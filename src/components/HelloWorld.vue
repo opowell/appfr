@@ -1,57 +1,77 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
-  </div>
+  <div>
+    <button @click="addWindow">Add Window</button>
+    <button v-for="i in numWindows" :key="i" @click="focus(i)">{{ i }}</button>
+    <div class="hello">
+      <jt-window 
+        ref="windows"
+        v-for="i in numWindows"
+        :key="i"
+        :state="state">
+        <template v-slot:body>
+          <div style="padding: 1rem;">{{ i }}</div>
+        </template>
+      </jt-window>
+    </div>
+  </div>  
 </template>
 
 <script>
+import JtWindow from './JtWindow.vue';
+
 export default {
   name: 'HelloWorld',
-  props: {
-    msg: String
-  }
-}
+  components: {
+    JtWindow,
+  },
+  data() {
+    return {
+      numWindows: 0,
+      state: {
+        activeWindow: null,
+        windows: [],
+        windowsMaximized: false,
+      }
+    }
+  },
+  methods: {
+    focus(i) {
+      this.$refs.windows[i-1].focus()
+    },
+    addWindow() {
+      this.numWindows++
+    },
+  },
+};
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
+.hello {
+  width: 800px;
+  height: 600px;
+  background-color: blue;
+  position: relative;
 }
-ul {
-  list-style-type: none;
-  padding: 0;
+
+::v-deep .window {
+  background-color: green;
+  position: absolute;
+  border: 1px outset #ddd;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  border-bottom-left-radius: 1px;
+  border-bottom-right-radius: 1px;
+  color: grey;
 }
-li {
-  display: inline-block;
-  margin: 0 10px;
+
+::v-deep .window.focussed {
+  background-color: lightgreen;
+  color: black;
 }
-a {
-  color: #42b983;
+
+::v-deep .maxed {
+  box-shadow: none;
+  border: none;
+  border-radius: 0px;
 }
 </style>

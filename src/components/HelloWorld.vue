@@ -7,7 +7,9 @@
         ref="windows"
         v-for="i in numWindows"
         :key="i"
-        :state="state">
+        :state="state"
+        @dblclick='toggleMaximized'
+      >
         <template v-slot:body>
           <div style="padding: 1rem;">{{ i }}</div>
         </template>
@@ -26,7 +28,7 @@ export default {
   },
   data() {
     return {
-      numWindows: 0,
+      numWindows: 2,
       state: {
         activeWindow: null,
         windows: [],
@@ -40,6 +42,9 @@ export default {
     },
     addWindow() {
       this.numWindows++
+    },
+    toggleMaximized() {
+      this.state.windowsMaximized = !this.state.windowsMaximized;
     },
   },
 };

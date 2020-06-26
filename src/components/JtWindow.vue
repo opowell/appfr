@@ -4,7 +4,6 @@
     @mousedown="click"
     :class='{"focussed": isFocussed, "maxed": isMaximized, "active": isActive}'
     :style="style"
-    @dblclick='toggleMaximized'
   >
     <slot name="body" />
     <span class="handle handle-tl" @mousedown.prevent.stop="startResizeTL">
@@ -80,6 +79,8 @@ export default {
       resizeStartY: null,
       moveStartX: null,
       moveStartY: null,
+
+      resizeFn: null,
     };
   },
   computed: {
@@ -135,9 +136,6 @@ export default {
     },
   },
   methods: {
-    toggleMaximized() {
-      this.state.windowsMaximized = !this.state.windowsMaximized;
-    },
     focus() {
       this.state.activeWindow = this
       let index = this.state.windows.indexOf(this)
@@ -155,31 +153,34 @@ export default {
       }
       document.documentElement.addEventListener('mousemove', this.move);
       document.documentElement.addEventListener('mouseup', this.stopMove);
-      this.moveStartX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      this.moveStartY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
+      this.moveStartX = ev.pageX;
+      this.moveStartY = ev.pageY;
       this.origTop = this.top;
       this.origLeft = this.left;
-
-      console.log('start move from ' + this.left + ', ' + this.top);
+    },
+    getConstrainedLeft(x, w) {
+      w = w || this.width
+      x = Math.max(x, this.minLeft);
+      x = Math.min(x, this.parentWidth - w);
+      return x;
+    },
+    getConstrainedWidth(w, x) {
+      x = x || this.left
+      w = Math.max(w, this.minWidth);
+      w = Math.min(w, this.parentWidth - x);
+      return w;
+    },
+    getConstrainedTop(x) {
+      x = Math.max(x, this.minTop);
+      x = Math.min(x, this.parentHeight - this.height);
+      return x;
     },
     move(ev) {
-      const pageX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      let newLeft = this.origLeft + pageX - this.moveStartX;
-      newLeft = Math.max(newLeft, this.minLeft);
-      newLeft = Math.min(newLeft, this.parentWidth - this.width);
-      this.left = newLeft;
+      let newLeft = this.origLeft + ev.pageX - this.moveStartX;
+      this.left = this.getConstrainedLeft(newLeft);
 
-      const pageY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
-      let newTop = this.origTop + pageY - this.moveStartY;
-      newTop = Math.max(newTop, this.minTop);
-      newTop = Math.min(newTop, this.parentHeight - this.height);
-      this.top = newTop;
-
-      // console.log('move to ' + newLeft + ', ' + newTop);
+      let newTop = this.origTop + ev.pageY - this.moveStartY;
+      this.top = this.getConstrainedTop(newTop);
     },
     stopMove() {
       document.documentElement.removeEventListener('mousemove', this.move);
@@ -188,222 +189,164 @@ export default {
     },
 
     startResizeTL(ev) {
-      document.documentElement.addEventListener('mousemove', this.resizeTL);
-      document.documentElement.addEventListener('mouseup', this.stopResizeTL);
-      this.resizeStartX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      this.resizeStartY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
+      this.addMouseListeners(this.resizeTL);
+      this.resizeStartX = ev.pageX;
+      this.resizeStartY = ev.pageY;
       this.origTop = this.top;
       this.origLeft = this.left;
       this.origWidth = this.width;
       this.origHeight = this.height;
     },
-    // This method needs to be as fast as possible to prevent lag.
+    // Resize methods need to be as fast as possible to prevent lag.
     resizeTL(ev) {
-      const pageX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      const deltaX = pageX - this.resizeStartX;
+      const deltaX = ev.pageX - this.resizeStartX;
       if (this.origWidth - deltaX >= this.minWidth) {
         this.left = this.origLeft + deltaX;
         this.width = this.origWidth - deltaX;
       }
-      const pageY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
-      const deltaY = pageY - this.resizeStartY;
+      const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight - deltaY >= this.minHeight) {
         this.top = this.origTop + deltaY;
         this.height = this.origHeight - deltaY;
       }
     },
-    stopResizeTL() {
-      this.removeMouseListeners(this.resizeTL, this.stopResizeTL);
-    },
 
     startResizeT(ev) {
-      this.addMouseListeners(this.resizeT, this.stopResizeT);
-      this.resizeStartY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
+      this.addMouseListeners(this.resizeT);
+      this.resizeStartY = ev.pageY;
       this.origTop = this.top;
       this.origHeight = this.height;
     },
     resizeT(ev) {
-      const pageY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
-      const deltaY = pageY - this.resizeStartY;
+      const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight - deltaY >= this.minHeight) {
         this.top = this.origTop + deltaY;
         this.height = this.origHeight - deltaY;
       }
     },
-    stopResizeT() {
-      document.documentElement.removeEventListener('mousemove', this.resizeT);
-      document.documentElement.removeEventListener('mouseup', this.stopResizeT);
-      this.$emit('saveWindowInfo', this);
-    },
 
     startResizeTR(ev) {
-      document.documentElement.addEventListener('mousemove', this.resizeTR);
-      document.documentElement.addEventListener('mouseup', this.stopResizeTR);
-      this.resizeStartX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      this.resizeStartY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
+      this.addMouseListeners(this.resizeTR);
+      this.resizeStartX = ev.pageX;
+      this.resizeStartY = ev.pageY;
       this.origTop = this.top;
       this.origLeft = this.left;
       this.origWidth = this.width;
       this.origHeight = this.height;
     },
     resizeTR(ev) {
-      // Resize top
-      const pageX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      const deltaX = pageX - this.resizeStartX;
+      // Resize RIGHT
+      const deltaX = ev.pageX - this.resizeStartX;
       if (this.origWidth + deltaX >= this.minWidth) {
         this.width = this.origWidth + deltaX;
       }
-      // Resize RIGHT
-      const pageY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
-      const deltaY = pageY - this.resizeStartY;
+      // Resize top
+      const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight - deltaY >= this.minHeight) {
         this.top = this.origTop + deltaY;
         this.height = this.origHeight - deltaY;
       }
     },
-    stopResizeTR() {
-      this.removeMouseListeners(this.resizeTR, this.stopResizeTR);
-    },
 
     startResizeL(ev) {
-      document.documentElement.addEventListener('mousemove', this.resizeL);
-      document.documentElement.addEventListener('mouseup', this.stopResizeL);
-      this.resizeStartX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
+      this.addMouseListeners(this.resizeL);
+      this.resizeStartX = ev.pageX;
       this.origLeft = this.left;
       this.origWidth = this.width;
     },
     resizeL(ev) {
-      const pageX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      const deltaX = pageX - this.resizeStartX;
-      if (this.origWidth - deltaX >= this.minWidth) {
-        this.left = this.origLeft + deltaX;
-        this.width = this.origWidth - deltaX;
-      }
-    },
-    stopResizeL() {
-      this.removeMouseListeners(this.resizeL, this.stopResizeL)
+      const deltaX = ev.pageX - this.resizeStartX;
+      let newLeft = this.origLeft + deltaX;
+      newLeft = Math.max(this.minLeft, newLeft);
+      let newWidth = this.origWidth + (this.origLeft - newLeft);
+      this.width = Math.max(this.minWidth, newWidth)
+      this.left = this.origLeft - (this.width - this.origWidth);
     },
 
-    removeMouseListeners(resizeFn, stopResizeFn) {
-      document.documentElement.removeEventListener('mousemove', resizeFn);
-      document.documentElement.removeEventListener('mouseup', stopResizeFn);
+    removeMouseListeners() {
+      document.documentElement.removeEventListener('mousemove', this.resizeFn);
+      this.resizeFn = null
+      document.documentElement.removeEventListener('mouseup', this.removeMouseListeners);
       this.$emit('saveWindowInfo', this);
     },
 
-    addMouseListeners(resizeFn, stopResizeFn) {
+    addMouseListeners(resizeFn) {
+      this.resizeFn = resizeFn
       document.documentElement.addEventListener('mousemove', resizeFn);
-      document.documentElement.addEventListener('mouseup', stopResizeFn);
+      document.documentElement.addEventListener('mouseup', this.removeMouseListeners);
     },
 
     startResizeR(ev) {
-      this.addMouseListeners(this.resizeR, this.stopResizeR);
-      this.resizeStartX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
+      this.addMouseListeners(this.resizeR);
+      this.resizeStartX = ev.pageX;
       this.origLeft = this.left;
       this.origWidth = this.width;
     },
     resizeR(ev) {
-      const pageX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      const deltaX = pageX - this.resizeStartX;
-      if (this.origWidth + deltaX >= this.minWidth) {
-        this.width = this.origWidth + deltaX;
-      }
-    },
-    stopResizeR() {
-      this.removeMouseListeners(this.resizeR, this.stopResizeR);
+      const deltaX = ev.pageX - this.resizeStartX;
+      let newWidth = this.origWidth + deltaX;
+      newWidth = Math.min(newWidth, this.parentWidth - this.origLeft);
+      this.width = Math.max(this.minWidth, newWidth)
+      // const deltaX = ev.pageX - this.resizeStartX;
+      // if (this.origWidth + deltaX >= this.minWidth) {
+      //   this.width = this.origWidth + deltaX;
+      // }
     },
 
     startResizeBL(ev) {
-      this.addMouseListeners(this.resizeBL, this.stopResizeBL);
-      this.resizeStartX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      this.resizeStartY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
+      this.addMouseListeners(this.resizeBL);
+      this.resizeStartX = ev.pageX;
+      this.resizeStartY = ev.pageY;
       this.origLeft = this.left;
       this.origWidth = this.width;
       this.origHeight = this.height;
     },
     resizeBL(ev) {
       // LEFT
-      const pageX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      const deltaX = pageX - this.resizeStartX;
+      const deltaX = ev.pageX - this.resizeStartX;
       if (this.origWidth - deltaX >= this.minWidth) {
         this.left = this.origLeft + deltaX;
         this.width = this.origWidth - deltaX;
       }
       // BOTTOM
-      const pageY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
-      const deltaY = pageY - this.resizeStartY;
+      const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight + deltaY >= this.minHeight) {
         this.height = this.origHeight + deltaY;
       }
     },
-    stopResizeBL() {
-      this.removeMouseListeners(this.resizeBL, this.stopResizeBL);
-    },
 
     startResizeB(ev) {
-      this.addMouseListeners(this.resizeB, this.stopResizeB);
-      this.resizeStartY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
+      this.addMouseListeners(this.resizeB);
+      this.resizeStartY = ev.pageY;
       this.origHeight = this.height;
     },
     resizeB(ev) {
       // BOTTOM
-      const pageY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
-      const deltaY = pageY - this.resizeStartY;
+      const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight + deltaY >= this.minHeight) {
         this.height = this.origHeight + deltaY;
       }
     },
-    stopResizeB() {
-      this.removeMouseListeners(this.resizeB, this.stopResizeB);
-    },
 
     startResizeBR(ev) {
-      this.addMouseListeners(this.resizeBR, this.stopResizeBR);
-      this.resizeStartX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      this.resizeStartY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
+      this.addMouseListeners(this.resizeBR);
+      this.resizeStartX = ev.pageX;
+      this.resizeStartY = ev.pageY;
       this.origWidth = this.width;
       this.origHeight = this.height;
     },
     resizeBR(ev) {
       // RIGHT
-      const pageX =
-        typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-      const deltaX = pageX - this.resizeStartX;
+      const deltaX = ev.pageX - this.resizeStartX;
       if (this.origWidth + deltaX >= this.minWidth) {
         this.width = this.origWidth + deltaX;
       }
       // BOTTOM
-      const pageY =
-        typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
-      const deltaY = pageY - this.resizeStartY;
+      const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight + deltaY >= this.minHeight) {
         this.height = this.origHeight + deltaY;
       }
     },
-    stopResizeBR() {
-      this.removeMouseListeners(this.resizeBR, this.stopResizeBR);
-    }
   },
   mounted() {
     this.$emit('addWindow', this);

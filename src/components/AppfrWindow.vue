@@ -1,7 +1,7 @@
 <template>
   <div
     class="window"
-    @mousedown.left.prevent.stop="click"
+    @mousedown="click"
     :class='{"focussed": isFocussed, "maxed": isMaximized, "active": isActive}'
     :style="style"
   >
@@ -33,6 +33,9 @@
   </div>
 </template>
 <script>
+
+window.hi = function() {console.log('hi')}
+
 import Vue from 'vue';
 
 export default {
@@ -82,6 +85,7 @@ export default {
       moveStartX: null,
       moveStartY: null,
       resizeFn: null,
+      isMoving: false,
     };
   },
   computed: {
@@ -161,8 +165,9 @@ export default {
       if (this.isMaximized) {
         return;
       }
-      document.documentElement.addEventListener('mousemove', this.move);
-      document.documentElement.addEventListener('mouseup', this.stopMove);
+      this.isMoving = true;
+      this.parentElement.addEventListener('mousemove', this.move);
+      this.parentElement.addEventListener('mouseup', this.stopMove);
       this.moveStartX = ev.pageX;
       this.moveStartY = ev.pageY;
       this.origTop = this.window.y;
@@ -186,6 +191,7 @@ export default {
       return x;
     },
     move(ev) {
+      // if (!this.isMoving) return;
       console.log('move ' + this.window.title)
       ev.stopPropagation();
       ev.preventDefault();
@@ -197,8 +203,9 @@ export default {
     },
     stopMove(ev) {
       console.log('stopMove ' + this.window.title, ev)
-      document.documentElement.removeEventListener('mousemove', this.move);
-      document.documentElement.removeEventListener('mouseup', this.stopMove);
+      this.isMoving = false;
+      this.parentElement.removeEventListener('mousemove', this.move);
+      this.parentElement.removeEventListener('mouseup', this.stopMove);
       this.$emit('saveWindowInfo', this);
     },
 

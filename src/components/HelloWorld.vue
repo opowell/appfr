@@ -13,12 +13,12 @@
     </div>
     <div>
       <button @click.left="addWindow">Add Window</button>
-      <button v-for="(window, i) in state.windows" :key="i" @click="focus(window)">{{ i }}</button>
+      <button v-for="(window, i) in state.windows" :key="window.title" @click="focus(window)">{{ i }}</button>
       <div class="hello">
         <appfr-window />
         <appfr-window 
           v-for="(window, i) in state.windows"
-          :key="i"
+          :key="window.title"
           :state="state"
           :window="window"
           @dblclick.native='toggleMaximized'

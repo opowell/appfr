@@ -1,7 +1,7 @@
 <template>
   <div
     class="window"
-    @mousedown="click"
+    @mousedown.left.prevent.stop="click"
     :class='{"focussed": isFocussed, "maxed": isMaximized, "active": isActive}'
     :style="style"
   >
@@ -33,23 +33,30 @@
   </div>
 </template>
 <script>
+import Vue from 'vue';
+
 export default {
-  name: 'JtWindow',
+  name: 'AppfrWindow',
   props: {
     window: {
       type: Object,
       default: function() {
         return {
-          w: 300,
-          h: 200,
-          x: 100,
-          y: 100,
+          w: null,
+          h: null,
+          x: null,
+          y: null,
         }
       }
     },
     state: {
       type: Object,
-      required: true
+      default: function() {
+        return {
+          windows: [],
+          activeWindow: null
+        }
+      }
     },
     minHeight: {
       type: Number,
@@ -70,84 +77,87 @@ export default {
   },
   data() {
     return {
-      left: this.window.x,
-      top: this.window.y,
-      width: this.window.w,
-      height: this.window.h,
-
       resizeStartX: null,
       resizeStartY: null,
       moveStartX: null,
       moveStartY: null,
-
       resizeFn: null,
     };
   },
   computed: {
-    parentWidth() {
+    parentElement() {
       if (this.$el == null) {
+        return null;
+      }
+      return this.$el.parentElement;
+    },
+    parentWidth() {
+      if (this.parentElement == null) {
         return 0;
       }
-      return this.$el.parentElement.clientWidth;
+      return this.parentElement.clientWidth;
     },
     parentHeight() {
-      if (this.$el == null) {
+      if (this.parentElement == null) {
         return 0;
       }
-      return this.$el.parentElement.clientHeight;
+      return this.parentElement.clientHeight;
     },
     isActive() {
-      return !this.isMaximized || this === this.state.activeWindow;
+      return !this.isMaximized || this.window === this.state.activeWindow;
     },
     isFocussed() {
-      return this === this.state.activeWindow;
+      return this.window === this.state.activeWindow;
     },
 		isMaximized() {
 			return this.state.windowsMaximized;
-		},
+    },
+    stateWindows() {
+      this.state.windows = this.state.windows || []
+      return this.state.windows
+    },
 		zIndex() {
-			const windows = this.state.windows;
+			const windows = this.stateWindows;
 			for (let i in windows) {
-				if (windows[i] === this) {
-					return i;
+				if (windows[i] === this.window) {
+					return (i - 0) + 1;
 				}
 			}
-			return -1;
+			return 0;
 		},
     style() {
       let out = {
         zIndex: this.zIndex,
       }
       if (!this.isMaximized) {
-        out.top = this.top + 'px';
-        out.left = this.left + 'px';
-        out.width = this.width + 'px';
-        out.height = this.height + 'px';
+        out.top = this.window.y + 'px';
+        out.left = this.window.x + 'px';
+        out.width = this.window.w + 'px';
+        out.height = this.window.h + 'px';
       }
       return out;
     }
   },
-  watch: {
-    window: function(oldVal, newVal) {
-      this.left = newVal.x;
-      this.top = newVal.y;
-      this.width = newVal.w;
-      this.height = newVal.h;
-    },
-  },
   methods: {
-    focus() {
-      this.state.activeWindow = this
-      let index = this.state.windows.indexOf(this)
+    close() {
+      let index = this.stateWindows.indexOf(this.window)
       if (index < 0) return
-      this.state.windows.splice(index, 1)
-      this.state.windows.push(this)
+      this.stateWindows.splice(index, 1)
+    },
+    focus() {
+      this.state.activeWindow = this.window
+      this.close();
+      this.stateWindows.push(this.window);
     },
     click(ev) {
       this.focus();
-      this.startMove(ev);
+      console.log('click ' + this.window.title, ev)
+      // Vue.nextTick(function() {
+        this.startMove(ev);
+      // }.bind(this));
     },
     startMove(ev) {
+      console.log('startMove ' + this.window.title, ev)
       if (this.isMaximized) {
         return;
       }
@@ -155,34 +165,38 @@ export default {
       document.documentElement.addEventListener('mouseup', this.stopMove);
       this.moveStartX = ev.pageX;
       this.moveStartY = ev.pageY;
-      this.origTop = this.top;
-      this.origLeft = this.left;
+      this.origTop = this.window.y;
+      this.origLeft = this.window.x;
     },
     getConstrainedLeft(x, w) {
-      w = w || this.width
+      w = w || this.window.w
       x = Math.max(x, this.minLeft);
       x = Math.min(x, this.parentWidth - w);
       return x;
     },
     getConstrainedWidth(w, x) {
-      x = x || this.left
+      x = x || this.window.x
       w = Math.max(w, this.minWidth);
       w = Math.min(w, this.parentWidth - x);
       return w;
     },
     getConstrainedTop(x) {
       x = Math.max(x, this.minTop);
-      x = Math.min(x, this.parentHeight - this.height);
+      x = Math.min(x, this.parentHeight - this.window.h);
       return x;
     },
     move(ev) {
+      console.log('move ' + this.window.title)
+      ev.stopPropagation();
+      ev.preventDefault();
       let newLeft = this.origLeft + ev.pageX - this.moveStartX;
-      this.left = this.getConstrainedLeft(newLeft);
+      this.window.x = this.getConstrainedLeft(newLeft);
 
       let newTop = this.origTop + ev.pageY - this.moveStartY;
-      this.top = this.getConstrainedTop(newTop);
+      this.window.y = this.getConstrainedTop(newTop);
     },
-    stopMove() {
+    stopMove(ev) {
+      console.log('stopMove ' + this.window.title, ev)
       document.documentElement.removeEventListener('mousemove', this.move);
       document.documentElement.removeEventListener('mouseup', this.stopMove);
       this.$emit('saveWindowInfo', this);
@@ -192,75 +206,76 @@ export default {
       this.addMouseListeners(this.resizeTL);
       this.resizeStartX = ev.pageX;
       this.resizeStartY = ev.pageY;
-      this.origTop = this.top;
-      this.origLeft = this.left;
-      this.origWidth = this.width;
-      this.origHeight = this.height;
+      this.origTop = this.window.y;
+      this.origLeft = this.window.x;
+      this.origWidth = this.window.w;
+      this.origHeight = this.window.h;
     },
     // Resize methods need to be as fast as possible to prevent lag.
     resizeTL(ev) {
       const deltaX = ev.pageX - this.resizeStartX;
       if (this.origWidth - deltaX >= this.minWidth) {
-        this.left = this.origLeft + deltaX;
-        this.width = this.origWidth - deltaX;
+        this.window.x = this.origLeft + deltaX;
+        this.window.w = this.origWidth - deltaX;
       }
       const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight - deltaY >= this.minHeight) {
-        this.top = this.origTop + deltaY;
-        this.height = this.origHeight - deltaY;
+        this.window.y = this.origTop + deltaY;
+        this.window.h = this.origHeight - deltaY;
       }
     },
 
     startResizeT(ev) {
       this.addMouseListeners(this.resizeT);
       this.resizeStartY = ev.pageY;
-      this.origTop = this.top;
-      this.origHeight = this.height;
+      this.origTop = this.window.y;
+      this.origHeight = this.window.h;
     },
     resizeT(ev) {
       const deltaY = ev.pageY - this.resizeStartY;
-      if (this.origHeight - deltaY >= this.minHeight) {
-        this.top = this.origTop + deltaY;
-        this.height = this.origHeight - deltaY;
-      }
+      let newTop = this.origTop + deltaY;
+      newTop = Math.max(this.minTop, newTop);
+      let newHeight = this.origHeight + (this.origTop - newTop);
+      this.window.h = Math.max(this.minHeight, newHeight)
+      this.window.y = this.origTop - (this.window.h - this.origHeight);
     },
 
     startResizeTR(ev) {
       this.addMouseListeners(this.resizeTR);
       this.resizeStartX = ev.pageX;
       this.resizeStartY = ev.pageY;
-      this.origTop = this.top;
-      this.origLeft = this.left;
-      this.origWidth = this.width;
-      this.origHeight = this.height;
+      this.origTop = this.window.y;
+      this.origLeft = this.window.x;
+      this.origWidth = this.window.w;
+      this.origHeight = this.window.h;
     },
     resizeTR(ev) {
       // Resize RIGHT
       const deltaX = ev.pageX - this.resizeStartX;
       if (this.origWidth + deltaX >= this.minWidth) {
-        this.width = this.origWidth + deltaX;
+        this.window.w = this.origWidth + deltaX;
       }
       // Resize top
       const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight - deltaY >= this.minHeight) {
-        this.top = this.origTop + deltaY;
-        this.height = this.origHeight - deltaY;
+        this.window.y = this.origTop + deltaY;
+        this.window.h = this.origHeight - deltaY;
       }
     },
 
     startResizeL(ev) {
       this.addMouseListeners(this.resizeL);
       this.resizeStartX = ev.pageX;
-      this.origLeft = this.left;
-      this.origWidth = this.width;
+      this.origLeft = this.window.x;
+      this.origWidth = this.window.w;
     },
     resizeL(ev) {
       const deltaX = ev.pageX - this.resizeStartX;
       let newLeft = this.origLeft + deltaX;
       newLeft = Math.max(this.minLeft, newLeft);
       let newWidth = this.origWidth + (this.origLeft - newLeft);
-      this.width = Math.max(this.minWidth, newWidth)
-      this.left = this.origLeft - (this.width - this.origWidth);
+      this.window.w = Math.max(this.minWidth, newWidth)
+      this.window.x = this.origLeft - (this.window.w - this.origWidth);
     },
 
     removeMouseListeners() {
@@ -279,79 +294,97 @@ export default {
     startResizeR(ev) {
       this.addMouseListeners(this.resizeR);
       this.resizeStartX = ev.pageX;
-      this.origLeft = this.left;
-      this.origWidth = this.width;
+      this.origWidth = this.window.w;
     },
     resizeR(ev) {
       const deltaX = ev.pageX - this.resizeStartX;
       let newWidth = this.origWidth + deltaX;
-      newWidth = Math.min(newWidth, this.parentWidth - this.origLeft);
-      this.width = Math.max(this.minWidth, newWidth)
-      // const deltaX = ev.pageX - this.resizeStartX;
-      // if (this.origWidth + deltaX >= this.minWidth) {
-      //   this.width = this.origWidth + deltaX;
-      // }
+      newWidth = Math.min(newWidth, this.parentWidth - this.window.x);
+      this.window.w = Math.max(this.minWidth, newWidth)
     },
 
     startResizeBL(ev) {
       this.addMouseListeners(this.resizeBL);
       this.resizeStartX = ev.pageX;
       this.resizeStartY = ev.pageY;
-      this.origLeft = this.left;
-      this.origWidth = this.width;
-      this.origHeight = this.height;
+      this.origLeft = this.window.x;
+      this.origWidth = this.window.w;
+      this.origHeight = this.window.h;
     },
     resizeBL(ev) {
       // LEFT
       const deltaX = ev.pageX - this.resizeStartX;
       if (this.origWidth - deltaX >= this.minWidth) {
-        this.left = this.origLeft + deltaX;
-        this.width = this.origWidth - deltaX;
+        this.window.x = this.origLeft + deltaX;
+        this.window.w = this.origWidth - deltaX;
       }
       // BOTTOM
       const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight + deltaY >= this.minHeight) {
-        this.height = this.origHeight + deltaY;
+        this.window.h = this.origHeight + deltaY;
       }
     },
 
     startResizeB(ev) {
       this.addMouseListeners(this.resizeB);
       this.resizeStartY = ev.pageY;
-      this.origHeight = this.height;
+      this.origHeight = this.window.h;
     },
     resizeB(ev) {
-      // BOTTOM
       const deltaY = ev.pageY - this.resizeStartY;
-      if (this.origHeight + deltaY >= this.minHeight) {
-        this.height = this.origHeight + deltaY;
-      }
+      let newHeight = this.origHeight + deltaY;
+      newHeight = Math.min(newHeight, this.parentHeight - this.window.y);
+      this.window.h = Math.max(this.minHeight, newHeight)
     },
 
     startResizeBR(ev) {
       this.addMouseListeners(this.resizeBR);
       this.resizeStartX = ev.pageX;
       this.resizeStartY = ev.pageY;
-      this.origWidth = this.width;
-      this.origHeight = this.height;
+      this.origWidth = this.window.w;
+      this.origHeight = this.window.h;
     },
     resizeBR(ev) {
       // RIGHT
       const deltaX = ev.pageX - this.resizeStartX;
       if (this.origWidth + deltaX >= this.minWidth) {
-        this.width = this.origWidth + deltaX;
+        this.window.w = this.origWidth + deltaX;
       }
       // BOTTOM
       const deltaY = ev.pageY - this.resizeStartY;
       if (this.origHeight + deltaY >= this.minHeight) {
-        this.height = this.origHeight + deltaY;
+        this.window.h = this.origHeight + deltaY;
       }
     },
   },
   mounted() {
-    this.$emit('addWindow', this);
-    this.state.windows.push(this);
-    this.state.activeWindow = this
+    this.state.newWindow = this.state.newWindow || {}
+    let newWindow = this.state.newWindow
+
+    newWindow.offset = newWindow.offset || 40;
+    newWindow.leftOffset = newWindow.leftOffset || newWindow.offset;
+    newWindow.topOffset = newWindow.topOffset || newWindow.offset;
+    newWindow.width = newWindow.width || 300;
+    newWindow.height = newWindow.height || 200;
+
+    this.window = this.window || {}
+
+    let index = this.state.windows.indexOf(this.window);
+    if (index < 0) {
+      this.state.windows.push(this.window)
+      index = this.state.windows.length - 1
+    }
+
+    if (!this.window.x) Vue.set(this.window, 'x', Math.max(this.minLeft, index * newWindow.leftOffset))
+    if (!this.window.y) Vue.set(this.window, 'y', Math.max(this.minTop, index * newWindow.topOffset))
+    if (!this.window.w) Vue.set(this.window, 'w', newWindow.width)
+    if (!this.window.h) Vue.set(this.window, 'h', newWindow.height)
+
+    this.state.activeWindow = this.window;
+
+    this.window.component = this;
+
+this.$emit('addWindow', this);
   },
 };
 
@@ -360,6 +393,9 @@ export default {
 <style scoped>
 .window {
   position: absolute;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
 }
 
 .handle {

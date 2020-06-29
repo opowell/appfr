@@ -253,158 +253,158 @@ export default {
   },
 
   methods: {
-        dragStart(index) {
-            this.$store.state.dragData = {
-                windowId: this.window.id,
-                areaPath: this.areaPath,
-                index,
-            }
-        },
-        dropOnTab(index, ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            ev.target.classList.remove('highlight');
-            let targetData = {
-                windowId: this.window.id,
-                areaPath: this.areaPath,
-                index,
-            };
-            let same = this.samePanel(this.$store.state.dragData, targetData);
-            if (same === false) {
-                this.$store.dispatch('dropOnTab', {
-                    sourceWindowId: this.$store.state.dragData.windowId,
-                    sourceAreaPath: this.$store.state.dragData.areaPath,
-                    sourcePanelIndex: this.$store.state.dragData.index,
-                    targetWindowId: this.window.id,
-                    targetAreaPath: this.areaPath,
-                    targetIndex: index,
-                });
-            }
-        },
-        dragOver(ev) {
-            ev.preventDefault();
-        },
-        samePanel(panel1Data, panel2Data) {
-            let out = (panel1Data.windowId === panel2Data.windowId &&
-                panel1Data.areaPath === panel2Data.areaPath && 
-                panel1Data.index === panel2Data.index);
-            return out;
-        },
-        dragEnterTab(index, ev) {
-            let targetData = {
-                windowId: this.window.id,
-                areaPath: this.areaPath,
-                index,
-            };
-            let samePanel = this.samePanel(this.$store.state.dragData, targetData);
-            if (samePanel === false) {
-                let el = ev.target;
-                el.classList.add('highlight');
-            }
-        },
-        dragLeaveTab(ev) {
-            ev.target.classList.remove('highlight');
-        },
-      newSiblingOfParent() {
-          this.$store.commit('newSiblingOfParent', {
-              areaPath: this.areaPath,
-              windowId: this.window.id,
-              panelInd: this.activePanelInd,
-          });
-      },
-      changeSelectedIndex(change) {
-          this.$store.commit('changeSelectedIndex', {
-              areaPath: this.areaPath,
-              windowId: this.window.id,
-              change,
-          })
-      },
-      startAdjust(index, curArea, indexOnParent, parent, ev) {
-			let startX =
-				typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-			let startY =
-                typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
-                let el = ev.currentTarget.previousSibling;
-          this.adjustData = {
-              index,
-              curArea,
-              indexOnParent,
-              parent,
-              startX,
-              startY,
-              origWidth: el.clientWidth,
-              origHeight: el.clientHeight,
-          }
-			document.documentElement.addEventListener('mousemove', this.adjust);
-            document.documentElement.addEventListener('mouseup', this.stopAdjust);
-      },
-      adjust(ev) {
-          ev.preventDefault();
-          ev.stopPropagation();
-			let adjustX =
-				typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
-			let adjustY =
-				typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
-        let size = null;
-        if (this.rowChildren) {
-            size = this.adjustData.origHeight + (adjustY - this.adjustData.startY);
-        } else {
-            size = this.adjustData.origWidth + (adjustX - this.adjustData.startX);
+    dragStart(index) {
+        this.$store.state.dragData = {
+            windowId: this.window.id,
+            areaPath: this.areaPath,
+            index,
         }
-          this.adjustData.newSize = size;
-          this.adjustData.curArea.flex = '0 0 ' + size + 'px';
-      },
-      stopAdjust(ev) {
-          ev.preventDefault();
-          ev.stopPropagation();
-			document.documentElement.removeEventListener('mousemove', this.adjust);
-			document.documentElement.removeEventListener('mouseup', this.stopAdjust);
-            let areaPath = [];
-            let parent = this.adjustData.parent;
-            let curArea = this.adjustData.curArea;
-            let indexOnParent = this.adjustData.indexOnParent;
-            while (parent != null) {
-                areaPath.unshift(indexOnParent);
-                curArea = parent;
-                parent = curArea.parent;
-                indexOnParent = curArea.indexOnParent;
-            }
-          this.$store.commit('setAreaSize', {
-              windowId: this.window.id,
-              areaPath,
-              size: this.adjustData.newSize,
-          });
-      },
-      startMove(ev) {
-          this.$emit('startmove', ev);
-      },
-        restore() {
-            this.$store.commit('toggleWindowsMaximized');
-        },
+    },
+    dropOnTab(index, ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        ev.target.classList.remove('highlight');
+        let targetData = {
+            windowId: this.window.id,
+            areaPath: this.areaPath,
+            index,
+        };
+        let same = this.samePanel(this.$store.state.dragData, targetData);
+        if (same === false) {
+            this.$store.dispatch('dropOnTab', {
+                sourceWindowId: this.$store.state.dragData.windowId,
+                sourceAreaPath: this.$store.state.dragData.areaPath,
+                sourcePanelIndex: this.$store.state.dragData.index,
+                targetWindowId: this.window.id,
+                targetAreaPath: this.areaPath,
+                targetIndex: index,
+            });
+        }
+    },
+    dragOver(ev) {
+        ev.preventDefault();
+    },
+    samePanel(panel1Data, panel2Data) {
+        let out = (panel1Data.windowId === panel2Data.windowId &&
+            panel1Data.areaPath === panel2Data.areaPath && 
+            panel1Data.index === panel2Data.index);
+        return out;
+    },
+    dragEnterTab(index, ev) {
+        let targetData = {
+            windowId: this.window.id,
+            areaPath: this.areaPath,
+            index,
+        };
+        let samePanel = this.samePanel(this.$store.state.dragData, targetData);
+        if (samePanel === false) {
+            let el = ev.target;
+            el.classList.add('highlight');
+        }
+    },
+    dragLeaveTab(ev) {
+        ev.target.classList.remove('highlight');
+    },
+    newSiblingOfParent() {
+        this.$store.commit('newSiblingOfParent', {
+            areaPath: this.areaPath,
+            windowId: this.window.id,
+            panelInd: this.activePanelInd,
+        });
+    },
+    changeSelectedIndex(change) {
+        this.$store.commit('changeSelectedIndex', {
+            areaPath: this.areaPath,
+            windowId: this.window.id,
+            change,
+        })
+    },
+    startAdjust(index, curArea, indexOnParent, parent, ev) {
+        let startX =
+            typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
+        let startY =
+            typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
+            let el = ev.currentTarget.previousSibling;
+        this.adjustData = {
+            index,
+            curArea,
+            indexOnParent,
+            parent,
+            startX,
+            startY,
+            origWidth: el.clientWidth,
+            origHeight: el.clientHeight,
+        }
+        document.documentElement.addEventListener('mousemove', this.adjust);
+        document.documentElement.addEventListener('mouseup', this.stopAdjust);
+    },
+    adjust(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        let adjustX =
+            typeof ev.pageX !== 'undefined' ? ev.pageX : ev.touches[0].pageX;
+        let adjustY =
+            typeof ev.pageY !== 'undefined' ? ev.pageY : ev.touches[0].pageY;
+    let size = null;
+    if (this.rowChildren) {
+        size = this.adjustData.origHeight + (adjustY - this.adjustData.startY);
+    } else {
+        size = this.adjustData.origWidth + (adjustX - this.adjustData.startX);
+    }
+        this.adjustData.newSize = size;
+        this.adjustData.curArea.flex = '0 0 ' + size + 'px';
+    },
+    stopAdjust(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        document.documentElement.removeEventListener('mousemove', this.adjust);
+        document.documentElement.removeEventListener('mouseup', this.stopAdjust);
+        let areaPath = [];
+        let parent = this.adjustData.parent;
+        let curArea = this.adjustData.curArea;
+        let indexOnParent = this.adjustData.indexOnParent;
+        while (parent != null) {
+            areaPath.unshift(indexOnParent);
+            curArea = parent;
+            parent = curArea.parent;
+            indexOnParent = curArea.indexOnParent;
+        }
+        this.$store.commit('setAreaSize', {
+            windowId: this.window.id,
+            areaPath,
+            size: this.adjustData.newSize,
+        });
+    },
+    startMove(ev) {
+        this.$emit('startmove', ev);
+    },
+    restore() {
+        this.$store.commit('toggleWindowsMaximized');
+    },
     setActivePanelIndex(index) {
         this.$store.commit('setActivePanelIndex', {
-                index,
-                areaPath: this.areaPath,
-                windowId: this.window.id,
-            });
-        },
-        close() {
-            this.$store.commit('closeArea', {
-                areaPath: this.areaPath,
-                windowId: this.window.id,
-            });
-        },
-      createChild(rowChildren) {
-            this.$store.commit('createChild', {
-              areaPath: this.areaPath,
-              windowId: this.window.id,
-              panelInd: this.activePanelInd,
-              rowChildren,
-            });
-      },
-      closeActivePanel() {
-          this.closePanel(this.activePanelInd);
-      },
+            index,
+            areaPath: this.areaPath,
+            windowId: this.window.id,
+        });
+    },
+    close() {
+        this.$store.commit('closeArea', {
+            areaPath: this.areaPath,
+            windowId: this.window.id,
+        });
+    },
+    createChild(rowChildren) {
+        this.$store.commit('createChild', {
+            areaPath: this.areaPath,
+            windowId: this.window.id,
+            panelInd: this.activePanelInd,
+            rowChildren,
+        });
+    },
+    closeActivePanel() {
+        this.closePanel(this.activePanelInd);
+    },
     closePanel(index) {
         this.$store.commit('closePanel', {
             panelIndex: index,

@@ -18,7 +18,7 @@ export default {
 body {
   margin: 0;
   padding: 0;
-  margin: 10rem;
+  margin: 2rem;
   display: flex;
   align-items: center;
   justify-content: center;

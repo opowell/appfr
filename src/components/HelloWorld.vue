@@ -3,17 +3,14 @@
     <div>
       Areas
       <div style='display: flex'>
-        <appfr-area class="demo-area">
-          1
-        </appfr-area>
-        <appfr-area class="demo-area">
-          2
-        </appfr-area>
+        <appfr-area class="demo-area" :area="area1" />
+        <appfr-area class="demo-area" :area="area2" />
       </div>
     </div>
     <div>
-      <button @click.left="addWindow">Add Window</button>
-      <button v-for="(window, i) in state.windows" :key="window.title" @click="focus(window)">{{ i }}</button>
+      Windows
+      <!-- <button @click.left="addWindow">Add Window</button>
+      <button v-for="(window, i) in state.windows" :key="window.title" @click="focus(window)">{{ i }}</button> -->
       <div class="hello">
         <appfr-window />
         <appfr-window 
@@ -55,7 +52,22 @@ export default {
         activeWindow: null,
         windows: [],
         windowsMaximized: false,
-      }
+      },
+      area1: {
+        childAreas: [
+          { content: '1a'}, 
+          { content: '1b'}
+        ]
+      },
+      area2: {
+        childAreas: [
+          { childAreas: [
+            {content: '2ai'},
+            {content: '2aii'}
+          ]}, 
+          { content: '2b'}
+        ]
+      },
     }
   },
   computed: {
@@ -93,7 +105,7 @@ export default {
 .hello {
   width: 800px;
   height: 600px;
-  background-color: blue;
+  background-color: rgb(203, 201, 201);
   position: relative;
 }
 
@@ -144,6 +156,19 @@ export default {
 
 .demo-area {
   margin: 2rem;
+  width: 400px;
+  height: 300px;
+  background-color: purple;
+  display: flex;
+}
+
+::v-deep .area-content {
+  background-color: hotpink;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
 }
 
 </style>

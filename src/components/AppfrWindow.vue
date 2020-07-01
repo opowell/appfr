@@ -34,8 +34,6 @@
 </template>
 <script>
 
-window.hi = function() {console.log('hi')}
-
 import Vue from 'vue';
 
 export default {
@@ -85,7 +83,6 @@ export default {
       moveStartX: null,
       moveStartY: null,
       resizeFn: null,
-      isMoving: false,
     };
   },
   computed: {
@@ -156,18 +153,15 @@ export default {
     click(ev) {
       this.focus();
       console.log('click ' + this.window.title, ev)
-      // Vue.nextTick(function() {
-        this.startMove(ev);
-      // }.bind(this));
+      this.startMove(ev);
     },
     startMove(ev) {
       console.log('startMove ' + this.window.title, ev)
       if (this.isMaximized) {
         return;
       }
-      this.isMoving = true;
-      this.parentElement.addEventListener('mousemove', this.move);
-      this.parentElement.addEventListener('mouseup', this.stopMove);
+      document.documentElement.addEventListener('mousemove', this.move);
+      document.documentElement.addEventListener('mouseup', this.stopMove);
       this.moveStartX = ev.pageX;
       this.moveStartY = ev.pageY;
       this.origTop = this.window.y;
@@ -176,23 +170,21 @@ export default {
     getConstrainedLeft(x, w) {
       w = w || this.window.w
       x = Math.max(x, this.minLeft);
-      x = Math.min(x, this.parentWidth - w);
+      x = Math.min(x, this.parentWidth - w - 18);
       return x;
     },
     getConstrainedWidth(w, x) {
       x = x || this.window.x
       w = Math.max(w, this.minWidth);
-      w = Math.min(w, this.parentWidth - x);
+      w = Math.min(w, this.parentWidth - x - 18);
       return w;
     },
     getConstrainedTop(x) {
       x = Math.max(x, this.minTop);
-      x = Math.min(x, this.parentHeight - this.window.h);
+      x = Math.min(x, this.parentHeight - this.window.h - 18);
       return x;
     },
     move(ev) {
-      // if (!this.isMoving) return;
-      console.log('move ' + this.window.title)
       ev.stopPropagation();
       ev.preventDefault();
       let newLeft = this.origLeft + ev.pageX - this.moveStartX;
@@ -202,10 +194,8 @@ export default {
       this.window.y = this.getConstrainedTop(newTop);
     },
     stopMove(ev) {
-      console.log('stopMove ' + this.window.title, ev)
-      this.isMoving = false;
-      this.parentElement.removeEventListener('mousemove', this.move);
-      this.parentElement.removeEventListener('mouseup', this.stopMove);
+      document.documentElement.removeEventListener('mousemove', this.move);
+      document.documentElement.removeEventListener('mouseup', this.stopMove);
       this.$emit('saveWindowInfo', this);
     },
 
@@ -306,7 +296,7 @@ export default {
     resizeR(ev) {
       const deltaX = ev.pageX - this.resizeStartX;
       let newWidth = this.origWidth + deltaX;
-      newWidth = Math.min(newWidth, this.parentWidth - this.window.x);
+      newWidth = Math.min(newWidth, this.parentWidth - this.window.x - 18);
       this.window.w = Math.max(this.minWidth, newWidth)
     },
 
@@ -407,13 +397,10 @@ this.$emit('addWindow', this);
 
 .handle {
   background-color: inherit;
-  border-style: outset;
   border-width: 0px;
-  margin: 0px;
   display: flex;
   width: 7px;
   height: 7px;
-  border-color: #dae1e7;
   position: absolute;
 }
 

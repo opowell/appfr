@@ -2,10 +2,7 @@
   <div>
     <div>
       Areas
-      <div style='display: flex'>
-        <appfr-area class="demo-area" :area="area1" />
-        <appfr-area class="demo-area" :area="area2" />
-      </div>
+      <appfr-area class="demo-area" :area="demoArea" />
     </div>
     <div>
       Windows
@@ -53,21 +50,25 @@ export default {
         windows: [],
         windowsMaximized: false,
       },
-      area1: {
+      demoArea: {
         childAreas: [
-          { content: '1a'}, 
-          { content: '1b'}
+          {
+            childAreas: [
+              { content: '1a'}, 
+              { content: '1b'}
+            ]
+          },
+          {
+            childAreas: [
+              { childAreas: [
+                {content: '2ai'},
+                {content: '2aii'}
+              ]}, 
+              { content: '2b'}
+            ]
+          },
         ]
-      },
-      area2: {
-        childAreas: [
-          { childAreas: [
-            {content: '2ai'},
-            {content: '2aii'}
-          ]}, 
-          { content: '2b'}
-        ]
-      },
+      }
     }
   },
   computed: {
@@ -156,7 +157,6 @@ export default {
 
 .demo-area {
   margin: 2rem;
-  width: 400px;
   height: 300px;
   background-color: purple;
   display: flex;

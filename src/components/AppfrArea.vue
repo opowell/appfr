@@ -11,21 +11,66 @@
           :area="childArea"
           :key="index"
           :isLastArea='index === area.childAreas.length - 1'
+          :parentArea='area'
+          :indexOnParent='index'
         />
         <div 
           class="adjuster"
           v-if="index < area.childAreas.length - 1"
           :key="'adjuster' + index"
           :style='adjusterStyle'
-          @mousedown.stop.prevent='startAdjust(index, childArea, index, area, $event)'
+          @mousedown.stop.prevent='startAdjust(childArea, $event)'
         />
       </template>
     </template>
     <!-- SHOW THIS AREA -->
     <template v-else>
-      <div 
-        class="area-content"
-      >
+          <div class='tabs'>
+      <template>
+          <span 
+              v-for='(panel, index) in area.panels'
+              :key='index'
+              class='tab tabHover'
+              :class='{"selected": isSelected(panel)}'
+              @mousedown='setActivePanelIndex(index)'
+              draggable="true"
+              @dragstart='dragStart($event, panel, index)'
+              @dragleave="dragLeaveTab"
+              @drop='dropOnTab(index, $event)'
+              @dragover='dragOver'
+              @dragenter="dragEnterTab(index, $event)"
+          >
+              {{ title(panel) }}
+              <span style='width: 20px; display: flex; margin-left: 5px;'>
+                  <span
+                      class='closeButton'
+                      @click.stop='closePanel(index)'
+                      style='width: 20px'
+                  >x</span>
+              </span>
+          </span>
+          <jt-spacer
+              @mousedown.native='startMove'
+              :area='area'
+          />
+      </template>
+    </div>
+      <template v-if="area.panels && area.panels.length > 0">
+        <div 
+          v-for='(panel, index) in area.panels'
+          v-bind:style='[area.activePanelInd === index ? {} : {"z-index": -1, "display": "none"}]'
+          class='content'
+          :is='panel.type'
+          :panel='panel'
+          :key='"panel-" + index'
+        /> 
+      </template>
+      <div v-else-if="area.type"
+        class="area-content-default"
+        :is="area.type"
+        :content="area.content"
+      />
+      <div v-else class="area-content area-content-default">
         {{ area.content }}
       </div>
     </template>
@@ -33,10 +78,20 @@
 </template>
 <script>
 import Vue from 'vue';
+import JtSpacer from '@/components/JtSpacer.vue';
 
 export default {
   name: 'AppfrArea',
+  components: {
+    JtSpacer
+  },
   props: {
+    indexOnParent: {
+      type: Number
+    },
+    parentArea: {
+      type: Object
+    },
     area: {
       type: Object,
       default: () => { return { 
@@ -55,9 +110,17 @@ export default {
       Vue.set(this.area, 'flexDirRow', true) 
     if (this.area.flex == null)
       Vue.set(this.area, 'flex', '1 1 100px')
+    if (this.area.activePanelInd == null) 
+      Vue.set(this.area, 'activePanelInd', 0)
+    this.area.component = this;
   },
   computed: {
     styleObj() {
+      if (this.area.childAreas == null || this.area.childAreas.length < 1) {
+        return {
+          "flex-direction": "column",
+        }
+      }
       let out = {
         "flex-direction": this.area.flexDirRow ? "row" : "column"
       }
@@ -74,18 +137,31 @@ export default {
         cursor: cursor,
       }
     },
+    activePanel() {
+      if (this.area.activePanelInd < 0 || this.area.panels == null || this.area.activePanelInd >= this.area.panels.length) {
+        return null;
+      } else {
+        return this.area.panels[this.area.activePanelInd];
+      }
+    },
+    areaId() {
+      if (this.indexOnParent == null) {
+        return;
+      }
+      return this.parent.component.areaId + ':' + this.indexOnParent;
+    }
   },
   methods: {
+    isSelected(panel) {
+      return this.activePanel === panel;
+    },
     toggleDir() {
       this.area.flexDirRow = !this.area.flexDirRow
     },
-    startAdjust(index, curArea, indexOnParent, parent, ev) {
+    startAdjust(curArea, ev) {
       let el = ev.currentTarget.previousSibling;
       this.adjustData = {
-        index,
         curArea,
-        indexOnParent,
-        parent,
         startX: ev.pageX,
         startY: ev.pageY,
         origWidth: el.clientWidth,
@@ -104,7 +180,6 @@ export default {
           size = this.adjustData.origHeight + (ev.pageY - this.adjustData.startY);
       }
       this.adjustData.newSize = size;
-      console.log('setting size to ' + size)
       this.adjustData.curArea.flex = '0 0 ' + size + 'px';
     },
     stopAdjust(ev) {
@@ -112,21 +187,37 @@ export default {
       ev.stopPropagation();
       document.documentElement.removeEventListener('mousemove', this.adjust);
       document.documentElement.removeEventListener('mouseup', this.stopAdjust);
-      // let areaPath = [];
-      // let parent = this.adjustData.parent;
-      // let curArea = this.adjustData.curArea;
-      // let indexOnParent = this.adjustData.indexOnParent;
-      // while (parent != null) {
-      //   areaPath.unshift(indexOnParent);
-      //   curArea = parent;
-      //   parent = curArea.parent;
-      //   indexOnParent = curArea.indexOnParent;
-      // }
-      // this.$store.commit('setAreaSize', {
+      this.$emit('adjusted-size', this.adjustData.curArea)
+    },
+    dragEnterTab(index, ev) {
+      // let targetData = {
       //   windowId: this.window.id,
-      //   areaPath,
-      //   size: this.adjustData.newSize,
-      // });
+      //   areaPath: this.areaPath,
+      //   index,
+      // };
+      // let samePanel = this.samePanel(this.$store.state.dragData, targetData);
+      // if (samePanel === false) {
+        let el = ev.target;
+        el.classList.add('highlight');
+      // }
+    },
+    dragLeaveTab(ev) {
+        ev.target.classList.remove('highlight');
+    },
+    dragOver(ev) {
+      ev.preventDefault();
+    },
+    title(panel) {
+      if (panel.id != null) return panel.id;
+      if (panel.type) return panel.type + ': ' + panel.content;
+      return panel.content;
+    },
+    setActivePanelIndex(index) {
+      this.area.activePanelInd = index;
+    },
+    dragStart(ev, panel, index) {
+      ev.dataTransfer.setData('panel', JSON.stringify(panel))
+      this.area.panels.splice(index, 1);
     },
   }
 };
@@ -138,9 +229,86 @@ export default {
   display: flex;
   flex: 1 1 auto;
 }
+.area > * {
+  flex: 1 1 auto;
+}
 .adjuster {
   flex: 0 0 1px;
   padding: 3px;
   background-color: brown;
+}
+.area-content-default {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+}
+
+.tabHover:hover {
+    background-color: #ff7f50b0;
+}
+
+.tabs {
+    display: flex;
+    flex: 0 0 auto;
+    background-color: var(--tabsBGColor);
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
+}
+
+.tab {
+    background-color: var(--tabBGColor);
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 25px;
+    padding-right: 5px;
+    cursor: default;
+    border-right: 1px solid;
+    display: flex;
+    white-space: nowrap;
+    color: var(--tabFontColor);
+}
+.tab.spacer {
+    flex: 1 1 auto;
+    background-color: transparent;
+    border-right-width: 0px;
+    padding: 0px;
+    margin: 0px;
+    color: inherit;
+}
+.highlight {
+    background-color: #ff00004f;
+}
+
+.tab.highlight {
+    background-color: #ff00004f;
+} 
+
+.selected {
+    background-color: coral;
+    color: white;
+    z-index: 0;
+}
+
+.selected:hover {
+    background-color: coral;
+}
+
+.selected .closeButton {
+    display: flex;
+}
+
+.closeButton {
+    display: none;
+    align-self: center;
+    color: #AAA;
+}
+
+.closeButton:hover {
+    color: #000;
+}
+
+.tab:hover .closeButton {
+    display: flex;
 }
 </style>

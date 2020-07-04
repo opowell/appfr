@@ -1,13 +1,14 @@
 <template>
   <div>
+    <div>Area with Panels
+      <appfr-area class="demo-area" :area="demoAreaWithPanels" />      
+    </div>
     <div>
-      Areas
+        Area: with child areas
       <appfr-area class="demo-area" :area="demoArea" />
     </div>
     <div>
       Windows
-      <!-- <button @click.left="addWindow">Add Window</button>
-      <button v-for="(window, i) in state.windows" :key="window.title" @click="focus(window)">{{ i }}</button> -->
       <div class="hello">
         <appfr-window />
         <appfr-window 
@@ -50,20 +51,44 @@ export default {
         windows: [],
         windowsMaximized: false,
       },
+      demoAreaWithPanels: {
+        panels: [
+          {
+            content: 'A',
+            type: 'my-panel-a'
+          },
+          {
+            content: 'B',
+            type: 'my-panel-a'
+          },
+          {
+            content: 'C',
+            type: 'my-panel-b'
+          },
+        ]
+      },
       demoArea: {
         childAreas: [
           {
+            flexDirRow: false,
             childAreas: [
-              { content: '1a'}, 
-              { content: '1b'}
+              { 
+                content: '1b'
+              }, 
+              {
+                content: '1b',
+              }
             ]
           },
           {
+            flexDirRow: false,
             childAreas: [
-              { childAreas: [
-                {content: '2ai'},
-                {content: '2aii'}
-              ]}, 
+              { 
+                childAreas: [
+                  {content: '2ai'},
+                  {content: '2aii'}
+                ]
+              }, 
               { content: '2b'}
             ]
           },
@@ -165,10 +190,6 @@ export default {
 ::v-deep .area-content {
   background-color: hotpink;
   color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 auto;
 }
 
 </style>

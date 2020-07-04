@@ -6,7 +6,7 @@
         @dblclick='restore'
         @dragenter="dragEnterTab(null, $event)"
         @dragleave="dragLeaveTab"
-        @drop='dropOnTab(numPanels, $event)'
+        @drop='dropOnTab($event)'
         @dragover='dragOver'
     >
         <slot></slot>
@@ -17,7 +17,6 @@
 export default {
     name: 'JtSpacer',
     props: [
-        'window',
         'area',
     ],
     computed: {
@@ -38,26 +37,13 @@ export default {
         restore() {
             this.$store.commit('toggleWindowsMaximized');
         },
-        dropOnTab(index, ev) {
+        dropOnTab(ev) {
             ev.preventDefault();
             ev.stopPropagation();
             ev.target.classList.remove('highlight');
-            let targetData = {
-                windowId: this.window.id,
-                areaPath: this.areaPath,
-                index,
-            };
-            let same = this.samePanel(this.$store.state.dragData, targetData);
-            if (same === false && this.$store.state.dragData != null) {
-                this.$store.dispatch('dropOnTab', {
-                    sourceWindowId: this.$store.state.dragData.windowId,
-                    sourceAreaPath: this.$store.state.dragData.areaPath,
-                    sourcePanelIndex: this.$store.state.dragData.index,
-                    targetWindowId: this.window.id,
-                    targetAreaPath: this.areaPath,
-                    targetIndex: index,
-                });
-            }
+            let panel = JSON.parse(ev.dataTransfer.getData('panel'));
+            this.area.panels.push(panel)
+            this.area.activePanelInd = this.area.panels.length - 1;
         },
         dragOver(ev) {
             ev.preventDefault();
@@ -76,16 +62,9 @@ export default {
             return out;
         },
         dragEnterTab(index, ev) {
-            let targetData = {
-                windowId: this.window.id,
-                areaPath: this.areaPath,
-                index,
-            };
-            let samePanel = this.samePanel(this.$store.state.dragData, targetData);
-            if (samePanel === false) {
-                let el = ev.target;
-                el.classList.add('highlight');
-            }
+            let sameArea = this.area === ev.dataTransfer.getData('area');
+            let el = ev.target;
+            el.classList.add('highlight');
         },
         dragLeaveTab(ev) {
             ev.target.classList.remove('highlight');

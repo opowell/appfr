@@ -1,5 +1,14 @@
 <template>
   <div>
+    Panel
+    <div>
+      Set display:
+      <button @click="demo1SetDisplay('flex')">"flex"</button>
+      <button @click="demo1SetDisplay('tabs')">"tabs"</button>
+      <button @click="demo1SetDisplay('windows')">"windows"</button>
+      <appfr-panel class="demo-area" :panel="demo1Panel" />
+    </div>
+
     <div>Area with Panels
       <appfr-area class="demo-area" :area="demoAreaWithPanels" />      
     </div>
@@ -37,11 +46,13 @@
 <script>
 import AppfrWindow from './AppfrWindow.vue';
 import AppfrArea from './AppfrArea.vue';
+import AppfrPanel from './AppfrPanel.vue';
 
 export default {
   name: 'HelloWorld',
   components: {
     AppfrArea,
+    AppfrPanel,
     AppfrWindow,
   },
   data() {
@@ -50,6 +61,19 @@ export default {
         activeWindow: null,
         windows: [],
         windowsMaximized: false,
+      },
+      demo1Panel: {
+        display: "tabs",
+        children: [
+          {
+            content: 'A',
+            type: 'my-panel-a'
+          },
+          {
+            content: 'B',
+            type: 'my-panel-b'
+          },
+        ]
       },
       demoAreaWithPanels: {
         panels: [
@@ -106,6 +130,9 @@ export default {
     this.addWindow();
   },
   methods: {
+    demo1SetDisplay(x) {
+      this.demo1Panel.display = x;
+    },
     close(i) {
       this.$refs.windows[i-1].close()
     },

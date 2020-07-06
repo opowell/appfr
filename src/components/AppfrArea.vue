@@ -34,8 +34,8 @@
               :class='{"selected": isSelected(panel)}'
               @mousedown='setActivePanelIndex(index)'
               draggable="true"
-              @dragstart='dragStart($event, panel, index)'
-              @dragleave="dragLeaveTab"
+              @dragstart='dragStart($event, panel)'
+              @dragleave="dragLeaveTab($event, index)"
               @drop='dropOnTab(index, $event)'
               @dragover='dragOver'
               @dragenter="dragEnterTab(index, $event)"
@@ -199,10 +199,15 @@ export default {
       // if (samePanel === false) {
         let el = ev.target;
         el.classList.add('highlight');
+        try {
+          let panel = JSON.parse(ev.dataTransfer.getData('panel'));
+          this.area.panels.splice(index, 0, panel);
+        } catch (err) {}
       // }
     },
-    dragLeaveTab(ev) {
-        ev.target.classList.remove('highlight');
+    dragLeaveTab(ev, index) {
+      ev.target.classList.remove('highlight');
+      this.area.panels.splice(index, 1);
     },
     dragOver(ev) {
       ev.preventDefault();
@@ -215,9 +220,8 @@ export default {
     setActivePanelIndex(index) {
       this.area.activePanelInd = index;
     },
-    dragStart(ev, panel, index) {
+    dragStart(ev, panel) {
       ev.dataTransfer.setData('panel', JSON.stringify(panel))
-      this.area.panels.splice(index, 1);
     },
   }
 };

@@ -32,12 +32,19 @@
     <div v-show='showArrow' class="arrow">&lt;</div>
     <div v-show='menu.children' class="dropdown" :class='{ open: isOpen}'>
       <menu-el
-        v-for="item in menu.children" :menu='item' :showIcon='menu.showIcon' :key='item.id' />
+        v-for="item in menu.children"
+        :menu='item'
+        :showIcon='menu.showIcon'
+        :key='item.id'
+        :rootPanel='rootPanel'
+      />
     </div>
   </span>
 </template>
 
 <script>
+import Vue from 'vue';
+
 export default {
   name: 'MenuEl',
   props: {
@@ -50,6 +57,7 @@ export default {
     disabled: {
       default: false,
     },
+    rootPanel: {}
   },
   computed: {
     hasParent() {
@@ -62,7 +70,8 @@ export default {
       return this.hasParent && this.hasChildren;
     },
     isActive() {
-      return this.$store.state.activeMenu === this;
+      if (this.rootPanel == null) return false;
+      return this.rootPanel.activeMenu === this;
     },
     isDisabled() {
       if (this.menu.disabled == null) {
@@ -76,7 +85,8 @@ export default {
       return false;
     },
     isOpen() {
-      return this.$store.state.isMenuOpen && this.isActive;
+      if (this.rootPanel == null) return false;
+      return this.rootPanel.isMenuOpen && this.isActive;
     },
     firstLetter() {
       if (this.menu.text == null) {
@@ -103,17 +113,20 @@ export default {
       }
       if (this.menu.action != null) {
         this.menu.action(this.menu.clickData, ev);
-        this.$store.state.isMenuOpen = false;
+        if (this.rootPanel == null) return;
+        Vue.set(this.rootPanel, 'isMenuOpen', false);
       } else {
-        this.$store.state.activeMenu = this;
-        this.$store.state.isMenuOpen = !this.$store.state.isMenuOpen;
+        if (this.rootPanel == null) return;
+        Vue.set(this.rootPanel, 'activeMenu', this);
+        Vue.set(this.rootPanel, 'isMenuOpen', !this.rootPanel.isMenuOpen);
       }
     },
     hover() {
       if (this.isDisabled) {
         return;
       }
-      this.$store.state.activeMenu = this;
+      if (this.rootPanel == null) return;
+      Vue.set(this.rootPanel, 'activeMenu', this);
     },
   },
 };

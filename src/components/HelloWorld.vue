@@ -1,13 +1,7 @@
 <template>
   <div>
     Panel
-    <div>
-      Set display:
-      <button @click="demo1SetDisplay('flex')">"flex"</button>
-      <button @click="demo1SetDisplay('tabs')">"tabs"</button>
-      <button @click="demo1SetDisplay('windows')">"windows"</button>
-      <appfr-panel class="demo-area" :panel="demo1Panel" />
-    </div>
+    <appfr-panel class="demo-area" :panel="demo1Panel" />
 
     <div>Area with Panels
       <appfr-area class="demo-area" :area="demoAreaWithPanels" />      
@@ -130,9 +124,6 @@ export default {
     this.addWindow();
   },
   methods: {
-    demo1SetDisplay(x) {
-      this.demo1Panel.display = x;
-    },
     close(i) {
       this.$refs.windows[i-1].close()
     },
@@ -172,7 +163,7 @@ export default {
   color: grey;
 }
 
-::v-deep .window > .content {
+::v-deep .content {
   display: flex;
   align-items: center;
   justify-content: center;

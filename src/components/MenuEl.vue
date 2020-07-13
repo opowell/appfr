@@ -22,6 +22,7 @@
         <font-awesome-icon :icon="menu.icon"/>
         </div>
     </template>
+    <!-- For spacing purposes -->
     <template v-else-if='showIcon'>
       <i class='icon'></i>
     </template>
@@ -132,21 +133,11 @@ export default {
 };
 </script>
 
-<style>
-.icon {
-  /* flex: 0 0 auto; */
-  flex: 0 0 24px;
-  padding: 5px;
-  cursor: default;
-  margin-right: 1px;
-  /* width: 24px; */
-  align-self: center;
-  text-align: center;
-  line-height: 1;
-}
-</style>
-
 <style scoped>
+.icon {
+  padding: 0.5rem;
+  cursor: default;
+}
 .divider {
   border-bottom: 1px solid;
   color: #888;
@@ -178,7 +169,7 @@ export default {
     outline: none;
 }
 .active {
-  color: red;
+  color: black;
 }
 .dropdown {
   z-index: 1000;
@@ -205,12 +196,10 @@ export default {
 
 .menu {
     display: flex;
-    flex: 0 0 auto;
     position: relative;
     border-width: 1px;
     border-color: transparent;
     border-style: solid;
-    width: max-content;
 }
 
 .text {

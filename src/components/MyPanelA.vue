@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class='content'>
     My A: {{ panel.content }}
   </div>
 </template>
@@ -15,7 +15,7 @@ export default {
 </script>
 
 <style scoped>
-div {
+div.content {
   background-color: yellow;
   display: flex;
   align-items: center;

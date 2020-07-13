@@ -1,6 +1,7 @@
 <template>
     <div 
-      v-if="panel.children" :style="styleObj"
+      v-if="panel.children" :style="styleObj" class='appfr-panel'
+      @mousedown.left='clickWindow($event)'
     >
       <div v-if="panel.display === 'flex'" style='display: flex; flex: 1 1 auto;'>
         <div>
@@ -24,7 +25,7 @@
             v-if="index < panel.children.length - 1"
             :key="'adjuster' + index"
             :style='adjusterStyle'
-            @mousedown.stop.prevent='startAdjust(childPanel, $event)'
+            @mousedown.left.stop.prevent='startAdjust(childPanel, $event)'
           />
         </template>
       </div>
@@ -45,7 +46,7 @@
             :key='childPanel.id'
             class='tab tabHover'
             :class='{"selected": isSelected(childPanel)}'
-            @mousedown='setActiveChildIndex(index)'
+            @mousedown.left='setActiveChildIndex(index)'
             draggable="true"
             @dragstart='dragStart($event, childPanel)'
             @dragleave="dragLeaveTab($event, index)"
@@ -53,32 +54,47 @@
             @dragover='dragOver'
             @dragenter="dragEnterTab(index, $event)"
           >
-              {{ title(childPanel) }}
-              <span style='width: 20px; display: flex; margin-left: 5px;'>
-                  <span
-                      class='closeButton'
-                      @click.stop='closePanel(index)'
-                      style='width: 20px'
-                  >x</span>
-              </span>
+            {{ title(childPanel) }}
+            <span style='width: 20px; display: flex; margin-left: 5px;'>
+              <font-awesome-icon
+                class='closeButton'
+                @click.left.stop='closePanel(index)'
+                icon="times"
+                style='width: 20px'
+              />
+            </span>
           </span>
-            <jt-spacer
-                @mousedown.native='startMove'
-                :area='panel'
-            />
+          <jt-spacer
+            @mousedown.left.native='startMove'
+            :area='panel'
+          />
         </div>
         <appfr-panel
             v-for='(child, index) in panel.children'
-            v-bind:style='[panel.activeChildIndex === index ? {} : {"z-index": -1, "display": "none"}]'
+            style='flex: 1 1 auto; width: unset'
+            :style='[panel.activeChildIndex === index ? {} : {"z-index": -1, "display": "none"}]'
             :panel='child'
             :parentPanel='panel'
             :key='child.id'
+            class='tab-content'
         />
       </div>
         <div 
           v-else-if="panel.display === 'windows'"
-          style='position: relative;'
+          style='display: flex; flex-direction: column; flex: 1 1 auto;'
         >
+          <div class="header">
+            <div>
+              <menu-el
+                :dblclickFunc="close"
+                :menu='menu'
+                :rootPanel='rootPanel'
+              />
+            </div>
+            <div class="title">{{ title(panel) }}</div>
+            <div class="close" @click.left="close(i)">x</div>
+          </div>
+          <div style='flex: 1 1 auto; position: relative;'>
             <div 
               v-for="(childPanel, index) in panel.children"
               :key="childPanel.id"
@@ -89,6 +105,7 @@
                 :panelIndex='index'
               />
             </div>
+          </div>
         </div>
     </div>
     <div v-else-if="panel.type != null && parentPanel != null && parentPanel.display !== 'windows'"
@@ -98,32 +115,32 @@
       :style="styleObj"
     />
     <div v-else
-      @mousedown.left='clickWindow($event)'
+      @mousedown.left.stop.prevent='clickWindow($event)'
       class="window"
       :style="styleObj"
     >
-      <span class="handle handle-tl" @mousedown.prevent.stop="startResizeTL">
+      <span class="handle handle-tl" @mousedown.left.prevent.stop="startResizeTL">
         <span />
       </span>
-      <span class="handle handle-tc" @mousedown.prevent.stop="startResizeT">
+      <span class="handle handle-tc" @mousedown.left.prevent.stop="startResizeT">
         <span />
       </span>
-      <span class="handle handle-tr" @mousedown.prevent.stop="startResizeTR">
+      <span class="handle handle-tr" @mousedown.left.prevent.stop="startResizeTR">
         <span />
       </span>
-      <span class="handle handle-ml" @mousedown.prevent.stop="startResizeL">
+      <span class="handle handle-ml" @mousedown.left.prevent.stop="startResizeL">
         <span />
       </span>
-      <span class="handle handle-mr" @mousedown.prevent.stop="startResizeR">
+      <span class="handle handle-mr" @mousedown.left.prevent.stop="startResizeR">
         <span />
       </span>
-      <span class="handle handle-bl" @mousedown.prevent.stop="startResizeBL">
+      <span class="handle handle-bl" @mousedown.left.prevent.stop="startResizeBL">
         <span />
       </span>
-      <span class="handle handle-bc" @mousedown.prevent.stop="startResizeB">
+      <span class="handle handle-bc" @mousedown.left.prevent.stop="startResizeB">
         <span />
       </span>
-      <span class="handle handle-br" @mousedown.prevent.stop="startResizeBR">
+      <span class="handle handle-br" @mousedown.left.prevent.stop="startResizeBR">
         <span />
       </span>
       <div class="header">
@@ -135,7 +152,7 @@
           />
         </div>
         <div class="title">{{ title(panel) }}</div>
-        <div class="close" @click="close(i)">x</div>
+        <div class="close" @click.left="close(i)">x</div>
       </div>
       <div class="content-container">
         <div
@@ -199,7 +216,8 @@ export default {
   data() {
     return {
       menu: {
-        text: '---',
+        // text: '---',
+        icon: ["fas", "align-center"],
         hasParent: false,
           showIcon: true,
           children: [
@@ -287,7 +305,7 @@ export default {
     },
     parentElement() {
       if (this.parentPanel == null) {
-        return null;
+        return this.$el.parentElement;
       }
       return this.parentPanel.$component.$el;
     },
@@ -326,8 +344,21 @@ export default {
           out.width = this.panel.w + 'px';
           out.height = this.panel.h + 'px';
         }
-      } else {
+      } else if (this.parentPanel != null && this.parentPanel.display === 'flex') {
         out["flex-direction"] = this.panel.flexDirRow ? "row" : "column";
+        out.display = 'flex';
+        if (this.isLastPanel) {
+          out.flex = '1 1 100px';
+        } else {
+          out.flex = this.panel.flex;
+        }
+      } else {
+        out.top = this.panel.y + 'px';
+        out.left = this.panel.x + 'px';
+        out.width = this.panel.w + 'px';
+        out.height = this.panel.h + 'px';
+        out["flex-direction"] = this.panel.flexDirRow ? "row" : "column";
+        out.display = 'flex';
         if (this.isLastPanel) {
           out.flex = '1 1 100px';
         } else {
@@ -353,6 +384,7 @@ export default {
       this.startMove(ev);
     },
     focusWindow() {
+      if (this.parentPanel == null) return;
       this.parentPanel.children.splice(this.panelIndex, 1);
       this.parentPanel.children.push(this.panel);
     },
@@ -393,6 +425,7 @@ export default {
 
       let newTop = this.origTop + ev.pageY - this.moveStartY;
       this.panel.y = this.getConstrainedTop(newTop);
+      // console.log('move', newLeft, this.moveStartX, this.origLeft, this.panel.x, ev.pageX);
     },
     stopMove(ev) {
       ev.stopPropagation();
@@ -632,6 +665,11 @@ export default {
 </script>
 
 <style scoped>
+.appfr-panel {
+  background-color: #9ac0d1;
+  font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
 .window {
   position: absolute;
   padding: 5px;
@@ -666,13 +704,13 @@ export default {
 .tabs {
     display: flex;
     flex: 0 0 auto;
-    background-color: var(--tabsBGColor);
+    background-color: #9ac0d1;
     border-top-right-radius: 5px;
     border-top-left-radius: 5px;
 }
 
 .tab {
-    background-color: var(--tabBGColor);
+    background-color: rgb(218, 229, 235);
     padding-top: 5px;
     padding-bottom: 5px;
     padding-left: 25px;
@@ -682,6 +720,7 @@ export default {
     display: flex;
     white-space: nowrap;
     color: var(--tabFontColor);
+    align-items: center;
 }
 .tab.spacer {
     flex: 1 1 auto;
@@ -700,9 +739,8 @@ export default {
 } 
 
 .selected {
-    background-color: coral;
-    color: white;
-    z-index: 0;
+  background-color: #f5f5f5;
+  z-index: 0;
 }
 
 .selected:hover {
@@ -739,9 +777,23 @@ export default {
   flex: 1 1 auto;
 }
 
+.tab-content {
+    background-color: white;
+    color: black;
+    flex: 1 1 auto;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0px 0px 7px 1px rgba(0, 0, 0, 0.4);
+    border-radius: 5px;
+    padding: 10px;
+}
+
 .header {
   display: flex;
   flex: 0 0 auto;
+  background-color: rgba(255,255,255,0.3);
+  align-items: center;
 }
 
 .header > .title {

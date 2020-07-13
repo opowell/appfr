@@ -1,69 +1,80 @@
 <template>
     <div 
-      v-if="panel.children" :style="styleObj" class='appfr-panel'
-      @mousedown.left='clickWindow($event)'
+      v-if="panel.children"
+      :style="styleObj"
+      class='appfr-panel'
+      @mousedown.left.stop.prevent='clickWindow($event)'
     >
-      <div v-if="panel.display === 'flex'" style='display: flex; flex: 1 1 auto;'>
-        <div>
-          <menu-el
-            :dblclickFunc="close"
-            :menu='menu'
-            :rootPanel='rootPanel'
-          />
+      <div 
+        v-if="panel.display === 'flex'"
+        style='display: flex; flex: 1 1 auto; flex-direction: column;'
+      >
+        <appfr-panel-header 
+          style="flex: 0 0 auto"
+          :panel="panel"
+          :rootPanel="rootPanel"
+          :title="title(panel)"
+          :menu="menu"
+          @close="close"
+        />
+        <div :style='flexStyleObj'>
+          <template v-for="(childPanel, index) in panel.children">
+            <appfr-panel 
+              :panel="childPanel"
+              :key="childPanel.id"
+              :isLastPanel='index === panel.children.length - 1'
+              :parentPanel='panel'
+              :indexOnParent='index'
+              class='area flex-child'
+            />
+            <div 
+              class="adjuster"
+              v-if="index < panel.children.length - 1"
+              :key="'adjuster' + index"
+              :style='adjusterStyle'
+              @mousedown.left.stop.prevent='startAdjust(childPanel, $event)'
+            />
+          </template>
         </div>
-        <template v-for="(childPanel, index) in panel.children">
-          <appfr-panel 
-            :panel="childPanel"
-            :key="childPanel.id"
-            :isLastPanel='index === panel.children.length - 1'
-            :parentPanel='panel'
-            :indexOnParent='index'
-            class='area flex-child'
-          />
-          <div 
-            class="adjuster"
-            v-if="index < panel.children.length - 1"
-            :key="'adjuster' + index"
-            :style='adjusterStyle'
-            @mousedown.left.stop.prevent='startAdjust(childPanel, $event)'
-          />
-        </template>
       </div>
       <div
         v-else-if="panel.display === 'tabs'" 
         style='display: flex; flex-direction: column; flex: 1 1 auto'
       >
         <div class='tabs'>
-          <div>
-            <menu-el
-              :dblclickFunc="close"
-              :menu='menu'
-              :rootPanel='rootPanel'
-            />
-          </div>
-          <span 
-            v-for='(childPanel, index) in panel.children'
-            :key='childPanel.id'
-            class='tab tabHover'
-            :class='{"selected": isSelected(childPanel)}'
-            @mousedown.left='setActiveChildIndex(index)'
-            draggable="true"
-            @dragstart='dragStart($event, childPanel)'
-            @dragleave="dragLeaveTab($event, index)"
-            @drop='dropOnTab(index, $event)'
-            @dragover='dragOver'
-            @dragenter="dragEnterTab(index, $event)"
-          >
-            {{ title(childPanel) }}
-            <span style='width: 20px; display: flex; margin-left: 5px;'>
-              <font-awesome-icon
-                class='closeButton'
-                @click.left.stop='closePanel(index)'
-                icon="times"
-                style='width: 20px'
-              />
+        <appfr-panel-header 
+          style="flex: 0 0 auto"
+          :panel="panel"
+          :rootPanel="rootPanel"
+          :menu="menu"
+          @close="close"
+        >
+          <template v-slot:title>
+            <span
+              v-for='(childPanel, index) in panel.children'
+              :key='childPanel.id'
+              class='tab tabHover'
+              :class='{"selected": isSelected(childPanel)}'
+              @mousedown.left.stop.prevent='setActiveChildIndex(index)'
+              draggable="true"
+              @dragstart='dragStart($event, childPanel)'
+              @dragleave="dragLeaveTab($event, index)"
+              @drop='dropOnTab(index, $event)'
+              @dragover='dragOver'
+              @dragenter="dragEnterTab(index, $event)"
+            >
+              {{ title(childPanel) }}
+              <span style='width: 20px; display: flex; margin-left: 5px;'>
+                <font-awesome-icon
+                  class='closeButton'
+                  @click.left.stop.prevent='closePanel(index)'
+                  icon="times"
+                  style='width: 20px'
+                />
+              </span>
             </span>
-          </span>
+          </template>
+        </appfr-panel-header>
           <jt-spacer
             @mousedown.left.native='startMove'
             :area='panel'
@@ -79,34 +90,31 @@
             class='tab-content'
         />
       </div>
-        <div 
-          v-else-if="panel.display === 'windows'"
-          style='display: flex; flex-direction: column; flex: 1 1 auto;'
-        >
-          <div class="header">
-            <div>
-              <menu-el
-                :dblclickFunc="close"
-                :menu='menu'
-                :rootPanel='rootPanel'
-              />
-            </div>
-            <div class="title">{{ title(panel) }}</div>
-            <div class="close" @click.left="close(i)">x</div>
-          </div>
-          <div style='flex: 1 1 auto; position: relative;'>
-            <div 
-              v-for="(childPanel, index) in panel.children"
-              :key="childPanel.id"
-            >
-              <appfr-panel
-                :panel="childPanel"
-                :parentPanel='panel'
-                :panelIndex='index'
-              />
-            </div>
+      <div 
+        v-else-if="panel.display === 'windows'"
+        style='display: flex; flex-direction: column; flex: 1 1 auto;'
+      >
+        <appfr-panel-header 
+          style="flex: 0 0 auto"
+          :panel="panel"
+          :rootPanel="rootPanel"
+          :title="title(panel)"
+          :menu="menu"
+          @close="close"
+        />
+        <div style='flex: 1 1 auto; position: relative;'>
+          <div 
+            v-for="(childPanel, index) in panel.children"
+            :key="childPanel.id"
+          >
+            <appfr-panel
+              :panel="childPanel"
+              :parentPanel='panel'
+              :panelIndex='index'
+            />
           </div>
         </div>
+      </div>
     </div>
     <div v-else-if="panel.type != null && parentPanel != null && parentPanel.display !== 'windows'"
       class='content'
@@ -152,7 +160,15 @@
           />
         </div>
         <div class="title">{{ title(panel) }}</div>
-        <div class="close" @click.left="close(i)">x</div>
+          <menu-el
+            :menu='{
+              icon: ["fas", "times"],
+              hasParent: false,
+              showIcon: true,
+              action: close,
+            }'
+            class='closeIcon title-bar-icon'
+          />
       </div>
       <div class="content-container">
         <div
@@ -167,13 +183,15 @@
 <script>
 import JtSpacer from '@/components/JtSpacer.vue'
 import MenuEl from '@/components/MenuEl.vue'
+import AppfrPanelHeader from '@/components/AppfrPanelHeader.vue'
 import Vue from 'vue';
 
 export default {
   name: 'AppfrPanel',
   components: {
     JtSpacer,
-    MenuEl
+    MenuEl,
+    AppfrPanelHeader,
   },
   props: {
     panel: {
@@ -236,10 +254,12 @@ export default {
               action: this.setDisplay,
               clickData: 'windows',
           },
+          'divider',
           {
               text: "Toggle flex dir",
               action: this.toggleDir,
           },
+          'divider',
           {
               text: "Next Panel",
               action: this.changeSelectedIndex,
@@ -334,6 +354,14 @@ export default {
         cursor: cursor,
       }
     },
+    flexStyleObj() {
+      let out = {
+        display: "flex",
+        flex: "1 1 auto",
+        "flex-direction": this.panel.flexDirRow ? "row" : "column",
+      }
+      return out;
+    },
     styleObj() {
       let out = {}
       if (this.parentPanel != null && this.parentPanel.display === 'windows') {
@@ -398,7 +426,7 @@ export default {
       this.moveStartY = ev.pageY;
       this.origTop = this.panel.y;
       this.origLeft = this.panel.x;
-      console.log('startmove', ev.pageX, ev.pageY, this.origTop, this.origLeft);
+      console.log('startmove', ev, ev.pageX, ev.pageY, this.origTop, this.origLeft);
     },
     getConstrainedLeft(x, w) {
       w = w || this.panel.w
@@ -698,7 +726,7 @@ export default {
 }
 
 .tabHover:hover {
-    background-color: #ff7f50b0;
+    background-color: #fff;
 }
 
 .tabs {
@@ -730,6 +758,16 @@ export default {
     margin: 0px;
     color: inherit;
 }
+
+.window {
+  background-color: rgb(185, 209, 234);;
+  border: 1px outset #ddd;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  border-bottom-left-radius: 1px;
+  border-bottom-right-radius: 1px;
+}
+
 .highlight {
     background-color: #ff00004f;
 }
@@ -744,7 +782,7 @@ export default {
 }
 
 .selected:hover {
-    background-color: coral;
+    background-color: #fff;
 }
 
 .selected .closeButton {
@@ -933,5 +971,16 @@ export default {
 
 .maxed > .handle {
     display: none;
+}
+
+.title-bar-icon {
+    color: red;
+    border: 1px solid rgba(0,0,0,0.4);
+    border-radius: 3px;
+    align-self: center;
+}
+
+.title-bar-icon:hover {
+    background-color: #36a9fb;
 }
 </style>

@@ -47,16 +47,6 @@ body {
 }
 </style>
 <style scoped>
-::v-deep .window {
-  background-color: green;
-  border: 1px outset #ddd;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  border-bottom-left-radius: 1px;
-  border-bottom-right-radius: 1px;
-  color: grey;
-}
-
 ::v-deep .content {
   display: flex;
   align-items: center;

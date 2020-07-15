@@ -72,7 +72,7 @@ export default {
     },
     isActive() {
       if (this.rootPanel == null) return false;
-      return this.rootPanel.activeMenu === this;
+      return this.rootPanel.activeMenu === this.menu;
     },
     isDisabled() {
       if (this.menu.disabled == null) {
@@ -118,7 +118,7 @@ export default {
         Vue.set(this.rootPanel, 'isMenuOpen', false);
       } else {
         if (this.rootPanel == null) return;
-        Vue.set(this.rootPanel, 'activeMenu', this);
+        Vue.set(this.rootPanel, 'activeMenu', this.menu);
         Vue.set(this.rootPanel, 'isMenuOpen', !this.rootPanel.isMenuOpen);
       }
     },
@@ -127,7 +127,7 @@ export default {
         return;
       }
       if (this.rootPanel == null) return;
-      Vue.set(this.rootPanel, 'activeMenu', this);
+      Vue.set(this.rootPanel, 'activeMenu', this.menu);
     },
   },
 };

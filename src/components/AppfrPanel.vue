@@ -5,13 +5,13 @@
       class='appfr-panel'
       @mousedown.left.stop.prevent='clickWindow($event)'
     >
+      <!-- FLEX CHILDREN -->
       <div 
         v-if="panel.display === 'flex'"
         style='display: flex; flex: 1 1 auto; flex-direction: column;'
       >
         <appfr-panel-header 
           style="flex: 0 0 auto"
-          :panel="panel"
           :rootPanel="rootPanel"
           :title="title(panel)"
           :menu="menu"
@@ -37,6 +37,7 @@
           </template>
         </div>
       </div>
+      <!-- TABS CHILDREN -->
       <div
         v-else-if="panel.display === 'tabs'" 
         style='display: flex; flex-direction: column; flex: 1 1 auto'
@@ -44,7 +45,6 @@
         <div class='tabs'>
         <appfr-panel-header 
           style="flex: 0 0 auto"
-          :panel="panel"
           :rootPanel="rootPanel"
           :menu="menu"
           @close="close"
@@ -90,13 +90,13 @@
             class='tab-content'
         />
       </div>
+      <!-- WINDOWS CHILDREN -->
       <div 
         v-else-if="panel.display === 'windows'"
         style='display: flex; flex-direction: column; flex: 1 1 auto;'
       >
         <appfr-panel-header 
           style="flex: 0 0 auto"
-          :panel="panel"
           :rootPanel="rootPanel"
           :title="title(panel)"
           :menu="menu"
@@ -151,7 +151,7 @@
       <span class="handle handle-br" @mousedown.left.prevent.stop="startResizeBR">
         <span />
       </span>
-      <div class="header">
+      <div class="header" style='flex: 0 0 auto'>
         <div>
           <menu-el
             :dblclickFunc="close"
@@ -160,15 +160,15 @@
           />
         </div>
         <div class="title">{{ title(panel) }}</div>
-          <menu-el
-            :menu='{
-              icon: ["fas", "times"],
-              hasParent: false,
-              showIcon: true,
-              action: close,
-            }'
-            class='closeIcon title-bar-icon'
-          />
+        <menu-el
+          :menu='{
+            icon: ["fas", "times"],
+            hasParent: false,
+            showIcon: true,
+            action: close,
+          }'
+          class='closeIcon title-bar-icon'
+        />
       </div>
       <div class="content-container">
         <div
@@ -460,7 +460,7 @@ export default {
       ev.preventDefault();
       document.documentElement.removeEventListener('mousemove', this.move);
       document.documentElement.removeEventListener('mouseup', this.stopMove);
-      this.$emit('saveWindowInfo', this);
+      // this.$emit('saveWindowInfo', this);
     },
     setDisplay(x) {
       this.panel.display = x;
@@ -516,7 +516,7 @@ export default {
       ev.stopPropagation();
       document.documentElement.removeEventListener('mousemove', this.adjust);
       document.documentElement.removeEventListener('mouseup', this.stopAdjust);
-      this.$emit('adjusted-size', this.adjustData.panel)
+      // this.$emit('adjusted-size', this.adjustData.panel)
     },
 
     startResizeTL(ev) {

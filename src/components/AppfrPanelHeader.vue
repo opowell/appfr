@@ -30,7 +30,6 @@ export default {
   props: [
     'menu',
     'rootPanel',
-    'panel',
     'title',
   ] 
 }

@@ -42,7 +42,6 @@
         v-else-if="panel.display === 'tabs'" 
         style='display: flex; flex-direction: column; flex: 1 1 auto'
       >
-        <div class='tabs'>
         <appfr-panel-header 
           style="flex: 0 0 auto"
           :rootPanel="rootPanel"
@@ -73,13 +72,9 @@
                 />
               </span>
             </span>
+            <span style='flex: 1 1 auto' />
           </template>
         </appfr-panel-header>
-          <jt-spacer
-            @mousedown.left.native='startMove'
-            :area='panel'
-          />
-        </div>
         <appfr-panel
             v-for='(child, index) in panel.children'
             style='flex: 1 1 auto; width: unset'
@@ -116,42 +111,21 @@
         </div>
       </div>
     </div>
-    <div v-else-if="panel.type != null && parentPanel != null && parentPanel.display !== 'windows'"
-      class='content'
-      :is='panel.type'
-      :panel='panel'
-      :style="styleObj"
-    />
     <div v-else
       @mousedown.left.stop.prevent='clickWindow($event)'
       class="window"
       :style="styleObj"
     >
-      <span class="handle handle-tl" @mousedown.left.prevent.stop="startResizeTL">
-        <span />
-      </span>
-      <span class="handle handle-tc" @mousedown.left.prevent.stop="startResizeT">
-        <span />
-      </span>
-      <span class="handle handle-tr" @mousedown.left.prevent.stop="startResizeTR">
-        <span />
-      </span>
-      <span class="handle handle-ml" @mousedown.left.prevent.stop="startResizeL">
-        <span />
-      </span>
-      <span class="handle handle-mr" @mousedown.left.prevent.stop="startResizeR">
-        <span />
-      </span>
-      <span class="handle handle-bl" @mousedown.left.prevent.stop="startResizeBL">
-        <span />
-      </span>
-      <span class="handle handle-bc" @mousedown.left.prevent.stop="startResizeB">
-        <span />
-      </span>
-      <span class="handle handle-br" @mousedown.left.prevent.stop="startResizeBR">
-        <span />
-      </span>
-      <div class="header" style='flex: 0 0 auto'>
+      <span v-if="resizable" class="handle handle-tl" @mousedown.left.prevent.stop="startResizeTL" />
+      <span v-if="resizable" class="handle handle-tc" @mousedown.left.prevent.stop="startResizeT" />
+      <span v-if="resizable" class="handle handle-tr" @mousedown.left.prevent.stop="startResizeTR" />
+      <span v-if="resizable" class="handle handle-ml" @mousedown.left.prevent.stop="startResizeL" />
+      <span v-if="resizable" class="handle handle-mr" @mousedown.left.prevent.stop="startResizeR" />
+      <span v-if="resizable" class="handle handle-bl" @mousedown.left.prevent.stop="startResizeBL" />
+      <span v-if="resizable" class="handle handle-bc" @mousedown.left.prevent.stop="startResizeB" />
+      <span v-if="resizable" class="handle handle-br" @mousedown.left.prevent.stop="startResizeBR" />
+      <!-- TODO LATER: Replace w/ AppfrPanelHeader. For some reason does not work. -->
+      <div v-if='hasHeader' class="header" style='flex: 0 0 auto'>
         <div>
           <menu-el
             :dblclickFunc="close"
@@ -317,6 +291,16 @@ export default {
     }
   },
   computed: {
+    resizable() {
+      if (this.panel.resizable != null) return this.panel.resizable
+      if (this.parentPanel != null) return this.parentPanel.display === 'windows'
+      return false;
+    },
+    hasHeader() {
+      if (this.panel.hasHeader != null) return this.panel.hasHeader
+      if (this.parentPanel != null) return this.parentPanel.display === 'windows'
+      return false;
+    },
     rootPanel() {
       if (this.parentPanel == null) {
         return this.panel;
@@ -366,6 +350,7 @@ export default {
       let out = {}
       if (this.parentPanel != null && this.parentPanel.display === 'windows') {
         out.zIndex = this.panel.zIndex;
+        out.position = 'absolute';
         if (!this.parentPanel.isMaximized) {
           out.top = this.panel.y + 'px';
           out.left = this.panel.x + 'px';
@@ -698,13 +683,6 @@ export default {
   font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-.window {
-  position: absolute;
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-}
-
 /* TABS */
 .area {
   display: flex;
@@ -716,7 +694,6 @@ export default {
 .adjuster {
   flex: 0 0 1px;
   padding: 3px;
-  background-color: brown;
 }
 .area-content-default {
   display: flex;
@@ -727,14 +704,6 @@ export default {
 
 .tabHover:hover {
     background-color: #fff;
-}
-
-.tabs {
-    display: flex;
-    flex: 0 0 auto;
-    background-color: #9ac0d1;
-    border-top-right-radius: 5px;
-    border-top-left-radius: 5px;
 }
 
 .tab {
@@ -766,6 +735,10 @@ export default {
   border-top-right-radius: 4px;
   border-bottom-left-radius: 1px;
   border-bottom-right-radius: 1px;
+
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
 }
 
 .highlight {

@@ -19,8 +19,8 @@ export default {
   data() {
     return {
       panelObject: {
-        h: 300,
-        w: 400,
+        h: 400,
+        w: 600,
         x: 10,
         y: 10,
         display: "tabs",
@@ -63,28 +63,6 @@ body {
   box-shadow: none;
   border: none;
   border-radius: 0px;
-}
-
-.header {
-  display: flex;
-  flex: 0 0 auto;
-}
-
-.content {
-  flex: 1 1 auto;
-}
-
-.header > .title {
-  flex: 1 1 auto;
-}
-
-.header > .close {
-  flex: 0 0 auto;
-}
-
-::v-deep .area-content {
-  background-color: hotpink;
-  color: white;
 }
 
 </style>

@@ -3,52 +3,20 @@
       v-if="panel.children"
       :style="styleObj"
       class='appfr-panel'
-      @mousedown.left.stop.prevent='clickWindow($event)'
+      @mousedown.left.stop='clickWindow($event)'
     >
       <!-- FLEX CHILDREN -->
-      <div 
-        v-if="panel.display === 'flex'"
+      <div
         style='display: flex; flex: 1 1 auto; flex-direction: column;'
       >
         <appfr-panel-header 
           style="flex: 0 0 auto"
           :rootPanel="rootPanel"
-          :title="title(panel)"
           :menu="menu"
           @close="close"
-        />
-        <div :style='flexStyleObj'>
-          <template v-for="(childPanel, index) in panel.children">
-            <appfr-panel 
-              :panel="childPanel"
-              :key="childPanel.id"
-              :isLastPanel='index === panel.children.length - 1'
-              :parentPanel='panel'
-              :indexOnParent='index'
-              class='area flex-child'
-            />
-            <div 
-              class="adjuster"
-              v-if="index < panel.children.length - 1"
-              :key="'adjuster' + index"
-              :style='adjusterStyle'
-              @mousedown.left.stop.prevent='startAdjust(childPanel, $event)'
-            />
-          </template>
-        </div>
-      </div>
-      <!-- TABS CHILDREN -->
-      <div
-        v-else-if="panel.display === 'tabs'" 
-        style='display: flex; flex-direction: column; flex: 1 1 auto'
-      >
-        <appfr-panel-header 
-          style="flex: 0 0 auto"
-          :rootPanel="rootPanel"
-          :menu="menu"
-          @close="close"
+          id='tabs-header'
         >
-          <template v-slot:title>
+          <template v-slot:title v-if="panel.display === 'tabs'">
             <span
               v-for='(childPanel, index) in panel.children'
               :key='childPanel.id'
@@ -75,44 +43,32 @@
             <span style='flex: 1 1 auto' />
           </template>
         </appfr-panel-header>
-        <appfr-panel
-            v-for='(child, index) in panel.children'
-            style='flex: 1 1 auto; width: unset'
-            :style='[panel.activeChildIndex === index ? {} : {"z-index": -1, "display": "none"}]'
-            :panel='child'
-            :parentPanel='panel'
-            :key='child.id'
-            class='tab-content'
-        />
-      </div>
-      <!-- WINDOWS CHILDREN -->
-      <div 
-        v-else-if="panel.display === 'windows'"
-        style='display: flex; flex-direction: column; flex: 1 1 auto;'
-      >
-        <appfr-panel-header 
-          style="flex: 0 0 auto"
-          :rootPanel="rootPanel"
-          :title="title(panel)"
-          :menu="menu"
-          @close="close"
-        />
-        <div style='flex: 1 1 auto; position: relative;'>
-          <div 
-            v-for="(childPanel, index) in panel.children"
-            :key="childPanel.id"
-          >
-            <appfr-panel
+
+        <div :style='childContainerStyle'>
+          <template v-for="(childPanel, index) in panel.children">
+            <appfr-panel 
               :panel="childPanel"
+              :key="childPanel.id"
+              :isLastPanel='index === panel.children.length - 1'
               :parentPanel='panel'
-              :panelIndex='index'
+              :indexOnParent='index'
+              style='flex: 1 1 auto; width: unset'
+              :style='[(panel.activeChildIndex === index || panel.display !== "tabs") ? {} : {"z-index": -1, "display": "none"}]'
+              class='area flex-child'
             />
-          </div>
+            <div 
+              class="adjuster"
+              v-if="showAdjusters && index < panel.children.length - 1"
+              :key="'adjuster' + index"
+              :style='adjusterStyle'
+              @mousedown.left.stop.prevent='startAdjust(childPanel, $event)'
+            />
+          </template>
         </div>
       </div>
     </div>
     <div v-else
-      @mousedown.left.stop.prevent='clickWindow($event)'
+      @mousedown.left.stop='clickWindow($event)'
       class="window"
       :style="styleObj"
     >
@@ -291,6 +247,26 @@ export default {
     }
   },
   computed: {
+    showAdjusters() {
+      return this.panel.display === 'flex';
+    },
+    childContainerStyle() {
+      if (this.panel.display === 'flex') {
+        return this.flexStyleObj
+      }
+      if (this.panel.display === 'tabs') {
+        return {
+          display: 'flex',
+          flex: '1 1 auto',
+        };
+      }
+      if (this.panel.display === 'windows') {
+        return {
+          flex: '1 1 auto',
+          position: 'relative',
+        }
+      }
+    },
     resizable() {
       if (this.panel.resizable != null) return this.panel.resizable
       if (this.parentPanel != null) return this.parentPanel.display === 'windows'

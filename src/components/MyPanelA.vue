@@ -1,6 +1,7 @@
 <template>
   <div class='content'>
     My A: {{ panel.content }}
+    <input />
   </div>
 </template>
 <script>

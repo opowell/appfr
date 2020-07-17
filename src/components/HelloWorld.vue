@@ -1,6 +1,6 @@
 <template>
-  <div style='width: 800px; height: 600px; background-color: grey; position: relative'>
-    <appfr-panel :panel="panelObject" style='position: absolute' />
+  <div style='width: 800px; height: 600px; background-color: grey; position: relative; display: flex'>
+    <appfr-panel :panel="panelObject" />
   </div>
 </template>
 
@@ -19,11 +19,6 @@ export default {
   data() {
     return {
       panelObject: {
-        h: 400,
-        w: 600,
-        x: 10,
-        y: 10,
-        display: "tabs",
         children: [
           {
             content: 'A',

@@ -1,32 +1,51 @@
 <template>
-  <div style='width: 800px; height: 600px; background-color: grey; position: relative; display: flex'>
+  <div style='width: 100vw; height: 100vh; background-color: grey; position: relative; display: flex'>
     <appfr-panel :panel="panelObject" />
   </div>
 </template>
 
 <script>
-import AppfrWindow from './AppfrWindow.vue';
-import AppfrArea from './AppfrArea.vue';
 import AppfrPanel from './AppfrPanel.vue';
 
 export default {
   name: 'HelloWorld',
   components: {
-    AppfrArea,
     AppfrPanel,
-    AppfrWindow,
   },
   data() {
     return {
       panelObject: {
         children: [
           {
-            content: 'A',
-            type: 'my-panel-a'
+            display: 'flex',
+            children: [
+              {
+                content: 'AA',
+                type: 'my-panel-a',
+              },
+              {
+                display: 'flex',
+                flexDirRow: false,
+                children: [
+                  {
+                    content: 'AAA',
+                    type: 'my-panel-a',
+                  },
+                  {
+                    content: 'BBB',
+                    type: 'my-panel-b',
+                  },
+                ]
+              },
+            ]
           },
           {
-            content: 'BBBB',
-            type: 'my-panel-b'
+            content: 'A',
+            type: 'my-panel-a',
+          },
+          {
+            content: 'B',
+            type: 'my-panel-b',
           },
         ]
       },
@@ -38,7 +57,6 @@ export default {
 <style>
 body {
   background-color: rgb(171, 171, 171);
-  padding: 0rem;
 }
 </style>
 <style scoped>

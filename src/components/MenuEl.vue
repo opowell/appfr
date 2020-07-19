@@ -7,13 +7,14 @@
     @click.stop.left
     @mouseup.prevent.stop.left='click'
     @mouseover='hover'
-    @dblclick="callDblclickFunc"
+    @dblclick.left="callDblclickFunc"
     :class='{
        active: menu.isActive !== false,
        disabled: isDisabled,
        open: isOpen,
     }'
     :title='menu.title'
+    @blur='closeMenu'
   >
     <div v-show='menu.template != null' v-html="menu.template"></div>
     <!-- <i v-show='menu.icon || showIcon' :class='"icon fas fa-align-center"'></i> -->
@@ -121,6 +122,9 @@ export default {
         Vue.set(this.rootPanel, 'activeMenu', this.menu);
         Vue.set(this.rootPanel, 'isMenuOpen', !this.rootPanel.isMenuOpen);
       }
+    },
+    closeMenu() {
+      this.rootPanel.isMenuOpen = false;
     },
     hover() {
       if (this.isDisabled) {

@@ -1,17 +1,20 @@
 <template>
   <div style='display: flex; align-items: center'>
     <menu-el
-      :dblclickFunc="$emit('close')"
+      :dblclickFunc="emitClose"
       :menu='menu'
       :rootPanel='rootPanel'
     />
     <slot name="title">
       <div class="title">{{ title }}</div>
     </slot>
-    <span style='width: 20px; display: flex; margin-left: 5px;'>
+    <span 
+      v-if='panel.showHeaderClose'
+      style='width: 20px; display: flex; margin-left: 5px;'
+    >
       <font-awesome-icon
         class='title-bar-icon'
-        @click.left.stop.prevent='$emit("close")'
+        @click.left.stop.prevent='emitClose'
         icon="times"
         style='width: 20px'
       />
@@ -31,7 +34,18 @@ export default {
     'menu',
     'rootPanel',
     'title',
-  ] 
+    'panel',
+  ],
+  methods: {
+    emitClose() {
+      this.$emit('close');
+    }
+  },
+  beforeMount() {
+    if (this.panel != null && this.panel.showHeaderClose == null) {
+      this.panel.showHeaderClose = false;
+    }
+  }
 }
 </script>
 

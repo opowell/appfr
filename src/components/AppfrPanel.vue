@@ -9,9 +9,11 @@
     <div
       style='display: flex; flex: 1 1 auto; flex-direction: column;'
     >
-      <appfr-panel-header 
+      <appfr-panel-header
+        v-if="showHeaderComputed"
         style="flex: 0 0 auto"
         :rootPanel="rootPanel"
+        :panel="panel"
         :menu="menu"
         @close="close"
         id='tabs-header'
@@ -46,7 +48,7 @@
 
       <div :style='childContainerStyle'>
         <template v-for="(childPanel, index) in panel.children">
-          <appfr-panel 
+          <appfr-panel
             :panel="childPanel"
             :key="childPanel.id"
             :isLastPanel='index === panel.children.length - 1'
@@ -78,26 +80,39 @@
     <span v-if="resizable" class="handle handle-bl" @mousedown.left.prevent.stop="startResizeBL" />
     <span v-if="resizable" class="handle handle-bc" @mousedown.left.prevent.stop="startResizeB" />
     <span v-if="resizable" class="handle handle-br" @mousedown.left.prevent.stop="startResizeBR" />
-    <!-- TODO LATER: Replace w/ AppfrPanelHeader. For some reason does not work. -->
-    <div v-if='hasHeader' class="header" style='flex: 0 0 auto'>
-      <div>
-        <menu-el
-          :dblclickFunc="close"
-          :menu='menu'
-          :rootPanel='rootPanel'
-        />
-      </div>
-      <div class="title">{{ title(panel) }}</div>
-      <menu-el
-        :menu='{
-          icon: ["fas", "times"],
-          hasParent: false,
-          showIcon: true,
-          action: close,
-        }'
-        class='closeIcon title-bar-icon'
-      />
-    </div>
+    <appfr-panel-header
+      v-if="hasHeader"
+      style="flex: 0 0 auto"
+      :rootPanel="rootPanel"
+      :panel="panel"
+      :menu="menu"
+      @close="close"
+      id='tabs-header'
+    >
+      <template v-slot:title>
+        <span
+          class='tab tabHover'
+          :class='{"selected": true}'
+          draggable="true"
+          @dragstart='dragStart($event, childPanel)'
+          @dragleave="dragLeaveTab($event, index)"
+          @drop='dropOnTab(index, $event)'
+          @dragover='dragOver'
+          @dragenter="dragEnterTab(index, $event)"
+        >
+          {{ title(panel) }}
+          <span style='width: 20px; display: flex; margin-left: 5px;'>
+            <font-awesome-icon
+              class='closeButton'
+              @click.left.stop.prevent='closePanel(index)'
+              icon="times"
+              style='width: 20px'
+            />
+          </span>
+        </span>
+        <span style='flex: 1 1 auto' />
+      </template>
+    </appfr-panel-header>
     <div class="content-container">
       <div
         class='content'
@@ -157,32 +172,19 @@ export default {
     minLeft: {
       type: Number,
       default: 5
+    },
+    showHeader: {
+      type: Boolean,
+      default: null,
     }
   },
-  data() {
-    return {
-      menu: {
-        // text: '---',
+  computed: {
+    menu() {
+      const out = {
         icon: ["fas", "align-center"],
         hasParent: false,
-          showIcon: true,
-          children: [
-          {
-              text: "Display: Flex",
-              action: this.setDisplay,
-              clickData: 'flex',
-          },
-          {
-              text: "Display: Tabs",
-              action: this.setDisplay,
-              clickData: 'tabs',
-          },
-          {
-              text: "Display: Windows",
-              action: this.setDisplay,
-              clickData: 'windows',
-          },
-          'divider',
+        showIcon: true,
+        children: [
           {
               text: "Toggle flex dir",
               action: this.toggleDir,
@@ -240,11 +242,62 @@ export default {
               action: this.restore,
               text: "Restore",
           },
-        ],
+        ]
+      };
+      if (this.children) {
+        out.children.unshift(
+          {
+            text: "Display: Flex",
+            action: this.setDisplay,
+            clickData: 'flex',
+          },
+          {
+            text: "Display: Tabs",
+            action: this.setDisplay,
+            clickData: 'tabs',
+          },
+          {
+            text: "Display: Windows",
+            action: this.setDisplay,
+            clickData: 'windows',
+          },
+          'divider',
+        );
       }
-    }
-  },
-  computed: {
+      if (this.indexOnParent === 0) {
+        out.children.unshift(
+          {
+            text: "Parent display: Flex",
+            action: this.setField,
+            clickData: {
+              object: this.parentPanel,
+              field: 'display',
+              value: 'flex',
+            },
+          },
+          {
+            text: "Parent display: Tabs",
+            action: this.setField,
+            clickData: {
+              object: this.parentPanel,
+              field: 'display',
+              value: 'tabs',
+            },
+          },
+          {
+            text: "Parent display: Windows",
+            action: this.setField,
+            clickData: {
+              object: this.parentPanel,
+              field: 'display',
+              value: 'windows',
+            },
+          },
+          'divider',
+        );
+      }
+      return out;
+    },
     showAdjusters() {
       return this.panel.display === 'flex';
     },
@@ -271,12 +324,13 @@ export default {
       return false;
     },
     hasHeader() {
-      if (this.panel.hasHeader != null) return this.panel.hasHeader
-      if (this.parentPanel != null) return this.parentPanel.display === 'windows'
+      if (this.panel.hasHeader != null) return this.panel.hasHeader;
+      if (this.parentPanel != null && this.parentPanel.display !== 'flex') return true;
+      if (this.panel.children == null) return true;
       return false;
     },
     rootPanel() {
-      if (this.parentPanel == null) {
+      if (this.parentPanel == null || this.parentPanel.$component == null) {
         return this.panel;
       }
       return this.parentPanel.$component.rootPanel
@@ -304,6 +358,11 @@ export default {
         return null;
       } else {
         return this.panel.children[this.panel.activeChildIndex];
+      }
+    },
+    showHeaderComputed() {
+      if (this.showHeader == null) {
+        return this.panel.display === 'tabs'
       }
     },
     adjusterStyle() {
@@ -362,12 +421,20 @@ export default {
         }
       }
 
+      if (this.panel.children == null || this.panel.children.length === 0) {
+        out["flex-direction"] = "column";
+      }
+
       return out;
     },
   },
   methods: {
+    setField({object, field, value}) {
+      object[field] = value;
+    },
     close() {
       if (this.parentPanel == null) return;
+      console.log('splicing', this)
       this.parentPanel.children.splice(this.indexOnParent, 1);
     },
     changeSelectedIndex(change) {
@@ -376,11 +443,14 @@ export default {
       if (this.activeChildIndex > this.children.length - 1) this.activeChildIndex = 0;
     },
     clickWindow(ev) {
+      this.rootPanel.isMenuOpen = false;
+      if (this.parentPanel != null && this.parentPanel.display !== 'windows') return;
       this.focusWindow();
       this.startMove(ev);
     },
     focusWindow() {
       if (this.parentPanel == null) return;
+      console.log('splicing')
       this.parentPanel.children.splice(this.indexOnParent, 1);
       this.parentPanel.children.push(this.panel);
     },
@@ -445,7 +515,14 @@ export default {
     title(panel) {
       if (panel.title != null) return panel.title;
       if (panel.type) return panel.type + ': ' + panel.content;
-      return panel.content;
+      if (
+        panel.children != null &&
+        panel.activeChildIndex != null &&
+        panel.activeChildIndex < panel.children.length
+      ) {
+        return this.title(panel.children[panel.activeChildIndex]);
+      }
+      return panel.id;
     },
     setActiveChildIndex(index) {
       this.panel.activeChildIndex = index;

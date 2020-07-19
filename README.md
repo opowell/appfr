@@ -1,8 +1,13 @@
 # appfr
-- Windows (maximize, resize, position)
-- Areas (recursive, resize, drag and drop)
+- Recursive, resize, drag and drop
+- In Windows display mode: (maximize, move)
 - Menu (keyboard shortcuts)
-- App: set of windows, areas and a menu
+
+## TODO
+- Drag and drop tabs
+- Menus
+- Close panels
+- Change display for parents from menu.
 
 ## Usage
 ```

@@ -1,23 +1,22 @@
 <template>
-  <div class='content'>
-    My A: {{ panel.content }}
-    <input />
+  <div>
+    My B: {{ content }}
   </div>
 </template>
 <script>
 
 export default {
-  name: 'MyPanelA',
-  props: [
-    'panel',
-  ]
+  name: 'MyPanelB',
+  props: {
+    content: { type: String, default: '' }
+  }
 };
 
 </script>
 
 <style scoped>
-div.content {
-  background-color: yellow;
+div {
+  background-color: #6081b0;
   display: flex;
   align-items: center;
   justify-content: center;

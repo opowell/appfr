@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import MenuEl from '@/components/MenuEl.vue'
+import MenuEl from './MenuEl.vue'
 
 export default {
   name: 'AppfrPanelHeader',

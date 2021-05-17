@@ -72,14 +72,16 @@
     class="window"
     :style="styleObj"
   >
-    <span v-if="resizable" class="handle handle-tl" @mousedown.left.prevent.stop="startResizeTL" />
-    <span v-if="resizable" class="handle handle-tc" @mousedown.left.prevent.stop="startResizeT" />
-    <span v-if="resizable" class="handle handle-tr" @mousedown.left.prevent.stop="startResizeTR" />
-    <span v-if="resizable" class="handle handle-ml" @mousedown.left.prevent.stop="startResizeL" />
-    <span v-if="resizable" class="handle handle-mr" @mousedown.left.prevent.stop="startResizeR" />
-    <span v-if="resizable" class="handle handle-bl" @mousedown.left.prevent.stop="startResizeBL" />
-    <span v-if="resizable" class="handle handle-bc" @mousedown.left.prevent.stop="startResizeB" />
-    <span v-if="resizable" class="handle handle-br" @mousedown.left.prevent.stop="startResizeBR" />
+    <template v-if="resizable">
+      <span class="handle handle-tl" @mousedown.left.prevent.stop="startResizeTL" />
+      <span class="handle handle-tc" @mousedown.left.prevent.stop="startResizeT" />
+      <span class="handle handle-tr" @mousedown.left.prevent.stop="startResizeTR" />
+      <span class="handle handle-ml" @mousedown.left.prevent.stop="startResizeL" />
+      <span class="handle handle-mr" @mousedown.left.prevent.stop="startResizeR" />
+      <span class="handle handle-bl" @mousedown.left.prevent.stop="startResizeBL" />
+      <span class="handle handle-bc" @mousedown.left.prevent.stop="startResizeB" />
+      <span class="handle handle-br" @mousedown.left.prevent.stop="startResizeBR" />
+    </template>
     <appfr-panel-header
       v-if="hasHeader"
       style="flex: 0 0 auto"
@@ -94,11 +96,11 @@
           class='tab tabHover'
           :class='{"selected": true}'
           draggable="true"
-          @dragstart='dragStart($event, childPanel)'
-          @dragleave="dragLeaveTab($event, index)"
-          @drop='dropOnTab(index, $event)'
+          @dragstart='dragStart($event, panel)'
+          @dragleave="dragLeaveTab($event, panel)"
+          @drop='dropOnTab(panel, $event)'
           @dragover='dragOver'
-          @dragenter="dragEnterTab(index, $event)"
+          @dragenter="dragEnterTab(panel, $event)"
         >
           {{ title(panel) }}
           <span style='width: 20px; display: flex; margin-left: 5px;'>
@@ -117,17 +119,18 @@
       <div
         class='content'
         :is='panel.type'
-        :panel='panel'
+        v-bind='panel.props'
       />
     </div>
   </div>
 </template>
 
 <script>
-import JtSpacer from '@/components/JtSpacer.vue'
-import MenuEl from '@/components/MenuEl.vue'
-import AppfrPanelHeader from '@/components/AppfrPanelHeader.vue'
+import JtSpacer from './JtSpacer.vue'
+import MenuEl from './MenuEl.vue'
+import AppfrPanelHeader from './AppfrPanelHeader.vue'
 import Vue from 'vue';
+import {DISPLAY} from "../constants";
 
 export default {
   name: 'AppfrPanel',
@@ -143,15 +146,11 @@ export default {
     },
     panel: {
       type: Object,
-      default: function() {
-        return {};
-      }
+      default: {},
     },
     parentPanel: {
       type: Object,
-      default: function() {
-        return null;
-      }
+      default: null,
     },
     isLastPanel: {
       type: Boolean,
@@ -249,17 +248,17 @@ export default {
           {
             text: "Display: Flex",
             action: this.setDisplay,
-            clickData: 'flex',
+            clickData: DISPLAY.FLEX,
           },
           {
             text: "Display: Tabs",
             action: this.setDisplay,
-            clickData: 'tabs',
+            clickData: DISPLAY.TABS,
           },
           {
             text: "Display: Windows",
             action: this.setDisplay,
-            clickData: 'windows',
+            clickData: DISPLAY.WINDOWS,
           },
           'divider',
         );
@@ -325,7 +324,8 @@ export default {
     },
     hasHeader() {
       if (this.panel.hasHeader != null) return this.panel.hasHeader;
-      if (this.parentPanel != null && this.parentPanel.display !== 'flex') return true;
+      if (this.parentPanel != null && this.parentPanel.display === 'windows') return true;
+      if (this.parentPanel != null && this.parentPanel.display === 'tabs') return false;
       if (this.panel.children == null) return true;
       return false;
     },
@@ -514,7 +514,8 @@ export default {
     },
     title(panel) {
       if (panel.title != null) return panel.title;
-      if (panel.type) return panel.type + ': ' + panel.content;
+      if (panel.type && typeof panel.type === 'string') return panel.type + ': ' + JSON.stringify(panel.props);
+      if (panel.type && panel.type.name) return panel.type.name + ': ' + JSON.stringify(panel.props);
       if (
         panel.children != null &&
         panel.activeChildIndex != null &&
@@ -719,6 +720,18 @@ export default {
         this.panel.h = this.origHeight + deltaY;
       }
     },
+    dragStart(ev, panel) {
+      console.log('drag start', ev, panel)
+    },
+    dragEnterTab(index, ev) {
+      console.log('dragEnterTab', index, ev)
+    },
+    dragLeaveTab(index, ev) {
+      console.log('dragLeaveTab', index, ev)
+    },
+    dropOnTab(index, ev) {
+      console.log('dropontab', index, ev)
+    }
   },
   mounted() {
     if (this.panel.children) {

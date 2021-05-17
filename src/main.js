@@ -1,7 +1,5 @@
 import Vue from 'vue'
 import App from './App.vue'
-import MyPanelA from './components/MyPanelA.vue';
-import MyPanelB from './components/MyPanelB.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -24,9 +22,6 @@ Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 Vue.config.productionTip = false
 
-// TODO: Need to be moved somewhere else?
-Vue.component('my-panel-a', MyPanelA)
-Vue.component('my-panel-b', MyPanelB)
 new Vue({
   render: h => h(App),
 }).$mount('#app')

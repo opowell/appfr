@@ -3,6 +3,12 @@
 - In Windows display mode: (maximize, move)
 - Menu (keyboard shortcuts)
 
+## properties
+- displayMode: 'tabs', 'row', 'column', 'window'
+- content: content to display in this panel.
+- type: type of component to display in this panel.
+- children: array of child components to display in this panel. Takes precedence over content.
+
 ## TODO
 - Drag and drop tabs
 - Menus

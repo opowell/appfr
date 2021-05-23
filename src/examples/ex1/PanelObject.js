@@ -1,6 +1,4 @@
 import {DISPLAY} from "../../constants";
-import MyPanelA from "./MyPanelA";
-import MyPanelB from "./MyPanelB";
 
 export const panelObject = {
   children: [
@@ -11,7 +9,7 @@ export const panelObject = {
           props: {
             content: 'AA'
           },
-          type: MyPanelA,
+          type: 'my-panel-a',
         },
         {
           display: DISPLAY.TABS,
@@ -21,19 +19,19 @@ export const panelObject = {
               props: {
                 content: 'AAA'
               },
-              type: MyPanelA,
+              type: 'my-panel-a',
             },
             {
               props: {
                 content: 'BBB'
               },
-              type: MyPanelB,
+              type: 'my-panel-b',
             },
             {
               props: {
                 content: 'CCC'
               },
-              type: MyPanelB,
+              type: 'my-panel-b',
             },
           ]
         },
@@ -43,13 +41,13 @@ export const panelObject = {
       props: {
         content: 'A'
       },
-      type: MyPanelA,
+      type: 'my-panel-a',
     },
     {
       props: {
         content: 'B'
       },
-      type: MyPanelB,
+      type: 'my-panel-b',
     },
   ]
 }

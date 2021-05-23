@@ -7,6 +7,8 @@
 <script>
 import AppfrPanel from '../../components/AppfrPanel.vue';
 import {panelObject} from "./PanelObject.js";
+import MyPanelA from "./MyPanelA";
+import MyPanelB from "./MyPanelB";
 
 export default {
   name: 'HelloWorld',
@@ -16,6 +18,7 @@ export default {
   data() {
     return {
       panelObject,
+      appComponents: [MyPanelA, MyPanelB]
     }
   },
 };

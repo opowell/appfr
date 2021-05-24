@@ -18,7 +18,7 @@
         @close="close"
         id='tabs-header'
       >
-        <template v-slot:title v-if="panel.display === 'tabs'">
+        <template v-slot:title v-if="panel.display === DISPLAY.TABS">
           <span
             v-for='(childPanel, index) in panel.children'
             :key='childPanel.id'
@@ -32,7 +32,7 @@
             @dragover='dragOver'
             @dragenter="dragEnterTab(index, $event)"
           >
-            {{ title(childPanel) }}
+            {{ childPanel.$component.myTitle }}
             <span style='width: 20px; display: flex; margin-left: 5px;'>
               <font-awesome-icon
                 class='closeButton'
@@ -118,6 +118,7 @@
     <div class="content-container">
       <div
         class='content'
+        ref="content"
         :is='panel.type'
         v-bind='panel.props'
       />
@@ -177,6 +178,11 @@ export default {
       default: null,
     }
   },
+  data() {
+    return {
+      DISPLAY
+    }
+  },
   computed: {
     menu() {
       const out = {
@@ -184,11 +190,6 @@ export default {
         hasParent: false,
         showIcon: true,
         children: [
-          {
-              text: "Toggle flex dir",
-              action: this.toggleDir,
-          },
-          'divider',
           {
               text: "Next Panel",
               action: this.changeSelectedIndex,
@@ -221,10 +222,6 @@ export default {
               text: "Close Area",
               action: this.close,
           },
-          {
-              text: "Toggle parent dir.",
-              action: this.toggleRowChildren,
-          },
           "divider",
           {
               text: "(Next Window)",
@@ -246,9 +243,14 @@ export default {
       if (this.children) {
         out.children.unshift(
           {
-            text: "Display: Flex",
+            text: "Display: Row",
             action: this.setDisplay,
-            clickData: DISPLAY.FLEX,
+            clickData: DISPLAY.ROW,
+          },
+          {
+            text: "Display: Column",
+            action: this.setDisplay,
+            clickData: DISPLAY.COLUMN,
           },
           {
             text: "Display: Tabs",
@@ -266,12 +268,12 @@ export default {
       if (this.indexOnParent === 0) {
         out.children.unshift(
           {
-            text: "Parent display: Flex",
+            text: "Parent display: Row",
             action: this.setField,
             clickData: {
               object: this.parentPanel,
               field: 'display',
-              value: 'flex',
+              value: DISPLAY.ROW,
             },
           },
           {
@@ -280,7 +282,7 @@ export default {
             clickData: {
               object: this.parentPanel,
               field: 'display',
-              value: 'tabs',
+              value: DISPLAY.TABS,
             },
           },
           {
@@ -289,7 +291,7 @@ export default {
             clickData: {
               object: this.parentPanel,
               field: 'display',
-              value: 'windows',
+              value: DISPLAY.WINDOWS,
             },
           },
           'divider',
@@ -298,19 +300,19 @@ export default {
       return out;
     },
     showAdjusters() {
-      return this.panel.display === 'flex';
+      return this.panel.display === DISPLAY.ROW || this.panel.display === DISPLAY.COLUMN;
     },
     childContainerStyle() {
-      if (this.panel.display === 'flex') {
+      if (this.panel.display === DISPLAY.ROW || this.panel.display === DISPLAY.COLUMN) {
         return this.flexStyleObj
       }
-      if (this.panel.display === 'tabs') {
+      if (this.panel.display === DISPLAY.TABS) {
         return {
           display: 'flex',
           flex: '1 1 auto',
         };
       }
-      if (this.panel.display === 'windows') {
+      if (this.panel.display === DISPLAY.WINDOWS) {
         return {
           flex: '1 1 auto',
           position: 'relative',
@@ -362,21 +364,23 @@ export default {
     },
     showHeaderComputed() {
       if (this.showHeader == null) {
-        return this.panel.display === 'tabs'
+        return this.panel.display === DISPLAY.TABS
       }
     },
     adjusterStyle() {
-      let cursor = this.panel.flexDirRow ? 'ew-resize' : 'ns-resize';
+      let cursor = this.panel.display === DISPLAY.ROW ? 'ew-resize' : 'ns-resize';
       return {
-        cursor: cursor,
+        cursor,
       }
     },
     flexStyleObj() {
       let out = {
         display: "flex",
         flex: "1 1 auto",
-        "flex-direction": this.panel.flexDirRow ? "row" : "column",
       }
+      if (this.panel.display === DISPLAY.ROW) out["flex-direction"] = "row"
+      if (this.panel.display === DISPLAY.COLUMN) out["flex-direction"] = "column"
+
       return out;
     },
     styleObj() {
@@ -385,7 +389,8 @@ export default {
       if (this.parentPanel == null) {
         out.top = this.panel.y + 'px';
         out.left = this.panel.x + 'px';
-        out["flex-direction"] = this.panel.flexDirRow ? "row" : "column";
+        if (this.panel.display === DISPLAY.ROW) out["flex-direction"] = "row"
+        if (this.panel.display === DISPLAY.COLUMN) out["flex-direction"] = "column"
         out.display = 'flex';
         if (this.isLastPanel) {
           out.flex = '1 1 100px';
@@ -404,8 +409,9 @@ export default {
           out.width = this.panel.w + 'px';
           out.height = this.panel.h + 'px';
         }
-      } else if (this.parentPanel.display === 'flex') {
-        out["flex-direction"] = this.panel.flexDirRow ? "row" : "column";
+      } else if (this.parentPanel.display === DISPLAY.ROW || this.parentPanel.display === DISPLAY.COLUMN) {
+        if (this.panel.display === DISPLAY.ROW) out["flex-direction"] = "row"
+        if (this.panel.display === DISPLAY.COLUMN) out["flex-direction"] = "column"
         out.display = 'flex';
         if (this.isLastPanel) {
           out.flex = '1 1 100px';
@@ -426,6 +432,21 @@ export default {
       }
 
       return out;
+    },
+    myTitle() {
+      if (this?.panel?.$component?.activeChild?.$component?.myTitle) return this.panel.$component.activeChild.$component.myTitle
+      if (this.panel.title) return this.panel.title;
+      if (this.$refs.content && this.$refs.content.title) return this.$refs.content.title;
+      if (this.panel.type && typeof this.panel.type === 'string') return this.panel.type + ': ' + JSON.stringify(this.panel.props);
+      if (this.panel.type && this.panel.type.name) return this.panel.type.name + ': ' + JSON.stringify(this.panel.props);
+      if (
+        this.panel.children != null &&
+        this.panel.activeChildIndex != null &&
+        this.panel.activeChildIndex < this.panel.children.length
+      ) {
+        return this.panel.children[this.panel.activeChildIndex].title;
+      }
+      return this.panel.id;
     },
   },
   methods: {
@@ -503,9 +524,6 @@ export default {
     setDisplay(x) {
       this.panel.display = x;
     },
-    toggleDir() {
-      this.panel.flexDirRow = !this.panel.flexDirRow
-    },
     isSelected(panel) {
       return this.activeChild === panel;
     },
@@ -514,6 +532,7 @@ export default {
     },
     title(panel) {
       if (panel.title != null) return panel.title;
+      if (this.$refs.content && this.$refs.content.title) return this.$refs.content.title;
       if (panel.type && typeof panel.type === 'string') return panel.type + ': ' + JSON.stringify(panel.props);
       if (panel.type && panel.type.name) return panel.type.name + ': ' + JSON.stringify(panel.props);
       if (
@@ -550,7 +569,7 @@ export default {
       ev.preventDefault();
       ev.stopPropagation();
       let size = null;
-      if (this.panel.flexDirRow) {
+      if (this.panel.display === DISPLAY.ROW) {
         size = this.adjustData.origWidth + (ev.pageX - this.adjustData.startX);
       } else {
         size = this.adjustData.origHeight + (ev.pageY - this.adjustData.startY);
@@ -737,8 +756,7 @@ export default {
     if (this.panel.children) {
         this.setIfNull(this.panel, 'activeChildIndex', this.panel.children.length > 0 ? 0 : -1);
     }
-    this.setIfNull(this.panel, 'display', 'tabs');
-    this.setIfNull(this.panel, 'flexDirRow', true);
+    this.setIfNull(this.panel, 'display', DISPLAY.TABS);
     this.panel.$component = this;
   },
   beforeMount() {
@@ -746,7 +764,7 @@ export default {
     this.setIfNull(this.panel, 'y', this.minTop);
     this.setIfNull(this.panel, 'w', 300);
     this.setIfNull(this.panel, 'h', 200);
-    this.setIfNull(this.panel, 'id', Math.random());
+    this.setIfNull(this.panel, 'id', Math.random().toFixed(8));
   }
 }
 </script>

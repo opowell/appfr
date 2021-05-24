@@ -1,5 +1,6 @@
 export const DISPLAY = {
-  FLEX: 'flex',
+  ROW: 'row',
+  COLUMN: 'column',
   TABS: 'tabs',
   WINDOWS: 'windows'
 }

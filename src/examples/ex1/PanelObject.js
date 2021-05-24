@@ -3,33 +3,32 @@ import {DISPLAY} from "../../constants";
 export const panelObject = {
   children: [
     {
-      display: DISPLAY.FLEX,
+      display: DISPLAY.ROW,
       children: [
         {
           props: {
-            content: 'AA'
+            content: 'Units'
           },
           type: 'my-panel-a',
         },
         {
           display: DISPLAY.TABS,
-          flexDirRow: true,
           children: [
             {
               props: {
-                content: 'AAA'
+                content: 'Map'
               },
               type: 'my-panel-a',
             },
             {
               props: {
-                content: 'BBB'
+                content: 'Actions'
               },
               type: 'my-panel-b',
             },
             {
               props: {
-                content: 'CCC'
+                content: 'Players'
               },
               type: 'my-panel-b',
             },
@@ -39,13 +38,13 @@ export const panelObject = {
     },
     {
       props: {
-        content: 'A'
+        content: 'Help'
       },
       type: 'my-panel-a',
     },
     {
       props: {
-        content: 'B'
+        content: 'About'
       },
       type: 'my-panel-b',
     },

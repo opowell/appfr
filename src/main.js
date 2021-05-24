@@ -9,6 +9,8 @@ import {faTimes}                from '@fortawesome/free-solid-svg-icons/faTimes'
 import {faWindowClose}          from '@fortawesome/free-regular-svg-icons/faWindowClose'
 import {faWindowMinimize}       from '@fortawesome/free-regular-svg-icons/faWindowMinimize'
 import {faWindowRestore}        from '@fortawesome/free-regular-svg-icons/faWindowRestore'
+import MyPanelA from "./examples/ex1/MyPanelA";
+import MyPanelB from "./examples/ex1/MyPanelB";
 
 library.add(
   faAlignCenter,
@@ -19,6 +21,8 @@ library.add(
 )
 
 Vue.component('font-awesome-icon', FontAwesomeIcon)
+Vue.component('my-panel-a', MyPanelA)
+Vue.component('my-panel-b', MyPanelB)
 
 Vue.config.productionTip = false
 

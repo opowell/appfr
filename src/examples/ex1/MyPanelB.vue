@@ -9,6 +9,11 @@ export default {
   name: 'MyPanelB',
   props: {
     content: { type: String, default: '' }
+  },
+  data() {
+    return {
+      title: this.content
+    }
   }
 };
 

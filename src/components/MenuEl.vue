@@ -1,7 +1,7 @@
 <template>
-  <div v-if='menu === "divider"' class="divider"></div>
+  <div v-if='menu === "divider"' class="divider" />
   <span
-    v-else :ref='menu.ref'
+    v-else :ref='ref'
     class="menu"
     @mousedown.prevent.stop.left
     @click.stop.left
@@ -16,7 +16,7 @@
     :title='menu.title'
     @blur='closeMenu'
   >
-    <div v-show='menu.template != null' v-html="menu.template"></div>
+    <div v-show='menu.template != null' v-html="menu.template" />
     <!-- <i v-show='menu.icon || showIcon' :class='"icon fas fa-align-center"'></i> -->
     <template v-if='menu.icon'>
       <div class='icon'>
@@ -25,7 +25,7 @@
     </template>
     <!-- For spacing purposes -->
     <template v-else-if='showIcon'>
-      <i class='icon'></i>
+      <i class='icon' />
     </template>
     <div v-show='menu.text' class='text text-first'>{{firstLetter}}</div>
     <div v-show='menu.text' class='text text-rest'>{{rest}}</div>
@@ -47,10 +47,33 @@
 <script>
 import Vue from 'vue';
 
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+
+import {faAlignCenter}          from '@fortawesome/free-solid-svg-icons/faAlignCenter'
+import {faTimes}                from '@fortawesome/free-solid-svg-icons/faTimes'
+import {faWindowClose}          from '@fortawesome/free-regular-svg-icons/faWindowClose'
+import {faWindowMinimize}       from '@fortawesome/free-regular-svg-icons/faWindowMinimize'
+import {faWindowRestore}        from '@fortawesome/free-regular-svg-icons/faWindowRestore'
+
+library.add(
+  faAlignCenter,
+  faTimes,
+  faWindowClose,
+  faWindowMinimize,
+  faWindowRestore,
+)
+
 export default {
   name: 'MenuEl',
+  components: {
+    FontAwesomeIcon
+  },
   props: {
-    menu: {},
+    menu: {
+      type: [Object, String],
+      default: {}
+    },
     showIcon: {},
     dblclickFunc: {},
     enabled: {
@@ -62,6 +85,9 @@ export default {
     rootPanel: {}
   },
   computed: {
+    ref() {
+      return this.menu ? this.menu.ref : null;
+    },
     hasParent() {
       return this.menu.hasParent == null ? true : this.menu.hasParent;
     },
@@ -72,22 +98,17 @@ export default {
       return this.hasParent && this.hasChildren;
     },
     isActive() {
-      if (this.rootPanel == null) return false;
+      if (!this.rootPanel) return false;
       return this.rootPanel.activeMenu === this.menu;
     },
     isDisabled() {
-      if (this.menu.disabled == null) {
+      if (!this.menu) {
         return false;
       }
-      // eslint-disable-next-line
-      const x = eval(this.menu.disabled);
-      if (x === true) {
-        return true;
-      }
-      return false;
+      return Boolean(this.menu.disabled);
     },
     isOpen() {
-      if (this.rootPanel == null) return false;
+      if (!this.rootPanel) return false;
       return this.rootPanel.isMenuOpen && this.isActive;
     },
     firstLetter() {
@@ -113,12 +134,12 @@ export default {
       if (this.isDisabled) {
         return;
       }
-      if (this.menu.action != null) {
+      if (this.menu.action) {
         this.menu.action(this.menu.clickData, ev);
-        if (this.rootPanel == null) return;
+        if (!this.rootPanel) return;
         Vue.set(this.rootPanel, 'isMenuOpen', false);
       } else {
-        if (this.rootPanel == null) return;
+        if (!this.rootPanel) return;
         Vue.set(this.rootPanel, 'activeMenu', this.menu);
         Vue.set(this.rootPanel, 'isMenuOpen', !this.rootPanel.isMenuOpen);
       }

@@ -72,7 +72,7 @@ export default {
   props: {
     menu: {
       type: [Object, String],
-      default: {}
+      default: () => {}
     },
     showIcon: {},
     dblclickFunc: {},

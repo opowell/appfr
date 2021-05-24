@@ -147,7 +147,7 @@ export default {
     },
     panel: {
       type: Object,
-      default: {},
+      default: () => {},
     },
     parentPanel: {
       type: Object,
@@ -318,6 +318,7 @@ export default {
           position: 'relative',
         }
       }
+      return {}
     },
     resizable() {
       if (this.panel.resizable != null) return this.panel.resizable
@@ -366,6 +367,7 @@ export default {
       if (this.showHeader == null) {
         return this.panel.display === DISPLAY.TABS
       }
+      return false
     },
     adjusterStyle() {
       let cursor = this.panel.display === DISPLAY.ROW ? 'ew-resize' : 'ns-resize';

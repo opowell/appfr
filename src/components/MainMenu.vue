@@ -1,7 +1,7 @@
 <template>
-    <div class='main-menu no-text-select' :style='mainMenuStyle'>
-        <menu-el 
-            v-for='menuEl in menu'
+    <div class='main-menu no-text-select'>
+        <menu-el
+          v-for='menuEl in menu'
             :key='menuEl.text'
             :menu='menuEl'
             :style='menuElStyle'
@@ -40,9 +40,11 @@ export default {
     },
     state: {
       type: Object,
-      default: {
-        panelsMaximized: false,
-        mainMenuPadding: '5px'
+      default: () => {
+        return {
+          panelsMaximized: false,
+          mainMenuPadding: '5px'
+        }
       }
     }
   },
@@ -52,10 +54,6 @@ export default {
       }
   },
   computed: {
-      mainMenuStyle() { return {
-        //   'background-color': this.$store.state.menuBGColor,
-        //   'color': this.$store.state.menuColor,
-      }},
       panelsMaxed() {
           return this.state.panelsMaximized;
       },
@@ -73,8 +71,8 @@ export default {
    display: flex;
     z-index: 1039; /* z-index of modal backdrops is 1040 */
     flex: 0 0 auto;
-    background-color: var(--menuBGColor);
-    color: var(--menuColor);
+    background-color: aliceblue;
+    color: black;
 }
 
 .main-menu .menu {

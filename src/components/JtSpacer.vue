@@ -62,7 +62,7 @@ export default {
             return out;
         },
         dragEnterTab(index, ev) {
-            let sameArea = this.area === ev.dataTransfer.getData('area');
+            // let sameArea = this.area === ev.dataTransfer.getData('area');
             let el = ev.target;
             el.classList.add('highlight');
         },

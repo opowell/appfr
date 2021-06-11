@@ -191,52 +191,52 @@ export default {
         showIcon: true,
         children: [
           {
-              text: "Next Panel",
-              action: this.changeSelectedIndex,
-              clickData: 1,
+            text: "Next Panel",
+            action: this.changeSelectedIndex,
+            clickData: 1,
           },
           {
-              text: "Previous Panel",
-              action: this.changeSelectedIndex,
-              clickData: -1,
+            text: "Previous Panel",
+            action: this.changeSelectedIndex,
+            clickData: -1,
           },
           {
-              action: this.createChild,
-              text: "Create child (Col)",
-              clickData: false,
-              hasParent: false,
+            action: this.createChild,
+            text: "Create child (Col)",
+            clickData: false,
+            hasParent: false,
           },
           {
-              action: this.createChild,
-              text: "Create child (Row)",
-              clickData: true,
-              hasParent: false,
+            action: this.createChild,
+            text: "Create child (Row)",
+            clickData: true,
+            hasParent: false,
           },
           {
-              text: "New sibling of parent",
-              hasParent: false,
-              action: this.newSiblingOfParent,
-          },
-          "divider",
-          {
-              text: "Close Area",
-              action: this.close,
+            text: "New sibling of parent",
+            hasParent: false,
+            action: this.newSiblingOfParent,
           },
           "divider",
           {
-              text: "(Next Window)",
-          },
-          {
-              text: "(Previous Window)",
+            text: "Close Area",
+            action: this.close,
           },
           "divider",
           {
-              hasParent: false,
-              text: "(Minimize)",
+            text: "(Next Window)",
           },
           {
-              action: this.restore,
-              text: "Restore",
+            text: "(Previous Window)",
+          },
+          "divider",
+          {
+            hasParent: false,
+            text: "(Minimize)",
+          },
+          {
+            action: this.restore,
+            text: "Restore",
           },
         ]
       };
@@ -550,9 +550,9 @@ export default {
       this.panel.activeChildIndex = index;
     },
     setIfNull(obj, field, value) {
-        if (obj[field] == null) {
-            Vue.set(obj, field, value);
-        }
+      if (obj[field] == null) {
+        Vue.set(obj, field, value);
+      }
     },
     startAdjust(panel, ev) {
       console.log('start adjust', panel, ev, this);
@@ -756,7 +756,7 @@ export default {
   },
   mounted() {
     if (this.panel.children) {
-        this.setIfNull(this.panel, 'activeChildIndex', this.panel.children.length > 0 ? 0 : -1);
+      this.setIfNull(this.panel, 'activeChildIndex', this.panel.children.length > 0 ? 0 : -1);
     }
     this.setIfNull(this.panel, 'display', DISPLAY.TABS);
     this.panel.$component = this;

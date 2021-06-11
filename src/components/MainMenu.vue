@@ -19,12 +19,12 @@ import MenuEl from './MenuEl'
 export default {
   name: 'MainMenu',
   components: {
-      MenuEl,
+    MenuEl,
   },
   props: {
     menu: {
       type: Array,
-      default: []
+      default: () => []
     },
     state: {
       type: Object,
@@ -37,17 +37,17 @@ export default {
     }
   },
   data() {
-      return {
-          windowDescs: this.state.windowDescs
-      }
+    return {
+      windowDescs: this.state.windowDescs
+    }
   },
   computed: {
-      panelsMaxed() {
-          return this.state.panelsMaximized;
-      },
-      menuElStyle() { return {
-          padding: this.state.mainMenuPadding,
-      }},
+    panelsMaxed() {
+      return this.state.panelsMaximized;
+    },
+    menuElStyle() { return {
+      padding: this.state.mainMenuPadding,
+    }},
   }
 }
 </script>

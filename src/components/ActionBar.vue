@@ -13,26 +13,26 @@ import MenuEl from './MenuEl'
 export default {
   name: 'ActionBar',
   components: {
-      MenuEl,
+    MenuEl,
   },
   props: [
-      'menus',
+    'menus',
   ],
   data() {
-      return {
-          filterText: '',
-      }
+    return {
+      filterText: '',
+    }
   },
   methods: {
-      changeFilterText() {
-          this.$emit('changeFilterText');
-      },
+    changeFilterText() {
+      this.$emit('changeFilterText');
+    },
   },
   computed: {
-      mainMenuStyle() { return {
-          'background-color': this.menuBGColor,
-          'color': this.menuColor,
-      }},
+    mainMenuStyle() { return {
+      'background-color': this.menuBGColor,
+      'color': this.menuColor,
+    }},
   },
 }
 </script>

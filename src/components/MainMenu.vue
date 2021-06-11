@@ -8,18 +8,6 @@
             :root-panel="menu"
         />
         <div class='spacer'/>
-        <!-- <div v-show='panelsMaxed' style='display: flex'>
-            <menu-el :menu='{
-            icon: "far fa-window-restore",
-            action: restore,
-            hasParent: false,
-            }'></menu-el>
-            <menu-el :menu='{
-            icon: "far fa-window-close",
-            action: close,
-            hasParent: false,
-            }'></menu-el>
-        </div> -->
     </div>
 
 </template>

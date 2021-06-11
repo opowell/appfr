@@ -29,9 +29,7 @@
     </template>
     <div v-show='menu.text' class='text text-first'>{{firstLetter}}</div>
     <div v-show='menu.text' class='text text-rest'>{{rest}}</div>
-    <!-- <div v-show="hasParent" class="shortcut-spacer"/> -->
-    <div v-show="hasParent" class="shortcut">{{menu.shortcut}}</div>
-    <div v-show='showArrow' class="arrow">&lt;</div>
+    <div v-show='showArrow' class="arrow">&gt;</div>
     <div v-show='menu.children' class="dropdown" :class='{ open: isOpen}'>
       <menu-el
         v-for="item in menu.children"
@@ -39,6 +37,8 @@
         :showIcon='menu.showIcon'
         :key='item.id'
         :rootPanel='rootPanel'
+        :parent-menu="menu"
+        @open="openChild(item)"
       />
     </div>
   </span>
@@ -82,20 +82,21 @@ export default {
     disabled: {
       default: false,
     },
-    rootPanel: {}
+    rootPanel: {},
+    parentMenu: {
+      type: Object,
+      default: null
+    }
   },
   computed: {
     ref() {
       return this.menu ? this.menu.ref : null;
     },
-    hasParent() {
-      return this.menu.hasParent == null ? true : this.menu.hasParent;
-    },
     hasChildren() {
       return this.menu.children != null && this.menu.children.length > 0;
     },
     showArrow() {
-      return this.hasParent && this.hasChildren;
+      return this.parentMenu && this.hasChildren;
     },
     isActive() {
       if (!this.rootPanel) return false;
@@ -130,6 +131,7 @@ export default {
         this.dblclickFunc();
       }
     },
+    openChild(item) {},
     click(ev) {
       if (this.isDisabled) {
         return;
@@ -143,6 +145,8 @@ export default {
         Vue.set(this.rootPanel, 'activeMenu', this.menu);
         Vue.set(this.rootPanel, 'isMenuOpen', !this.rootPanel.isMenuOpen);
       }
+      this.menu.open = true
+      this.$emit('open')
     },
     closeMenu() {
       this.rootPanel.isMenuOpen = false;

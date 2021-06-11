@@ -24,6 +24,17 @@ Simple.args = {
         },
         {
           text: 'Open'
+        },
+        {
+          text: 'View',
+          children: [
+            {
+              text: 'View 1'
+            },
+            {
+              text: 'View 2'
+            }
+          ]
         }
       ]
     },

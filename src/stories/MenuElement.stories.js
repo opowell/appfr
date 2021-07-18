@@ -1,28 +1,27 @@
-import MenuEl from "../components/MenuEl";
+import MenuEl from '../components/MenuEl.vue'
 
 export default {
   title: 'Menu Element',
   component: MenuEl,
-  argTypes: {
-  },
+  argTypes: {},
 };
 
 const Template = (args, { argTypes }) => ({
-  props: Object.keys(argTypes),
   components: { MenuEl },
+  props: Object.keys(argTypes),
   template: '<menu-el v-bind="$props" />',
 });
 
 export const Text = Template.bind({});
 Text.args = {
-  menu: {
+  menuProp: {
     text: 'text only'
   }
 };
 
 export const TextIcon = Template.bind({});
 TextIcon.args = {
-  menu: {
+  menuProp: {
     text: 'text+icon',
     icon: 'window-close'
   }
@@ -30,7 +29,7 @@ TextIcon.args = {
 
 export const WithChildren = Template.bind({})
 WithChildren.args = {
-  menu: {
+  menuProp: {
     text: 'Children',
     children:   [
       {

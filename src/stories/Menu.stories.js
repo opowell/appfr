@@ -15,7 +15,7 @@ const Template = (args, { argTypes }) => ({
 
 export const Simple = Template.bind({});
 Simple.args = {
-  menu: [
+  menuProp: [
     {
       text: 'File',
       children: [

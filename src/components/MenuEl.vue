@@ -10,18 +10,18 @@
     @mouseleave="blur"
     @dblclick.left="callDblclickFunc"
     :class='{
-       active: menu.isActive !== false,
+       active: isActive,
        disabled: isDisabled,
        open: isOpen,
     }'
-    :title='menu.title'
+    :title='title'
     @blur='blur'
   >
-    <div v-show='menu.template != null' v-html="menu.template" />
-    <div v-show='menu.text' class='text text-first'>{{firstLetter}}</div>
-    <div v-show='menu.text' class='text text-rest'>{{rest}}</div>
-    <div v-show='showArrow' class="arrow">&gt;</div>
-    <div v-show='menu.children' class="dropdown" :class='{ open: isOpen, submenu: isSubMenu}'>
+    <div v-if='menu && menu.template != null' v-html="menu.template" />
+    <div v-if='menu && menu.text' class='text text-first'>{{firstLetter}}</div>
+    <div v-if='menu && menu.text' class='text text-rest'>{{rest}}</div>
+    <div v-if='showArrow' class="arrow">&gt;</div>
+    <div v-if='menu && menu.children' class="dropdown" :class='{ open: isOpen, submenu: isSubMenu}'>
       <menu-el
         v-for="item in menu.children"
         :menu-prop='item'
@@ -34,35 +34,40 @@
 </template>
 
 <script>
-import MenuElement from '../models/MenuElement'
+import Menu from '../models/Menu.ts'
 
 export default {
   name: 'MenuEl',
   props: {
     menuProp: {
       type: Object,
-      required: true
+      default: () => {}
     },
     parentMenu: {
-      type: MenuElement,
-      default: () => null
+      type: Menu,
+      default: () => undefined
     },
-    dblclickFunc: {},
+    dblclickFunc: {}
   },
   data() {
     let menu = this.menuProp
-    if (menu.constructor.name !== MenuElement.name)
-      menu = new MenuElement(this.menuProp, this.parentMenu)
+    if (menu && menu.class !== 'parsed')
+      menu = new Menu(this.menuProp, this.parentMenu)
     return {
       menu
     }
   },
   computed: {
     isOpen() {
+      if (!this.menu) return false
       return this.menu.open
     },
+    title() {
+      if (!this.menu) return ''
+      return this.menu.title
+    },
     ref() {
-      return this.menu ? this.menu.ref : null
+      return (this.menu && this.menu.ref) ? this.menu.ref : 'menu'
     },
     hasChildren() {
       return this.menu.children != null && this.menu.children.length > 0
@@ -71,8 +76,8 @@ export default {
       return this.parentMenu && this.hasChildren
     },
     isActive() {
-      if (!this.rootPanel) return false
-      return this.rootPanel.activeMenu === this.menu
+      if (!this.menu) return false
+      return true
     },
     isDisabled() {
       if (!this.menu) return false
@@ -100,8 +105,11 @@ export default {
     click(ev) {
       this.menu.click(ev)
     },
-    blur() {
-      this.menu.open = false
+    blur(ev) {
+      if (this.$refs[this.ref]) {
+        if (this.$refs[this.ref].contains(ev.target)) return
+      }
+      this.menu.blur()
     },
     hover() {
       this.menu.hover()

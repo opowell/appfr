@@ -20,7 +20,10 @@ Simple.args = {
       text: 'File',
       children: [
         {
-          text: 'New'
+          text: 'New',
+          action: x => {
+            console.log('click', x)
+          }
         },
         {
           text: 'Open'
@@ -39,9 +42,25 @@ Simple.args = {
       ]
     },
     {
-      text: 'Edit'
+      text: 'Edit',
+      children: [
+        {
+          text: 'Copy'
+        },
+        {
+          text: 'Paste'
+        }
+      ]
     },
     {
-      text: 'Help'
+      text: 'Help',
+      children: [
+        {
+          text: 'About'
+        },
+        {
+          text: 'Register'
+        }
+      ]
     }]
 };

@@ -7,6 +7,7 @@
     @click.stop.left
     @mouseup.prevent.stop.left='click'
     @mouseover='hover'
+    @mouseleave="blur"
     @dblclick.left="callDblclickFunc"
     :class='{
        active: menu.isActive !== false,
@@ -14,30 +15,18 @@
        open: isOpen,
     }'
     :title='menu.title'
-    @blur='closeMenu'
+    @blur='blur'
   >
     <div v-show='menu.template != null' v-html="menu.template" />
-    <!-- <i v-show='menu.icon || showIcon' :class='"icon fas fa-align-center"'></i> -->
-    <template v-if='menu.icon'>
-      <div class='icon'>
-        <font-awesome-icon :icon="menu.icon"/>
-        </div>
-    </template>
-    <!-- For spacing purposes -->
-    <template v-else-if='showIcon'>
-      <i class='icon' />
-    </template>
     <div v-show='menu.text' class='text text-first'>{{firstLetter}}</div>
     <div v-show='menu.text' class='text text-rest'>{{rest}}</div>
     <div v-show='showArrow' class="arrow">&gt;</div>
-    <div v-show='menu.children' class="dropdown" :class='{ open: isOpen}'>
+    <div v-show='menu.children' class="dropdown" :class='{ open: isOpen, submenu: isSubMenu}'>
       <menu-el
         v-for="item in menu.children"
-        :menu='item'
-        :showIcon='menu.showIcon'
+        :menu-prop='item'
+        :parent-menu='menu'
         :key='item.id'
-        :rootPanel='rootPanel'
-        :parent-menu="menu"
         @open="openChild(item)"
       />
     </div>
@@ -45,121 +34,80 @@
 </template>
 
 <script>
-import Vue from 'vue';
-
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-
-import {faAlignCenter}          from '@fortawesome/free-solid-svg-icons/faAlignCenter'
-import {faTimes}                from '@fortawesome/free-solid-svg-icons/faTimes'
-import {faWindowClose}          from '@fortawesome/free-regular-svg-icons/faWindowClose'
-import {faWindowMinimize}       from '@fortawesome/free-regular-svg-icons/faWindowMinimize'
-import {faWindowRestore}        from '@fortawesome/free-regular-svg-icons/faWindowRestore'
-
-library.add(
-  faAlignCenter,
-  faTimes,
-  faWindowClose,
-  faWindowMinimize,
-  faWindowRestore,
-)
+import MenuElement from '../models/MenuElement'
 
 export default {
   name: 'MenuEl',
-  components: {
-    FontAwesomeIcon
-  },
   props: {
-    menu: {
-      type: [Object, String],
-      default: () => {}
-    },
-    showIcon: {},
-    dblclickFunc: {},
-    enabled: {
-      default: true,
-    },
-    disabled: {
-      default: false,
-    },
-    rootPanel: {},
-    parentMenu: {
+    menuProp: {
       type: Object,
-      default: null
+      required: true
+    },
+    parentMenu: {
+      type: MenuElement,
+      default: () => null
+    },
+    dblclickFunc: {},
+  },
+  data() {
+    let menu = this.menuProp
+    if (menu.constructor.name !== MenuElement.name)
+      menu = new MenuElement(this.menuProp, this.parentMenu)
+    return {
+      menu
     }
   },
   computed: {
+    isOpen() {
+      return this.menu.open
+    },
     ref() {
-      return this.menu ? this.menu.ref : null;
+      return this.menu ? this.menu.ref : null
     },
     hasChildren() {
-      return this.menu.children != null && this.menu.children.length > 0;
+      return this.menu.children != null && this.menu.children.length > 0
     },
     showArrow() {
-      return this.parentMenu && this.hasChildren;
+      return this.parentMenu && this.hasChildren
     },
     isActive() {
-      if (!this.rootPanel) return false;
-      return this.rootPanel.activeMenu === this.menu;
+      if (!this.rootPanel) return false
+      return this.rootPanel.activeMenu === this.menu
     },
     isDisabled() {
-      if (!this.menu) {
-        return false;
-      }
-      return Boolean(this.menu.disabled);
-    },
-    isOpen() {
-      if (!this.rootPanel) return false;
-      return this.rootPanel.isMenuOpen && this.isActive;
+      if (!this.menu) return false
+      return Boolean(this.menu.disabled)
     },
     firstLetter() {
-      if (this.menu.text == null) {
-        return '';
-      }
-      return this.menu.text.substring(0, 1);
+      if (!this.menu.text) return ''
+      return this.menu.text.substring(0, 1)
     },
     rest() {
-      if (this.menu.text == null) {
-        return '';
-      }
-      return this.menu.text.substring(1);
+      if (!this.menu.text) return ''
+      return this.menu.text.substring(1)
     },
+    isSubMenu() {
+      return this.parentMenu
+    }
   },
   methods: {
     callDblclickFunc() {
       if (this.dblclickFunc != null) {
-        this.dblclickFunc();
+        this.dblclickFunc()
       }
     },
-    openChild(item) {},
+    openChild() {},
     click(ev) {
-      if (this.isDisabled) {
-        return;
-      }
-      if (this.menu.action) {
-        this.menu.action(this.menu.clickData, ev);
-        if (!this.rootPanel) return;
-        Vue.set(this.rootPanel, 'isMenuOpen', false);
-      } else {
-        if (!this.rootPanel) return;
-        Vue.set(this.rootPanel, 'activeMenu', this.menu);
-        Vue.set(this.rootPanel, 'isMenuOpen', !this.rootPanel.isMenuOpen);
-      }
-      this.menu.open = true
-      this.$emit('open')
+      this.menu.click(ev)
     },
-    closeMenu() {
-      this.rootPanel.isMenuOpen = false;
+    blur() {
+      this.menu.open = false
     },
     hover() {
-      if (this.isDisabled) {
-        return;
-      }
-      if (this.rootPanel == null) return;
-      Vue.set(this.rootPanel, 'activeMenu', this.menu);
+      this.menu.hover()
     },
   },
-};
+}
 </script>
 
 <style scoped>
@@ -191,7 +139,7 @@ export default {
     text-align: center;
 }
 /* .icon:hover {
-  background-color: #EEE;
+  background-color: #EEE
 } */
 .menu.open {
     box-shadow: none;
@@ -209,12 +157,17 @@ export default {
   width: max-content;
 }
 
+.dropdown.submenu {
+  top: 0;
+  left: 100%;
+}
+
 .dropdown .menu:hover {
   background-color: rgba(0,123,255,.25);
 }
 
 .dropdown > .menu {
-  /* width: max-content; */
+  /* width: max-content */
   max-width: 20rem;
   width: 100%;
 }
@@ -253,24 +206,24 @@ export default {
 }
 
 .dropdown {
-    display: none;
-    margin: 0px;
-    padding: 3px;
-    transform: translate3d(0px, 0px, 0px) !important;
-    border-radius: 0px;
-    box-shadow: 1px 1px 1px 1px #00000057;
-    background-color: hsla(0, 0%, 97%, 1);
-    position: absolute;
-    top: 100%;
-    left: 0;
-    z-index: 1000;
-    float: left;
-    min-width: 10rem;
-    color: #212529;
-    text-align: left;
-    list-style: none;
-    background-clip: padding-box;
-    border: 1px solid rgba(0,0,0,.15);
+  display: none;
+  margin: 0px;
+  padding: 3px;
+  transform: translate3d(0px, 0px, 0px) !important;
+  border-radius: 0px;
+  box-shadow: 1px 1px 1px 1px #00000057;
+  background-color: hsla(0, 0%, 97%, 1);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  float: left;
+  min-width: 10rem;
+  color: #212529;
+  text-align: left;
+  list-style: none;
+  background-clip: padding-box;
+  border: 1px solid rgba(0,0,0,.15);
 }
 
 .focussed {

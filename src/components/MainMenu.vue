@@ -9,7 +9,6 @@
         />
         <div class='spacer'/>
     </div>
-
 </template>
 
 <script>
@@ -26,27 +25,10 @@ export default {
       type: Array,
       default: () => []
     },
-    state: {
-      type: Object,
-      default: () => {
-        return {
-          panelsMaximized: false,
-          mainMenuPadding: '5px'
-        }
-      }
-    }
-  },
-  data() {
-    return {
-      windowDescs: this.state.windowDescs
-    }
   },
   computed: {
-    panelsMaxed() {
-      return this.state.panelsMaximized;
-    },
     menuElStyle() { return {
-      padding: this.state.mainMenuPadding,
+      padding: '5px'
     }},
   }
 }

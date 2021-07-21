@@ -32,14 +32,15 @@
             @dragover='dragOver'
             @dragenter="dragEnterTab(index, $event)"
           >
-            {{ childPanel.$component.myTitle }}
+            {{ childPanel && childPanel.$component ? childPanel.$component.myTitle : 'abc' }}
             <span style='width: 20px; display: flex; margin-left: 5px;'>
-              <font-awesome-icon
+              x
+              <!-- <font-awesome-icon
                 class='closeButton'
                 @click.left.stop.prevent='closePanel(index)'
                 icon="times"
                 style='width: 20px'
-              />
+              /> -->
             </span>
           </span>
           <span style='flex: 1 1 auto' />
@@ -104,12 +105,13 @@
         >
           {{ title(panel) }}
           <span style='width: 20px; display: flex; margin-left: 5px;'>
-            <font-awesome-icon
+            x
+            <!-- <font-awesome-icon
               class='closeButton'
               @click.left.stop.prevent='closePanel(index)'
               icon="times"
               style='width: 20px'
-            />
+            /> -->
           </span>
         </span>
         <span style='flex: 1 1 auto' />
@@ -436,7 +438,7 @@ export default {
       return out;
     },
     myTitle() {
-      if (this?.panel?.$component?.activeChild?.$component?.myTitle) return this.panel.$component.activeChild.$component.myTitle
+      if (this?.panel?.$component?.activeChild?.$component) return this.panel.$component.activeChild.$component.myTitle
       if (this.panel.title) return this.panel.title;
       if (this.$refs.content && this.$refs.content.title) return this.$refs.content.title;
       if (this.panel.type && typeof this.panel.type === 'string') return this.panel.type + ': ' + JSON.stringify(this.panel.props);

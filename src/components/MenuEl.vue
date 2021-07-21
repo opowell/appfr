@@ -1,36 +1,50 @@
 <template>
   <div v-if='menu === "divider"' class="divider" />
-  <span
-    v-else :ref='ref'
-    class="menu"
-    @mousedown.prevent.stop.left
-    @click.stop.left
-    @mouseup.prevent.stop.left='click'
-    @mouseover='hover'
-    @mouseleave="blur"
-    @dblclick.left="callDblclickFunc"
-    :class='{
-       active: isActive,
-       disabled: isDisabled,
-       open: isOpen,
-    }'
-    :title='title'
-    @blur='blur'
-  >
-    <div v-if='menu && menu.template != null' v-html="menu.template" />
-    <div v-if='menu && menu.text' class='text text-first'>{{firstLetter}}</div>
-    <div v-if='menu && menu.text' class='text text-rest'>{{rest}}</div>
-    <div v-if='showArrow' class="arrow">&gt;</div>
-    <div v-if='menu && menu.children' class="dropdown" :class='{ open: isOpen, submenu: isSubMenu}'>
-      <menu-el
-        v-for="item in menu.children"
-        :menu-prop='item'
-        :parent-menu='menu'
-        :key='item.id'
-        @open="openChild(item)"
-      />
-    </div>
-  </span>
+  <div v-else style="display: flex" :class="classObj">
+    <span
+      ref='children'
+      class="menu label"
+      @mousedown.prevent.stop.left
+      @click.stop.left
+      @mouseup.prevent.stop.left='click'
+      @mouseover.stop='hover'
+      @mouseleave.stop="blur"
+      @dblclick.left="callDblclickFunc"
+      :class='{
+        active: isActive,
+        disabled: isDisabled,
+        open: isOpen,
+      }'
+      :title='title'
+    >
+      <div v-if='menu && menu.text' class='text text-first'>{{firstLetter}}</div>
+      <div v-if='menu && menu.text' class='text text-rest'>{{rest}}</div>
+      <div v-if='showArrow' class="arrow">&gt;</div>
+    </span>
+    <span
+      class="menu children"
+      @mouseover.stop='hover'
+      @mouseleave.stop="blurChildren"
+      :class='{
+        active: isActive,
+        open: isOpen,
+      }'
+    >
+      <div v-if='hasChildren' 
+        class="dropdown"
+        :class='{ open: isOpen, submenu: isSubMenu}'
+      >
+        <menu-el
+          v-for="item in menu.children"
+          :menu-prop='item'
+          :parent-menu='menu'
+          :key='item.id'
+          @open="openChild(item)"
+        />
+      </div>
+    </span>
+  </div>
+
 </template>
 
 <script>
@@ -70,10 +84,10 @@ export default {
       return (this.menu && this.menu.ref) ? this.menu.ref : 'menu'
     },
     hasChildren() {
-      return this.menu.children != null && this.menu.children.length > 0
+      return this.menu && this.menu.children && this.menu.children.length
     },
     showArrow() {
-      return this.parentMenu && this.hasChildren
+      return this.hasChildren && !this.openDown
     },
     isActive() {
       if (!this.menu) return false
@@ -91,8 +105,25 @@ export default {
       if (!this.menu.text) return ''
       return this.menu.text.substring(1)
     },
+    classObj() {
+      return {
+        openDown: this.openDown,
+        openRight: !this.openDown
+      }
+    },
     isSubMenu() {
-      return this.parentMenu
+      return !!this.parentMenu
+    },
+    openDown() {
+      return this.menu.openDown || !this.parentMenu 
+    }
+  },
+  mounted() {
+    if (!this.menu.parentMenu) {
+      const self = this
+      window.addEventListener("click", function(event) {
+        self.menu.setOpen(false)
+      });
     }
   },
   methods: {
@@ -106,10 +137,13 @@ export default {
       this.menu.click(ev)
     },
     blur(ev) {
+      // console.log(ev, this.ref, this.$refs[this.ref], ev.target, this.$refs[this.ref].contains(ev.toElement))
       if (this.$refs[this.ref]) {
-        if (this.$refs[this.ref].contains(ev.target)) return
+        if (this.$refs[this.ref].contains(ev.toElement)) return
       }
       this.menu.blur()
+    },
+    blurChildren() {
     },
     hover() {
       this.menu.hover()
@@ -119,6 +153,19 @@ export default {
 </script>
 
 <style scoped>
+
+.openDown {
+  flex-direction: column;
+}
+
+.openRight {
+  flex-direction: row;
+}
+
+.openRight .submenu {
+  top: -4px;
+}
+
 .icon {
   padding: 0.5rem;
   cursor: default;
@@ -135,43 +182,43 @@ export default {
 }
 
 .shortcut {
-    padding: var(--menuTextPadding);
-    margin-left: 6px;
+  padding: var(--menuTextPadding);
+  margin-left: 6px;
+}
+
+.menu.label {
+  padding: 2px 5px;
+  flex: 1 1 auto;
 }
 
 .arrow {
-    width: 20px;
-    position: relative;
-    padding-left: 3px;
-    padding-right: 3px;
-    text-align: center;
+  width: 20px;
+  position: relative;
+  padding-left: 3px;
+  padding-right: 3px;
+  text-align: center;
 }
 /* .icon:hover {
   background-color: #EEE
 } */
 .menu.open {
-    box-shadow: none;
-    outline: none;
+  box-shadow: none;
+  outline: none;
+  background-color: rgb(0, 122, 255);
 }
+
 .active {
   color: black;
 }
-.dropdown {
-  z-index: 1000;
+
+.label.open {
+  color: #fff;
 }
+
 .dropdown.open {
   display: flex;
   flex-direction: column;
   width: max-content;
-}
-
-.dropdown.submenu {
-  top: 0;
-  left: 100%;
-}
-
-.dropdown .menu:hover {
-  background-color: rgba(0,123,255,.25);
 }
 
 .dropdown > .menu {
@@ -205,6 +252,10 @@ export default {
   padding-right: 0px;
 }
 
+.menu.children {
+  border: 0;
+}
+
 .text-rest {
   flex: 1 1 auto;
   padding-left: 0px;
@@ -215,22 +266,11 @@ export default {
 
 .dropdown {
   display: none;
-  margin: 0px;
-  padding: 3px;
-  transform: translate3d(0px, 0px, 0px) !important;
-  border-radius: 0px;
-  box-shadow: 1px 1px 1px 1px #00000057;
-  background-color: hsla(0, 0%, 97%, 1);
+  padding-top: 3px;
+  padding-bottom: 3px;
+  background-color: #f0f0f0;
   position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 1000;
-  float: left;
   min-width: 10rem;
-  color: #212529;
-  text-align: left;
-  list-style: none;
-  background-clip: padding-box;
   border: 1px solid rgba(0,0,0,.15);
 }
 

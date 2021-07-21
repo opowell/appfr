@@ -1,15 +1,19 @@
 type MenuType = {
   children: Menu[]
+  childrenOpenDown: boolean
   disabled: boolean
   open: boolean
+  openDown: boolean
   openOnHover: boolean
   text: String
 }
 
 export default class Menu {
   children: Menu[]
+  childrenOpenDown: boolean
   disabled: boolean
   open: boolean
+  openDown: boolean
   openOnHover: boolean
   parent: Menu | undefined
   text: String
@@ -17,21 +21,26 @@ export default class Menu {
   activeMenu: Menu | undefined
   ref: any
   constructor({
+    children,
+    childrenOpenDown = false,
     disabled,
     text,
-    children,
     open,
+    openDown,
     openOnHover
   }: MenuType, parent: Menu | undefined) {
     this.children = []
+    this.childrenOpenDown = childrenOpenDown
     this.disabled = disabled
     this.open = open
+    this.openDown = openDown
     this.openOnHover = openOnHover
     this.parent = parent
     this.text = text
     this.class = 'parsed'
     for (const i in children) {
       const child = children[i]
+      if (childrenOpenDown) child.openDown = childrenOpenDown
       this.children.push(new Menu(child, this))
     }
   }
@@ -50,7 +59,8 @@ export default class Menu {
   }
 
   blur() {
-    if (this.openOnHover) this.setOpen(false)
+    if (this.activeMenu) this.activeMenu.setOpen(false)
+    this.clearActiveMenu()
   }
 
   click() {
@@ -63,8 +73,8 @@ export default class Menu {
   }
 
   setOpen(open: boolean = true) {
-    console.log('set open', open, this)
     this.open = open
+    this.clearActiveMenu()
     if (this.parent)
       if (open)
         this.parent.setActiveMenu(this)
@@ -73,12 +83,16 @@ export default class Menu {
   }
 
   setActiveMenu(menu: Menu) {
-    if (this.activeMenu) this.activeMenu.setOpen(false)
+    if (this.activeMenu && this.activeMenu !== menu) this.activeMenu.setOpen(false)
     this.activeMenu = menu
     this.open = true
   }
 
   clearActiveMenu() {
+    if (this.activeMenu) {
+      this.activeMenu.clearActiveMenu()
+      this.activeMenu.open = false
+    }
     this.activeMenu = undefined
   }
 }

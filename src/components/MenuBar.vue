@@ -1,11 +1,10 @@
 <template>
     <div class='main-menu no-text-select'>
         <menu-el
-          v-for='menuEl in menu'
+          v-for='menuEl in parentMenu.children'
             :key='menuEl.text'
-            :menu='menuEl'
-            :style='menuElStyle'
-            :root-panel="menu"
+            :menu-prop='menuEl'
+            :parent-menu="parentMenu"
         />
         <div class='spacer'/>
     </div>
@@ -14,9 +13,10 @@
 <script>
 
 import MenuEl from './MenuEl'
+import Menu from '../models/Menu'
 
 export default {
-  name: 'MainMenu',
+  name: 'MenuBar',
   components: {
     MenuEl,
   },
@@ -26,11 +26,22 @@ export default {
       default: () => []
     },
   },
-  computed: {
-    menuElStyle() { return {
-      padding: '5px'
-    }},
-  }
+  data() {
+    return {
+      parentMenu: {}
+    }
+  },
+  mounted() {
+    this.parentMenu = new Menu({
+      children: this.menu,
+      childrenOpenDown: true
+    })
+
+    const self = this
+    window.addEventListener("click", function(event) {
+      self.parentMenu.setOpen(false)
+    });
+  },
 }
 </script>
 

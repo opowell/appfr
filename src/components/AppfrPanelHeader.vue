@@ -2,7 +2,7 @@
   <div style='display: flex; align-items: center'>
     <menu-el
       :dblclickFunc="emitClose"
-      :menu='menu'
+      :menuProp='menu'
       :rootPanel='rootPanel'
     />
     <slot name="title">
@@ -12,12 +12,13 @@
       v-if='panel.showHeaderClose'
       style='width: 20px; display: flex; margin-left: 5px;'
     >
-      <font-awesome-icon
+      x
+      <!-- <font-awesome-icon
         class='title-bar-icon'
         @click.left.stop.prevent='emitClose'
         icon="times"
         style='width: 20px'
-      />
+      /> -->
     </span>
   </div>
 </template>

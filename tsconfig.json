@@ -33,7 +33,7 @@
     "src/**/*.vue",
     "tests/**/*.ts",
     "tests/**/*.tsx"
-, "src/models/Menu.ts", "src/stories/Menu.stories.js"  ],
+, "src/models/Menu.ts", "src/stories/MenuBar.stories.js"  ],
   "exclude": [
     "node_modules"
   ]

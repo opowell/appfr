@@ -1,66 +1,23 @@
-import MainMenu from "../components/MainMenu";
+import MenuEl from '../components/MenuEl.vue'
 
 export default {
   title: 'Menu',
-  component: MainMenu,
-  argTypes: {
-  },
+  component: MenuEl,
+  argTypes: {},
 };
 
 const Template = (args, { argTypes }) => ({
+  components: { MenuEl },
   props: Object.keys(argTypes),
-  components: { MainMenu },
-  template: '<main-menu v-bind="$props" />',
+  template: '<div style="display: flex"><menu-el v-bind="$props" /></div>',
 });
 
-export const Simple = Template.bind({});
-Simple.args = {
-  menuProp: [
-    {
-      text: 'File',
-      children: [
-        {
-          text: 'New',
-          action: x => {
-            console.log('click', x)
-          }
-        },
-        {
-          text: 'Open'
-        },
-        {
-          text: 'View',
-          children: [
-            {
-              text: 'View 1'
-            },
-            {
-              text: 'View 2'
-            }
-          ]
-        }
-      ]
-    },
-    {
-      text: 'Edit',
-      children: [
-        {
-          text: 'Copy'
-        },
-        {
-          text: 'Paste'
-        }
-      ]
-    },
-    {
-      text: 'Help',
-      children: [
-        {
-          text: 'About'
-        },
-        {
-          text: 'Register'
-        }
-      ]
-    }]
-};
+import StandardMenu from './StandardMenu'
+
+export const Menu = Template.bind({})
+Menu.args = {
+  menuProp: {
+    text: 'Menu',
+    children: StandardMenu  
+  }
+}

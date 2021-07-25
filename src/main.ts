@@ -10,11 +10,6 @@ import {faWindowClose}          from '@fortawesome/free-regular-svg-icons/faWind
 import {faWindowMinimize}       from '@fortawesome/free-regular-svg-icons/faWindowMinimize'
 import {faWindowRestore}        from '@fortawesome/free-regular-svg-icons/faWindowRestore'
 
-import MyPanelA from "./examples/ex1/MyPanelA";
-import MyPanelB from "./examples/ex1/MyPanelB";
-Vue.component('my-panel-a', MyPanelA)
-Vue.component('my-panel-b', MyPanelB)
-
 library.add(
   faAlignCenter,
   faTimes,

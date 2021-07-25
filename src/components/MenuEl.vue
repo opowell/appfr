@@ -24,7 +24,6 @@
     <span
       class="menu children"
       @mouseover.stop='hover'
-      @mouseleave.stop="blurChildren"
       :class='{
         active: isActive,
         open: isOpen,
@@ -39,7 +38,6 @@
           :menu-prop='item'
           :parent-menu='menu'
           :key='item.id'
-          @open="openChild(item)"
         />
       </div>
     </span>
@@ -115,16 +113,21 @@ export default {
       return !!this.parentMenu
     },
     openDown() {
+      if (!this.menu) return false
       return this.menu.openDown || !this.parentMenu 
     }
   },
   mounted() {
-    if (!this.menu.parentMenu) {
-      const self = this
+    const self = this
+    if (this.menu && !this.menu.parentMenu) {
       window.addEventListener("click", function(event) {
         self.menu.setOpen(false)
-      });
+      })
     }
+    if (this.menu)
+      window.addEventListener("closeMenus", function(event) {
+        self.menu.setOpen(false)
+      })
   },
   methods: {
     callDblclickFunc() {
@@ -132,9 +135,11 @@ export default {
         this.dblclickFunc()
       }
     },
-    openChild() {},
     click(ev) {
-      this.menu.click(ev)
+      if (this.menu.disabled) return
+      const newState = !this.menu.open
+      window.dispatchEvent(new CustomEvent('closeMenus'))
+      this.menu.setOpen(newState)
     },
     blur(ev) {
       // console.log(ev, this.ref, this.$refs[this.ref], ev.target, this.$refs[this.ref].contains(ev.toElement))
@@ -142,8 +147,6 @@ export default {
         if (this.$refs[this.ref].contains(ev.toElement)) return
       }
       this.menu.blur()
-    },
-    blurChildren() {
     },
     hover() {
       this.menu.hover()
@@ -219,6 +222,7 @@ export default {
   display: flex;
   flex-direction: column;
   width: max-content;
+  z-index: 1;
 }
 
 .dropdown > .menu {

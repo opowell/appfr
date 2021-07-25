@@ -1,6 +1,6 @@
 <template>
   <div 
-    v-if="panel.children"
+    v-if="panelObj.children.length"
     :style="styleObj"
     class='appfr-panel'
     @mousedown.left.stop='clickWindow($event)'
@@ -12,19 +12,18 @@
       <appfr-panel-header
         v-if="showHeaderComputed"
         style="flex: 0 0 auto"
-        :rootPanel="rootPanel"
-        :panel="panel"
+        :show-close="panelObj.showHeaderClose"
         :menu="menu"
         @close="close"
         id='tabs-header'
       >
         <template v-slot:title v-if="panel.display === DISPLAY.TABS">
           <span
-            v-for='(childPanel, index) in panel.children'
+            v-for='(childPanel, index) in panelObj.children'
             :key='childPanel.id'
             class='tab tabHover'
-            :class='{"selected": isSelected(childPanel)}'
-            @mousedown.left.stop.prevent='setActiveChildIndex(index)'
+            :class='{"selected": index === panelObj.activeChildIndex}'
+            @mousedown.left.stop.prevent='panelObj.setActiveChild(index)'
             draggable="true"
             @dragstart='dragStart($event, childPanel)'
             @dragleave="dragLeaveTab($event, index)"
@@ -32,7 +31,7 @@
             @dragover='dragOver'
             @dragenter="dragEnterTab(index, $event)"
           >
-            {{ childPanel && childPanel.$component ? childPanel.$component.myTitle : 'abc' }}
+            {{ childPanel.title }}
             <span style='width: 20px; display: flex; margin-left: 5px;'>
               x
               <!-- <font-awesome-icon
@@ -48,18 +47,18 @@
       </appfr-panel-header>
 
       <div :style='childContainerStyle'>
-        <template v-for="(childPanel, index) in panel.children">
+        <template v-for="(childPanel, index) in panelObj.children">
           <appfr-panel
             :panel="childPanel"
             :key="childPanel.id"
-            :isLastPanel='index === panel.children.length - 1'
-            :parentPanel='panel'
+            :isLastPanel='index === panelObj.children.length - 1'
+            :parent-panel='panelObj'
             :indexOnParent='index'
             class='area flex-child'
           />
           <div 
             class="adjuster"
-            v-if="showAdjusters && index < panel.children.length - 1"
+            v-if="showAdjusters && index < panelObj.children.length - 1"
             :key="'adjuster' + index"
             :style='adjusterStyle'
             @mousedown.left.stop.prevent='startAdjust(childPanel, $event)'
@@ -86,8 +85,7 @@
     <appfr-panel-header
       v-if="hasHeader"
       style="flex: 0 0 auto"
-      :rootPanel="rootPanel"
-      :panel="panel"
+      :show-close="panel.showHeaderClose"
       :menu="menu"
       @close="close"
       id='tabs-header'
@@ -103,7 +101,7 @@
           @dragover='dragOver'
           @dragenter="dragEnterTab(panel, $event)"
         >
-          {{ title(panel) }}
+          {{ panelObj.title }}
           <span style='width: 20px; display: flex; margin-left: 5px;'>
             x
             <!-- <font-awesome-icon
@@ -121,24 +119,23 @@
       <div
         class='content'
         ref="content"
-        :is='panel.type'
-        v-bind='panel.props'
+        :is='panelObj.type'
+        v-bind='panelObj.props'
       />
     </div>
   </div>
 </template>
 
 <script>
-import JtSpacer from './JtSpacer.vue'
 import MenuEl from './MenuEl.vue'
 import AppfrPanelHeader from './AppfrPanelHeader.vue'
 import Vue from 'vue';
 import {DISPLAY} from "../constants";
+import Panel from '../models/Panel'
 
 export default {
   name: 'AppfrPanel',
   components: {
-    JtSpacer,
     MenuEl,
     AppfrPanelHeader,
   },
@@ -181,8 +178,12 @@ export default {
     }
   },
   data() {
+    let panelObj = this.panel
+    if (panelObj && panelObj.class !== 'parsed')
+      panelObj = new Panel(panelObj)
     return {
-      DISPLAY
+      DISPLAY,
+      panelObj
     }
   },
   computed: {
@@ -191,6 +192,7 @@ export default {
         icon: ["fas", "align-center"],
         hasParent: false,
         showIcon: true,
+        text: 'MENU',
         children: [
           {
             text: "Next Panel",
@@ -302,19 +304,20 @@ export default {
       return out;
     },
     showAdjusters() {
-      return this.panel.display === DISPLAY.ROW || this.panel.display === DISPLAY.COLUMN;
+      return this.display === DISPLAY.ROW || this.display === DISPLAY.COLUMN;
     },
     childContainerStyle() {
-      if (this.panel.display === DISPLAY.ROW || this.panel.display === DISPLAY.COLUMN) {
+      console.log('child style', this.display)
+      if (this.display === DISPLAY.ROW || this.display === DISPLAY.COLUMN) {
         return this.flexStyleObj
       }
-      if (this.panel.display === DISPLAY.TABS) {
+      if (this.display === DISPLAY.TABS) {
         return {
           display: 'flex',
           flex: '1 1 auto',
         };
       }
-      if (this.panel.display === DISPLAY.WINDOWS) {
+      if (this.display === DISPLAY.WINDOWS) {
         return {
           flex: '1 1 auto',
           position: 'relative',
@@ -322,21 +325,25 @@ export default {
       }
       return {}
     },
+    display() {
+      if (this.panelObj && this.panelObj.display) return this.panelObj.display
+      return DISPLAY.TABS
+    },
     resizable() {
-      if (this.panel.resizable != null) return this.panel.resizable
+      if (this.panelObj.resizable != null) return this.panelObj.resizable
       if (this.parentPanel != null) return this.parentPanel.display === 'windows'
       return false;
     },
     hasHeader() {
-      if (this.panel.hasHeader != null) return this.panel.hasHeader;
+      if (this.panelObj.hasHeader != null) return this.panelObj.hasHeader;
       if (this.parentPanel != null && this.parentPanel.display === 'windows') return true;
       if (this.parentPanel != null && this.parentPanel.display === 'tabs') return false;
-      if (this.panel.children == null) return true;
-      return false;
+      if (this.panelObj.children.length > 0) return true;
+      return true;
     },
     rootPanel() {
       if (this.parentPanel == null || this.parentPanel.$component == null) {
-        return this.panel;
+        return this.panelObj;
       }
       return this.parentPanel.$component.rootPanel
     },
@@ -358,21 +365,14 @@ export default {
       }
       return this.parentElement.clientHeight;
     },
-    activeChild() {
-      if (this.panel.activeChildIndex < 0 || this.panel.children == null || this.panel.activeChildIndex >= this.panel.children.length) {
-        return null;
-      } else {
-        return this.panel.children[this.panel.activeChildIndex];
-      }
-    },
     showHeaderComputed() {
       if (this.showHeader == null) {
-        return this.panel.display === DISPLAY.TABS
+        return this.display === DISPLAY.TABS
       }
       return false
     },
     adjusterStyle() {
-      let cursor = this.panel.display === DISPLAY.ROW ? 'ew-resize' : 'ns-resize';
+      let cursor = this.panelObj.display === DISPLAY.ROW ? 'ew-resize' : 'ns-resize';
       return {
         cursor,
       }
@@ -382,8 +382,8 @@ export default {
         display: "flex",
         flex: "1 1 auto",
       }
-      if (this.panel.display === DISPLAY.ROW) out["flex-direction"] = "row"
-      if (this.panel.display === DISPLAY.COLUMN) out["flex-direction"] = "column"
+      if (this.panelObj.display === DISPLAY.ROW) out["flex-direction"] = "row"
+      if (this.panelObj.display === DISPLAY.COLUMN) out["flex-direction"] = "column"
 
       return out;
     },
@@ -391,21 +391,21 @@ export default {
       let out = {}
 
       if (this.parentPanel == null) {
-        out.top = this.panel.y + 'px';
-        out.left = this.panel.x + 'px';
-        if (this.panel.display === DISPLAY.ROW) out["flex-direction"] = "row"
-        if (this.panel.display === DISPLAY.COLUMN) out["flex-direction"] = "column"
+        out.top = this.panelObj.y + 'px';
+        out.left = this.panelObj.x + 'px';
+        if (this.panelObj.display === DISPLAY.ROW) out["flex-direction"] = "row"
+        if (this.panelObj.display === DISPLAY.COLUMN) out["flex-direction"] = "column"
         out.display = 'flex';
         if (this.isLastPanel) {
           out.flex = '1 1 100px';
         } else {
-          out.flex = this.panel.flex;
+          out.flex = this.panelObj.flex;
         }
         return out;
       } 
 
       if (this.parentPanel.display === 'windows') {
-        out.zIndex = this.panel.zIndex;
+        out.zIndex = this.panelObj.zIndex;
         out.position = 'absolute';
         if (!this.parentPanel.isMaximized) {
           out.top = this.panel.y + 'px';
@@ -436,21 +436,6 @@ export default {
       }
 
       return out;
-    },
-    myTitle() {
-      if (this?.panel?.$component?.activeChild?.$component) return this.panel.$component.activeChild.$component.myTitle
-      if (this.panel.title) return this.panel.title;
-      if (this.$refs.content && this.$refs.content.title) return this.$refs.content.title;
-      if (this.panel.type && typeof this.panel.type === 'string') return this.panel.type + ': ' + JSON.stringify(this.panel.props);
-      if (this.panel.type && this.panel.type.name) return this.panel.type.name + ': ' + JSON.stringify(this.panel.props);
-      if (
-        this.panel.children != null &&
-        this.panel.activeChildIndex != null &&
-        this.panel.activeChildIndex < this.panel.children.length
-      ) {
-        return this.panel.children[this.panel.activeChildIndex].title;
-      }
-      return this.panel.id;
     },
   },
   methods: {
@@ -528,28 +513,8 @@ export default {
     setDisplay(x) {
       this.panel.display = x;
     },
-    isSelected(panel) {
-      return this.activeChild === panel;
-    },
     dragOver(ev) {
       ev.preventDefault();
-    },
-    title(panel) {
-      if (panel.title != null) return panel.title;
-      if (this.$refs.content && this.$refs.content.title) return this.$refs.content.title;
-      if (panel.type && typeof panel.type === 'string') return panel.type + ': ' + JSON.stringify(panel.props);
-      if (panel.type && panel.type.name) return panel.type.name + ': ' + JSON.stringify(panel.props);
-      if (
-        panel.children != null &&
-        panel.activeChildIndex != null &&
-        panel.activeChildIndex < panel.children.length
-      ) {
-        return this.title(panel.children[panel.activeChildIndex]);
-      }
-      return panel.id;
-    },
-    setActiveChildIndex(index) {
-      this.panel.activeChildIndex = index;
     },
     setIfNull(obj, field, value) {
       if (obj[field] == null) {
@@ -800,7 +765,7 @@ export default {
 }
 
 .tab {
-    background-color: rgb(218, 229, 235);
+    background-color: rgb(197, 207, 213);
     padding-top: 5px;
     padding-bottom: 5px;
     padding-left: 25px;

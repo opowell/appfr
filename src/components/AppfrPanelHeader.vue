@@ -1,25 +1,28 @@
 <template>
   <div style='display: flex; align-items: center'>
-    <menu-el
-      :dblclickFunc="emitClose"
-      :menuProp='menu'
-      :rootPanel='rootPanel'
-    />
+    <slot name="menu">
+      <menu-el
+        :dblclickFunc="emitClose"
+        :menu-prop='menu'
+      />
+    </slot>
     <slot name="title">
       <div class="title">{{ title }}</div>
     </slot>
-    <span 
-      v-if='panel.showHeaderClose'
-      style='width: 20px; display: flex; margin-left: 5px;'
-    >
-      x
-      <!-- <font-awesome-icon
-        class='title-bar-icon'
-        @click.left.stop.prevent='emitClose'
-        icon="times"
-        style='width: 20px'
-      /> -->
-    </span>
+    <slot name="close">
+      <span 
+        v-if='showClose'
+        style='width: 20px; display: flex; margin-left: 5px;'
+      >
+        x
+        <!-- <font-awesome-icon
+          class='title-bar-icon'
+          @click.left.stop.prevent='emitClose'
+          icon="times"
+          style='width: 20px'
+        /> -->
+      </span>
+    </slot>
   </div>
 </template>
 
@@ -31,20 +34,23 @@ export default {
   components: {
     MenuEl,
   },
-  props: [
-    'menu',
-    'rootPanel',
-    'title',
-    'panel',
-  ],
+  props: {
+    menu: {
+      type: Object,
+      default: () => undefined
+    },
+    showClose: {
+      type: Boolean,
+      default: false
+    },
+    title: {
+      type: String,
+      default: ''
+    },
+  },
   methods: {
     emitClose() {
       this.$emit('close');
-    }
-  },
-  beforeMount() {
-    if (this.panel != null && this.panel.showHeaderClose == null) {
-      this.panel.showHeaderClose = false;
     }
   }
 }

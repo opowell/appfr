@@ -38,7 +38,7 @@ export declare const MINIMIZED_GAP = 6;
 /** A group of one — a panel with no tabs beside it. */
 export declare function panelNode(id: string): WindowGroup;
 /** A group of tabs sharing one space — panels, and whole spaces beside them. */
-export declare function group(panels: WindowTab[], active?: string): WindowGroup;
+export declare function group(panels: WindowTab[], active?: string, title?: string): WindowGroup;
 /** True for a tab that is a panel rather than a whole space sharing the strip. */
 export declare const isPanelTab: (tab: WindowTab) => tab is string;
 /** A tab as a node: a panel tab is the group of one it already reads as. */
@@ -74,8 +74,10 @@ export declare const column: (children: WindowNode[], sizes?: number[], title?: 
  * becomes.
  *
  * A space shown another way is the same space: a row a host drew without a
- * title bar is still without one once it is a desktop, and one whose display
- * was fixed does not start offering to be changed for having changed.
+ * title bar is still without one once it is a desktop, one whose display was
+ * fixed does not start offering to be changed for having changed, and a space
+ * that was called something is called it in all four shapes — a named desktop
+ * tiled across is a named row, collapsed is a named strip, and back again.
  */
 export declare function spaceChrome(node: WindowNode): WindowSpace;
 /**
@@ -217,12 +219,14 @@ export declare function normalizeSizes(count: number, sizes?: number[]): number[
 /** The normalized shares of a split's children. */
 export declare const sizesOf: (node: WindowSplit) => number[];
 /**
- * Where a split's children were as windows, when it still answers for them —
- * one place per child, or nothing at all. A split that was never tiled from a
- * float has none, and one whose children have changed under it has a list that
- * no longer pairs with them, which is the same as having none.
+ * Where a space's children were as windows, when it still answers for them —
+ * one place per child, or nothing at all. A split's children are its panes and
+ * a strip's are its tabs, since both are shapes a desktop is shown in. A space
+ * that was never a desktop has none, and one whose children have changed under
+ * it has a list that no longer pairs with them, which is the same as having
+ * none.
  */
-export declare const placesOf: (node: WindowSplit) => FramePlace[] | undefined;
+export declare const placesOf: (node: WindowSplit | WindowGroup) => FramePlace[] | undefined;
 /**
  * Collapses the shapes that are indistinguishable on screen: a split with one
  * child *is* that child, and a split nested inside a split of the same
@@ -372,13 +376,17 @@ export declare function toTiled(layout: WindowNode, id: string, direction?: Spli
  * in front of a float.
  */
 /**
- * What a *space* is called on the title bar it draws for itself.
+ * What a *space* is called on the bar it draws for itself.
  *
  * A container has no tab to take a name from, so it says how it is shown —
  * which is exactly what the menu beside the name switches between, and is
  * true of a space that was never given one rather than merely plausible. A
- * layout that names it wins; a group is not a space of this kind and has no
- * such name.
+ * layout that names it wins.
+ *
+ * A strip is the one shape with nothing to say unnamed: its tabs already say
+ * what is on it, and `Tabs` beside them would name the strip after the thing
+ * the strip is. Named, it says the name — the same name it said as a row, as a
+ * column and as a desktop.
  */
 export declare function spaceTitle(node: WindowNode): string;
 export declare function nodeTitle(node: WindowNode, titleFor: (id: string) => string | undefined): string;

@@ -18,8 +18,8 @@ defineProps<{ status: RecordStatus }>()
   flex: 0 0 auto;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--dc-text-micro);
+  font-weight: var(--dc-weight-semibold);
   white-space: nowrap;
   background: var(--dc-bg-2);
   color: var(--dc-fg-2);

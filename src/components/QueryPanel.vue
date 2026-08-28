@@ -270,7 +270,7 @@ void nextTick(() => expressionField.value?.focus())
 }
 
 .dc-panel__note {
-  font-size: 10px;
+  font-size: var(--dc-text-eyebrow);
   color: var(--dc-fg-3);
 }
 
@@ -284,8 +284,8 @@ void nextTick(() => expressionField.value?.focus())
 .dc-panel__field-label {
   display: block;
   margin-bottom: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--dc-text-micro);
+  font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-1);
 }
 
@@ -298,8 +298,8 @@ void nextTick(() => expressionField.value?.focus())
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius);
   color: var(--dc-fg-0);
-  font-size: 12.5px;
-  line-height: 1.5;
+  font-size: var(--dc-text-input);
+  line-height: var(--dc-leading-input);
   outline: none;
 }
 
@@ -323,8 +323,8 @@ void nextTick(() => expressionField.value?.focus())
   max-width: 46ch;
   margin: 0;
   color: var(--dc-fg-3);
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: var(--dc-text-meta);
+  line-height: var(--dc-leading-prose);
 }
 
 .dc-entity--all .dc-entity__label {
@@ -365,7 +365,7 @@ void nextTick(() => expressionField.value?.focus())
   background: var(--dc-accent);
   border-color: var(--dc-accent);
   color: var(--dc-accent-contrast);
-  font-weight: 600;
+  font-weight: var(--dc-weight-semibold);
 }
 
 .dc-button--primary:hover:not(:disabled) {
@@ -376,7 +376,7 @@ void nextTick(() => expressionField.value?.focus())
 .dc-button--icon {
   padding: 5px 10px;
   background: var(--dc-bg-0);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
 }
 
 .dc-panel__entities {
@@ -415,9 +415,9 @@ void nextTick(() => expressionField.value?.focus())
 }
 
 .dc-entity__label {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: var(--dc-text-heading);
+  font-weight: var(--dc-weight-semibold);
+  letter-spacing: var(--dc-tracking-tight);
 }
 
 .dc-entity[data-dc-active='true'] .dc-entity__label {
@@ -425,7 +425,7 @@ void nextTick(() => expressionField.value?.focus())
 }
 
 .dc-entity__count {
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
   color: var(--dc-fg-3);
 }
 
@@ -433,9 +433,9 @@ void nextTick(() => expressionField.value?.focus())
   display: flex;
   flex-direction: column;
   gap: 3px;
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
   color: var(--dc-fg-2);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--dc-tracking-tight);
 }
 
 @container (max-width: 760px) {

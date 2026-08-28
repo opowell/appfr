@@ -37,8 +37,13 @@ type __VLS_Props = {
     tokens?: Record<string, string>;
     /**
      * `minimal`, the default, is paper, ink and hairlines with nothing else
-     * on. `auto` follows the system setting. `macos` and `windows` wear that
-     * system's typography, corners and accent, and follow its scheme too.
+     * on: no hue, no shadow, no rounded corner — the values the layout stops
+     * working without and no more. `mono-size` is that theme with its type
+     * scale collapsed too, so every word — headings, URLs, inputs, tags — is
+     * set at one size and one weight, and colour and opacity are all that
+     * separate them. `auto` follows the system setting. `macos` and `windows`
+     * wear that system's typography, corners and accent, and follow its
+     * scheme too.
      * `inherit` brings no palette at all: the shell takes the host's
      * background, text colour and font.
      */

@@ -140,9 +140,17 @@ export const Pinnable = story({ search: '?v=list', pinnable: true })
 /**
  * Every story above is the default theme, which is the minimal one: paper, ink
  * and hairlines, with no hue, no shadow and no rounded corner. What is left
- * holding the layout together is the borders and the surface steps, and a
- * status still says which it is in words.
+ * holding the layout together is the borders, the surface steps and the type
+ * scale — and a status still says which it is in words.
  *
+ * `theme="mono-size"` gives up the last of those too. Every word in the shell
+ * is set at one size and one weight, the query field included, so the only
+ * things separating a preview's heading from the label under it are colour
+ * and opacity.
+ */
+export const MonoSizeTheme = story({ search: '?v=list', theme: 'mono-size' })
+
+/**
  * `theme="dark"` is the palette that used to be the default — and, with
  * `light`, what the sliding scale of seeds and tokens was tuned against.
  */

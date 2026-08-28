@@ -34,6 +34,8 @@ export interface WindowContext {
     resizable: ComputedRef<boolean>;
     /** Smallest a pane may be dragged to, in pixels. */
     minPanelSize: ComputedRef<number>;
+    /** Whether a strip that is a named space says that name beside its tabs. */
+    spaceNames: ComputedRef<boolean>;
     /** The panel most recently focused or clicked into. */
     focused: Ref<string | null>;
     /** The panel being dragged, or `null` when nothing is in flight. */

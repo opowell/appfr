@@ -14,16 +14,28 @@ export const VIEW_KINDS = ['list', 'cards', 'grid', 'table', 'links', 'preview']
 
 /**
  * The palettes the shell ships with, the default first. `minimal` is paper,
- * ink and hairlines with nothing else on; `auto` follows the system setting;
- * `macos` and `windows` wear that operating system's typeface, corners, accent
- * and shadow, and follow its light and dark schemes the way `auto` does;
- * `inherit` brings no palette at all, taking its background, text colour and
- * font from the host so the shell blends into an app that has its own design.
+ * ink and hairlines with nothing else on — the values the layout stops working
+ * without and no more; `mono-size` is that theme with its type scale collapsed
+ * too, so every word is set at one size and one weight and only colour and
+ * opacity separate them; `auto` follows the system setting; `macos` and
+ * `windows` wear that operating system's typeface, corners, accent and shadow,
+ * and follow its light and dark schemes the way `auto` does; `inherit` brings
+ * no palette at all, taking its background, text colour and font from the host
+ * so the shell blends into an app that has its own design.
  */
-export type ShellTheme = 'minimal' | 'dark' | 'light' | 'auto' | 'macos' | 'windows' | 'inherit'
+export type ShellTheme =
+  | 'minimal'
+  | 'mono-size'
+  | 'dark'
+  | 'light'
+  | 'auto'
+  | 'macos'
+  | 'windows'
+  | 'inherit'
 
 export const SHELL_THEMES = [
   'minimal',
+  'mono-size',
   'dark',
   'light',
   'auto',

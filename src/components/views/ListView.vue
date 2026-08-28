@@ -74,7 +74,7 @@ const showEntity = computed(() => shell.isEverything.value)
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
   color: var(--dc-fg-2);
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
   white-space: nowrap;
 }
 
@@ -93,7 +93,7 @@ const showEntity = computed(() => shell.isEverything.value)
 }
 
 .dc-list__ordinal {
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   color: var(--dc-fg-3);
   text-align: right;
 }
@@ -105,13 +105,13 @@ const showEntity = computed(() => shell.isEverything.value)
 .dc-list__primary {
   display: block;
   color: var(--dc-accent);
-  font-weight: 500;
+  font-weight: var(--dc-weight-medium);
 }
 
 .dc-list__secondary {
   display: block;
   margin-top: 1px;
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   color: var(--dc-fg-3);
 }
 
@@ -120,7 +120,7 @@ const showEntity = computed(() => shell.isEverything.value)
   align-items: center;
   gap: 12px;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   color: var(--dc-fg-2);
 }
 

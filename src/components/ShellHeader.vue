@@ -139,13 +139,13 @@ const count = computed(() => {
   border-radius: var(--dc-radius-sm);
   background: var(--dc-accent-bg);
   color: var(--dc-accent);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
 }
 
 .dc-header__domain {
   flex: 0 0 auto;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--dc-text-body);
+  font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-1);
 }
 
@@ -156,17 +156,17 @@ const count = computed(() => {
   flex: 0 0 auto;
   padding-left: 12px;
   border-left: 1px solid var(--dc-line);
-  font-size: 13px;
+  font-size: var(--dc-text-body);
   white-space: nowrap;
 }
 
 .dc-header__crumb-root {
   color: var(--dc-fg-0);
-  font-weight: 600;
+  font-weight: var(--dc-weight-semibold);
 }
 
 .dc-header__count {
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
   color: var(--dc-fg-3);
 }
 
@@ -182,15 +182,15 @@ const count = computed(() => {
 
 .dc-header__query-label {
   flex: 0 0 auto;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--dc-text-eyebrow);
+  font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-3);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  text-transform: var(--dc-caps);
+  letter-spacing: var(--dc-tracking-caps-wide);
 }
 
 .dc-header__summary {
-  font-size: 11.5px;
+  font-size: var(--dc-text-code);
   color: var(--dc-fg-3);
 }
 
@@ -201,7 +201,7 @@ const count = computed(() => {
 .dc-header__chevron {
   flex: 0 0 auto;
   margin-left: auto;
-  font-size: 10px;
+  font-size: var(--dc-text-eyebrow);
   color: var(--dc-fg-3);
 }
 

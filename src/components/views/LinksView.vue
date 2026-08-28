@@ -39,7 +39,7 @@ const rows = usePresentedRows()
   background: var(--dc-bg-1);
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
-  font-size: 13px;
+  font-size: var(--dc-text-body);
   text-align: left;
   cursor: pointer;
 }
@@ -50,11 +50,11 @@ const rows = usePresentedRows()
 
 .dc-link__primary {
   color: var(--dc-accent);
-  font-weight: 500;
+  font-weight: var(--dc-weight-medium);
 }
 
 .dc-link__secondary {
-  font-size: 11.5px;
+  font-size: var(--dc-text-code);
   color: var(--dc-fg-3);
 }
 </style>

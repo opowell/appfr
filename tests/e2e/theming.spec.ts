@@ -35,6 +35,38 @@ async function paint(page: Page, token: string, host = '.dc-shell'): Promise<Rgb
 /** Perceived lightness, 0–1. Enough to say which way a ramp runs. */
 const luma = ([r, g, b]: Rgba) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
 
+/**
+ * One computed property, read off every element that renders text inside the
+ * shell. Empty elements are skipped: an inherited size on a wrapper that sets
+ * no words of its own says nothing about how the shell is set.
+ */
+const typeOf = (page: Page, property: string): Promise<string[]> =>
+  page.locator('.dc-shell').first().evaluate((root, name) => {
+    const seen: string[] = []
+    for (const el of [root, ...root.querySelectorAll('*')]) {
+      const text = Array.from(el.childNodes).some(
+        (node) => node.nodeType === Node.TEXT_NODE && node.textContent!.trim() !== '',
+      )
+      if (text) seen.push(getComputedStyle(el).getPropertyValue(name))
+    }
+    return seen
+  }, property)
+
+/**
+ * Size, weight and family off every button in the shell — the label being its
+ * own text node or sitting in a span makes no difference here. `font:
+ * inherit` on `.dc-shell button` means a button starts from the shell's own
+ * setting, so any button that reads differently was moved there deliberately,
+ * which is the thing `mono-size` is being asked about.
+ */
+const buttonType = (page: Page): Promise<string[]> =>
+  page.locator('.dc-shell').first().evaluate((root) =>
+    Array.from(root.querySelectorAll('button'), (button) => {
+      const style = getComputedStyle(button)
+      return `${style.fontSize} / ${style.fontWeight} / ${style.fontFamily}`
+    }),
+  )
+
 const styleOf = (page: Page, selector: string, property: string) =>
   page
     .locator(selector)
@@ -95,6 +127,63 @@ test.describe('Theming — the shipped themes', () => {
 
     // A status still says which it is, colour or no colour.
     await expect(page.locator('.dc-pill').first()).not.toBeEmpty()
+
+    // What the bare minimum keeps is the scale, because once the hue is gone
+    // it is the last thing separating a row's own text from what annotates it.
+    const sizes = await typeOf(page, 'font-size')
+    expect(new Set(sizes).size).toBeGreaterThan(1)
+
+    // Buttons are part of that scale rather than exempt from it: on the panel,
+    // a view picker sits a rung below the primary button beside it.
+    await openPanel(page)
+    expect(new Set(await buttonType(page)).size).toBeGreaterThan(1)
+  })
+
+  /*
+   * `mono-size` is the theme that gives that up too: one size and one weight
+   * for every word the shell sets, so the assertion is simply that the whole
+   * subtree agrees — headings, URLs, the query input, tags and all.
+   */
+  test('mono-size sets every word at one size and one weight', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--mono-size-theme')
+    await expect(page.locator('.dc-shell')).toHaveAttribute('data-dc-theme', 'mono-size')
+    await openPanel(page)
+
+    const base = await styleOf(page, '.dc-shell', 'font-size')
+    expect(base).toBe('14px')
+    expect(new Set(await typeOf(page, 'font-size'))).toEqual(new Set([base]))
+    expect(new Set(await typeOf(page, 'font-weight'))).toEqual(new Set(['400']))
+
+    // One family with it: the mono slot is the sans one, so the query
+    // expression is set at the width of the prose beside it.
+    const family = await styleOf(page, '.dc-shell', 'font-family')
+    expect(new Set(await typeOf(page, 'font-family'))).toEqual(new Set([family]))
+
+    // And no second case or second style to stand in for the missing scale.
+    expect(new Set(await typeOf(page, 'text-transform'))).toEqual(new Set(['none']))
+    expect(new Set(await typeOf(page, 'font-style'))).toEqual(new Set(['normal']))
+
+    // Buttons with the rest of it — the header trigger, the view and sort
+    // pickers, the panel's primary and icon buttons. They are the control the
+    // scale is most tempting to shrink, so they are asserted by name.
+    const buttons = await buttonType(page)
+    expect(buttons.length).toBeGreaterThan(20)
+    expect(new Set(buttons)).toEqual(new Set([`${base} / 400 / ${family}`]))
+
+    // Which leaves colour and opacity doing the separating, and they still do.
+    expect(new Set(await typeOf(page, 'color')).size).toBeGreaterThan(1)
+  })
+
+  /*
+   * Every rung resolves to `--dc-font-size` here, so unlike the px scale the
+   * other themes are drawn at, that one token rescales the whole shell.
+   */
+  test('mono-size rescales from the one token', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--mono-size-theme')
+    await page.locator('.dc-shell').evaluate((el) => {
+      ;(el as HTMLElement).style.setProperty('--dc-font-size', '18px')
+    })
+    expect(new Set(await typeOf(page, 'font-size'))).toEqual(new Set(['18px']))
   })
 
   test('auto follows the system setting, both ways', async ({ page }) => {
@@ -280,6 +369,7 @@ test.describe('Theming — surfaces that float', () => {
    */
   const stories = [
     ['minimal, the default', 'shell-data-shell--home'],
+    ['mono-size', 'shell-data-shell--mono-size-theme'],
     ['dark', 'shell-data-shell--dark-theme'],
     ['light', 'shell-data-shell--light-theme'],
     ['macos', 'shell-data-shell--macos-theme'],

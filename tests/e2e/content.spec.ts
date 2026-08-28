@@ -44,6 +44,8 @@ test.describe('Content — everything is in the results by default', () => {
     const keys = await page.locator('.dc-preview__key').allInnerTexts()
 
     // Whatever kind came first, its field names are that entity's, not generic.
+    // Compared upper-cased: whether a label is capsed is `--dc-caps`, a theme's
+    // business, and this is about which words are there.
     const expected: Record<string, string> = {
       Logs: 'TRACE ID',
       Settings: 'KEY',
@@ -51,8 +53,9 @@ test.describe('Content — everything is in the results by default', () => {
       Items: 'URL',
       Scrapers: 'HOST',
     }
-    expect(keys[0], `first record was ${kind}`).toBe(expected[kind])
-    expect(keys).not.toContain('REFERENCE')
+    const said = keys.map((key) => key.toUpperCase())
+    expect(said[0], `first record was ${kind}`).toBe(expected[kind])
+    expect(said).not.toContain('REFERENCE')
   })
 
   test('the preview pager admits it is paging a subset of the matches', async ({ page }) => {

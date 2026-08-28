@@ -80,8 +80,8 @@ function onKeydown(event: KeyboardEvent, index: number) {
   border-radius: var(--dc-radius-sm);
   background: transparent;
   color: var(--dc-fg-2);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--dc-text-meta);
+  font-weight: var(--dc-weight-medium);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -97,6 +97,6 @@ function onKeydown(event: KeyboardEvent, index: number) {
 .dc-segmented__item[data-dc-active='true'] {
   background: var(--dc-bg-3);
   color: var(--dc-fg-0);
-  font-weight: 600;
+  font-weight: var(--dc-weight-semibold);
 }
 </style>

@@ -75,8 +75,8 @@ const rows = usePresentedRows()
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--dc-text-micro);
+  font-weight: var(--dc-weight-semibold);
 }
 
 .dc-tile__chip {
@@ -92,14 +92,14 @@ const rows = usePresentedRows()
 }
 
 .dc-tile__secondary {
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
   opacity: 0.85;
 }
 
 .dc-tile__primary {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  font-size: var(--dc-text-heading);
+  font-weight: var(--dc-weight-semibold);
+  line-height: var(--dc-leading-tight);
+  letter-spacing: var(--dc-tracking-tight);
 }
 </style>

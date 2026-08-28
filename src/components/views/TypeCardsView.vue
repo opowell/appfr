@@ -119,7 +119,7 @@ const narrowed = computed(() => !shell.isPristine.value)
   padding: 40px 24px;
   color: var(--dc-fg-3);
   font-family: var(--dc-mono);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
 }
 
 .dc-type {
@@ -153,20 +153,20 @@ const narrowed = computed(() => !shell.isPristine.value)
 }
 
 .dc-type__name {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: var(--dc-text-title);
+  font-weight: var(--dc-weight-semibold);
+  letter-spacing: var(--dc-tracking-tight);
 }
 
 .dc-type__count {
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   color: var(--dc-fg-3);
 }
 
 .dc-type__go {
   margin-left: auto;
   color: var(--dc-fg-3);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   opacity: 0;
 }
 
@@ -190,8 +190,8 @@ const narrowed = computed(() => !shell.isPristine.value)
   margin: 0;
   padding: 16px;
   color: var(--dc-fg-3);
-  font-size: 13px;
-  font-style: italic;
+  font-size: var(--dc-text-body);
+  font-style: var(--dc-italic);
 }
 
 .dc-type__row {
@@ -222,13 +222,13 @@ const narrowed = computed(() => !shell.isPristine.value)
 
 .dc-type__primary {
   display: block;
-  font-size: 13px;
+  font-size: var(--dc-text-body);
   color: var(--dc-fg-0);
 }
 
 .dc-type__secondary {
   display: block;
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
   color: var(--dc-fg-3);
 }
 
@@ -241,22 +241,22 @@ const narrowed = computed(() => !shell.isPristine.value)
 }
 
 .dc-type__metric-value {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--dc-text-body);
+  font-weight: var(--dc-weight-semibold);
   color: var(--dc-accent);
 }
 
 .dc-type__metric-label {
   margin-left: 4px;
   color: var(--dc-fg-3);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: var(--dc-text-eyebrow);
+  text-transform: var(--dc-caps);
+  letter-spacing: var(--dc-tracking-caps);
 }
 
 .dc-type__date {
   color: var(--dc-fg-3);
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
 }
 
 /* In a narrow shell the date is the first thing worth dropping: the card is

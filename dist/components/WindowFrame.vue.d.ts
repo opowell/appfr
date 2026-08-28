@@ -30,6 +30,17 @@ type __VLS_Props = {
      */
     menu?: boolean;
     /**
+     * Whether a strip that *is* a named space says that name beside its tabs.
+     *
+     * A row, a column and a desktop each draw a header of their own to say it
+     * on; a strip has only its tabs, so the name goes in front of them — which
+     * is what keeps a named space named in all four of the shapes it is shown
+     * in. Off, the name is kept in the layout and said again the moment the
+     * space is shown any other way: what a strip spends on chrome is then its
+     * tabs and nothing else.
+     */
+    spaceNames?: boolean;
+    /**
      * Extends or replaces the menu a pane offers, given the items it would
      * have had: the content's own, then the window's. Return them with yours
      * appended, or something else entirely.
@@ -40,9 +51,11 @@ type __VLS_Props = {
     /** Design tokens set on the window element — `{ '--dc-surface': '#101418' }`. */
     tokens?: Record<string, string>;
     /**
-     * `minimal`, the default, is paper, ink and hairlines; `auto` follows the
-     * system setting; `macos` and `windows` wear that system's design language
-     * and follow its scheme; `inherit` brings no palette at all.
+     * `minimal`, the default, is paper, ink and hairlines with nothing else
+     * on; `mono-size` is that theme with every word set at one size and one
+     * weight; `auto` follows the system setting; `macos` and `windows` wear
+     * that system's design language and follow its scheme; `inherit` brings
+     * no palette at all.
      */
     theme?: ShellTheme;
 };
@@ -137,5 +150,6 @@ declare const _default: import("vue").DefineComponent<__VLS_PublicProps, {
     movable: boolean;
     closable: boolean;
     minPanelSize: number;
+    spaceNames: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export default _default;

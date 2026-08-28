@@ -10,9 +10,11 @@ type __VLS_Props = {
     /** Design tokens set on the bar — `{ '--dc-surface': '#101418' }`. */
     tokens?: Record<string, string>;
     /**
-     * `minimal`, the default, is paper, ink and hairlines; `auto` follows the
-     * system setting; `macos` and `windows` wear that system's design language
-     * and follow its scheme; `inherit` brings no palette at all.
+     * `minimal`, the default, is paper, ink and hairlines with nothing else
+     * on; `mono-size` is that theme with every word set at one size and one
+     * weight; `auto` follows the system setting; `macos` and `windows` wear
+     * that system's design language and follow its scheme; `inherit` brings
+     * no palette at all.
      */
     theme?: ShellTheme;
 };

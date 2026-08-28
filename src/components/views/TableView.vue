@@ -158,7 +158,7 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
 .dc-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--dc-text-body);
 }
 
 .dc-table th {
@@ -166,11 +166,11 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
   border-bottom: 1px solid var(--dc-line);
   background: var(--dc-bg-1);
   color: var(--dc-fg-2);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--dc-text-micro);
+  font-weight: var(--dc-weight-semibold);
   text-align: left;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  text-transform: var(--dc-caps);
+  letter-spacing: var(--dc-tracking-caps);
   white-space: nowrap;
 }
 
@@ -215,7 +215,7 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
   width: 52px;
   text-align: right;
   color: var(--dc-fg-3);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
 }
 
 .dc-table th.dc-table__number,
@@ -233,7 +233,7 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
 .dc-table td.dc-table__entity {
   width: 130px;
   color: var(--dc-fg-2);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
 }
 
 .dc-table__state {
@@ -242,7 +242,7 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
 
 .dc-table__muted {
   color: var(--dc-fg-3);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
 }
 
 .dc-table__open {
@@ -251,7 +251,7 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
   background: transparent;
   color: var(--dc-accent);
   font: inherit;
-  font-weight: 500;
+  font-weight: var(--dc-weight-medium);
   text-align: left;
   cursor: pointer;
 }

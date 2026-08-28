@@ -147,7 +147,7 @@ const step = (delta: number) => {
   align-items: center;
   align-self: flex-end;
   gap: 10px;
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   color: var(--dc-fg-2);
 }
 
@@ -183,9 +183,9 @@ const step = (delta: number) => {
   border-right: 1px solid var(--dc-line);
   color: color-mix(in oklab, var(--dc-scrim-fg) 40%, transparent);
   font-family: var(--dc-mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: var(--dc-text-micro);
+  text-transform: var(--dc-caps);
+  letter-spacing: var(--dc-tracking-caps-wider);
 }
 
 .dc-preview__body {
@@ -214,19 +214,19 @@ const step = (delta: number) => {
   border: 1px solid var(--dc-line);
   border-radius: 999px;
   color: var(--dc-fg-2);
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
 }
 
 .dc-preview__primary {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-size: var(--dc-text-hero);
+  font-weight: var(--dc-weight-bold);
+  line-height: var(--dc-leading-hero);
+  letter-spacing: var(--dc-tracking-hero);
 }
 
 .dc-preview__secondary {
   margin-top: 6px;
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   color: var(--dc-accent);
   word-break: break-all;
 }
@@ -248,16 +248,16 @@ const step = (delta: number) => {
 }
 
 .dc-preview__key {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--dc-text-eyebrow);
+  font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-3);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  text-transform: var(--dc-caps);
+  letter-spacing: var(--dc-tracking-caps);
 }
 
 .dc-preview__value {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--dc-text-body);
   color: var(--dc-fg-0);
 }
 
@@ -269,7 +269,7 @@ const step = (delta: number) => {
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
   color: var(--dc-fg-0);
-  font-weight: 500;
+  font-weight: var(--dc-weight-medium);
   cursor: pointer;
 }
 

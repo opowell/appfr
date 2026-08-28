@@ -280,7 +280,7 @@ results.
 | `views` | `ViewKind[]` | all six | Restricts the offered views. |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
-| `theme` | `'minimal' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all. |
+| `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `mono-size` is that theme with its type scale collapsed too, every word at one size and one weight with only colour and opacity varying; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all. |
 | `pinnable` | `boolean` | `false` | Offers the star affordance on rows. |
 | `open` | `boolean` | — | `v-model:open` to control the panel; omit and the shell holds it. |
 | `pinned` | `string[]` | — | `v-model:pinned` to control pinning; omit and the shell holds it. |
@@ -410,7 +410,8 @@ it outside the slot, in the store or composable the slot reads from.
 ### Tabs
 
 `group(['sources', 'activity', 'log'], 'activity')` puts three panels in one
-space and shows the third. The strip is an ARIA tablist: click a tab, or use
+space and shows the third; a third argument names that space, which the strip
+then says in front of its tabs. The strip is an ARIA tablist: click a tab, or use
 the arrow keys and Home/End, and the header's menu follows whichever panel is
 on top. Which tab that is lives in the tree, so it is persisted and
 restored with everything else.
@@ -716,6 +717,7 @@ is what the menu beside the name switches between — unless the node carries a
 ```ts
 row([panelNode('items'), sidebar], [0.6, 0.4], 'Workspace')
 float(frames, 'Workspace')
+group(['sources', 'activity'], undefined, 'Workspace')
 ```
 
 A name is something said about *that* space, so a named one is kept whole: it
@@ -724,6 +726,28 @@ into its only child, the way `headless` and `fixedView` are kept. Otherwise a
 name would hold only while the shape happened to stay distinguishable from its
 parent's — one pane dragged out of `Workspace` and the space would be gone,
 name and bar and all, with nothing on screen to say why.
+
+**And it survives all four shapes.** A row, a column and a desktop each draw a
+header of their own to say the name on; a strip has none — its tabs already say
+what is on it — so a named strip says the name in front of them, with a rule
+between the two. Without that, "Tabs" would be the one of the four that lost
+what the space was: the name first, and the space with it, since a space with
+nothing said about it is dissolved into the one around it as soon as it is
+spread back out.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Workspace │ Sources │ Activity │                    ⋯   │
+├─────────────────────────────────────────────────────────┤
+│  the tab on top                                         │
+```
+
+A strip carries `places` for the same reason a tiled row does: a desktop shown
+as tabs and then as a desktop again puts every window back exactly where it
+was. `space-names="false"` keeps the name out of the strip on a window too
+narrow to spend width on it — the name is still in the layout, still what makes
+that space a space of its own, and still said on the bar the moment it is shown
+as a row, a column or a desktop.
 
 Each of the four is a pure operation a host can call directly —
 `setSplitDirection`, `collapseToTabs`, `toFloat`, `toTiled`, and `collapseSpace`
@@ -901,7 +925,17 @@ most of a narrow pane on chrome, and the views a panel's *content* offers with
 [`usePaneMenu`](#items-the-content-registers) were menu items already — one
 question with two shapes. A submenu rather than items on the menu itself,
 because the four ways of showing a space are already there, and two flat groups
-of ticked choices would read as one list of eight.
+of ticked choices read as one list of eight.
+
+**The menu says which is which by naming them.** A pane's menu is about two
+things at once — the panel on top, and the tabs it is one of — so each group
+sits under a heading: the panel's own title over its views, and what the tabs
+are called over the four shapes and the two steps along them. A strip the
+layout named says that name; one it did not is *These tabs*. A space's own menu
+names its two the same way, a level up: the space over the four shapes, and the
+strip it is a tab of over the steps. A menu with one thing to be about — a pane
+of host content offering nothing but its views — is named nothing at all, since
+naming the only group there is says nothing the items under it did not.
 
 ```vue
 <WindowFrame :panels="panels" v-model:views="views" @view-change="remember" />
@@ -1047,6 +1081,7 @@ or a test without going near the DOM.
 | `minPanelSize` | `number` | `120` | Smallest a panel or a floating window may be resized to, in pixels. |
 | `closable` | `boolean` | `false` | Gives every panel a close button, which asks the host to drop it. |
 | `menu` | `boolean` | `true` | Whether the *window's* own menu items are offered — how a space is shown, a pane's tabs, its close. Items the content registered stay either way. |
+| `spaceNames` | `boolean` | `true` | Whether a strip that *is* a named space says that name beside its tabs. Off, the name is kept in the layout and said on the bar of every other shape. |
 | `paneMenu` | `(panel, items) => items` | — | Extends or replaces that menu, given the items it would have had: the content's own, then the window's. |
 | `accent`, `tokens`, `theme` | | | The same three the shell takes. |
 
@@ -1097,9 +1132,12 @@ const menus: MenuItemDef[] = [
 ```
 
 A menu is data: a `label`, an `action`, `items` for a submenu, and `disabled`,
-`checked`, `shortcut` or `separator` as needed. `shortcut` is display only —
-the hint at the right of an item — because only the host knows what else the
-key might mean.
+`checked`, `shortcut`, `separator` or `heading` as needed. `shortcut` is
+display only — the hint at the right of an item — because only the host knows
+what else the key might mean. `heading` names the items that follow it rather
+than being one of them, which is what tells two groups of ticked choices apart
+when they are about different things; it is drawn as a `role="group"` around
+what it named, so the name is heard once and the keyboard steps over it.
 
 It behaves the way a menu bar does. With one menu up, moving the pointer along
 the bar swaps to the next rather than asking for another click. The arrow keys
@@ -1116,24 +1154,51 @@ uses. Both take the shell's `theme`, `accent` and `tokens`.
 
 ## Theming
 
-Five ways in, in increasing order of effort.
+Six ways in — the first two cost nothing, and the rest run in increasing
+order of effort.
 
 Everything below applies to `<WindowFrame>` too: it takes the same three props
 and reads the same tokens.
 
 ### Nothing
 
-The default is the minimal theme: white paper, near black ink, square corners,
-no shadows, and no hue at all — the accent and the three status colours all
-resolve to the ink, since a status pill says which state it is in words and
-never needed the colour to say it.
+The default is the minimal theme, and it is the bare minimum: white paper,
+near black ink, square corners, no shadows, no tracking, no small caps, the
+two generic font families the browser already has, and no hue at all — the
+accent and the three status colours all resolve to the ink, since a status
+pill says which state it is in words and never needed the colour to say it.
 
-What it keeps is what the layout stops working without: the surface steps, the
-only thing left separating a hover from a selection once the tints have no
-colour in them, and the borders — which, with no shadow and no radius helping
-them, are weighted a little heavier than the other themes need. That is the
-whole theme; everything else is the same derivations every theme uses, so a
-seed or an accent put back on top lands exactly as it would elsewhere.
+What is left is what the layout stops working without: the surface steps, the
+only thing separating a hover from a selection once the tints have no colour
+in them; the borders — which, with no shadow and no radius helping them, are
+weighted a little heavier than the other themes need; and the type scale,
+which is the last thing telling a preview's heading from the label under it
+once the hue is gone. That is the whole theme; everything else is the same
+derivations every theme uses, so a seed or an accent put back on top lands
+exactly as it would elsewhere.
+
+### Nothing, and one size
+
+`theme="mono-size"` is the minimal theme with the type scale given up too. Not
+one family with a scale on top of it — one size, one weight, one leading, one
+width. Every role a scale would separate is the same setting: a preview's
+hero line, a column header, the count in a pill, the URL in a links row, a
+tag, the expression in the query field. Colour and opacity are the only things
+left telling them apart.
+
+```vue
+<DataShell :schema="schema" theme="mono-size" />
+```
+
+Two things follow from the collapse. The mono slot points at the sans one, so
+`.dc-mono` is left lining up numerals and nothing else. And every rung of the
+scale resolves to `--dc-font-size`, which the px scale of every other theme
+deliberately does not do — so here that one token is *the* size, and moving it
+rescales the whole shell:
+
+```vue
+<DataShell :schema="schema" theme="mono-size" :tokens="{ '--dc-font-size': '16px' }" />
+```
 
 ### A palette off the shelf
 
@@ -1202,7 +1267,7 @@ are a whole theme:
 | `--dc-ink` | `--dc-fg-0…3`, and the lift in each surface step |
 | `--dc-accent` | `--dc-accent-dim`, `--dc-accent-bg`, `--dc-accent-contrast` |
 | `--dc-ok`, `--dc-warn`, `--dc-danger` | the matching `-bg` tints |
-| `--dc-tint` | how much colour those tints carry (`10%` minimal, `24%` dark, `14%` light) |
+| `--dc-tint` | how much colour those tints carry (`10%` minimal and `mono-size`, `24%` dark, `14%` light) |
 | `--dc-sans`, `--dc-mono`, `--dc-font-size` | typography |
 | `--dc-radius-sm`, `--dc-radius`, `--dc-radius-lg` | corners |
 | `--dc-shadow`, `--dc-header-height` | — |

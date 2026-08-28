@@ -4,10 +4,14 @@
  * Theming is meant to be a sliding scale, not an all-or-nothing job:
  *
  *   1. Nothing at all. The shell ships the minimal theme: paper, ink and
- *      hairlines, with no hue, no shadow and no rounded corner. `dark`,
- *      `light` and `auto` are a prop away, and so are `macos` and `windows` —
- *      the two that dress the shell in an operating system's own design
- *      language, following that system's light and dark schemes with it.
+ *      hairlines, with no hue, no shadow and no rounded corner — the values
+ *      the layout stops working without, at the plainest setting that works,
+ *      and nothing else on top. `mono-size` is that same theme with its type
+ *      scale collapsed as well, so every word in the shell is set at one size
+ *      and one weight and only colour tells them apart. `dark`, `light` and
+ *      `auto` are a prop away, and so are `macos` and `windows` — the two that
+ *      dress the shell in an operating system's own design language, following
+ *      that system's light and dark schemes with it.
  *   2. A handful of seeds. `--dc-surface`, `--dc-ink`, `--dc-accent` and the
  *      three status hues generate everything else — surfaces, borders, muted
  *      text, tinted backgrounds. Move one and every value derived from it
@@ -36,11 +40,18 @@
  * `.dc-shell`, with no theme attribute on it at all, is the same shell the
  * default prop asks for.
  *
- * Paper, near black ink, and no hue anywhere: the accent and all three status
- * colours resolve to the ink, because a status pill says which state it is in
- * words and never needed the colour to say it. No shadow and no rounded
- * corner either. Everything left here is load bearing; `dark`, `light` and
- * `auto` put the decoration back on top.
+ * Everything here is load bearing. Paper and near black ink, and no hue
+ * anywhere: the accent and all three status colours resolve to the ink,
+ * because a status pill says which state it is in words and never needed the
+ * colour to say it. No shadow and no rounded corner, no tracking, no small
+ * caps and no italic, and two generic families rather than a typeface of its
+ * own — each of those is a flourish the layout holds together without, and
+ * the themes further down are where they come back.
+ *
+ * The type scale stays, because a scale is not decoration: telling the line a
+ * preview leads with from the label under it is the shell doing its job, and
+ * that is the last distinction left once the hue is gone. `mono-size` is the
+ * theme for a shell that gives up that one too.
  */
 
 :where(.dc-shell) {
@@ -59,9 +70,71 @@
 
   --dc-shadow: none;
 
+  /* What the browser already has. A face of the shell's own is something the
+     palettes below bring; the mono slot is real, though, because a query
+     expression and a column of figures are read by their columns lining up. */
   --dc-sans: system-ui, sans-serif;
   --dc-mono: ui-monospace, monospace;
   --dc-font-size: 14px;
+
+  /*
+   * The scale every theme is drawn at. Nothing in it is derived from
+   * `--dc-font-size`: a scale in px is what the shell was drawn at, and one
+   * that rescaled every rung the moment a host nudged the base size would be
+   * a different promise than the one the seed tier makes. `mono-size` is the
+   * theme that does tie the two together.
+   */
+
+  /* The one line a preview leads with, and the headings under it. */
+  --dc-text-hero: 24px;
+  --dc-text-title: 15px;
+  --dc-text-heading: 14px;
+
+  /* A row's own text, then everything that annotates it. */
+  --dc-text-body: 13px;
+  --dc-text-meta: 12px;
+  --dc-text-micro: 11px;
+  --dc-text-eyebrow: 10px;
+
+  /* Mono runs large for its size, so it is set half a point under the sans it
+     sits beside: `code` next to meta text, `input` next to a heading — the
+     query field being the one thing on the panel worth reading first. */
+  --dc-text-input: 12.5px;
+  --dc-text-code: 11.5px;
+
+  --dc-weight-regular: 400;
+  --dc-weight-medium: 500;
+  --dc-weight-semibold: 600;
+  --dc-weight-bold: 700;
+
+  /* The one rung that is not type setting: `1` centres a single glyph in a
+     square button. Leading is what runs between two lines of text, and a
+     button with one character in it has none. */
+  --dc-leading-flat: 1;
+
+  --dc-leading: 1.45;
+
+  /* Leading tightens as type grows: a 24px heading wrapping at 1.45 would
+     leave a stripe of paper between its lines. */
+  --dc-leading-hero: 1.2;
+  --dc-leading-tight: 1.3;
+  --dc-leading-input: 1.5;
+  --dc-leading-prose: 1.6;
+
+  /* Tracking is how a typeface is fitted to the size it is set at, and this
+     theme is not wearing one it picked. Every rung sits at `normal`; the
+     themes that bring a face of their own fit them below. */
+  --dc-tracking: normal;
+  --dc-tracking-hero: var(--dc-tracking);
+  --dc-tracking-tight: var(--dc-tracking);
+  --dc-tracking-wide: var(--dc-tracking);
+  --dc-tracking-caps: var(--dc-tracking);
+  --dc-tracking-caps-wide: var(--dc-tracking);
+  --dc-tracking-caps-wider: var(--dc-tracking);
+
+  /* Small caps and italics are two more faces to carry. */
+  --dc-caps: none;
+  --dc-italic: normal;
 
   --dc-radius-sm: 0;
   --dc-radius: 0;
@@ -125,10 +198,57 @@
 /* ---------------------------------------------------------------- variants */
 
 /*
- * What every theme with a palette of its own has in common, and the minimal
- * default does not: because each of them has a shadow or a colour helping a
- * border along, the lighter hairline the default cannot afford. Colours are
- * per theme, below.
+ * `mono-size` is the minimal theme with its type scale given up as well. Not
+ * one family with a scale on top of it: one size, one weight, one leading,
+ * one width. Every role a scale would normally separate — the line a preview
+ * leads with, a column header, the count in a pill, the URL in a links row,
+ * the expression in the query field, a tag — is the same setting here, and
+ * colour and opacity are the only things left telling them apart.
+ *
+ * Only the rungs need saying. The rest of what this theme promises it already
+ * has from the block above, which is the point of building it on the minimal
+ * one: tracking is `normal` there, `--dc-caps` is `none` and `--dc-italic` is
+ * `normal`, so no word in the shell is set in a second case or a second style
+ * either.
+ *
+ * Two things follow from the collapse. The mono slot points at the sans one,
+ * so an expression in the query field is set at the width of the prose beside
+ * it and `.dc-mono` is left lining up numerals and nothing else. And with
+ * every rung resolving to `--dc-font-size`, that token is *the* size here:
+ * move it and the whole shell rescales, which is the one thing the px scale
+ * above deliberately will not do.
+ */
+
+:where(.dc-shell[data-dc-theme='mono-size']) {
+  --dc-mono: var(--dc-sans);
+
+  --dc-text-hero: var(--dc-font-size);
+  --dc-text-title: var(--dc-font-size);
+  --dc-text-heading: var(--dc-font-size);
+  --dc-text-body: var(--dc-font-size);
+  --dc-text-input: var(--dc-font-size);
+  --dc-text-meta: var(--dc-font-size);
+  --dc-text-code: var(--dc-font-size);
+  --dc-text-micro: var(--dc-font-size);
+  --dc-text-eyebrow: var(--dc-font-size);
+
+  --dc-weight-medium: var(--dc-weight-regular);
+  --dc-weight-semibold: var(--dc-weight-regular);
+  --dc-weight-bold: var(--dc-weight-regular);
+
+  /* `--dc-leading-flat` is left where it is: `1` centres a single glyph in a
+     square button, and one character has no leading to hold to anyway. */
+  --dc-leading-hero: var(--dc-leading);
+  --dc-leading-tight: var(--dc-leading);
+  --dc-leading-input: var(--dc-leading);
+  --dc-leading-prose: var(--dc-leading);
+}
+
+/*
+ * What every theme with a palette of its own has in common, and neither of
+ * the two plain ones above does: because each of them has a shadow or a
+ * colour helping a border along, the lighter hairline the plain ones cannot
+ * afford. Colours are per theme, below.
  */
 
 :where(
@@ -141,6 +261,38 @@
   ) {
   --dc-line: color-mix(in oklab, var(--dc-surface), var(--dc-ink) 16%);
   --dc-line-2: color-mix(in oklab, var(--dc-surface), var(--dc-ink) 27%);
+}
+
+/*
+ * And the tracking, small caps and italic the minimal theme did without,
+ * because it was not wearing a typeface it had chosen. Every theme here
+ * brings one — the shell's own, or an operating system's — so this is where
+ * the fitting happens, and the list is the same as above because it is not
+ * something `macos` and `windows` differ on.
+ */
+
+:where(
+    .dc-shell[data-dc-theme='dark'],
+    .dc-shell[data-dc-theme='light'],
+    .dc-shell[data-dc-theme='auto'],
+    .dc-shell[data-dc-theme='macos'],
+    .dc-shell[data-dc-theme='windows'],
+    .dc-shell[data-dc-theme='inherit']
+  ) {
+  --dc-tracking: -0.005em;
+
+  /* Out from that base in both directions: negative to close up large type,
+     positive to open up small type and the three caps steps, which widen with
+     how little there is to read. */
+  --dc-tracking-hero: -0.02em;
+  --dc-tracking-tight: -0.01em;
+  --dc-tracking-wide: 0.01em;
+  --dc-tracking-caps: 0.06em;
+  --dc-tracking-caps-wide: 0.08em;
+  --dc-tracking-caps-wider: 0.1em;
+
+  --dc-caps: uppercase;
+  --dc-italic: italic;
 }
 
 /*
@@ -432,8 +584,8 @@
   color: var(--dc-fg-0);
   font-family: var(--dc-sans);
   font-size: var(--dc-font-size);
-  line-height: 1.45;
-  letter-spacing: -0.005em;
+  line-height: var(--dc-leading);
+  letter-spacing: var(--dc-tracking);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -459,14 +611,19 @@
 
 .dc-mono {
   font-family: var(--dc-mono);
+  /* Mono was never only about looking like code: half of what wears this class
+     is a number in a column. `mono-size` points the mono slot at the sans one,
+     so the lining has to be asked for by name — a no-op wherever the slot
+     really is monospaced, since those digits are already one width. */
+  font-variant-numeric: tabular-nums;
 }
 
 .dc-eyebrow {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--dc-text-eyebrow);
+  font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-2);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  text-transform: var(--dc-caps);
+  letter-spacing: var(--dc-tracking-caps-wide);
 }
 
 .dc-truncate {

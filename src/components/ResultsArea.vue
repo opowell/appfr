@@ -109,14 +109,14 @@ const failed = computed(() => shell.error.value !== null)
 }
 
 .dc-results__headline {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--dc-text-title);
+  font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-1);
 }
 
 .dc-results__detail {
   font-family: var(--dc-mono);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   color: var(--dc-fg-3);
 }
 
@@ -127,7 +127,7 @@ const failed = computed(() => shell.error.value !== null)
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
   color: var(--dc-fg-0);
-  font-weight: 500;
+  font-weight: var(--dc-weight-medium);
   cursor: pointer;
 }
 

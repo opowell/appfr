@@ -78,7 +78,7 @@ const showEntity = computed(() => shell.isEverything.value)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
   color: var(--dc-fg-3);
 }
 
@@ -109,13 +109,13 @@ const showEntity = computed(() => shell.isEverything.value)
 
 .dc-card__primary {
   color: var(--dc-accent);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: var(--dc-text-heading);
+  font-weight: var(--dc-weight-semibold);
+  line-height: var(--dc-leading-tight);
 }
 
 .dc-card__secondary {
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
   color: var(--dc-fg-3);
   word-break: break-all;
 }
@@ -124,7 +124,7 @@ const showEntity = computed(() => shell.isEverything.value)
   display: flex;
   gap: 16px;
   margin-top: 2px;
-  font-size: 11px;
+  font-size: var(--dc-text-micro);
   color: var(--dc-fg-2);
 }
 

@@ -167,13 +167,13 @@ function flip() {
 }
 
 .dc-facet__label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--dc-text-micro);
+  font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-1);
 }
 
 .dc-facet__hint {
-  font-size: 10px;
+  font-size: var(--dc-text-eyebrow);
   color: var(--dc-fg-3);
 }
 
@@ -190,8 +190,8 @@ function flip() {
   background: var(--dc-bg-1);
   color: var(--dc-fg-2);
   font-family: var(--dc-mono);
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: var(--dc-text-code);
+  font-weight: var(--dc-weight-medium);
   cursor: pointer;
 }
 
@@ -214,7 +214,7 @@ function flip() {
 
 .dc-facet__dash {
   color: var(--dc-fg-3);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
 }
 
 .dc-input {
@@ -225,7 +225,7 @@ function flip() {
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius);
   color: var(--dc-fg-0);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   outline: none;
 }
 
@@ -244,7 +244,7 @@ function flip() {
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius);
   color: var(--dc-fg-1);
-  font-size: 12px;
+  font-size: var(--dc-text-meta);
   text-align: left;
   cursor: pointer;
 }

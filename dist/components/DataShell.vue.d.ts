@@ -1,0 +1,103 @@
+import '../style/tokens.css';
+import type { DataSource, DomainSchema, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ViewKind } from '../types';
+import type { RouteAdapter } from '../routing/adapter';
+import type { NavigationMode } from '../composables/useQueryState';
+type __VLS_Props = {
+    /** The vocabulary the shell renders: entities, facets, labels, samples. */
+    schema: DomainSchema;
+    /**
+     * Where rows come from. Defaults to a deterministic mock source over the
+     * schema's own samples, so the shell is demonstrable — and testable — with
+     * nothing behind it.
+     */
+    source?: DataSource;
+    /**
+     * How the query reaches the URL. Defaults to an injected adapter, or a
+     * History API adapter when nothing is provided.
+     */
+    route?: RouteAdapter;
+    /** Query fields to fall back to when the URL omits them. */
+    defaults?: ShellQueryDefaults;
+    /** Maximum rows requested from the source. */
+    limit?: number;
+    /**
+     * Rows shown inside each type's card on the home screen — the most
+     * recently updated few, under the current sort.
+     */
+    previewsPerType?: number;
+    /** Restricts the offered result views. */
+    views?: ViewKind[];
+    /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
+    accent?: string;
+    /**
+     * Design tokens set on the shell element — `{ '--dc-surface': '#101418' }`.
+     * Setting a seed (`--dc-surface`, `--dc-ink`, `--dc-accent`) moves every
+     * value derived from it; setting a derived token overrides just that one.
+     */
+    tokens?: Record<string, string>;
+    /**
+     * `minimal`, the default, is paper, ink and hairlines with nothing else
+     * on. `auto` follows the system setting. `macos` and `windows` wear that
+     * system's typography, corners and accent, and follow its scheme too.
+     * `inherit` brings no palette at all: the shell takes the host's
+     * background, text colour and font.
+     */
+    theme?: ShellTheme;
+    /** Offers the star affordance on rows. */
+    pinnable?: boolean;
+    navigationMode?: NavigationMode;
+    facetNavigationMode?: NavigationMode;
+};
+type __VLS_Slots = {
+    /** Extra controls at the right end of the header bar. */
+    actions?: () => unknown;
+    /** Replaces the entire results area. */
+    results?: (props: {
+        rows: ShellRow[];
+        total: number;
+        query: ShellQuery;
+        pending: boolean;
+    }) => unknown;
+};
+declare function closePanel(): void;
+type __VLS_PublicProps = __VLS_Props & {
+    /**
+     * Both of these are optionally controlled: bind `v-model:open` or
+     * `v-model:pinned` to own the state, or leave them alone and the shell keeps
+     * it internally. `defineModel` distinguishes the two by whether the prop was
+     * actually passed, which a plain boolean prop cannot do — Vue casts an absent
+     * boolean to `false`.
+     */
+    'open'?: boolean;
+    'pinned'?: string[];
+};
+declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, {
+    query: import("vue").ComputedRef<ShellQuery>;
+    openPanel: () => void;
+    closePanel: typeof closePanel;
+}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
+    activate: (row: ShellRow) => any;
+    "query-change": (query: ShellQuery) => any;
+    "toggle-pin": (row: ShellRow) => any;
+    "update:open": (value: boolean) => any;
+    "update:pinned": (value: string[]) => any;
+}, string, import("vue").PublicProps, Readonly<__VLS_PublicProps> & Readonly<{
+    onActivate?: ((row: ShellRow) => any) | undefined;
+    "onQuery-change"?: ((query: ShellQuery) => any) | undefined;
+    "onToggle-pin"?: ((row: ShellRow) => any) | undefined;
+    "onUpdate:open"?: ((value: boolean) => any) | undefined;
+    "onUpdate:pinned"?: ((value: string[]) => any) | undefined;
+}>, {
+    limit: number;
+    previewsPerType: number;
+    theme: ShellTheme;
+    navigationMode: NavigationMode;
+    facetNavigationMode: NavigationMode;
+}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+declare const _default: __VLS_WithSlots<typeof __VLS_component, __VLS_Slots>;
+export default _default;
+type __VLS_WithSlots<T, S> = T & {
+    new (): {
+        $slots: S;
+    };
+};

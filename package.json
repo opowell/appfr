@@ -31,6 +31,7 @@
   },
   "scripts": {
     "build": "vite build && vue-tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "prepare": "npm run build",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -45,7 +46,7 @@
   "peerDependencies": {
     "@nuxt/kit": "^3.0.0 || ^4.0.0",
     "vue": "^3.4.0",
-    "vue-router": "^4.0.0"
+    "vue-router": "^4.0.0 || ^5.0.0"
   },
   "peerDependenciesMeta": {
     "@nuxt/kit": {

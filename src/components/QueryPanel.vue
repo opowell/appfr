@@ -14,6 +14,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [] }>()
 
+const slots = defineSlots<{
+  /**
+   * A section of the host application's own, after the panel's. The section
+   * element and its rules are the panel's, so it sits flush with the rest;
+   * what goes inside it is the host's business.
+   */
+  'panel-section'?: () => unknown
+}>()
+
 const shell = useShellContext()
 
 const VIEW_LABELS: Record<ViewKind, string> = {
@@ -225,6 +234,15 @@ void nextTick(() => expressionField.value?.focus())
           </span>
         </button>
       </div>
+    </section>
+
+    <!-- Last, so the panel's own vocabulary is read before the host's, and so
+         `:last-child` moves the closing border onto it. -->
+    <section
+      v-if="slots['panel-section']"
+      class="dc-panel__section"
+    >
+      <slot name="panel-section" />
     </section>
   </div>
 </template>

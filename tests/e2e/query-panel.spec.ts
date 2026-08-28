@@ -3,6 +3,7 @@ import { gotoStory, listRows, openPanel, panel, pickEntity, summary } from './st
 import { iRadarSchema } from '../../src/fixtures/schemas'
 
 const HOME_OPEN = 'shell-data-shell--home-panel-open'
+const HOST_SECTION = 'shell-data-shell--host-panel-section'
 const ENTITY = 'shell-data-shell--entity-list'
 
 test.describe('Query panel — scope', () => {
@@ -272,5 +273,20 @@ test.describe('Query panel — view and sort', () => {
     group = page.getByRole('radiogroup', { name: 'Sort field' })
     // iRadar names the first metric of `searches` "New".
     await expect(group.getByRole('radio')).toHaveText(['updated', 'score', 'new', 'name'])
+  })
+})
+
+test.describe('Query panel — host section', () => {
+  test('renders a host section last, inside the panel', async ({ page }) => {
+    await gotoStory(page, HOST_SECTION)
+    const sections = panel(page).locator('> .dc-panel__section')
+    await expect(sections).toHaveCount(4)
+    await expect(sections.last()).toContainText('App')
+    await expect(sections.last().getByRole('button', { name: 'Reload data' })).toBeVisible()
+  })
+
+  test('adds no section when the host gives none', async ({ page }) => {
+    await gotoStory(page, HOME_OPEN)
+    await expect(panel(page).locator('> .dc-panel__section')).toHaveCount(3)
   })
 })

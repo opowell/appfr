@@ -291,9 +291,28 @@ results.
 the URL has been updated, `toggle-pin(row)`, plus `update:open` and
 `update:pinned`.
 
-**Slots** — `actions` for extra controls at the right of the header bar, and
+**Slots** — `actions` for extra controls at the right of the header bar,
+`panel-section` for a section of your own at the end of the query panel, and
 `results` to replace the content area entirely (receives `rows`, `total`,
 `query`, `pending`).
+
+`panel-section` is where an application's own commands go when they are not
+about the query — the header bar's width belongs to the summary it exists to
+show, and it is trimmed before its actions are. The shell renders the section
+element, so it sits flush with Query, View and Entities above it and takes the
+divider between them; the content is yours, and `dc-eyebrow` is there for a
+heading that matches theirs:
+
+```vue
+<DataShell :schema="schema">
+  <template #panel-section>
+    <header class="app-head">
+      <span class="dc-eyebrow">App</span>
+    </header>
+    <button type="button" @click="reload">Reload data</button>
+  </template>
+</DataShell>
+```
 
 ### Composables
 

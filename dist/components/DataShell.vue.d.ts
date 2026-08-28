@@ -56,6 +56,12 @@ type __VLS_Props = {
 type __VLS_Slots = {
     /** Extra controls at the right end of the header bar. */
     actions?: () => unknown;
+    /**
+     * A section of your own at the end of the query panel — for the controls
+     * that belong to the application rather than to the query, which the header
+     * bar would otherwise have to carry beside the summary it is there to show.
+     */
+    'panel-section'?: () => unknown;
     /** Replaces the entire results area. */
     results?: (props: {
         rows: ShellRow[];

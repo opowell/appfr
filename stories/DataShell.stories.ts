@@ -1,3 +1,4 @@
+import { h } from 'vue'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import DataShell from '../src/components/DataShell.vue'
 import { delayedSource, failingSource, renderShell, themeArgTypes } from './helpers'
@@ -51,6 +52,31 @@ export const Home = story({})
 
 /** Home with the query panel open, showing what narrowing is available. */
 export const HomePanelOpen = story({ open: true })
+
+/**
+ * A host's own section at the end of the panel, through the `panel-section`
+ * slot. The section is the panel's — same metrics, same divider — and what
+ * goes in it is the host's, which is why this one styles its own heading with
+ * the `dc-eyebrow` utility and lays out its own controls.
+ *
+ * It is where an application's commands go when they are not about the query:
+ * the header bar's width belongs to the summary it exists to show.
+ */
+export const HostPanelSection = story({
+  open: true,
+  slots: {
+    'panel-section': () => [
+      h('header', { class: 'sb-panel-section__head' }, [
+        h('span', { class: 'dc-eyebrow' }, 'App'),
+        h('span', { class: 'sb-panel-section__note' }, 'the host\u2019s own controls, not the query'),
+      ]),
+      h('div', { class: 'sb-panel-section__actions' }, [
+        h('button', { type: 'button' }, 'Reload data'),
+        h('button', { type: 'button' }, 'Sign out'),
+      ]),
+    ],
+  },
+})
 
 /** More of each type per card. */
 export const HomeDeeperCards = story({ previewsPerType: 6 })

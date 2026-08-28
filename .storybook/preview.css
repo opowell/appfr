@@ -132,3 +132,26 @@ body {
 .sb-workbench > .dc-menubar {
   flex: 0 0 auto;
 }
+
+/*
+ * The host section a story puts through the `panel-section` slot. The section
+ * frame is the panel's; everything inside it is the host's to style, and this
+ * is the little that takes — a heading beside a note, and a row of controls.
+ */
+.sb-panel-section__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sb-panel-section__note {
+  font-size: 10px;
+  color: var(--dc-fg-3);
+}
+
+.sb-panel-section__actions {
+  display: flex;
+  gap: 8px;
+}
+

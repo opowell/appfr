@@ -111,6 +111,12 @@ const pinned = defineModel<string[]>('pinned', { default: () => [] })
 const slots = defineSlots<{
   /** Extra controls at the right end of the header bar. */
   actions?: () => unknown
+  /**
+   * A section of your own at the end of the query panel — for the controls
+   * that belong to the application rather than to the query, which the header
+   * bar would otherwise have to carry beside the summary it is there to show.
+   */
+  'panel-section'?: () => unknown
   /** Replaces the entire results area. */
   results?: (props: {
     rows: ShellRow[]
@@ -253,7 +259,14 @@ defineExpose({
             :panel-id="panelId"
             :views="views"
             @close="closePanel"
-          />
+          >
+            <template
+              v-if="slots['panel-section']"
+              #panel-section
+            >
+              <slot name="panel-section" />
+            </template>
+          </QueryPanel>
         </div>
       </template>
     </div>

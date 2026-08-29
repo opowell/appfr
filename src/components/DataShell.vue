@@ -11,6 +11,7 @@ import { computed, inject, nextTick, onBeforeUnmount, ref, useId, watch } from '
 import type {
   DataSource,
   DomainSchema,
+  EntitySchema,
   ShellAlign,
   ShellQuery,
   ShellQueryDefaults,
@@ -114,6 +115,12 @@ const props = withDefaults(
 const emit = defineEmits<{
   /** A row was opened. */
   activate: [row: ShellRow]
+  /**
+   * A new record of this type was asked for, from the button the entity's
+   * `create` label puts on its card. Nothing has been made: this is the
+   * request.
+   */
+  create: [entity: EntitySchema]
   /** The query changed. The URL has already been updated. */
   'query-change': [query: ShellQuery]
   'toggle-pin': [row: ShellRow]
@@ -258,6 +265,7 @@ const shell = provideShellContext({
   isPinnedId: (id) => pinnedIds.value.has(id),
   togglePin,
   activate: (row) => emit('activate', row),
+  create: (entity) => emit('create', entity),
 })
 
 /*

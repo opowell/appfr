@@ -1,6 +1,8 @@
-import { h } from 'vue'
+import { h, ref } from 'vue'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import DataShell from '../src/components/DataShell.vue'
+import { iRadarSchema } from '../src/fixtures/schemas'
+import type { DomainSchema } from '../src/types'
 import { delayedSource, failingSource, renderShell, themeArgTypes } from './helpers'
 import type { ShellStoryArgs } from './helpers'
 
@@ -92,6 +94,47 @@ export const HostPanelSection = story({
 
 /** More of each type per card. */
 export const HomeDeeperCards = story({ previewsPerType: 6 })
+
+/* ------------------------------------------------ a type you can make more of */
+
+/** iRadar, with two of its types made from the shell and the rest not. */
+const creatableSchema: DomainSchema = {
+  ...iRadarSchema,
+  entities: iRadarSchema.entities.map((entity) => {
+    if (entity.key === 'searches') return { ...entity, create: 'Start new…' }
+    if (entity.key === 'scrapers') return { ...entity, create: 'Add a scraper' }
+    return entity
+  }),
+}
+
+/** What the host was last asked for — this story's whole answer to `create`. */
+const asked = ref('nothing asked for yet')
+
+const creatable = (args: ShellStoryArgs): Story =>
+  story({
+    ...args,
+    schema: creatableSchema,
+    onCreate: (entity) => {
+      asked.value = `asked for a new ${entity.label}`
+    },
+    slots: {
+      actions: () => h('span', { class: 'sb-asked dc-mono' }, asked.value),
+    },
+  })
+
+/**
+ * `create` on an entity names what making a new one is called, and puts that
+ * button at the foot of its card. The types that named nothing do not offer
+ * it — the shell makes nothing itself, so the button is a request the host
+ * answers, the way an opened row is.
+ */
+export const HomeCreatable = creatable({})
+
+/**
+ * The same button on a type with nothing in it, which is where it does the
+ * most: a card that would otherwise be a dead end says what to do about it.
+ */
+export const HomeCreatableEmpty = creatable({ search: '?q=recall' })
 
 /**
  * A search from home narrows every card at once, and each card's count becomes

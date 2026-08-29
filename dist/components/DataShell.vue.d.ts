@@ -1,5 +1,5 @@
 import '../style/tokens.css';
-import type { DataSource, DomainSchema, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewKind } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewKind } from '../types';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
 type __VLS_Props = {
@@ -110,12 +110,14 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     closePanel: typeof closePanel;
 }, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     activate: (row: ShellRow) => any;
+    create: (entity: EntitySchema) => any;
     "query-change": (query: ShellQuery) => any;
     "toggle-pin": (row: ShellRow) => any;
     "update:open": (value: boolean) => any;
     "update:pinned": (value: string[]) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_PublicProps> & Readonly<{
     onActivate?: ((row: ShellRow) => any) | undefined;
+    onCreate?: ((entity: EntitySchema) => any) | undefined;
     "onQuery-change"?: ((query: ShellQuery) => any) | undefined;
     "onToggle-pin"?: ((row: ShellRow) => any) | undefined;
     "onUpdate:open"?: ((value: boolean) => any) | undefined;

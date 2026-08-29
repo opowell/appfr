@@ -7,7 +7,9 @@ import { useEntityPreviews } from '../../composables/useEntityPreviews'
  * The home screen: one card per item type, each naming the type, how many of
  * it there are, and its most recently updated few.
  *
- * A card's header filters the results to that type; a row opens that record.
+ * A card's header filters the results to that type; a row opens that record;
+ * and a type the schema gave a `create` label to ends with the button that
+ * asks for a new one.
  */
 const shell = useShellContext()
 
@@ -94,6 +96,22 @@ const narrowed = computed(() => !shell.isPristine.value)
           <span class="dc-type__date">{{ entry.date }}</span>
         </span>
       </button>
+
+      <!-- Under the records rather than beside the count: making one more is
+           what comes after the ones there are, and an empty card is then the
+           card that most obviously offers it. -->
+      <button
+        v-if="preview.entity.create"
+        type="button"
+        class="dc-type__new"
+        @click="shell.create(preview.entity)"
+      >
+        <span
+          class="dc-type__plus"
+          aria-hidden="true"
+        >+</span>
+        {{ preview.entity.create }}
+      </button>
     </section>
   </div>
 </template>
@@ -136,13 +154,20 @@ const narrowed = computed(() => !shell.isPristine.value)
   opacity: 0.7;
 }
 
+/* Every seam in the card, from one rule: head to rows, row to row, and the
+   last of them to the button at the foot. Drawn between the children rather
+   than under each of them, so whichever of them is last has nothing under it
+   however the card is made up. */
+.dc-type > * + * {
+  border-top: 1px solid var(--dc-line);
+}
+
 .dc-type__head {
   display: flex;
   align-items: baseline;
   gap: 10px;
   padding: 14px 16px;
   border: none;
-  border-bottom: 1px solid var(--dc-line);
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -201,14 +226,9 @@ const narrowed = computed(() => !shell.isPristine.value)
   min-height: 54px;
   padding: 10px 16px;
   border: none;
-  border-bottom: 1px solid var(--dc-line);
   background: transparent;
   text-align: left;
   cursor: pointer;
-}
-
-.dc-type__row:last-child {
-  border-bottom: none;
 }
 
 .dc-type__row:hover {
@@ -257,6 +277,35 @@ const narrowed = computed(() => !shell.isPristine.value)
 .dc-type__date {
   color: var(--dc-fg-3);
   font-size: var(--dc-text-micro);
+}
+
+/* Quieter than a row until it is reached: the records are what the card is
+   for, and this is the thing to do about them. */
+.dc-type__new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: var(--dc-fg-2);
+  font-size: var(--dc-text-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dc-type__new:hover {
+  background: var(--dc-bg-2);
+  color: var(--dc-accent);
+}
+
+.dc-type__plus {
+  font-family: var(--dc-mono);
+  color: var(--dc-fg-3);
+}
+
+.dc-type__new:hover .dc-type__plus {
+  color: var(--dc-accent);
 }
 
 /* In a narrow shell the date is the first thing worth dropping: the card is

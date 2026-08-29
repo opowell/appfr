@@ -103,6 +103,63 @@ test.describe('Home — the cards are navigation', () => {
   })
 })
 
+test.describe('Home — making a new one', () => {
+  const CREATABLE = 'shell-data-shell--home-creatable'
+
+  /** What the story says it was last asked for, from the header bar. */
+  const asked = (page: import('@playwright/test').Page) => page.locator('.sb-asked')
+
+  test('only the types that named the action offer it', async ({ page }) => {
+    await gotoStory(page, CREATABLE)
+    await expect(card(page, 'Searches').locator('.dc-type__new')).toHaveText('+ Start new…')
+    await expect(card(page, 'Scrapers').locator('.dc-type__new')).toHaveText('+ Add a scraper')
+    await expect(card(page, 'Items').locator('.dc-type__new')).toHaveCount(0)
+    await expect(card(page, 'Logs').locator('.dc-type__new')).toHaveCount(0)
+  })
+
+  test('a schema that names none puts no such button anywhere', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await expect(page.locator('.dc-type__new')).toHaveCount(0)
+  })
+
+  test('it comes after the records, at the foot of the card', async ({ page }) => {
+    await gotoStory(page, CREATABLE)
+    const searches = card(page, 'Searches')
+    const lastRow = await searches.locator('.dc-type__row').last().boundingBox()
+    const button = await searches.locator('.dc-type__new').boundingBox()
+    expect(button!.y).toBeGreaterThan(lastRow!.y)
+  })
+
+  test('pressing it asks the host, and the shell does nothing else', async ({ page }) => {
+    await gotoStory(page, CREATABLE)
+    await expect(asked(page)).toHaveText('nothing asked for yet')
+
+    await card(page, 'Searches').locator('.dc-type__new').click()
+    await expect(asked(page)).toHaveText('asked for a new Searches')
+
+    // Still home: the button neither filtered to the type nor opened anything.
+    await expect(summary(page)).toHaveText('everything · cards · updated')
+    await expect(page.locator('.dc-types')).toBeVisible()
+  })
+
+  test('each card asks for its own type', async ({ page }) => {
+    await gotoStory(page, CREATABLE)
+    await card(page, 'Scrapers').locator('.dc-type__new').click()
+    await expect(asked(page)).toHaveText('asked for a new Scrapers')
+  })
+
+  test('a card with nothing in it still offers it, under the empty line', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--home-creatable-empty')
+    const empty = card(page, 'Searches')
+    await expect(empty).toHaveAttribute('data-dc-empty', 'true')
+    await expect(empty.locator('.dc-type__empty')).toHaveText('No matches')
+
+    const line = await empty.locator('.dc-type__empty').boundingBox()
+    const button = await empty.locator('.dc-type__new').boundingBox()
+    expect(button!.y).toBeGreaterThan(line!.y)
+  })
+})
+
 test.describe('Home — cards under a query', () => {
   test('a search narrows every card, and the counts become the breakdown', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-search')

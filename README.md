@@ -236,6 +236,8 @@ const schema: DomainSchema = {
       ],
       tabs: ['Information', 'Content', 'Links'],
       samples: [['Q3 price list', 'shop.example.com/pricing']],
+      // Optional: offers a button on this type's card that asks for a new one.
+      create: 'Add an item',
     },
   ],
 }
@@ -249,6 +251,29 @@ Four worked examples ship in `header-content-layout/fixtures`: `iRadarSchema`,
 `legoSchema`, `commerceSchema`, `battleSimSchema`. Each also gets `logsEntity`
 and `settingsEntity`, which are exported on their own and are entities like any
 other — no special casing anywhere in the shell.
+
+### A type you can make more of
+
+`create` on an entity names what making a new one of it is called, and puts
+that button at the foot of its card on the home screen:
+
+```ts
+{ key: 'crawls', label: 'Crawls', create: 'Start new…', /* … */ }
+```
+
+Types that name nothing do not offer it, so the schema is where creatable and
+listed-only are told apart. The shell makes nothing itself: pressing the button
+emits `create(entity)` and stops there, exactly as opening a row emits
+`activate(row)` — where a new one is made is the host's to decide, and is
+usually a form on a route of its own.
+
+```vue
+<DataShell :schema="schema" @create="entity => router.push(`/${entity.key}/new`)" />
+```
+
+It sits under the records rather than beside the count, which is also what
+makes it worth having on a type with none: a card that would otherwise be a
+dead end says what to do about it.
 
 ### A facet a row holds several of
 
@@ -324,9 +349,9 @@ numeric comparison against one constrains nothing.
 | `navigationMode` | `'push' \| 'replace'` | `'push'` | For entity, view, sort and expression. |
 | `facetNavigationMode` | `'push' \| 'replace'` | `'replace'` | For individual facet edits. |
 
-**Events** — `activate(row)` when a row is opened, `query-change(query)` after
-the URL has been updated, `toggle-pin(row)`, plus `update:open` and
-`update:pinned`.
+**Events** — `activate(row)` when a row is opened, `create(entity)` when a
+card's create button is pressed, `query-change(query)` after the URL has been
+updated, `toggle-pin(row)`, plus `update:open` and `update:pinned`.
 
 **Slots** — `actions` for extra controls at the right of the header bar,
 `panel-section` for a section of your own at the end of the query panel, and

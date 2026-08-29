@@ -134,6 +134,16 @@ export interface EntitySchema {
   facets: FacetDef[]
   /** Detail tabs offered when a record is opened. */
   tabs: string[]
+  /**
+   * What making a new one of these is called — `'Start new…'`. Naming it puts
+   * that button at the foot of this type's card on the home screen; leaving
+   * it out means this type is not made from here.
+   *
+   * The shell makes nothing itself. It reports the press as `create`, the way
+   * it reports an opened row as `activate`, and the host decides what the
+   * button leads to.
+   */
+  create?: string
   /** Seed pairs of `[primary, secondary]` the mock source expands into rows. */
   samples: Array<readonly [string, string]>
   /** Overrides the default `updated / score / metric1 / name` sort set. */

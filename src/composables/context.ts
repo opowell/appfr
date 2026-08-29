@@ -38,6 +38,12 @@ export interface ShellContext extends QueryState {
   togglePin(row: ShellRow): void
   /** Opening a row — the shell reports it, the host decides what it means. */
   activate(row: ShellRow): void
+  /**
+   * Asking for a new record of a type, from the button {@link EntitySchema.create}
+   * puts on its card. Reported the same way, and for the same reason: making
+   * one is the host's, not the shell's.
+   */
+  create(entity: EntitySchema): void
 }
 
 export const SHELL_CONTEXT_KEY: InjectionKey<ShellContext> = Symbol('dc.shellContext')

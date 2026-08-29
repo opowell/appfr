@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import type { Page } from '@playwright/test'
+import type { FrameLocator, Page } from '@playwright/test'
 import { gotoStory } from './story'
 
 /**
@@ -13,6 +13,17 @@ interface IndexEntry {
   type: string
   title: string
   name: string
+}
+
+/**
+ * Where a story's shell is. Almost every story renders it into the story frame
+ * itself; the no-build stories frame a static page of their own — deliberately,
+ * so nothing of Storybook's build reaches it — and the shell is inside that.
+ */
+function shellFrame(page: Page, story: IndexEntry): Page | FrameLocator {
+  return story.title.startsWith('No Build')
+    ? page.frameLocator('iframe[title="header-content-layout with no build step"]')
+    : page
 }
 
 async function storyIds(page: Page): Promise<IndexEntry[]> {
@@ -32,12 +43,17 @@ test('the index lists the expected story groups', async ({ page }) => {
       'Routing / URL Bound',
       'Parts / Controls',
       'Window / Panel Grid',
+      'No Build / Static Page',
     ]),
   )
   expect(stories.length).toBeGreaterThanOrEqual(30)
 })
 
 test('every story renders without logging an error', async ({ page }) => {
+  // Every story in the index, one after another, and the no-build ones fetch a
+  // 1.8MB compiler and build their host from source before they show anything.
+  test.slow()
+
   const stories = await storyIds(page)
   const failures: string[] = []
 
@@ -55,7 +71,10 @@ test('every story renders without logging an error', async ({ page }) => {
       await page.goto(`/iframe.html?id=${story.id}&viewMode=story`)
       // Parts stories render a bare control, but still inside `.dc-shell` for
       // its tokens, so one selector covers every story.
-      await page.locator('.dc-shell').first().waitFor({ state: 'visible', timeout: 15_000 })
+      await shellFrame(page, story)
+        .locator('.dc-shell')
+        .first()
+        .waitFor({ state: 'visible', timeout: 15_000 })
     } catch (error) {
       problems.push(`did not render: ${(error as Error).message}`)
     } finally {
@@ -100,12 +119,16 @@ test('every schema story renders rows with its own vocabulary', async ({ page })
 })
 
 test('no story makes the page scroll sideways', async ({ page }) => {
+  // Every story in the index, one after another, and the no-build ones fetch a
+  // 1.8MB compiler and build their host from source before they show anything.
+  test.slow()
+
   const stories = await storyIds(page)
   const offenders: string[] = []
 
   for (const story of stories) {
     await page.goto(`/iframe.html?id=${story.id}&viewMode=story`)
-    await page.locator('.dc-shell').first().waitFor({ state: 'visible' })
+    await shellFrame(page, story).locator('.dc-shell').first().waitFor({ state: 'visible' })
     const overflows = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     )

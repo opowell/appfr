@@ -9,6 +9,18 @@ const meta = {
   component: DataShell,
   argTypes: {
     ...themeArgTypes,
+    matchWidth: {
+      control: { type: 'select' as const },
+      options: ['grow', 'shrink'],
+      description: 'Whether the panel grows to the bar, or the bar comes in to the panel.',
+      table: { defaultValue: { summary: 'grow' } },
+    },
+    headAlign: {
+      control: { type: 'select' as const },
+      options: ['left', 'center', 'right'],
+      description: 'Where the pair sits once `shrink` has narrowed them.',
+      table: { defaultValue: { summary: 'center' } },
+    },
   },
   parameters: {
     layout: 'fullscreen',
@@ -146,7 +158,7 @@ export const NoResults = story({ search: '?v=list&q=nothingmatchesthis' })
  */
 export const ScopedNoResults = story({ search: '?e=searches&v=list&q=nothingmatchesthis' })
 
-/** A single page's worth, so the limit is visible. */
+/** A short page, so the limit is visible in the rows themselves. */
 export const ShortPage = story({ search: '?e=searches&v=list', limit: 6 })
 
 /** An async source mid-flight, with the home cards still to arrive. */
@@ -157,6 +169,68 @@ export const LoadingAsList = story({ search: '?v=list', source: delayedSource(10
 
 /** A source that fails. The shell reports it rather than showing an empty list. */
 export const SourceError = story({ source: failingSource() })
+
+/* ----------------------------------------------------------------- paging */
+
+/**
+ * Forty-eight searches, twelve to a page. The header gains a step either side
+ * of where it is — `‹ 1 / 4 ›` — and the page it is on is in the URL as `p`,
+ * so a page is a link like every other state the shell can be in.
+ *
+ * There is no control until there is somewhere to go: at the default limit of
+ * fifty this same query is one page, and the bar says nothing about pages.
+ */
+export const Paged = story({ search: '?e=searches&v=list', limit: 12 })
+
+/**
+ * Further in. The list's leading column goes on counting — page three of
+ * twelve opens at 25, not back at 01 — so a row's number means its place in
+ * the whole result rather than its place on screen.
+ */
+export const LaterPage = story({ search: '?e=searches&v=list&p=3', limit: 12 })
+
+/** The end of the results, where the step forward has nowhere to go. */
+export const LastPage = story({ search: '?e=searches&v=list&p=4', limit: 12 })
+
+/**
+ * A page past the end — a bookmark to a query that has since shrunk, or a
+ * hand-edited URL. How many pages there are is a count only the source knows,
+ * so the shell corrects it once the results are in: this lands on page four
+ * with `p=4` in the URL, rather than on an empty list reading "nothing
+ * matches".
+ */
+export const PagePastTheEnd = story({ search: '?e=searches&v=list&p=99', limit: 12 })
+
+/**
+ * Paging is a position in a result set, so a change to what matched returns to
+ * the first page: open the panel here and pick a facet, and the page goes back
+ * to one. Changing the *view* does not — the same rows drawn another way are
+ * still the same rows, and page two of them is still page two.
+ */
+export const PagedInTheTableView = story({ search: '?e=items&v=table&p=2', limit: 12 })
+
+/* --------------------------------------------- the width the two of them share */
+
+/**
+ * The default. The panel grows to the bar it drops from, so the query opens
+ * over exactly the width of the summary it came from — at any size of shell,
+ * and with nothing left over at either end.
+ */
+export const PanelFillsTheBar = story({ open: true })
+
+/**
+ * The other way round: `matchWidth="shrink"` brings the *bar* in to the width
+ * the panel wants — `--dc-header-width`, 1220px — so the pair still measure
+ * the same, and a query on a very wide screen is not read corner to corner.
+ * The results below keep the shell's full width.
+ */
+export const BarComesInToThePanel = story({ open: true, matchWidth: 'shrink' })
+
+/** The narrowed pair held to the left of the shell rather than centred. */
+export const BarComesInLeft = story({ open: true, matchWidth: 'shrink', headAlign: 'left' })
+
+/** And to the right. */
+export const BarComesInRight = story({ open: true, matchWidth: 'shrink', headAlign: 'right' })
 
 /* ------------------------------------------------------------------ variants */
 

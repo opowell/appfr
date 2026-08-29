@@ -14,6 +14,7 @@ export const PARAM_VIEW = 'v'
 export const PARAM_SORT = 's'
 export const PARAM_DIR = 'd'
 export const PARAM_EXPR = 'q'
+export const PARAM_PAGE = 'p'
 export const FACET_PREFIX = 'f_'
 
 /**
@@ -23,7 +24,14 @@ export const FACET_PREFIX = 'f_'
  */
 export const ENTITY_ALL = '*'
 
-const SCALAR_PARAMS = [PARAM_ENTITY, PARAM_VIEW, PARAM_SORT, PARAM_DIR, PARAM_EXPR] as const
+const SCALAR_PARAMS = [
+  PARAM_ENTITY,
+  PARAM_VIEW,
+  PARAM_SORT,
+  PARAM_DIR,
+  PARAM_EXPR,
+  PARAM_PAGE,
+] as const
 
 const RANGE_SEPARATOR = '..'
 const CHIP_SEPARATOR = ','
@@ -166,6 +174,13 @@ export function parseQuery(
 
   const exprParam = params.get(PARAM_EXPR)
 
+  // A page below the first, a fraction, or a word is a page nobody can be on,
+  // so it reads as the first one. How far past the end a page is depends on a
+  // count only the source knows, so that is the shell's to correct, not this.
+  const pageParam = params.get(PARAM_PAGE)
+  const pageRaw = pageParam === undefined ? 1 : Number(decodeValue(pageParam))
+  const page = Number.isFinite(pageRaw) ? Math.max(1, Math.floor(pageRaw)) : 1
+
   const facets: FacetState = {}
   for (const facet of entity?.facets ?? []) {
     const raw = params.get(`${FACET_PREFIX}${facet.key}`)
@@ -179,6 +194,7 @@ export function parseQuery(
     dir,
     expr: exprParam === undefined ? '' : decodeValue(exprParam),
     facets: reconcileFacets(entity, facets),
+    page,
   }
 }
 
@@ -217,6 +233,10 @@ export function serializeQuery(
     const encoded = serializeFacetValue(value, facet)
     if (encoded !== null) owned.push([`${FACET_PREFIX}${facet.key}`, encodeValue(encoded)])
   }
+
+  // Last, after the terms that decide what is being paged through — the page
+  // is a position in that result, and reads as one at the end of the URL.
+  if (query.page > 1) put(PARAM_PAGE, String(query.page))
 
   const all: Array<[string, string]> = [
     ...foreign.map(([key, value]): [string, string] => [encodeValue(key), value]),

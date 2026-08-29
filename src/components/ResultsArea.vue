@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { Component } from 'vue'
 import type { ViewKind } from '../types'
 import { useShellContext } from '../composables/context'
+import { isTypeCardsQuery } from '../query/schema'
 import CardsView from './views/CardsView.vue'
 import GridView from './views/GridView.vue'
 import LinksView from './views/LinksView.vue'
@@ -27,9 +28,7 @@ const VIEWS: Record<ViewKind, Component> = {
  * are one card per record; across every entity — the home screen — a card per
  * record would be a wall of mixed things, so it is a card per type instead.
  */
-const isTypeCards = computed(
-  () => shell.isEverything.value && shell.query.value.view === 'cards',
-)
+const isTypeCards = computed(() => isTypeCardsQuery(shell.query.value))
 
 const view = computed(() => VIEWS[shell.query.value.view] ?? ListView)
 const hasRows = computed(() => shell.rows.value.length > 0)

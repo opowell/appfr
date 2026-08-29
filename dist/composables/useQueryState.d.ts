@@ -50,6 +50,14 @@ export interface QueryState {
     setSort(key: string): void;
     toggleDirection(): void;
     setExpression(expr: string): void;
+    /**
+     * Moves to a page of the current results, 1-based and clamped there. What
+     * the last page is depends on a count this composable has no sight of — the
+     * shell knows it, from the total its source reported, and offers the control
+     * accordingly; `mode` is how it corrects a page past the end, which replaces
+     * rather than pushes so the back button does not lead straight back to it.
+     */
+    setPage(page: number, mode?: NavigationMode): void;
     setFacet(key: string, value: FacetValue): void;
     toggleChip(key: string, option: string): void;
     setRange(key: string, min: number | null, max: number | null): void;

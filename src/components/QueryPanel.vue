@@ -43,9 +43,9 @@ const sortOptions = computed(() =>
 )
 
 /* The expression is edited as a draft. Committing on every keystroke would put
-   a history entry behind each character; it commits on Run or Cmd/Ctrl+Enter. */
+   a history entry behind each character; it commits on Run or Enter. */
 const draft = ref(shell.query.value.expr)
-const expressionField = ref<HTMLTextAreaElement | null>(null)
+const expressionField = ref<HTMLInputElement | null>(null)
 
 watch(
   () => shell.query.value.expr,
@@ -55,13 +55,6 @@ watch(
 )
 
 const dirty = computed(() => draft.value !== shell.query.value.expr)
-
-const scopeNote = computed(() => {
-  const entity = shell.entity.value
-  return entity
-    ? `applies to ${entity.label.toLowerCase()} · results stay behind this panel`
-    : 'applies to every entity · results stay behind this panel'
-})
 
 function run() {
   shell.setExpression(draft.value)
@@ -91,45 +84,23 @@ void nextTick(() => expressionField.value?.focus())
     @keydown.esc.stop="emit('close')"
   >
     <section class="dc-panel__section">
-      <header class="dc-panel__head">
-        <span class="dc-eyebrow">Query</span>
-        <span class="dc-panel__note">{{ scopeNote }}</span>
-      </header>
-
       <div class="dc-panel__query">
         <div class="dc-panel__expression">
           <label
             class="dc-panel__field-label"
             :for="`${panelId}-expr`"
           >Expression</label>
-          <textarea
+          <input
             :id="`${panelId}-expr`"
             ref="expressionField"
             v-model="draft"
-            class="dc-textarea dc-mono"
-            rows="4"
+            class="dc-expression dc-mono"
+            type="text"
+            autocomplete="off"
             spellcheck="false"
             :placeholder="shell.schema.value.placeholder"
-            @keydown.enter.meta.prevent="run"
-            @keydown.enter.ctrl.prevent="run"
-          />
-          <div class="dc-panel__actions">
-            <button
-              type="button"
-              class="dc-button dc-button--primary"
-              @click="run"
-            >
-              Run query
-            </button>
-            <button
-              type="button"
-              class="dc-button"
-              :disabled="shell.isPristine.value && !dirty"
-              @click="reset"
-            >
-              Reset
-            </button>
-          </div>
+            @keydown.enter.prevent="run"
+          >
         </div>
 
         <div
@@ -151,6 +122,66 @@ void nextTick(() => expressionField.value?.focus())
           Results span every entity — logs and settings included. Pick one below
           to narrow to it and to get its own filters.
         </p>
+      </div>
+
+      <!-- The entity picker is part of the query, not a topic beside it:
+           narrowing to an entity is what gives the facets above something to
+           filter, so the two are read as one. -->
+      <div class="dc-panel__scope">
+        <span
+          :id="`${panelId}-entities`"
+          class="dc-panel__field-label"
+        >Entities</span>
+
+        <div
+          class="dc-panel__entities"
+          role="group"
+          :aria-labelledby="`${panelId}-entities`"
+        >
+          <!-- Lifting the entity filter is an option beside the entities, not a
+               separate control: "everything" is just no filter. -->
+          <button
+            type="button"
+            class="dc-entity dc-entity--all"
+            :data-dc-active="shell.isEverything.value ? 'true' : 'false'"
+            :aria-current="shell.isEverything.value ? 'true' : undefined"
+            @click="shell.clearEntity()"
+          >
+            <span class="dc-entity__label">Everything</span>
+            <span class="dc-entity__count dc-mono">{{ shell.entities.value.length }} kinds</span>
+          </button>
+
+          <button
+            v-for="candidate in shell.entities.value"
+            :key="candidate.key"
+            type="button"
+            class="dc-entity"
+            :data-dc-active="candidate.key === shell.entity.value?.key ? 'true' : 'false'"
+            :aria-current="candidate.key === shell.entity.value?.key ? 'true' : undefined"
+            @click="shell.setEntity(candidate.key)"
+          >
+            <span class="dc-entity__label">{{ candidate.label }}</span>
+            <span class="dc-entity__count dc-mono">{{ candidate.count }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="dc-panel__actions">
+        <button
+          type="button"
+          class="dc-button dc-button--primary"
+          @click="run"
+        >
+          Run query
+        </button>
+        <button
+          type="button"
+          class="dc-button"
+          :disabled="shell.isPristine.value && !dirty"
+          @click="reset"
+        >
+          Reset
+        </button>
       </div>
     </section>
 
@@ -182,56 +213,6 @@ void nextTick(() => expressionField.value?.focus())
           @click="shell.toggleDirection()"
         >
           {{ shell.query.value.dir === 'desc' ? '↓' : '↑' }}
-        </button>
-      </div>
-    </section>
-
-    <section class="dc-panel__section">
-      <header class="dc-panel__head">
-        <span class="dc-eyebrow">Entities</span>
-        <span class="dc-panel__note">{{ shell.schema.value.kicker }}</span>
-      </header>
-
-      <div class="dc-panel__entities">
-        <!-- Lifting the entity filter is an option beside the entities, not a
-             separate control: "everything" is just no filter. -->
-        <button
-          type="button"
-          class="dc-entity dc-entity--all"
-          :data-dc-active="shell.isEverything.value ? 'true' : 'false'"
-          :aria-current="shell.isEverything.value ? 'true' : undefined"
-          @click="shell.clearEntity()"
-        >
-          <span class="dc-entity__head">
-            <span class="dc-entity__label">Everything</span>
-            <span class="dc-entity__count dc-mono">{{ shell.entities.value.length }} kinds</span>
-          </span>
-          <span class="dc-entity__preview dc-mono">
-            <span class="dc-truncate">no entity filter</span>
-            <span class="dc-truncate">logs and settings included</span>
-          </span>
-        </button>
-
-        <button
-          v-for="candidate in shell.entities.value"
-          :key="candidate.key"
-          type="button"
-          class="dc-entity"
-          :data-dc-active="candidate.key === shell.entity.value?.key ? 'true' : 'false'"
-          :aria-current="candidate.key === shell.entity.value?.key ? 'true' : undefined"
-          @click="shell.setEntity(candidate.key)"
-        >
-          <span class="dc-entity__head">
-            <span class="dc-entity__label">{{ candidate.label }}</span>
-            <span class="dc-entity__count dc-mono">{{ candidate.count }}</span>
-          </span>
-          <span class="dc-entity__preview dc-mono">
-            <span
-              v-for="sample in candidate.samples.slice(0, 3)"
-              :key="sample[1]"
-              class="dc-truncate"
-            >{{ sample[1] }}</span>
-          </span>
         </button>
       </div>
     </section>
@@ -280,18 +261,6 @@ void nextTick(() => expressionField.value?.focus())
   padding: 12px 18px 14px;
 }
 
-.dc-panel__head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.dc-panel__note {
-  font-size: var(--dc-text-eyebrow);
-  color: var(--dc-fg-3);
-}
-
 .dc-panel__query {
   display: grid;
   grid-template-columns: minmax(280px, 1.1fr) 2fr;
@@ -307,11 +276,24 @@ void nextTick(() => expressionField.value?.focus())
   color: var(--dc-fg-1);
 }
 
-.dc-textarea {
+/* Whitespace alone divides the query from the entities under it — a rule here
+   would put back the section border the merge took out. */
+.dc-panel__scope {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.dc-panel__scope .dc-panel__field-label {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.dc-expression {
   width: 100%;
-  min-height: 88px;
+  min-width: 0;
   padding: 9px 11px;
-  resize: vertical;
   background: var(--dc-bg-0);
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius);
@@ -321,14 +303,15 @@ void nextTick(() => expressionField.value?.focus())
   outline: none;
 }
 
-.dc-textarea:focus {
+.dc-expression:focus {
   border-color: var(--dc-accent-dim);
 }
 
 .dc-panel__actions {
   display: flex;
+  justify-content: center;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 18px;
 }
 
 .dc-panel__facets {
@@ -378,7 +361,6 @@ void nextTick(() => expressionField.value?.focus())
 }
 
 .dc-button--primary {
-  flex: 1;
   padding: 8px 14px;
   background: var(--dc-accent);
   border-color: var(--dc-accent);
@@ -397,22 +379,26 @@ void nextTick(() => expressionField.value?.focus())
   font-size: var(--dc-text-meta);
 }
 
+/* A row of buttons rather than a grid of cards: picking an entity is a
+   filter, and a filter is a control the width of its own name. */
 .dc-panel__entities {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 10px;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .dc-entity {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  align-items: baseline;
   gap: 8px;
-  min-height: 104px;
-  padding: 12px;
+  padding: 7px 11px;
   background: var(--dc-bg-0);
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius);
   text-align: left;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -425,15 +411,8 @@ void nextTick(() => expressionField.value?.focus())
   border-color: var(--dc-accent-dim);
 }
 
-.dc-entity__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .dc-entity__label {
-  font-size: var(--dc-text-heading);
+  font-size: var(--dc-text-body);
   font-weight: var(--dc-weight-semibold);
   letter-spacing: var(--dc-tracking-tight);
 }
@@ -445,15 +424,6 @@ void nextTick(() => expressionField.value?.focus())
 .dc-entity__count {
   font-size: var(--dc-text-micro);
   color: var(--dc-fg-3);
-}
-
-.dc-entity__preview {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: var(--dc-text-micro);
-  color: var(--dc-fg-2);
-  letter-spacing: var(--dc-tracking-tight);
 }
 
 @container (max-width: 760px) {

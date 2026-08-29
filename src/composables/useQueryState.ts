@@ -13,6 +13,7 @@ import type {
 import type { RouteAdapter } from '../routing/adapter'
 import { parseQuery, serializeQuery } from '../query/codec'
 import {
+  changesResults,
   defaultQuery,
   emptyFacetState,
   findEntity,
@@ -77,6 +78,14 @@ export interface QueryState {
   setSort(key: string): void
   toggleDirection(): void
   setExpression(expr: string): void
+  /**
+   * Moves to a page of the current results, 1-based and clamped there. What
+   * the last page is depends on a count this composable has no sight of — the
+   * shell knows it, from the total its source reported, and offers the control
+   * accordingly; `mode` is how it corrects a page past the end, which replaces
+   * rather than pushes so the back button does not lead straight back to it.
+   */
+  setPage(page: number, mode?: NavigationMode): void
   setFacet(key: string, value: FacetValue): void
   toggleChip(key: string, option: string): void
   setRange(key: string, min: number | null, max: number | null): void
@@ -119,8 +128,15 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
   const primaryMode = () => toValue(options.navigationMode) ?? 'push'
   const facetMode = () => toValue(options.facetNavigationMode) ?? 'replace'
 
+  /**
+   * Applies a change to the query, returning to the first page whenever the
+   * change is to what matched — a page is a position in a result set, and a
+   * different result set makes the position meaningless. A patch that names a
+   * page is saying where to go, so it is left alone.
+   */
   const commit = (patch: Partial<ShellQuery>, mode: NavigationMode) => {
-    navigate({ ...query.value, ...patch }, mode)
+    const page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
+    navigate({ ...query.value, ...patch, page }, mode)
   }
 
   const patchFacets = (key: string, produce: (current: FacetValue) => FacetValue) => {
@@ -171,6 +187,9 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     setExpression(expr) {
       commit({ expr }, primaryMode())
     },
+    setPage(page, mode) {
+      commit({ page: Math.max(1, Math.floor(page)) }, mode ?? primaryMode())
+    },
     setFacet(key, value) {
       patchFacets(key, () => value)
     },
@@ -215,6 +234,9 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     },
     hrefFor(patch) {
       const next = { ...query.value, ...patch }
+      // The same rule the mutations follow, so a link built for a change goes
+      // exactly where clicking through to that change would have gone.
+      next.page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
       // Keep the facets legal for whichever entity the patch lands on.
       next.facets = reconcileFacets(findEntity(schema.value, next.entity), next.facets)
       return `${adapter.path.value}${serializeQuery(next, schema.value, defaults.value, adapter.search.value)}`

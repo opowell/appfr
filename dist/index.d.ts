@@ -37,8 +37,8 @@ export { provideWindowContext, useWindowContext, WINDOW_CONTEXT_KEY, } from './c
 export type { DropTarget, MoveDirection, WindowContext } from './composables/windowContext';
 export { PANE_CONTEXT_KEY, providePaneContext, usePaneContext, usePaneMenu, } from './composables/paneMenu';
 export type { PaneContext } from './composables/paneMenu';
-export { ENTITY_ALL, FACET_PREFIX, PARAM_DIR, PARAM_ENTITY, PARAM_EXPR, PARAM_SORT, PARAM_VIEW, parseQuery, serializeQuery, } from './query/codec';
-export { DEFAULT_SORT, DEFAULT_VIEW, defaultQuery, emptyFacetState, emptyFacetValue, findEntity, findSort, focusEntity, hasActiveFacets, isEntityScoped, isFacetActive, isPristineQuery, isViewKind, reconcileFacets, sortsFor, } from './query/schema';
+export { ENTITY_ALL, FACET_PREFIX, PARAM_DIR, PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_SORT, PARAM_VIEW, parseQuery, serializeQuery, } from './query/codec';
+export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, defaultQuery, emptyFacetState, emptyFacetValue, findEntity, findSort, focusEntity, hasActiveFacets, isEntityScoped, isFacetActive, isPristineQuery, isTypeCardsQuery, isViewKind, reconcileFacets, RESULT_FIELDS, sortsFor, } from './query/schema';
 export { ENTITY_TERM, summarizeQuery, summaryTerms } from './query/summary';
 export type { SummaryTerm } from './query/summary';
 export { normalizeSearch, ROUTE_ADAPTER_KEY } from './routing/adapter';
@@ -54,5 +54,5 @@ export { matchesExpression, parseExpression } from './data/expression';
 export type { Comparator, Expression, FieldTerm, Term, TextTerm } from './data/expression';
 export { fnv1a, formatDate, formatMetric, formatOrdinal, formatPercent } from './data/format';
 export { RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS } from './types';
-export type { ChipsFacet, DataSource, DomainSchema, EntityLabels, EntitySchema, FacetDef, FacetState, FacetValue, QueryRequest, QueryResult, RangeFacet, RecordStatus, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, SortDef, SortDirection, SyncDataSource, ToggleFacet, ViewKind, } from './types';
+export type { ChipsFacet, DataSource, DomainSchema, EntityLabels, EntitySchema, FacetDef, FacetState, FacetValue, QueryRequest, QueryResult, RangeFacet, RecordStatus, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, SortDef, SortDirection, SyncDataSource, ToggleFacet, ViewKind, } from './types';
 export { default as HeaderContentLayoutPlugin } from './plugin';

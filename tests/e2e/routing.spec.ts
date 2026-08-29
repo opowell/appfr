@@ -1,5 +1,15 @@
 import { expect, test } from '@playwright/test'
-import { gotoStory, listRows, openPanel, pickEntity, shellParams, summary, trigger } from './story'
+import {
+  gotoStory,
+  listRows,
+  openPanel,
+  pageReadout,
+  pickEntity,
+  shellParams,
+  stepPage,
+  summary,
+  trigger,
+} from './story'
 
 /**
  * These run against the `Routing / URL Bound` stories, which drive the real
@@ -61,7 +71,7 @@ test.describe('URL — the query is the route', () => {
 
   test('a committed expression appears in the URL', async ({ page }) => {
     await gotoStory(page, LIVE_OPEN)
-    await page.locator('.dc-textarea').fill('price < 40')
+    await page.locator('.dc-expression').fill('price < 40')
     await page.locator('.dc-button--primary').click()
     await expect(summary(page)).toHaveText('"price < 40"')
     expect(shellParams(page.url()).q).toBe('price < 40')
@@ -158,6 +168,49 @@ test.describe('URL — reload and history', () => {
     await page.goBack()
     await expect(summary(page)).toHaveText('everything · cards · updated')
     expect(shellParams(page.url())).toEqual({})
+  })
+})
+
+test.describe('URL — the page is in it too', () => {
+  const PAGED = 'routing-url-bound--live-url-paged'
+
+  test('paging writes p, and the first page is its absence', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    // Twelve of forty-eight searches, and a clean URL on the first page.
+    await expect(listRows(page)).toHaveCount(12)
+    await expect(pageReadout(page)).toHaveText('1 / 4')
+    expect(shellParams(page.url())).toEqual({})
+
+    await stepPage(page, 'Next')
+    expect(shellParams(page.url())).toEqual({ p: '2' })
+
+    await stepPage(page, 'Previous')
+    expect(shellParams(page.url())).toEqual({})
+  })
+
+  test('a page is a destination, so Back returns to the one before', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    await stepPage(page, 'Next')
+    await stepPage(page, 'Next')
+    expect(shellParams(page.url())).toEqual({ p: '3' })
+
+    await page.goBack()
+    await expect(pageReadout(page)).toHaveText('2 / 4')
+    expect(shellParams(page.url())).toEqual({ p: '2' })
+  })
+
+  test('a pasted page loads straight into it', async ({ page }) => {
+    await gotoStory(page, PAGED, '&p=3')
+    await expect(pageReadout(page)).toHaveText('3 / 4')
+    expect(shellParams(page.url())).toEqual({ p: '3' })
+  })
+
+  test('a change to what matched drops the page from the URL', async ({ page }) => {
+    await gotoStory(page, PAGED, '&p=3')
+    await openPanel(page)
+    await page.locator('.dc-chip', { hasText: 'running' }).first().click()
+    // Back to the first page of the narrowed results, so `p` goes with it.
+    expect(shellParams(page.url())).toEqual({ f_state: 'running' })
   })
 })
 

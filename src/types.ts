@@ -51,6 +51,16 @@ export const RECORD_STATUSES = ['ok', 'running', 'queued', 'review', 'failed'] a
 
 export type SortDirection = 'asc' | 'desc'
 
+/**
+ * How the header bar and the query panel that drops from it are brought to one
+ * width: `grow` widens the panel to the bar, `shrink` narrows the bar to the
+ * panel — to `--dc-header-width` — so the two still measure the same.
+ */
+export type ShellWidthMatch = 'grow' | 'shrink'
+
+/** Where a bar and panel narrowed by `shrink` sit across the shell. */
+export type ShellAlign = 'left' | 'center' | 'right'
+
 /* ------------------------------------------------------------------ facets */
 
 /** A multi-select set of mutually compatible values. */
@@ -159,6 +169,13 @@ export interface ShellQuery {
   /** Free-text expression, in the schema's own query language. */
   expr: string
   facets: FacetState
+  /**
+   * Which page of the matching rows is on screen, 1-based and never lower. A
+   * page is `limit` rows long. This is a position in a result set rather than
+   * a filter, so it returns to the first page whenever the query changes what
+   * matched or how it is ordered, and survives a change of view.
+   */
+  page: number
 }
 
 /** Query fields the shell will fall back to when the URL omits them. */
@@ -218,13 +235,22 @@ export interface QueryRequest {
    * other, so they are in that result set until an entity filter excludes them.
    */
   entity: EntitySchema | null
-  /** Maximum rows to return. */
+  /** Maximum rows to return: one page's worth. */
   limit: number
+  /**
+   * Rows to skip before that page — `(query.page - 1) * limit`, done here so a
+   * source can hand it straight to an `OFFSET` without repeating the sum.
+   */
+  offset: number
 }
 
 export interface QueryResult {
   rows: ShellRow[]
-  /** Rows matching the query before `limit` was applied. */
+  /**
+   * Rows matching the query, before `limit` and `offset` picked a page out of
+   * them. This is what the shell counts pages with, so it has to be the whole
+   * match rather than the length of the page returned.
+   */
   total: number
   /** True when no facet or expression narrowed the population. */
   unfiltered: boolean

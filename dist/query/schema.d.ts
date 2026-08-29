@@ -35,11 +35,33 @@ export declare function isPristineQuery(query: ShellQuery): boolean;
 /** True when an entity has been picked out of the whole corpus. */
 export declare function isEntityScoped(query: ShellQuery): boolean;
 /**
+ * True when the results are a card per *type* rather than per record — cards
+ * with no entity filter, which is the home screen. Those cards run their own
+ * per-entity queries, so the shell's single result set is not what is on
+ * screen and nothing pages through it.
+ */
+export declare function isTypeCardsQuery(query: ShellQuery): boolean;
+/**
+ * How many pages of `limit` rows `total` rows come to. Always at least one:
+ * an empty result set is one empty page, not none.
+ */
+export declare function countPages(total: number, limit: number): number;
+/**
  * The query an empty URL means. By default that is the home screen: every
  * entity, nothing filtered, in the preview view. A host can land on a single
  * entity's list instead with `landing: 'entity'`.
  */
 export declare function defaultQuery(schema: DomainSchema, defaults?: ShellQueryDefaults): ShellQuery;
+/**
+ * The query fields that decide *which* rows matched and in what order. A
+ * change to any of them makes the page someone was on a position in a result
+ * set that no longer exists, so the shell returns to the first page. `view` is
+ * deliberately not among them: the same rows drawn another way are still the
+ * same rows, and page 3 of them is still page 3.
+ */
+export declare const RESULT_FIELDS: readonly ["entity", "sort", "dir", "expr", "facets"];
+/** True when a patch touches any of {@link RESULT_FIELDS}. */
+export declare function changesResults(patch: Partial<ShellQuery>): boolean;
 /**
  * Drops facet values the entity does not declare and fills in the ones it
  * does. Called after every parse and on every entity change, so a stale or

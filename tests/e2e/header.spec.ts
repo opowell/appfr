@@ -1,5 +1,21 @@
 import { expect, test } from '@playwright/test'
-import { clickOutsidePanel, gotoStory, header, openPanel, panel, pickEntity, summary, trigger } from './story'
+import type { Page } from '@playwright/test'
+import {
+  clickOutsidePanel,
+  gotoStory,
+  header,
+  listRows,
+  openPanel,
+  pageReadout,
+  pageStep,
+  pager,
+  panel,
+  pickEntity,
+  rowOrdinals,
+  stepPage,
+  summary,
+  trigger,
+} from './story'
 
 const HOME = 'shell-data-shell--home'
 const HOME_OPEN = 'shell-data-shell--home-panel-open'
@@ -125,5 +141,157 @@ test.describe('Header — opening the expanded query view', () => {
     await gotoStory(page, HOME_OPEN)
     await expect(panel(page)).toBeVisible()
     await expect(page.locator('.dc-type').first()).toBeVisible()
+  })
+})
+
+test.describe('Header — paging through the results', () => {
+  /** Forty-eight searches, twelve to a page: four pages. */
+  const PAGED = 'shell-data-shell--paged'
+  const LATER = 'shell-data-shell--later-page'
+  const LAST = 'shell-data-shell--last-page'
+
+  test('says nothing about pages when the results are one page', async ({ page }) => {
+    // The same query at the default limit of fifty: all forty-eight fit.
+    await gotoStory(page, ENTITY)
+    await expect(pager(page)).toHaveCount(0)
+  })
+
+  test('offers a step either side of where it is, and says which page that is', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    await expect(pager(page)).toBeVisible()
+    await expect(pageReadout(page)).toHaveText('1 / 4')
+    await expect(listRows(page)).toHaveCount(12)
+  })
+
+  test('stepping forward brings the next page of rows', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    const first = await listRows(page).first().innerText()
+
+    await stepPage(page, 'Next')
+    await expect(pageReadout(page)).toHaveText('2 / 4')
+    await expect(listRows(page)).toHaveCount(12)
+    expect(await listRows(page).first().innerText()).not.toBe(first)
+
+    await stepPage(page, 'Previous')
+    await expect(pageReadout(page)).toHaveText('1 / 4')
+    expect(await listRows(page).first().innerText()).toBe(first)
+  })
+
+  test('there is no page before the first, and none after the last', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    await expect(pageStep(page, 'Previous')).toBeDisabled()
+    await expect(pageStep(page, 'Next')).toBeEnabled()
+
+    await gotoStory(page, LAST)
+    await expect(pageReadout(page)).toHaveText('4 / 4')
+    await expect(pageStep(page, 'Previous')).toBeEnabled()
+    await expect(pageStep(page, 'Next')).toBeDisabled()
+  })
+
+  test('the rows go on counting across the pages', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    expect(await rowOrdinals(page)).toEqual(
+      ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
+    )
+
+    // Page three of twelve opens at 25, not back at 01.
+    await gotoStory(page, LATER)
+    expect((await rowOrdinals(page))[0]).toBe('25')
+    expect((await rowOrdinals(page)).at(-1)).toBe('36')
+  })
+
+  test('the last page is as short as the rows left over', async ({ page }) => {
+    await gotoStory(page, LAST)
+    await expect(listRows(page)).toHaveCount(12)
+    expect((await rowOrdinals(page)).at(-1)).toBe('48')
+  })
+
+  test('the page says where it is to a screen reader, in words', async ({ page }) => {
+    await gotoStory(page, LATER)
+    await expect(page.getByText('Page 3 of 4 — rows 25 to 36 of 48')).toBeAttached()
+  })
+
+  test('narrowing the query returns to the first page', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    await stepPage(page, 'Next')
+    await expect(pageReadout(page)).toHaveText('2 / 4')
+
+    await openPanel(page)
+    await page.getByRole('button', { name: 'running' }).first().click()
+    await clickOutsidePanel(page)
+
+    // Fewer pages, and back at the first of them.
+    await expect(pageReadout(page)).toHaveText(/^1 \/ /)
+  })
+
+  test('a page past the end lands on the last one there is', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--page-past-the-end')
+    await expect(pageReadout(page)).toHaveText('4 / 4')
+    await expect(listRows(page)).toHaveCount(12)
+  })
+
+  test('the home screen\'s type cards do not page', async ({ page }) => {
+    // The corpus is 240 rows against a limit of 50, so the shell's own result
+    // set has pages — but a card per type is not what pages through them.
+    await gotoStory(page, HOME)
+    await expect(page.locator('.dc-type').first()).toBeVisible()
+    await expect(pager(page)).toHaveCount(0)
+
+    // The same query as a list does page.
+    await gotoStory(page, 'shell-data-shell--home-as-list')
+    await expect(pager(page)).toBeVisible()
+  })
+})
+
+test.describe('Header — the width the bar and the panel share', () => {
+  /** The three boxes the width rules are about, in viewport coordinates. */
+  async function boxes(page: Page) {
+    const shell = await page.locator('.dc-shell').boundingBox()
+    const bar = await header(page).boundingBox()
+    const sheet = await panel(page).boundingBox()
+    if (!shell || !bar || !sheet) throw new Error('The shell, bar and panel are not all on screen')
+    return { shell, bar, sheet }
+  }
+
+  test('the panel grows to the bar by default', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--panel-fills-the-bar')
+    const { shell, bar, sheet } = await boxes(page)
+
+    expect(Math.abs(sheet.width - bar.width)).toBeLessThanOrEqual(1)
+    expect(Math.abs(sheet.x - bar.x)).toBeLessThanOrEqual(1)
+    // And the bar is still the whole shell, so nothing was narrowed to match.
+    expect(Math.abs(bar.width - shell.width)).toBeLessThanOrEqual(1)
+  })
+
+  test('shrink brings the bar in to the panel, and centres the pair', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--bar-comes-in-to-the-panel')
+    const { shell, bar, sheet } = await boxes(page)
+
+    expect(Math.abs(sheet.width - bar.width)).toBeLessThanOrEqual(1)
+    expect(bar.width).toBeLessThan(shell.width)
+    // Equal gutters either side.
+    const left = bar.x - shell.x
+    const right = shell.x + shell.width - (bar.x + bar.width)
+    expect(left).toBeGreaterThan(0)
+    expect(Math.abs(left - right)).toBeLessThanOrEqual(1)
+  })
+
+  test('the narrowed pair can be held to either edge instead', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--bar-comes-in-left')
+    {
+      const { shell, bar, sheet } = await boxes(page)
+      expect(Math.abs(sheet.x - bar.x)).toBeLessThanOrEqual(1)
+      expect(Math.abs(bar.x - shell.x)).toBeLessThanOrEqual(1)
+      expect(bar.width).toBeLessThan(shell.width)
+    }
+
+    await gotoStory(page, 'shell-data-shell--bar-comes-in-right')
+    {
+      const { shell, bar, sheet } = await boxes(page)
+      const barRight = bar.x + bar.width
+      expect(Math.abs(sheet.x + sheet.width - barRight)).toBeLessThanOrEqual(1)
+      expect(Math.abs(barRight - (shell.x + shell.width))).toBeLessThanOrEqual(1)
+      expect(bar.width).toBeLessThan(shell.width)
+    }
   })
 })

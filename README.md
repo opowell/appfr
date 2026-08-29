@@ -127,19 +127,25 @@ import type { DataSource } from 'header-content-layout'
 const source: DataSource = {
   // `entity` is null on the home screen, where the query spans every entity in
   // the schema. `schema` is passed so you can enumerate them.
-  async query({ query, schema, entity, limit }) {
+  // `limit` is one page of rows and `offset` is where that page starts —
+  // `(query.page - 1) * limit`, worked out for you.
+  async query({ query, schema, entity, limit, offset }) {
     const response = await fetch(`/api/records?${new URLSearchParams({
       kinds: (entity ? [entity] : schema.entities).map((e) => e.key).join(','),
       q: query.expr,
       sort: query.sort,
       dir: query.dir,
       limit: String(limit),
+      offset: String(offset),
     })}`)
     const body = await response.json()
     return { rows: body.rows, total: body.total, unfiltered: body.unfiltered }
   },
 }
 ```
+
+`total` is the whole match, before `limit` and `offset` picked a page out of
+it — the shell counts pages with it, and the header states them.
 
 Each row it returns carries its own `entityKey` and `entityLabel`, which is
 what lets a mixed result set label every record in its own entity's vocabulary
@@ -179,7 +185,7 @@ app.provide(ROUTE_ADAPTER_KEY, route)
 
 ```
                                      ← home: nothing filtered, so no parameters
-?e=items&v=table&s=score&d=asc&q=price+%3C+40&f_kind=page,pdf&f_rank=20..80&f_seen=1
+?e=items&v=table&s=score&d=asc&q=price+%3C+40&f_kind=page,pdf&f_rank=20..80&f_seen=1&p=3
 ```
 
 | Key | Meaning |
@@ -190,6 +196,7 @@ app.provide(ROUTE_ADAPTER_KEY, route)
 | `d` | direction — `asc`, `desc` |
 | `q` | expression |
 | `f_<facet>` | a facet: `a,b` for chips, `min..max` for ranges (either end may be empty), `1` for toggles. Only meaningful alongside an `e`, since facets belong to an entity |
+| `p` | page, 1-based. Absent means the first one. A page of `limit` rows — see [paging](#paging-through-the-results) |
 
 Three things this does on purpose:
 
@@ -200,8 +207,8 @@ Three things this does on purpose:
   sort or facet value falls back to the schema's default, and range bounds are
   clamped, so a hand-edited URL cannot reach an unrenderable state.
 
-Changing the entity, view, sort or committed expression **pushes** a history
-entry — those are destinations worth coming back to. Nudging a facet
+Changing the entity, view, sort, committed expression or page **pushes** a
+history entry — those are destinations worth coming back to. Nudging a facet
 **replaces**, because one entry per chip click makes the back button useless.
 Both are configurable via `navigationMode` and `facetNavigationMode`.
 
@@ -304,11 +311,13 @@ numeric comparison against one constrains nothing.
 | `route` | `RouteAdapter` | injected, else History API | How the query reaches the URL. |
 | `defaults` | `ShellQueryDefaults` | home, `cards`, `updated`, `desc` | Fallbacks when the URL omits a field. `landing: 'entity'` opens on one entity's list instead of home. |
 | `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. |
-| `limit` | `number` | `50` | Rows requested from the source. |
+| `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
 | `views` | `ViewKind[]` | all six | Restricts the offered views. |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `mono-size` is that theme with its type scale collapsed too, every word at one size and one weight with only colour and opacity varying; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all. |
+| `matchWidth` | `'grow' \| 'shrink'` | `'grow'` | How the header bar and the query panel are brought to one width: `grow` widens the panel to the bar, `shrink` narrows the bar to the panel. |
+| `headAlign` | `'left' \| 'center' \| 'right'` | `'center'` | Where the narrowed pair sits across the shell. `shrink` only. |
 | `pinnable` | `boolean` | `false` | Offers the star affordance on rows. |
 | `open` | `boolean` | — | `v-model:open` to control the panel; omit and the shell holds it. |
 | `pinned` | `string[]` | — | `v-model:pinned` to control pinning; omit and the shell holds it. |
@@ -321,8 +330,8 @@ the URL has been updated, `toggle-pin(row)`, plus `update:open` and
 
 **Slots** — `actions` for extra controls at the right of the header bar,
 `panel-section` for a section of your own at the end of the query panel, and
-`results` to replace the content area entirely (receives `rows`, `total`,
-`query`, `pending`).
+`results` to replace the content area entirely (receives `rows` — the current
+page of them — plus `total`, `offset`, `pageCount`, `query` and `pending`).
 
 `panel-section` is where an application's own commands go when they are not
 about the query — the header bar's width belongs to the summary it exists to
@@ -342,6 +351,84 @@ heading that matches theirs:
 </DataShell>
 ```
 
+### One width for the bar and the panel
+
+The panel drops from the bar and says what the bar summarizes, so the two are
+always the same width. Which of them gives way is `matchWidth`:
+
+```
+match-width="grow" — the panel widens to the bar
+┌──────────────────────────────────────────────────┐
+│ ◆ iRadar │ Everything 240 │ QUERY everything    ▲ │
+├──────────────────────────────────────────────────┤
+│ Query · View · Entities                          │
+└──────────────────────────────────────────────────┘
+  01  Competitor pricing pages          909  running
+
+match-width="shrink" — the bar comes in to the panel
+        ┌──────────────────────────────────┐
+        │ ◆ iRadar │ Everything 240      ▲ │
+        ├──────────────────────────────────┤
+        │ Query · View · Entities          │
+        └──────────────────────────────────┘
+  01  Competitor pricing pages          909  running
+```
+
+`grow` widens the panel to the bar, which spans the shell. `shrink` narrows the
+bar to the panel instead — to `--dc-header-width`, 1220px — which keeps a query
+off the far edges of a very wide screen; the results below keep the shell's
+full width either way. `headAlign` (`left`, `center`, `right`) then says where
+that narrowed pair sits, and is the one prop `grow` has nothing to do with.
+
+```vue
+<DataShell :schema="schema" match-width="shrink" head-align="left" />
+```
+
+### Paging through the results
+
+`limit` is a page rather than a ceiling. When the results run past it the
+header gains a step either side of where it is, and the page is in the URL as
+`p` — so a page is a link like every other state the shell can be in.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ◆ iRadar │ Searches 38 │ QUERY entity:searches  ▼ │ ‹ 3 / 4 › │
+└──────────────────────────────────────────────────────────────┘
+  25  Security advisories             716    5  ▬▬▬▬   ok
+  26  Security advisories · rev 4     556  260  ▬▬▬    ok
+  27  Regulatory filings              682  116  ▬▬     running
+```
+
+Four things this does on purpose:
+
+- **The control is only there when there is somewhere to go.** One page of
+  results says nothing about pages; the home screen's type cards say nothing
+  either, since each card runs its own query and stepping would move nothing.
+- **The rows keep counting.** Page three of twelve opens at 25, so a row's
+  number is its place in the result rather than its place on screen.
+- **A change to what matched returns to the first page.** The entity, the
+  facets, the expression, the sort and the direction all do this: a page is a
+  position in a result set, and a different result set makes the position
+  meaningless. Changing the *view* does not — the same rows drawn another way
+  are still the same rows, and page three of them is still page three.
+- **A page past the end lands on the last one there is.** How many pages there
+  are is a count only the source knows, so the codec cannot clamp `p` the way
+  it clamps a range; the shell corrects it when the results arrive, replacing
+  rather than pushing so Back does not lead straight to it again.
+
+A source is handed `offset` alongside `limit` and reports `total` for the whole
+match — see [wiring it to your data](#wiring-it-to-your-data). Building your
+own chrome instead? `useShellContext()` carries `limit`, `offset`, `pageCount`
+and `total`, and `setPage` is on the query state:
+
+```ts
+const shell = useShellContext()
+shell.pageCount.value          // 4
+shell.query.value.page         // 3
+shell.setPage(shell.query.value.page + 1)
+shell.hrefFor({ page: 4 })     // a link, without navigating
+```
+
 ### Composables
 
 `useQueryState` is the whole query model without any of the markup — useful if
@@ -357,6 +444,7 @@ state.terms.value       // individually removable terms, entity filter included
 state.setEntity('logs')
 state.clearEntity()     // back to everything
 state.toggleChip('state', 'running')
+state.setPage(3)        // paging, which any filter change returns to page 1
 state.hrefFor({ view: 'grid' })   // build a link without navigating
 ```
 
@@ -1428,6 +1516,7 @@ are a whole theme:
 | `--dc-sans`, `--dc-mono`, `--dc-font-size` | typography |
 | `--dc-radius-sm`, `--dc-radius`, `--dc-radius-lg` | corners |
 | `--dc-shadow`, `--dc-header-height` | — |
+| `--dc-header-width` | how wide the bar and panel are under `matchWidth="shrink"` |
 
 ### Any single token
 
@@ -1501,6 +1590,88 @@ in a side panel as it does full-screen. It declares `flex: 1 1 auto`, so inside
 a flex column it grows to the available height rather than collapsing to its
 content; give its container a height and the shell fills it.
 
+## No build step
+
+`dist/` is plain ES modules and one plain stylesheet, so a static page can use
+the shell with nothing installed and nothing compiled. Name the artifacts in an
+import map and load them:
+
+```html
+<link rel="stylesheet" href="/dist/style.css" />
+
+<script type="importmap">
+  {
+    "imports": {
+      "vue": "https://unpkg.com/vue@3/dist/vue.runtime.esm-browser.prod.js",
+      "header-content-layout": "/dist/index.js",
+      "header-content-layout/fixtures": "/dist/fixtures.js"
+    }
+  }
+</script>
+
+<script type="module">
+  import { createApp, h } from 'vue'
+  import { DataShell } from 'header-content-layout'
+  import { iRadarSchema } from 'header-content-layout/fixtures'
+
+  createApp(() => h(DataShell, { schema: iRadarSchema })).mount('#app')
+</script>
+```
+
+`vue` is the only bare specifier the bundle itself imports, and the runtime
+build is enough for it — the shell's own templates are compiled already.
+
+### The host's components, compiled in the browser
+
+Render functions get tiresome fast. [vue3-sfc-loader][sfc-loader] compiles
+`.vue` files in the tab, so the host can be written as SFCs and served as
+source — `<script setup>`, scoped styles, relative imports between them, and
+the same bare imports of the shell you would write against a bundler:
+
+```js
+const options = {
+  // What the loader must not go and fetch. The shell has to be handed the very
+  // Vue the page is running, not a second copy of it.
+  moduleCache: { vue: Vue, 'header-content-layout': shell },
+
+  async getFile(url) {
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`${response.status} ${url}`)
+    const text = await response.text()
+    return { getContentData: () => text }
+  },
+
+  addStyle(css) {
+    document.head.append(Object.assign(document.createElement('style'), { textContent: css }))
+  },
+
+  // A bare specifier is a module name, so it goes to `moduleCache` above; the
+  // rest resolve as URLs. The loader's own default joins them as strings, which
+  // folds `http://` down to `http:/`.
+  pathResolve({ refPath, relPath }) {
+    if (relPath === '.') return refPath
+    if (!relPath.startsWith('.') && !relPath.startsWith('/')) return relPath
+    return new URL(relPath, refPath ?? document.baseURI).href
+  },
+}
+
+createApp(await loadModule('/App.vue', options)).mount('#app')
+```
+
+A working page is in [`stories/no-build/`](stories/no-build): one `index.html`,
+and two hosts written as SFCs of their own. `App.vue` mounts the shell;
+`?app=window` compiles `WindowApp.vue` instead and mounts the panel grid, with
+two of its panels filled by components the host wrote — one of them running a
+real query through `useQueryState`, `useResults` and `ResultsArea`, all from the
+same bundle.
+
+The page checks itself — the artifacts import, the SFCs compile after load, the
+host mounts with content, the stylesheet applies — and states the verdict across
+the top. The **No Build** stories frame it, `MissingStylesheet` among them,
+which removes an artifact so you can watch the checks fail.
+
+[sfc-loader]: https://github.com/FranckFreiburger/vue3-sfc-loader
+
 ## Nuxt
 
 ```ts
@@ -1537,6 +1708,10 @@ Two test layers, deliberately split:
   exists: focus return, stacking and click interception, container queries,
   computed styles, and — importantly — the real address bar across reload,
   Back and Forward.
+
+The **No Build** stories stand apart from both: they load `dist/` over HTTP into
+a page of their own, so what they cover is the *built* artifacts rather than the
+source. Run `npm run build` first, or they are testing the build before this one.
 
 Storybook runs on **6011** rather than the default 6006, so it does not collide
 with another project's server on the same machine.

@@ -192,7 +192,7 @@ test.describe('Query panel — narrowing the result set', () => {
     await gotoStory(page, ENTITY)
     await openPanel(page)
 
-    await page.locator('.dc-textarea').fill('regulatory')
+    await page.locator('.dc-expression').fill('regulatory')
     await expect(summary(page)).toHaveText('entity:searches')
 
     await page.locator('.dc-button--primary').click()
@@ -203,7 +203,7 @@ test.describe('Query panel — narrowing the result set', () => {
   test('an expression from home searches every kind at once', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-as-list')
     await openPanel(page)
-    await page.locator('.dc-textarea').fill('digest')
+    await page.locator('.dc-expression').fill('digest')
     await page.locator('.dc-button--primary').click()
 
     await expect(summary(page)).toHaveText('"digest"')
@@ -211,18 +211,26 @@ test.describe('Query panel — narrowing the result set', () => {
     expect(kinds).toEqual(new Set(['Settings']))
   })
 
+  test('an expression commits on Enter', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    await openPanel(page)
+    await page.locator('.dc-expression').fill('firmware')
+    await page.locator('.dc-expression').press('Enter')
+    await expect(summary(page)).toHaveText('entity:searches · "firmware"')
+  })
+
   test('an expression also commits on Meta+Enter', async ({ page }) => {
     await gotoStory(page, ENTITY)
     await openPanel(page)
-    await page.locator('.dc-textarea').fill('firmware')
-    await page.locator('.dc-textarea').press('Meta+Enter')
+    await page.locator('.dc-expression').fill('firmware')
+    await page.locator('.dc-expression').press('Meta+Enter')
     await expect(summary(page)).toHaveText('entity:searches · "firmware"')
   })
 
   test('committing the expression closes the panel, so results are visible', async ({ page }) => {
     await gotoStory(page, ENTITY)
     await openPanel(page)
-    await page.locator('.dc-textarea').fill('regulatory')
+    await page.locator('.dc-expression').fill('regulatory')
     await page.locator('.dc-button--primary').click()
     await expect(panel(page)).toHaveCount(0)
   })
@@ -323,13 +331,13 @@ test.describe('Query panel — host section', () => {
   test('renders a host section last, inside the panel', async ({ page }) => {
     await gotoStory(page, HOST_SECTION)
     const sections = panel(page).locator('> .dc-panel__section')
-    await expect(sections).toHaveCount(4)
+    await expect(sections).toHaveCount(3)
     await expect(sections.last()).toContainText('App')
     await expect(sections.last().getByRole('button', { name: 'Reload data' })).toBeVisible()
   })
 
   test('adds no section when the host gives none', async ({ page }) => {
     await gotoStory(page, HOME_OPEN)
-    await expect(panel(page).locator('> .dc-panel__section')).toHaveCount(3)
+    await expect(panel(page).locator('> .dc-panel__section')).toHaveCount(2)
   })
 })

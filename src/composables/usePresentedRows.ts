@@ -74,9 +74,16 @@ export function usePresentedRows(): ComputedRef<PresentedRow[]> {
   const byKey = computed(
     () => new Map(shell.entities.value.map((entity) => [entity.key, entity.labels])),
   )
+  // Offset by where the page starts, so the leading column goes on counting
+  // through the result set — page two of fifty opens at 51, not back at 01.
   return computed(() =>
     shell.rows.value.map((row, index) =>
-      presentRow(row, index, byKey.value.get(row.entityKey) ?? GENERIC_LABELS, shell.isPinned(row)),
+      presentRow(
+        row,
+        shell.offset.value + index,
+        byKey.value.get(row.entityKey) ?? GENERIC_LABELS,
+        shell.isPinned(row),
+      ),
     ),
   )
 }

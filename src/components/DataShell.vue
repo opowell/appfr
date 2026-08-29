@@ -11,10 +11,12 @@ import { computed, inject, nextTick, onBeforeUnmount, ref, useId, watch } from '
 import type {
   DataSource,
   DomainSchema,
+  ShellAlign,
   ShellQuery,
   ShellQueryDefaults,
   ShellRow,
   ShellTheme,
+  ShellWidthMatch,
   ViewKind,
 } from '../types'
 import type { RouteAdapter } from '../routing/adapter'
@@ -46,7 +48,11 @@ const props = withDefaults(
     route?: RouteAdapter
     /** Query fields to fall back to when the URL omits them. */
     defaults?: ShellQueryDefaults
-    /** Maximum rows requested from the source. */
+    /**
+     * Rows per page: the most the source is asked for at once. The header
+     * offers the pages this divides the results into, and the page itself is
+     * in the URL.
+     */
     limit?: number
     /**
      * Rows shown inside each type's card on the home screen — the most
@@ -76,6 +82,19 @@ const props = withDefaults(
      * background, text colour and font.
      */
     theme?: ShellTheme
+    /**
+     * How the header bar and the panel that drops from it are brought to one
+     * width. `grow`, the default, widens the panel to the bar, so the query
+     * opens over exactly what it summarizes however wide the shell is.
+     * `shrink` brings the bar in to the panel instead — to `--dc-header-width`
+     * — which keeps a query off the far edges of a very wide screen.
+     */
+    matchWidth?: ShellWidthMatch
+    /**
+     * Where that narrowed pair sits across the shell. Only `shrink` leaves
+     * anything to align: a panel grown to a full-width bar already spans it.
+     */
+    headAlign?: ShellAlign
     /** Offers the star affordance on rows. */
     pinnable?: boolean
     navigationMode?: NavigationMode
@@ -85,6 +104,8 @@ const props = withDefaults(
     limit: 50,
     previewsPerType: 3,
     theme: 'minimal',
+    matchWidth: 'grow',
+    headAlign: 'center',
     navigationMode: 'push',
     facetNavigationMode: 'replace',
   },
@@ -119,8 +140,13 @@ const slots = defineSlots<{
   'panel-section'?: () => unknown
   /** Replaces the entire results area. */
   results?: (props: {
+    /** The current page of rows, not the whole result. */
     rows: ShellRow[]
+    /** Rows matching the query, across every page of them. */
     total: number
+    /** Rows before the first of `rows` — for numbering that keeps counting. */
+    offset: number
+    pageCount: number
     query: ShellQuery
     pending: boolean
   }) => unknown
@@ -161,6 +187,29 @@ const results = useResults({
 
 watch(query.query, (value) => emit('query-change', value))
 
+/*
+ * A page past the end of the results — a bookmark to a query that has since
+ * shrunk, or a hand-edited URL — lands on the last page there is. The codec
+ * cannot do this: how many pages there are is a count only the source knows,
+ * and it arrives with the results rather than with the URL.
+ *
+ * It replaces rather than pushes, so the back button does not lead straight
+ * back to the page that was corrected and forward again.
+ */
+watch(
+  [results.pageCount, results.pending, query.query],
+  () => {
+    if (results.pending.value) return
+    const last = results.pageCount.value
+    if (query.query.value.page > last) query.setPage(last, 'replace')
+  },
+  // Immediately, since a pasted URL is past the end before anything changes;
+  // and after the render, so the correction is a navigation the mounted shell
+  // makes rather than one it makes on the way up. An async source is still
+  // pending here and corrects itself when its count lands.
+  { immediate: true, flush: 'post' },
+)
+
 /* -------------------------------------------------------------- panel open */
 
 const panelId = useId() ?? 'dc-query-panel'
@@ -197,6 +246,9 @@ const shell = provideShellContext({
   entities: computed(() => props.schema.entities),
   rows: results.rows,
   total: results.total,
+  limit: computed(() => props.limit),
+  offset: results.offset,
+  pageCount: results.pageCount,
   pending: results.pending,
   error: results.error,
   source,
@@ -232,7 +284,11 @@ defineExpose({
     :data-dc-theme="theme"
     :style="style"
   >
-    <div class="dc-shell__head">
+    <div
+      class="dc-shell__head"
+      :data-dc-width="matchWidth"
+      :data-dc-align="matchWidth === 'shrink' ? headAlign : undefined"
+    >
       <ShellHeader
         ref="headerRef"
         :expanded="panelOpen"
@@ -275,6 +331,8 @@ defineExpose({
       name="results"
       :rows="shell.rows.value"
       :total="shell.total.value"
+      :offset="shell.offset.value"
+      :page-count="shell.pageCount.value"
       :query="shell.query.value"
       :pending="shell.pending.value"
     >
@@ -291,6 +349,32 @@ defineExpose({
 }
 
 /*
+ * The bar and the panel are one width, and this is which of them gives way.
+ * `grow` is the default and needs no rule: the bar already spans the shell and
+ * the panel is pinned to the head's own edges below.
+ *
+ * `shrink` caps the head instead, which carries the bar and the panel with it,
+ * and `align-self` moves the pair across the shell as one — the head is a flex
+ * item of the shell's column, so this is its cross-axis alignment.
+ */
+.dc-shell__head[data-dc-width='shrink'] {
+  width: 100%;
+  max-width: var(--dc-header-width, 1220px);
+}
+
+.dc-shell__head[data-dc-align='left'] {
+  align-self: flex-start;
+}
+
+.dc-shell__head[data-dc-align='center'] {
+  align-self: center;
+}
+
+.dc-shell__head[data-dc-align='right'] {
+  align-self: flex-end;
+}
+
+/*
  * Layering inside the head, which is itself above the content area:
  * the scrim covers the results, the panel sits over the scrim, and the header
  * bar sits over both so its trigger stays clickable while the panel is open.
@@ -304,12 +388,13 @@ defineExpose({
 .dc-shell__panel {
   position: absolute;
   top: calc(100% + 6px);
-  left: 12px;
-  right: 12px;
+  /* The bar's own edges, whichever mode brought them here: the panel says what
+     the bar says, so it is measured against the bar and nothing else. */
+  left: 0;
+  right: 0;
   z-index: 2;
   display: flex;
   flex-direction: column;
-  max-width: 1220px;
   /* Constrains the panel so its own `overflow: auto` engages instead of the
      panel running off the bottom of a short container. */
   max-height: calc(100vh - var(--dc-header-height) - 24px);

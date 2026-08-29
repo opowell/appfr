@@ -19,7 +19,7 @@ export declare function generateRows(entity: EntitySchema, options?: MockSourceO
 export declare function matchesFacets(row: ShellRow, facets: FacetState): boolean;
 /**
  * An in-memory {@link SyncDataSource} over generated rows. It filters, sorts and
- * limits for real, so stories and tests exercise the same code paths a live
+ * pages for real, so stories and tests exercise the same code paths a live
  * backend would.
  */
 export declare function createMockDataSource(options?: MockSourceOptions): SyncDataSource;

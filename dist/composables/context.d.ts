@@ -10,8 +10,16 @@ export interface ShellContext extends QueryState {
     schema: ComputedRef<DomainSchema>;
     /** Every entity the schema declares — logs and settings among them. */
     entities: ComputedRef<EntitySchema[]>;
+    /** The rows of the current page, not of the whole result. */
     rows: ShallowRef<ShellRow[]>;
+    /** Rows matching the query, across every page of them. */
     total: Ref<number>;
+    /** Rows per page — what the shell asks its source for at a time. */
+    limit: ComputedRef<number>;
+    /** Rows before the first on screen: `(page - 1) * limit`. */
+    offset: ComputedRef<number>;
+    /** How many pages the total comes to. Never fewer than one. */
+    pageCount: ComputedRef<number>;
     pending: Ref<boolean>;
     error: ShallowRef<unknown>;
     /**

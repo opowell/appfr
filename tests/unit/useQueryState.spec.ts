@@ -261,6 +261,108 @@ describe('useQueryState — reading and writing the URL', () => {
   })
 })
 
+describe('useQueryState — the page', () => {
+  it('starts on the first page, which the URL does not spell out', () => {
+    const { state, adapter } = setup('?e=items&v=list')
+    expect(state.query.value.page).toBe(1)
+    expect(adapter.search.value).toBe('?e=items&v=list')
+  })
+
+  it('moves to a page, and says so in the URL', () => {
+    const { state, adapter } = setup('?e=items&v=list')
+    state.setPage(3)
+    expect(state.query.value.page).toBe(3)
+    expect(adapter.search.value).toBe('?e=items&v=list&p=3')
+  })
+
+  it('clamps to the first page rather than below it', () => {
+    const { state, adapter } = setup('?e=items&p=2')
+    state.setPage(0)
+    expect(state.query.value.page).toBe(1)
+    expect(adapter.search.value).toBe('?e=items')
+  })
+
+  it('pushes by default, so paging is a destination the back button reaches', () => {
+    const { state, adapter } = setup('?e=items')
+    const before = adapter.history.length
+    state.setPage(2)
+    expect(adapter.history.length).toBe(before + 1)
+  })
+
+  it('replaces when told to — how a page past the end is corrected', () => {
+    const { state, adapter } = setup('?e=items&p=99')
+    const before = adapter.history.length
+    state.setPage(4, 'replace')
+    expect(adapter.search.value).toBe('?e=items&p=4')
+    expect(adapter.history.length).toBe(before)
+  })
+})
+
+describe('useQueryState — what returns to the first page', () => {
+  /** Every change to what matched, or to the order it matched in. */
+  it('the entity filter', () => {
+    const { state, adapter } = setup('?e=items&p=5')
+    state.setEntity('logs')
+    expect(adapter.search.value).toBe('?e=logs')
+  })
+
+  it('lifting the entity filter', () => {
+    const { state, adapter } = setup('?e=items&p=5')
+    state.clearEntity()
+    expect(adapter.search.value).toBe('')
+  })
+
+  it('the sort field, and the direction', () => {
+    const { state, adapter } = setup('?e=items&p=5')
+    state.setSort('score')
+    expect(adapter.search.value).toBe('?e=items&s=score')
+
+    state.setPage(5)
+    state.toggleDirection()
+    expect(adapter.search.value).toBe('?e=items&s=score&d=asc')
+  })
+
+  it('the expression', () => {
+    const { state, adapter } = setup('?e=items&p=5')
+    state.setExpression('recall')
+    expect(adapter.search.value).toBe('?e=items&q=recall')
+  })
+
+  it('a facet, however it is edited', () => {
+    const { state, adapter } = setup('?e=items&p=5')
+    state.toggleChip('kind', 'page')
+    expect(adapter.search.value).toBe('?e=items&f_kind=page')
+
+    state.setPage(5)
+    state.setRange('rank', 20, 80)
+    expect(adapter.search.value).toBe('?e=items&f_kind=page&f_rank=20..80')
+  })
+
+  it('lifting a term, and clearing the filters', () => {
+    const { state, adapter } = setup('?e=items&f_kind=page&p=5')
+    state.removeTerm(state.terms.value[1]!)
+    expect(adapter.search.value).toBe('?e=items')
+
+    const cleared = setup('?e=items&f_kind=page&p=5')
+    cleared.state.clearFilters()
+    expect(cleared.adapter.search.value).toBe('')
+  })
+
+  it('but not the view: the same rows drawn another way are the same rows', () => {
+    const { state, adapter } = setup('?e=items&v=list&p=5')
+    state.setView('grid')
+    expect(adapter.search.value).toBe('?e=items&v=grid&p=5')
+    expect(state.query.value.page).toBe(5)
+  })
+
+  it('and an href agrees with the click it stands in for', () => {
+    const { state } = setup('?e=items&v=list&p=5')
+    expect(state.hrefFor({ view: 'grid' })).toBe('/?e=items&v=grid&p=5')
+    expect(state.hrefFor({ sort: 'score' })).toBe('/?e=items&v=list&s=score')
+    expect(state.hrefFor({ page: 2 })).toBe('/?e=items&v=list&p=2')
+  })
+})
+
 describe('useQueryState — landing on an entity instead', () => {
   const defaults = { landing: 'entity' as const, entity: 'items' }
 

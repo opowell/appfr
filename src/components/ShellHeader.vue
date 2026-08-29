@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useShellContext } from '../composables/context'
+import { isTypeCardsQuery } from '../query/schema'
 
 const props = defineProps<{
   expanded: boolean
@@ -33,6 +34,33 @@ const count = computed(() => {
   const entity = shell.entity.value
   if (entity && !shell.hasFacets.value && !shell.query.value.expr.trim()) return entity.count
   return String(shell.total.value)
+})
+
+/* -------------------------------------------------------------------- pages */
+
+const page = computed(() => shell.query.value.page)
+
+/**
+ * Pages are offered when there is more than one and when the results below are
+ * what would be paged. The home screen's cards are the exception: a card per
+ * type runs its own per-entity query, so the shell's single result set is not
+ * what is on screen and stepping through it would move nothing.
+ */
+const paged = computed(
+  () => shell.pageCount.value > 1 && !isTypeCardsQuery(shell.query.value),
+)
+
+/**
+ * Where this page sits in the whole result. The bar shows the short form and
+ * says this much to a tooltip and a screen reader, since `2 / 5` on its own
+ * does not say what it is counting.
+ */
+const position = computed(() => {
+  const place = `Page ${page.value} of ${shell.pageCount.value}`
+  const shown = shell.rows.value.length
+  if (!shown) return place
+  const first = shell.offset.value + 1
+  return `${place} — rows ${first} to ${first + shown - 1} of ${shell.total.value}`
 })
 </script>
 
@@ -77,6 +105,44 @@ const count = computed(() => {
       >{{ expanded ? '▲' : '▼' }}</span>
       <span class="dc-header__sr">{{ expanded ? 'Hide query panel' : 'Edit query' }}</span>
     </button>
+
+    <!-- Outside the trigger, which is itself a button: these are controls of
+         their own, and a button cannot hold another. -->
+    <nav
+      v-if="paged"
+      class="dc-header__pages"
+      aria-label="Pages"
+    >
+      <button
+        type="button"
+        class="dc-header__step"
+        aria-label="Previous page"
+        :disabled="page <= 1"
+        @click="shell.setPage(page - 1)"
+      >
+        <span aria-hidden="true">‹</span>
+      </button>
+
+      <span
+        class="dc-header__page dc-mono"
+        :title="position"
+        aria-hidden="true"
+      >{{ page }} / {{ shell.pageCount.value }}</span>
+      <span
+        class="dc-header__sr"
+        aria-live="polite"
+      >{{ position }}</span>
+
+      <button
+        type="button"
+        class="dc-header__step"
+        aria-label="Next page"
+        :disabled="page >= shell.pageCount.value"
+        @click="shell.setPage(page + 1)"
+      >
+        <span aria-hidden="true">›</span>
+      </button>
+    </nav>
 
     <div
       v-if="$slots.actions"
@@ -223,6 +289,58 @@ const count = computed(() => {
   gap: 6px;
   flex: 0 0 auto;
   min-width: 0;
+}
+
+/*
+ * The same divider the crumb and the query take, so the bar reads as one row
+ * of instruments rather than a summary with something stuck on the end.
+ */
+.dc-header__pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  padding-left: 12px;
+  border-left: 1px solid var(--dc-line);
+}
+
+.dc-header__step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: var(--dc-bg-0);
+  border: 1px solid var(--dc-line);
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-fg-1);
+  font-size: var(--dc-text-meta);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dc-header__step:hover:not(:disabled) {
+  background: var(--dc-bg-2);
+  color: var(--dc-fg-0);
+}
+
+/*
+ * There is no page before the first, and the button says so. This is not the
+ * shell forbidding a move — it is the end of the results, which is a fact
+ * about them and reads as one.
+ */
+.dc-header__step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dc-header__page {
+  /* Held to a width, so stepping 9 → 10 does not shuffle the buttons. */
+  min-width: 46px;
+  text-align: center;
+  font-size: var(--dc-text-micro);
+  color: var(--dc-fg-3);
 }
 
 /*

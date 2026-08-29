@@ -1,4 +1,4 @@
-import { ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import type { ComputedRef, Ref, ShallowRef } from 'vue'
 import type {
   DataSource,
@@ -8,6 +8,7 @@ import type {
   ShellQuery,
   ShellRow,
 } from '../types'
+import { countPages } from '../query/schema'
 
 export interface UseResultsOptions {
   source: ComputedRef<DataSource>
@@ -15,12 +16,18 @@ export interface UseResultsOptions {
   schema: ComputedRef<DomainSchema>
   /** `null` when the query spans every entity. */
   entity: ComputedRef<EntitySchema | null>
+  /** Rows per page — the most the source is asked for at once. */
   limit: ComputedRef<number>
 }
 
 export interface ResultsState {
   rows: ShallowRef<ShellRow[]>
+  /** Rows matching the query, of which the current page is one `limit`. */
   total: Ref<number>
+  /** Rows skipped to reach the current page — where its first row sits. */
+  offset: ComputedRef<number>
+  /** How many pages of `limit` the total comes to. Never fewer than one. */
+  pageCount: ComputedRef<number>
   /** True while an async source is in flight. Never true for a sync source. */
   pending: Ref<boolean>
   error: ShallowRef<unknown>
@@ -42,6 +49,9 @@ export function useResults(options: UseResultsOptions): ResultsState {
   const error = shallowRef<unknown>(null)
   let token = 0
 
+  const offset = computed(() => (options.query.value.page - 1) * options.limit.value)
+  const pageCount = computed(() => countPages(total.value, options.limit.value))
+
   const apply = (result: QueryResult) => {
     rows.value = result.rows
     total.value = result.total
@@ -55,6 +65,7 @@ export function useResults(options: UseResultsOptions): ResultsState {
       schema: options.schema.value,
       entity: options.entity.value,
       limit: options.limit.value,
+      offset: offset.value,
     }
 
     let outcome: QueryResult | Promise<QueryResult>
@@ -94,5 +105,5 @@ export function useResults(options: UseResultsOptions): ResultsState {
     immediate: true,
   })
 
-  return { rows, total, pending, error, refresh: run }
+  return { rows, total, offset, pageCount, pending, error, refresh: run }
 }

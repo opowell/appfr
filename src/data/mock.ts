@@ -157,7 +157,7 @@ function comparatorFor(sortKey: string): (a: ShellRow, b: ShellRow) => number {
 
 /**
  * An in-memory {@link SyncDataSource} over generated rows. It filters, sorts and
- * limits for real, so stories and tests exercise the same code paths a live
+ * pages for real, so stories and tests exercise the same code paths a live
  * backend would.
  */
 export function createMockDataSource(options: MockSourceOptions = {}): SyncDataSource {
@@ -172,7 +172,7 @@ export function createMockDataSource(options: MockSourceOptions = {}): SyncDataS
   }
 
   return {
-    query({ query, schema, entity, limit }: QueryRequest): QueryResult {
+    query({ query, schema, entity, limit, offset }: QueryRequest): QueryResult {
       const expression = parseExpression(query.expr)
 
       // No entity selected means the whole corpus. Logs and settings are
@@ -195,7 +195,9 @@ export function createMockDataSource(options: MockSourceOptions = {}): SyncDataS
       if (query.dir === 'asc') sorted.reverse()
 
       return {
-        rows: sorted.slice(0, limit),
+        // One page out of the middle. `total` stays the whole match, which is
+        // what the shell counts pages with.
+        rows: sorted.slice(offset, offset + limit),
         total: matched.length,
         unfiltered: matched.length === population.length,
       }

@@ -61,6 +61,16 @@ export const LiveUrlPinnable = story({
 })
 
 /**
+ * Twelve searches to a page, so the header carries its steps. Paging writes
+ * `p` and nothing else, and pushes — Back returns to the page before.
+ */
+export const LiveUrlPaged = story({
+  liveUrl: true,
+  defaults: { landing: 'entity', entity: 'searches', view: 'list' },
+  limit: 12,
+})
+
+/**
  * A host that lands on an entity rather than home. Its URL is clean, and the
  * whole corpus is spelled out as `e=*` when you widen back out.
  */

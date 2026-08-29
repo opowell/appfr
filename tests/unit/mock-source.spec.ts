@@ -24,6 +24,8 @@ const run = (search: string, limit = 500): QueryResult => {
     schema: iRadarSchema,
     entity: findEntity(iRadarSchema, query.entity),
     limit,
+    // What the shell derives, so `?p=` in a search string pages here too.
+    offset: (query.page - 1) * limit,
   })
 }
 
@@ -248,6 +250,43 @@ describe('createMockDataSource — one entity', () => {
   })
 })
 
+describe('createMockDataSource — paging', () => {
+  it('returns the page the offset asks for, without changing the total', () => {
+    const first = run('?e=searches', 10)
+    const second = run('?e=searches&p=2', 10)
+
+    expect(second.rows).toHaveLength(10)
+    expect(second.total).toBe(PER_ENTITY)
+    // A different slice of the same ordering, not the same rows again.
+    expect(second.rows.map((r) => r.id)).not.toEqual(first.rows.map((r) => r.id))
+  })
+
+  it('pages cover the result set once, in order and with no repeats', () => {
+    const whole = run('?e=searches').rows.map((r) => r.id)
+    const paged = [1, 2, 3, 4, 5].flatMap((page) => run(`?e=searches&p=${page}`, 10).rows.map((r) => r.id))
+
+    expect(paged).toEqual(whole)
+    expect(new Set(paged).size).toBe(whole.length)
+  })
+
+  it('the last page is short when the total does not divide evenly', () => {
+    // Forty-eight rows, ten to a page: five pages, the last of eight.
+    expect(run('?e=searches&p=5', 10).rows).toHaveLength(PER_ENTITY - 40)
+  })
+
+  it('a page past the end is empty, and still reports the whole match', () => {
+    const result = run('?e=searches&p=99', 10)
+    expect(result.rows).toHaveLength(0)
+    expect(result.total).toBe(PER_ENTITY)
+  })
+
+  it('pages the whole corpus the same way', () => {
+    const result = run('?p=3', 50)
+    expect(result.rows).toHaveLength(50)
+    expect(result.total).toBe(CORPUS)
+  })
+})
+
 describe('createMockDataSource — a multi-valued facet', () => {
   const commerce = (search: string): QueryResult => {
     const query = parseQuery(search, commerceSchema)
@@ -256,6 +295,7 @@ describe('createMockDataSource — a multi-valued facet', () => {
       schema: commerceSchema,
       entity: findEntity(commerceSchema, query.entity),
       limit: 500,
+      offset: 0,
     })
   }
 
@@ -299,6 +339,7 @@ describe('createMockDataSource — every bundled schema', () => {
         schema,
         entity: null,
         limit: 10,
+        offset: 0,
       })
       expect(everything.rows.length, `${schema.key}/everything`).toBe(10)
       expect(everything.total, `${schema.key}/everything`).toBe(
@@ -311,6 +352,7 @@ describe('createMockDataSource — every bundled schema', () => {
           schema,
           entity,
           limit: 10,
+          offset: 0,
         })
         expect(result.rows.length, `${schema.key}/${entity.key}`).toBe(10)
         expect(result.rows[0]!.primary).toBeTruthy()

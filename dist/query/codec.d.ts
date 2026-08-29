@@ -5,6 +5,7 @@ export declare const PARAM_VIEW = "v";
 export declare const PARAM_SORT = "s";
 export declare const PARAM_DIR = "d";
 export declare const PARAM_EXPR = "q";
+export declare const PARAM_PAGE = "p";
 export declare const FACET_PREFIX = "f_";
 /**
  * Value of `e` meaning "every entity". Only needed when the host lands on an

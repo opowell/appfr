@@ -6,11 +6,17 @@ export interface UseResultsOptions {
     schema: ComputedRef<DomainSchema>;
     /** `null` when the query spans every entity. */
     entity: ComputedRef<EntitySchema | null>;
+    /** Rows per page — the most the source is asked for at once. */
     limit: ComputedRef<number>;
 }
 export interface ResultsState {
     rows: ShallowRef<ShellRow[]>;
+    /** Rows matching the query, of which the current page is one `limit`. */
     total: Ref<number>;
+    /** Rows skipped to reach the current page — where its first row sits. */
+    offset: ComputedRef<number>;
+    /** How many pages of `limit` the total comes to. Never fewer than one. */
+    pageCount: ComputedRef<number>;
     /** True while an async source is in flight. Never true for a sync source. */
     pending: Ref<boolean>;
     error: ShallowRef<unknown>;

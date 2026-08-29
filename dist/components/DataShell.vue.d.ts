@@ -1,5 +1,5 @@
 import '../style/tokens.css';
-import type { DataSource, DomainSchema, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ViewKind } from '../types';
+import type { DataSource, DomainSchema, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewKind } from '../types';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
 type __VLS_Props = {
@@ -18,7 +18,11 @@ type __VLS_Props = {
     route?: RouteAdapter;
     /** Query fields to fall back to when the URL omits them. */
     defaults?: ShellQueryDefaults;
-    /** Maximum rows requested from the source. */
+    /**
+     * Rows per page: the most the source is asked for at once. The header
+     * offers the pages this divides the results into, and the page itself is
+     * in the URL.
+     */
     limit?: number;
     /**
      * Rows shown inside each type's card on the home screen — the most
@@ -48,6 +52,19 @@ type __VLS_Props = {
      * background, text colour and font.
      */
     theme?: ShellTheme;
+    /**
+     * How the header bar and the panel that drops from it are brought to one
+     * width. `grow`, the default, widens the panel to the bar, so the query
+     * opens over exactly what it summarizes however wide the shell is.
+     * `shrink` brings the bar in to the panel instead — to `--dc-header-width`
+     * — which keeps a query off the far edges of a very wide screen.
+     */
+    matchWidth?: ShellWidthMatch;
+    /**
+     * Where that narrowed pair sits across the shell. Only `shrink` leaves
+     * anything to align: a panel grown to a full-width bar already spans it.
+     */
+    headAlign?: ShellAlign;
     /** Offers the star affordance on rows. */
     pinnable?: boolean;
     navigationMode?: NavigationMode;
@@ -64,8 +81,13 @@ type __VLS_Slots = {
     'panel-section'?: () => unknown;
     /** Replaces the entire results area. */
     results?: (props: {
+        /** The current page of rows, not the whole result. */
         rows: ShellRow[];
+        /** Rows matching the query, across every page of them. */
         total: number;
+        /** Rows before the first of `rows` — for numbering that keeps counting. */
+        offset: number;
+        pageCount: number;
         query: ShellQuery;
         pending: boolean;
     }) => unknown;
@@ -102,6 +124,8 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     limit: number;
     previewsPerType: number;
     theme: ShellTheme;
+    matchWidth: ShellWidthMatch;
+    headAlign: ShellAlign;
     navigationMode: NavigationMode;
     facetNavigationMode: NavigationMode;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;

@@ -172,11 +172,47 @@ describe('serializeQuery', () => {
   })
 })
 
+describe('the page parameter', () => {
+  it('reads a URL with no page as the first one', () => {
+    expect(parseQuery('', iRadarSchema).page).toBe(1)
+    expect(parseQuery('?e=items&v=list', iRadarSchema).page).toBe(1)
+  })
+
+  it('reads the page it names', () => {
+    expect(parseQuery('?e=items&p=4', iRadarSchema).page).toBe(4)
+  })
+
+  it('degrades a page nobody can be on to the first', () => {
+    for (const search of ['?p=0', '?p=-3', '?p=sausage', '?p=', '?p=1.5']) {
+      expect(parseQuery(search, iRadarSchema).page, search).toBe(1)
+    }
+  })
+
+  it('omits the first page, which is what an unpaged URL means', () => {
+    const query = parseQuery('?e=items', iRadarSchema)
+    expect(serializeQuery(query, iRadarSchema)).toBe('?e=items')
+  })
+
+  it('writes the page last, after the terms being paged through', () => {
+    const query = parseQuery('?e=items&f_kind=page&p=3', iRadarSchema)
+    expect(serializeQuery(query, iRadarSchema)).toBe('?e=items&f_kind=page&p=3')
+  })
+
+  it('is a parameter the shell owns, so it is not mistaken for the host\'s', () => {
+    const query = parseQuery('?tab=audit&p=2', iRadarSchema)
+    // Rewritten by the shell rather than carried through as foreign state.
+    expect(serializeQuery(query, iRadarSchema, {}, '?tab=audit&p=2')).toBe('?tab=audit&p=2')
+    expect(serializeQuery({ ...query, page: 1 }, iRadarSchema, {}, '?tab=audit&p=2')).toBe('?tab=audit')
+  })
+})
+
 describe('round trip', () => {
   const cases: string[] = [
     '',
     '?v=cards',
     '?e=items&v=table&s=score&d=asc',
+    '?e=items&v=list&p=7',
+    '?e=items&f_kind=page&p=2',
     '?e=items&f_kind=page,feed&f_rank=10..90&f_seen=1',
     '?q=site:*.shop+AND+price+%3C+40',
     '?e=scrapers&f_engine=headless&q=reddit',

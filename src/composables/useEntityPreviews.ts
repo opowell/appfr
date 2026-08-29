@@ -78,10 +78,13 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
       // Scope the query to this entity, keeping the expression and ordering
       // but dropping facets, which belong to whichever entity is selected.
       outcome: options.source.value.query({
-        query: { ...query, entity: entity.key, facets: emptyFacetState(entity) },
+        // Each card is the top few of its type, wherever the shell's own
+        // result set has been paged to — so this asks for the first page.
+        query: { ...query, entity: entity.key, facets: emptyFacetState(entity), page: 1 },
         schema,
         entity,
         limit,
+        offset: 0,
       }),
     }))
 

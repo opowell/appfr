@@ -83,8 +83,19 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
         <th
           class="dc-table__number"
           scope="col"
+          :aria-sort="ariaSort('metric2')"
         >
-          {{ labels.metric2 }}
+          <button
+            v-if="sortable.has('metric2')"
+            type="button"
+            class="dc-table__sort"
+            @click="sortBy('metric2')"
+          >
+            {{ labels.metric2 }}
+          </button>
+          <template v-else>
+            {{ labels.metric2 }}
+          </template>
         </th>
         <th
           class="dc-table__date"

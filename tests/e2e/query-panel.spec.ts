@@ -263,16 +263,28 @@ test.describe('Query panel — view and sort', () => {
     expect(await page.locator('.dc-list__primary').first().innerText()).not.toBe(first)
   })
 
-  test('the metric sort is generic at home and named once scoped', async ({ page }) => {
+  test('the metric sorts are generic at home and named once scoped', async ({ page }) => {
     await gotoStory(page, HOME_OPEN)
     let group = page.getByRole('radiogroup', { name: 'Sort field' })
-    await expect(group.getByRole('radio')).toHaveText(['updated', 'score', 'value', 'name'])
+    await expect(group.getByRole('radio')).toHaveText([
+      'updated',
+      'score',
+      'value',
+      'second value',
+      'name',
+    ])
 
     await gotoStory(page, ENTITY)
     await openPanel(page)
     group = page.getByRole('radiogroup', { name: 'Sort field' })
-    // iRadar names the first metric of `searches` "New".
-    await expect(group.getByRole('radio')).toHaveText(['updated', 'score', 'new', 'name'])
+    // iRadar names the metrics of `searches` "New" and "Results".
+    await expect(group.getByRole('radio')).toHaveText([
+      'updated',
+      'score',
+      'new',
+      'results',
+      'name',
+    ])
   })
 })
 

@@ -43,7 +43,7 @@ export function focusEntity(schema: DomainSchema, defaults: ShellQueryDefaults =
 
 /**
  * Sort options. Across every entity the metric columns have no single name, so
- * the metric sort is labelled generically; inside one entity it takes that
+ * the metric sorts are labelled generically; inside one entity each takes that
  * entity's own column name.
  */
 export function sortsFor(entity: EntitySchema | null): SortDef[] {
@@ -52,6 +52,7 @@ export function sortsFor(entity: EntitySchema | null): SortDef[] {
     { key: 'updated', label: 'updated' },
     { key: 'score', label: 'score' },
     { key: 'metric1', label: entity ? entity.labels.metric1.toLowerCase() : 'value' },
+    { key: 'metric2', label: entity ? entity.labels.metric2.toLowerCase() : 'second value' },
     { key: 'name', label: 'name' },
   ]
 }

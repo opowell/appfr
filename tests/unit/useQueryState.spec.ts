@@ -29,21 +29,23 @@ describe('useQueryState — the home screen', () => {
     expect(state.focus.value.key).toBe('searches')
   })
 
-  it('names the metric sort generically until an entity is chosen', () => {
+  it('names the metric sorts generically until an entity is chosen', () => {
     const { state } = setup('')
     expect(state.sorts.value.map((sort) => sort.label)).toEqual([
       'updated',
       'score',
       'value',
+      'second value',
       'name',
     ])
 
     state.setEntity('searches')
-    // `searches` calls its first metric "New".
+    // `searches` calls its metrics "New" and "Results".
     expect(state.sorts.value.map((sort) => sort.label)).toEqual([
       'updated',
       'score',
       'new',
+      'results',
       'name',
     ])
   })

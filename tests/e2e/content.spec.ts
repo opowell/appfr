@@ -189,6 +189,23 @@ test.describe('Content — sort order', () => {
     const names = await page.locator('.dc-table__open').allInnerTexts()
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)))
   })
+
+  test('sorts by either metric column, highest first', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--table-view')
+
+    for (const [label, column] of [
+      ['New', 4],
+      ['Results', 5],
+    ] as const) {
+      const header = page.locator('.dc-table th', { hasText: label }).first()
+      await header.locator('.dc-table__sort').click()
+      await expect(header).toHaveAttribute('aria-sort', 'descending')
+
+      const cells = await page.locator(`.dc-table tbody tr td:nth-child(${column})`).allInnerTexts()
+      const values = cells.map((text) => Number(text.trim()))
+      expect(values).toEqual([...values].sort((a, b) => b - a))
+    }
+  })
 })
 
 test.describe('Content — states other than a full result set', () => {

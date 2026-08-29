@@ -631,6 +631,7 @@ makes it a window of its own, which is the fifth thing a drop can mean:
 | the middle of a pane | joins that pane as a tab, on top |
 | a tab strip | joins it at that position in the strip |
 | bare desktop | becomes a floating window there |
+| a space with nothing in it | fills it — a window on a desktop, the one pane in a row or a column |
 
 That is how a panel becomes floating without the host rewriting the layout:
 drag a tab out of a window and drop it on the desktop beside it, and it keeps
@@ -640,7 +641,9 @@ moves a window about its desktop without it docking into whatever it passes
 over — see [Moving panels](#moving-panels).
 The pure operation behind it is `floatPanel(layout, panel, near, rect)`, where
 `near` is any panel already on the float — a drop names the desktop by
-something on it.
+something on it. A desktop with *nothing* on it has nothing to be named by, so
+that drop names the space by where it is instead: `dropIntoSpace(layout, panel,
+path, rect?)` — see [a space with nothing in it](#a-space-with-nothing-in-it).
 
 A float has to exist for there to be a desktop to drop on: a host supplies one
 in the layout, or builds one with the exported operations. The panel menu that
@@ -672,9 +675,11 @@ short enough to read at a glance, and nothing in front of any one of them.
 | Tabs | they stop dividing the space and share it — a desktop among them as one tab of its own |
 | Desktop | they float over it instead, on a desktop of their own |
 
-Whichever is already true is ticked and cannot be taken — the option that would
-change nothing is offered *disabled* rather than hidden, so the menu says the
-same thing wherever it is opened from.
+Whichever is already true is ticked, and that tick is the whole of the answer:
+none of the four is ever hidden, and none of them is ever greyed out. A display
+mode greyed out reads as one the space is not allowed to be shown in, which is
+the opposite of what a ticked one says — so all four stay where they are, and
+choosing one that is already true does nothing.
 
 **A pane of host content offers none of this.** What is in it is content, not
 panels, so it has nothing to arrange and nothing to say about the space around
@@ -726,8 +731,10 @@ rootSpace(group(['a', 'b']))        // the group it was given, untouched
 ```
 
 On a space of one pane, "Row", "Column" and "Tabs" all describe what is already
-on screen, so all three are disabled and "Desktop" is the only one with
-anywhere to go.
+on screen — which is exactly why none of them greys out. Three of the four
+going dim at once would read as a menu with one choice left in it, while every
+one of the four was perfectly true of that space; the tick says which, and
+"Desktop" is the only one that moves anything.
 
 What a space is called is `Row`, `Column` or `Desktop` — how it is shown, which
 is what the menu beside the name switches between — unless the node carries a
@@ -745,6 +752,34 @@ into its only child, the way `headless` and `fixedView` are kept. Otherwise a
 name would hold only while the shape happened to stay distinguishable from its
 parent's — one pane dragged out of `Workspace` and the space would be gone,
 name and bar and all, with nothing on screen to say why.
+
+#### A space with nothing in it
+
+Down to the last pane. Drag everything out of a named space and the space is
+still there: an empty desktop, or an empty row, with its name on its bar and
+its share of the room around it. A space the host named is a place rather than
+a container, so it outlives what was in it — and a name that lasted exactly as
+long as the last pane in it would be the same disappearing act one step later.
+
+The way back is the other half of that. A drop into a space holding nothing has
+no panel there to land against, so it names the space by the path it is
+rendered at:
+
+```ts
+dropIntoSpace(layout, 'notes', [1])                        // the one pane of a row or column
+dropIntoSpace(layout, 'notes', [1], { x: 24, y: 24, w: 320, h: 240 })  // a window on a desktop
+```
+
+The drag does it for you — carry a panel over an empty space and the whole of
+it lights up, there being no edge in it to land on one side of. `removePanel`
+and `normalizeLayout` both keep the space, so a layout that round-trips through
+storage comes back with it.
+
+A **strip** is the one shape this does not apply to: what says a strip's name
+is its tabs, so a strip with none has no bar left to say anything on and
+nothing to drop into. An empty group goes, as it always did — which makes
+"Tabs" the one of the four an empty space cannot be shown in, so choosing it
+leaves the space as it was rather than taking it away.
 
 **And it survives all four shapes.** A row, a column and a desktop each draw a
 header of their own to say the name on; a strip has none — its tabs already say
@@ -781,6 +816,70 @@ what a pane offers:
   :pane-menu="(panel, items) => [...items, { separator: true }, { label: `Reload ${panel.title}`, action: () => reload(panel.id) }]"
 />
 ```
+
+### A space inside a space
+
+A space holding one space is a bar drawn twice. Both are spaces, so both say
+what they are called and both offer the same four choices — about the same
+panes, since the content under the two of them was only ever the inner one's.
+
+```
+┌─ Workspace ──────────────────────┐
+│ ┌─ Column ─────────────────────┐ │
+│ │ ┌─ Sources ────────────────┐ │ │
+│ │ ├─ Activity ───────────────┤ │ │
+│ │ └──────────────────────────┘ │ │
+│ └──────────────────────────────┘ │
+└──────────────────────────────────┘
+```
+
+That pair is the only nesting the model keeps: a split of one child is
+collapsed into that child, and a strip whose only tab is a space into that
+space, so one that is still there is one the host meant — a space with a name,
+a space that draws no bar, or one that remembers the desktop it was tiled from,
+each of which is something collapsing it would lose.
+
+Which leaves one question, and the menu on **either** bar asks it: which of the
+two stays.
+
+| Item | What it does |
+| --- | --- |
+| Keep *Workspace* | the outer bar stays, and the content arrives under its name, in the shape the inner space was holding it |
+
+Nothing moves. The panes are the same panes, in the same order, at the same
+sizes — the choice is only which of the two bars they are left under, which is
+the only thing the two spaces ever said separately.
+
+Only ever the merge that keeps every name there was. Keeping *Column* here
+would leave the column and take *Workspace* with the bar that goes, and a name
+is the one thing a space is proof against losing everywhere else in the model —
+so that item is not offered, and a pair with a name on **both** bars offers
+neither and stays a pair. `mergeSpace` still takes either half: a host that
+means to drop a name can say so.
+
+The items are headed by *which* pair they are about — *Around Column* on the
+outer bar, *Inside Workspace* on the inner one — because a space can be the
+inside of one pair and the outside of another, and "keep this space" means a
+different thing in each.
+
+`mergeSpace` is the operation and `onlySpace` the pair it acts on, so the same
+choice can come from a palette or a shortcut:
+
+```ts
+const pair = row([column([panelNode('sources'), panelNode('activity')])], undefined, 'Workspace')
+
+onlySpace(pair)            // the column
+mergeSpace(pair, 'outer')  // that column, named Workspace
+mergeSpace(pair, 'inner')  // that column, exactly as it was
+
+onlySpace(row([a, b]))     // null — more than one child is an arrangement
+```
+
+Neither half is ever a **desktop**: its frames are windows placed over the
+space rather than dividing it, so a desktop holding one window is a desktop
+with a window on it and not a bar drawn twice. Nor is a lone **pane**, which is
+content under a header rather than a space — the same distinction `rootSpace`
+draws. A strip of two or more tabs is a space in its own right and counts.
 
 ### A space that offers less
 
@@ -880,8 +979,8 @@ itself. `:menu="false"` does not take
 them away either way: they were never the window's to withhold.
 
 `items` is read every time the menu is built, so a getter or a computed says
-what is true at that moment — the tick beside the view actually showing, an
-option disabled while it would do nothing. Nothing is pushed back up when it
+what is true at that moment — the tick beside the view actually showing, a
+label that follows what is under it. Nothing is pushed back up when it
 changes.
 
 Called outside a window it does nothing rather than failing, which is what lets
@@ -1040,6 +1139,15 @@ would give, while leaving every size in the window untouched — otherwise a
 panel walked across the grid would leave a trail of resized panes behind it.
 Every move is announced.
 
+A [space with nothing in it](#a-space-with-nothing-in-it) is a place that way
+like any other, and the one where both arrows mean the same thing: *beside*
+what is there and *with* what is there are the same place when there is nothing
+there, so shift is not refused — it has nothing extra to say. The move is
+announced against the space, since there is no panel in it to announce it
+against. A pane exactly as far away wins over an empty space, being the more
+particular answer: an edge of it is somewhere to land, where the space is only
+itself.
+
 Dropping a panel where it already is, or on itself, is a no-op rather than a
 history entry.
 
@@ -1076,7 +1184,8 @@ clear of the last, rather than as a tiled pane wedged beside the desktop.
 
 The operations behind all of this are exported and pure — `movePanel`,
 `insertPanel`, `removePanel`, `swapPanels`, `moveTab`, `setActivePanel`,
-`floatPanel`, `setFrameRect`, `raiseFrame`, `frameOf`, `clampRect`, `resizeRect`,
+`floatPanel`, `dropIntoSpace`, `setFrameRect`, `raiseFrame`, `frameOf`,
+`clampRect`, `resizeRect`,
 `setSplitDirection`, `collapseToTabs`, `collapseSpace`, `toFloat`, `toTiled`,
 `nodeTitle`, `frontPanel`, `activeTab`, `isPanelTab`, `panelTabs`, `tabPanels`,
 `headless`, `fixedView`, `spaceChrome`,
@@ -1106,7 +1215,8 @@ or a test without going near the DOM.
 
 **Events** — `panel-move({ panel, target, edge, index, rect })` after a panel
 has been moved — `edge: 'float'` with a `rect` when it was dropped on bare
-desktop — `frame-change({ panel, rect })` after a floating window has been
+desktop, and a `space` path with no `target` when it was dropped into a space
+that held nothing — `frame-change({ panel, rect })` after a floating window has been
 moved or resized, `frame-maximize({ panel, maximized })`,
 `frame-minimize({ panel, minimized })`, `panel-close(id)`
 when a close button is pressed — the window has *not* removed it — `tab-select({ panel })`, `view-change({ panel, view })`,

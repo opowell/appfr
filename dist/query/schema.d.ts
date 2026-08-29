@@ -17,7 +17,7 @@ export declare function findEntity(schema: DomainSchema, key: string | null | un
 export declare function focusEntity(schema: DomainSchema, defaults?: ShellQueryDefaults): EntitySchema;
 /**
  * Sort options. Across every entity the metric columns have no single name, so
- * the metric sort is labelled generically; inside one entity it takes that
+ * the metric sorts are labelled generically; inside one entity each takes that
  * entity's own column name.
  */
 export declare function sortsFor(entity: EntitySchema | null): SortDef[];

@@ -1,14 +1,15 @@
-const e = (s, i, n) => ({
+const e = (s, i, n, o = !1) => ({
   kind: "chips",
   key: s,
   label: i,
-  options: n
-}), r = (s, i, n, l) => ({
+  options: n,
+  ...o ? { multiple: o } : {}
+}), r = (s, i, n, o) => ({
   kind: "range",
   key: s,
   label: i,
   min: n,
-  max: l
+  max: o
 }), a = (s, i, n) => ({
   kind: "toggle",
   key: s,
@@ -27,7 +28,7 @@ const e = (s, i, n) => ({
   facets: s.facets,
   tabs: s.tabs,
   samples: s.samples
-}), o = t({
+}), c = t({
   key: "settings",
   label: "Settings",
   count: "20",
@@ -63,7 +64,7 @@ const e = (s, i, n) => ({
     ["API tokens", "access.api_tokens"],
     ["Audit log", "access.audit_log"]
   ]
-}), c = t({
+}), l = t({
   key: "logs",
   label: "Logs",
   count: "184k",
@@ -162,8 +163,8 @@ const e = (s, i, n) => ({
         ["Docs crawler", "docs.example.io"]
       ]
     }),
-    c,
-    o
+    l,
+    c
   ]
 }, d = {
   key: "LEGO",
@@ -286,8 +287,8 @@ const e = (s, i, n) => ({
         ["Wheels & tyres", "wheels-tyres"]
       ]
     }),
-    c,
-    o
+    l,
+    c
   ]
 }, u = {
   key: "Commerce",
@@ -305,7 +306,9 @@ const e = (s, i, n) => ({
       metric2: "Tests",
       facets: [
         e("plan", "Plan", ["trial", "growth", "enterprise"]),
-        e("region", "Region", ["eu", "us", "apac"]),
+        // Multi-valued: a tenant can run in more than one region, and is in
+        // each of their chip sets rather than in a combined one of its own.
+        e("region", "Region", ["eu", "us", "apac"], !0),
         a("health", "Health", "Only tenants with failures")
       ],
       tabs: ["Information", "Crawls", "Tests", "Logs"],
@@ -410,8 +413,8 @@ const e = (s, i, n) => ({
         ["Checkout step 2", "acme.example/checkout/2"]
       ]
     }),
-    c,
-    o
+    l,
+    c
   ]
 }, p = {
   key: "Battle-sim",
@@ -511,8 +514,8 @@ const e = (s, i, n) => ({
         ["Salt Flats #8816", "run_8816"]
       ]
     }),
-    c,
-    o
+    l,
+    c
   ]
 }, y = {
   iRadar: m,
@@ -525,8 +528,8 @@ export {
   u as commerceSchema,
   m as iRadarSchema,
   d as legoSchema,
-  c as logsEntity,
+  l as logsEntity,
   g as schemaList,
   y as schemas,
-  o as settingsEntity
+  c as settingsEntity
 };

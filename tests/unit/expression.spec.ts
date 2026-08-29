@@ -81,6 +81,19 @@ describe('matchesExpression', () => {
     expect(matches('kind:feed')).toBe(false)
   })
 
+  it('matches a multi-valued facet on any one of its values', () => {
+    const multi = row({ facets: { kind: ['pdf', 'feed'], rank: 55, seen: true } })
+    expect(matches('kind:pdf', multi)).toBe(true)
+    expect(matches('kind:feed', multi)).toBe(true)
+    expect(matches('kind:image', multi)).toBe(false)
+    expect(matches('kind:pdf AND kind:feed', multi)).toBe(true)
+  })
+
+  it('treats a comparison against a multi-valued facet as no constraint', () => {
+    const multi = row({ facets: { kind: ['pdf'], rank: 55, seen: true } })
+    expect(matches('kind>2', multi)).toBe(true)
+  })
+
   it('matches a facet by its label, spaces removed', () => {
     const piece = row({ facets: { category: 'brick', firstYear: 1974, rarity: false } })
     expect(matches('firstyear>=1970', piece, findEntity(legoSchema, 'pieces')!)).toBe(true)

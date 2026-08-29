@@ -243,6 +243,30 @@ Four worked examples ship in `header-content-layout/fixtures`: `iRadarSchema`,
 and `settingsEntity`, which are exported on their own and are entities like any
 other — no special casing anywhere in the shell.
 
+### A facet a row holds several of
+
+A chips facet is one value per row by default. Mark it `multiple` and a row may
+hold a list instead, and it answers to each of its values on its own:
+
+```ts
+{ kind: 'chips', key: 'region', label: 'Region', options: ['eu', 'us', 'apac'], multiple: true }
+```
+
+```ts
+{ id: 'acme', primary: 'Acme Retail', facets: { region: ['eu', 'us'] }, /* … */ }
+```
+
+That tenant is in `eu`'s set and in `us`'s, so the chips overlap rather than
+partition the population — the three of them together account for more rows
+than there are. Without it a row belonging to two values has to carry a
+combined value of its own (`eu + us`), which becomes a chip in its own right
+that nobody thinks to click, and `eu` then quietly means "eu and nowhere else".
+
+Nothing else changes: the URL, the summary and the controls are the same, and
+filtering follows whatever the row holds — a source may return a list whether
+or not the schema declares one. The flag is what says so in the schema, and
+what the bundled mock source generates against.
+
 ## The expression field
 
 A small query language, evaluated by the bundled mock source and exported for
@@ -261,6 +285,10 @@ bare word matches the identity fields; `*` is a wildcard. `field:value` and
 entity's own column labels, or any facet key. An unrecognised field is ignored
 rather than treated as a mismatch, so a half-typed expression keeps showing
 results.
+
+A term against a multi-valued facet is satisfied by any one of the row's
+values, so `region:eu` keeps a tenant that runs in `eu` and `us` both. A
+numeric comparison against one constrains nothing.
 
 `entity:` is what makes kind filterable from the expression alone —
 `entity:logs` from home narrows to logs without leaving the whole-corpus view.

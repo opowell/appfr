@@ -117,7 +117,7 @@ function resolveField(
   field: string,
   row: ShellRow,
   entity: EntitySchema,
-): string | number | boolean | undefined {
+): ShellRow['facets'][string] | undefined {
   const labels = entity.labels
   const alias = (label: string) => label.toLowerCase().replace(/\s+/g, '')
   const normalized = field.replace(/\s+/g, '')
@@ -158,6 +158,13 @@ function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
 
   const actual = resolveField(term.field, row, entity)
   if (actual === undefined) return true // unknown field: not a constraint
+
+  // A multi-valued facet answers to each of its values on its own. Nothing
+  // there is a number, so a comparison against one constrains nothing.
+  if (Array.isArray(actual)) {
+    const equality = term.comparator === ':' || term.comparator === '='
+    return equality ? actual.some((entry) => matchesText(entry, term.value)) : true
+  }
 
   if (term.comparator === ':' || term.comparator === '=') {
     if (typeof actual === 'boolean') {

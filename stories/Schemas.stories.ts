@@ -57,6 +57,13 @@ export const Lego = story({ schema: legoSchema, search: '?e=sets&v=list&f_theme=
 /** Crawl and test platform: tenants, crawls, tests, results. */
 export const Commerce = story({ schema: commerceSchema, search: '?e=testresults&v=table' })
 
+/**
+ * A multi-valued facet. A tenant runs in one region or in several, so the
+ * Region chips overlap: picking `eu` keeps a tenant that is in `eu` and `us`
+ * both, and the three chips together account for more rows than there are.
+ */
+export const CommerceRegions = story({ schema: commerceSchema, search: '?e=tenants&v=list' })
+
 /** Simulation runs: units, factions, scenarios, runs. */
 export const BattleSim = story({ schema: battleSimSchema, search: '?e=runs&v=list&s=metric1' })
 

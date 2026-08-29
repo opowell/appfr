@@ -1,8 +1,16 @@
 import { expect, test } from '@playwright/test'
 import { gotoStory, listRows, openPanel, panel, pickEntity, summary } from './story'
-import { iRadarSchema } from '../../src/fixtures/schemas'
+import { commerceSchema, iRadarSchema } from '../../src/fixtures/schemas'
+import { findEntity } from '../../src/query/schema'
+import type { ChipsFacet } from '../../src/types'
 
 const HOME_OPEN = 'shell-data-shell--home-panel-open'
+const REGIONS = 'schemas-same-shell--commerce-regions'
+
+/** The fixture's multi-valued facet: a tenant runs in one region or several. */
+const REGION = findEntity(commerceSchema, 'tenants')!.facets.find(
+  (facet) => facet.key === 'region',
+) as ChipsFacet
 const HOST_SECTION = 'shell-data-shell--host-panel-section'
 const ENTITY = 'shell-data-shell--entity-list'
 
@@ -105,6 +113,29 @@ test.describe('Query panel — narrowing the result set', () => {
 
     expect(two).toBeGreaterThan(one)
     await expect(summary(page)).toHaveText('entity:searches · state:running · state:paused')
+  })
+
+  test('a chip keeps the rows holding its value among several', async ({ page }) => {
+    await gotoStory(page, REGIONS)
+    const all = await listRows(page).count()
+    await openPanel(page)
+
+    const chip = (option: string) =>
+      page.locator('.dc-chip').filter({ hasText: new RegExp(`^${option}$`) }).first()
+
+    let summed = 0
+    for (const option of REGION.options) {
+      await chip(option).click()
+      await expect(summary(page)).toHaveText(`entity:tenants · ${REGION.key}:${option}`)
+      const narrowed = await listRows(page).count()
+      expect(narrowed).toBeGreaterThan(0)
+      expect(narrowed).toBeLessThan(all)
+      summed += narrowed
+      await chip(option).click()
+    }
+
+    // Only possible because a row sits in more than one chip's set.
+    expect(summed).toBeGreaterThan(all)
   })
 
   test('chips in different facets intersect', async ({ page }) => {

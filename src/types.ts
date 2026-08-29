@@ -59,6 +59,14 @@ export interface ChipsFacet {
   key: string
   label: string
   options: string[]
+  /**
+   * Whether a row may hold several of these values at once — a tenant that
+   * runs in two regions, a host built from two containers. Such a row answers
+   * to each of its values on its own, so it is in more than one chip's set.
+   * Filtering follows the row's value either way; this says so in the schema,
+   * and is what the mock source generates against.
+   */
+  multiple?: boolean
 }
 
 /** A numeric window. Either bound may be left open. */
@@ -194,8 +202,11 @@ export interface ShellRow {
   updatedAt: string
   /** Background colour for the grid view's tile. */
   tint: string
-  /** Values behind this row, keyed by {@link FacetDef.key}. */
-  facets: Record<string, string | number | boolean>
+  /**
+   * Values behind this row, keyed by {@link FacetDef.key}. A chips facet may
+   * hold a list rather than one string — see {@link ChipsFacet.multiple}.
+   */
+  facets: Record<string, string | number | boolean | string[]>
 }
 
 export interface QueryRequest {

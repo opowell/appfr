@@ -9,11 +9,12 @@ import type { ChipsFacet, DomainSchema, EntitySchema, RangeFacet, ToggleFacet } 
  * Import them for stories, tests, and as worked examples of the schema shape.
  */
 
-const chips = (key: string, label: string, options: string[]): ChipsFacet => ({
+const chips = (key: string, label: string, options: string[], multiple = false): ChipsFacet => ({
   kind: 'chips',
   key,
   label,
   options,
+  ...(multiple ? { multiple } : {}),
 })
 
 const range = (key: string, label: string, min: number, max: number): RangeFacet => ({
@@ -359,7 +360,9 @@ export const commerceSchema: DomainSchema = {
       metric2: 'Tests',
       facets: [
         chips('plan', 'Plan', ['trial', 'growth', 'enterprise']),
-        chips('region', 'Region', ['eu', 'us', 'apac']),
+        // Multi-valued: a tenant can run in more than one region, and is in
+        // each of their chip sets rather than in a combined one of its own.
+        chips('region', 'Region', ['eu', 'us', 'apac'], true),
         toggle('health', 'Health', 'Only tenants with failures'),
       ],
       tabs: ['Information', 'Crawls', 'Tests', 'Logs'],

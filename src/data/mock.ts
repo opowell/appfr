@@ -32,10 +32,12 @@ export interface MockSourceOptions {
   now?: Date
 }
 
-function pickFacetValue(facet: FacetDef, hash: number): string | number | boolean {
+function pickFacetValue(facet: FacetDef, hash: number): ShellRow['facets'][string] {
   switch (facet.kind) {
     case 'chips':
-      return facet.options[hash % facet.options.length] ?? ''
+      // A multi-valued facet takes one, two or three of its options, so the
+      // generated population has rows that belong to more than one chip's set.
+      return facet.multiple ? pickSeveral(facet.options, hash) : facet.options[hash % facet.options.length] ?? ''
     case 'range': {
       const span = Math.max(0, facet.max - facet.min)
       return facet.min + (span === 0 ? 0 : hash % (span + 1))
@@ -44,6 +46,16 @@ function pickFacetValue(facet: FacetDef, hash: number): string | number | boolea
       // Roughly a third of rows carry the flag, so toggles visibly narrow.
       return hash % 3 === 0
   }
+}
+
+/** One to three of `options`, in schema order, chosen deterministically. */
+function pickSeveral(options: string[], hash: number): string[] {
+  if (!options.length) return []
+  const count = 1 + ((hash >> 5) % Math.min(3, options.length))
+  const first = hash % options.length
+  const picked = new Set<number>()
+  for (let step = 0; step < count; step++) picked.add((first + step) % options.length)
+  return [...picked].sort((a, b) => a - b).map((index) => options[index] as string)
 }
 
 /**
@@ -67,7 +79,7 @@ export function generateRows(
     const revision = Math.floor(i / samples.length)
     const hash = fnv1a(`${salt}:${entity.key}:${sample[0]}:${i}`)
 
-    const facets: Record<string, string | number | boolean> = {}
+    const facets: ShellRow['facets'] = {}
     for (const facet of entity.facets) {
       facets[facet.key] = pickFacetValue(facet, fnv1a(`${hash}:${facet.key}`))
     }
@@ -99,6 +111,12 @@ export function matchesFacets(row: ShellRow, facets: FacetState): boolean {
     switch (value.kind) {
       case 'chips': {
         if (!value.selected.length) break
+        // The chips of one facet are an OR, so a row holding several values is
+        // in the set when any one of them is selected.
+        if (Array.isArray(actual)) {
+          if (!actual.some((entry) => value.selected.includes(entry))) return false
+          break
+        }
         if (typeof actual !== 'string' || !value.selected.includes(actual)) return false
         break
       }

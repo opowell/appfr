@@ -2,11 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { createMockDataSource, generateRows, matchesFacets } from '../../src/data/mock'
 import { parseQuery } from '../../src/query/codec'
 import { defaultQuery, findEntity } from '../../src/query/schema'
-import { iRadarSchema, schemaList } from '../../src/fixtures/schemas'
-import type { QueryResult } from '../../src/types'
+import { commerceSchema, iRadarSchema, schemaList } from '../../src/fixtures/schemas'
+import type { ChipsFacet, QueryResult } from '../../src/types'
 
 const searches = findEntity(iRadarSchema, 'searches')!
 const items = findEntity(iRadarSchema, 'items')!
+const tenants = findEntity(commerceSchema, 'tenants')!
+
+/** The fixture's multi-valued facet: a tenant runs in one region or several. */
+const REGION = tenants.facets.find((facet) => facet.key === 'region') as ChipsFacet
 
 /** Rows generated per entity by the source under test. */
 const PER_ENTITY = 48
@@ -59,6 +63,21 @@ describe('generateRows', () => {
     }
   })
 
+  it('draws a multi-valued chips facet as a list of its options', () => {
+    const options = new Set(REGION.options)
+    let sawSeveral = false
+    for (const row of generateRows(tenants, { seed: 'x', population: PER_ENTITY })) {
+      const values = row.facets[REGION.key]
+      expect(Array.isArray(values)).toBe(true)
+      const list = values as string[]
+      expect(list.length).toBeGreaterThan(0)
+      expect(new Set(list).size).toBe(list.length)
+      for (const value of list) expect(options.has(value)).toBe(true)
+      if (list.length > 1) sawSeveral = true
+    }
+    expect(sawSeveral).toBe(true)
+  })
+
   it('keeps range values inside the facet bounds', () => {
     for (const row of generateRows(items, { seed: 'x', population: PER_ENTITY })) {
       expect(row.facets.rank).toBeGreaterThanOrEqual(0)
@@ -86,6 +105,17 @@ describe('matchesFacets', () => {
     expect(matchesFacets({ ...subject!, facets: { ...subject!.facets, kind: 'page' } }, facets)).toBe(
       false,
     )
+  })
+
+  it('keeps a row holding a selected value among several', () => {
+    const row = { ...subject!, facets: { ...subject!.facets, kind: ['feed', 'page'] } }
+    expect(matchesFacets(row, { kind: { kind: 'chips' as const, selected: ['feed'] } })).toBe(true)
+    expect(matchesFacets(row, { kind: { kind: 'chips' as const, selected: ['image'] } })).toBe(false)
+  })
+
+  it('excludes a row holding no value at all for a selected chip set', () => {
+    const row = { ...subject!, facets: { ...subject!.facets, kind: [] } }
+    expect(matchesFacets(row, { kind: { kind: 'chips' as const, selected: ['feed'] } })).toBe(false)
   })
 
   it('applies range bounds inclusively', () => {
@@ -215,6 +245,47 @@ describe('createMockDataSource — one entity', () => {
   it('sorts by the entity metric', () => {
     const values = run('?e=searches&s=metric1').rows.map((r) => r.metric1)
     expect(values).toEqual([...values].sort((a, b) => b - a))
+  })
+})
+
+describe('createMockDataSource — a multi-valued facet', () => {
+  const commerce = (search: string): QueryResult => {
+    const query = parseQuery(search, commerceSchema)
+    return createMockDataSource({ seed: 'Commerce' }).query({
+      query,
+      schema: commerceSchema,
+      entity: findEntity(commerceSchema, query.entity),
+      limit: 500,
+    })
+  }
+
+  const ALL = `?e=${tenants.key}`
+  const withRegions = (...values: string[]) => `${ALL}&f_${REGION.key}=${values.join(',')}`
+
+  it('counts a row under every value it holds, so the buckets overlap', () => {
+    const total = commerce(ALL).total
+    const summed = REGION.options.reduce((sum, value) => sum + commerce(withRegions(value)).total, 0)
+
+    // Impossible if each row sat in exactly one bucket, which is the point.
+    expect(summed).toBeGreaterThan(total)
+    for (const value of REGION.options) {
+      expect(commerce(withRegions(value)).total, value).toBeGreaterThan(0)
+      expect(commerce(withRegions(value)).total, value).toBeLessThan(total)
+    }
+  })
+
+  it('narrows to the rows holding either value when two are selected', () => {
+    const [first, second] = REGION.options as [string, string]
+    const either = commerce(withRegions(first, second)).total
+
+    expect(either).toBeGreaterThanOrEqual(commerce(withRegions(first)).total)
+    expect(either).toBeLessThanOrEqual(
+      commerce(withRegions(first)).total + commerce(withRegions(second)).total,
+    )
+  })
+
+  it('selects everything back when every value is chosen', () => {
+    expect(commerce(withRegions(...REGION.options)).total).toBe(commerce(ALL).total)
   })
 })
 

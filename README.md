@@ -1715,3 +1715,32 @@ source. Run `npm run build` first, or they are testing the build before this one
 
 Storybook runs on **6011** rather than the default 6006, so it does not collide
 with another project's server on the same machine.
+
+### Releasing
+
+There is no registry in the middle: a consumer names a tag of this repository
+and gets `dist/` out of the tarball, which is why `dist/` is committed. So a
+release is a tag, and `npm version` is the whole of it:
+
+```bash
+git commit -m 'What changed'   # the work, without dist/
+npm version minor              # lint, typecheck, build, test, tag, push
+```
+
+`npm version` refuses a dirty tree, which is the point — the change lands as its
+own commit first, and `Release vX.Y.Z` stays a version bump and the artifacts it
+implies. Three hooks do the rest:
+
+| Hook | Does |
+| --- | --- |
+| `preversion` | lint, typecheck, `build`, then `test`. Building before testing is what lets the No Build stories cover *this* build rather than the last one. |
+| `version` | builds again and stages `dist/`, so the artifacts ride in the version commit rather than trailing it |
+| `postversion` | `git push origin main --follow-tags` |
+
+Anything red stops it before the version is written, and nothing needs undoing.
+
+Versions are pre-1.0 and the minor is where breaking goes, so `minor` is the
+usual argument and `patch` is for a fix that changes nothing a host is holding.
+
+CI runs the same checks on every push and, because a stale `dist/` is invisible
+in review, rebuilds and fails if what is committed is not what `src/` builds.

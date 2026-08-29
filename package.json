@@ -40,7 +40,10 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "storybook": "storybook dev -p 6011 --no-open",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "preversion": "npm run lint && npm run typecheck && npm run build && npm test",
+    "version": "npm run build && git add dist",
+    "postversion": "git push origin main --follow-tags"
   },
   "peerDependencies": {
     "@nuxt/kit": "^3.0.0 || ^4.0.0",

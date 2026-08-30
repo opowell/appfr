@@ -135,21 +135,27 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
           {{ entry.ordinal }}
         </td>
         <td class="dc-table__primary">
-          <button
-            type="button"
-            class="dc-table__open"
-            @click.stop="shell.activate(entry.row)"
-          >
-            {{ entry.row.primary }}
-          </button>
-          <ScopeMark :entry="entry" />
+          <div class="dc-table__name">
+            <button
+              type="button"
+              class="dc-table__open dc-truncate"
+              :title="entry.row.primary"
+              @click.stop="shell.activate(entry.row)"
+            >
+              {{ entry.row.primary }}
+            </button>
+            <ScopeMark :entry="entry" />
+          </div>
         </td>
-        <td class="dc-table__muted dc-mono">
+        <td
+          class="dc-table__muted dc-truncate dc-mono"
+          :title="entry.row.secondary"
+        >
           {{ entry.row.secondary }}
         </td>
         <td
           v-if="showEntity"
-          class="dc-table__entity dc-mono"
+          class="dc-table__entity dc-truncate dc-mono"
         >
           {{ entry.entityLabel }}
         </td>
@@ -165,7 +171,7 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
             metric="metric2"
           />
         </td>
-        <td class="dc-table__muted dc-mono">
+        <td class="dc-table__muted dc-table__date dc-mono">
           {{ entry.date }}
         </td>
         <td><StatusPill :status="entry.row.status" /></td>
@@ -175,14 +181,26 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
 </template>
 
 <style scoped>
+/*
+ * Fixed layout, because a table that lays itself out by its content is a table
+ * that scrolls sideways: one long name or one long path and every other column
+ * is pushed off the right edge, where the state and the date — the two things a
+ * row is scanned for — are the first to go. Fixed hands each column the width
+ * declared for it below and lets the two open-ended ones share the rest, so the
+ * table is exactly as wide as the shell however long a value gets. What no
+ * longer fits is truncated with the whole of it on hover.
+ */
 .dc-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: var(--dc-text-body);
 }
 
 .dc-table th {
   padding: 10px 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border-bottom: 1px solid var(--dc-line);
   background: var(--dc-bg-1);
   color: var(--dc-fg-2);
@@ -197,6 +215,7 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
 .dc-table td {
   padding: 9px 12px;
   border-bottom: 1px solid var(--dc-line);
+  white-space: nowrap;
 }
 
 .dc-table__row {
@@ -276,13 +295,46 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
   cursor: pointer;
 }
 
+/* The name shrinks and the mark does not: whatever room is left over is the
+   name's, and the arrow stays put at the end of it. */
+.dc-table__name {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
 .dc-table__open:hover {
   text-decoration: underline;
 }
 
-/* The narrowing mark rides with the name rather than in a column of its own:
-   it belongs to that record, and a column would cost every row the width. */
-.dc-table__primary {
-  white-space: nowrap;
+/*
+ * Columns leave in order of what a narrow table can do without.
+ *
+ * Fixed layout keeps the declared widths whatever the shell's width is, so past
+ * a point they are most of it and the name and the path are slivers. The metrics
+ * go first — the list view drops them at the same size — then the type, which
+ * the query itself usually says, then the date. The name, the path and the state
+ * are what is left, and they are what a row is for.
+ */
+@container (max-width: 900px) {
+  .dc-table th.dc-table__entity,
+  .dc-table td.dc-table__entity {
+    display: none;
+  }
+}
+
+@container (max-width: 760px) {
+  .dc-table th.dc-table__number,
+  .dc-table td.dc-table__number {
+    display: none;
+  }
+}
+
+@container (max-width: 620px) {
+  .dc-table th.dc-table__date,
+  .dc-table td.dc-table__date {
+    display: none;
+  }
 }
 </style>

@@ -12,6 +12,15 @@ import PreviewView from './views/PreviewView.vue'
 import TableView from './views/TableView.vue'
 import TypeCardsView from './views/TypeCardsView.vue'
 
+const props = defineProps<{
+  /**
+   * The views on offer, when the host restricts them. A URL naming one that is
+   * not on the list — a link kept from before it was taken off — renders the
+   * first that is, rather than a view with no way back to it in the panel.
+   */
+  views?: ViewKind[]
+}>()
+
 const shell = useShellContext()
 
 const VIEWS: Record<ViewKind, Component> = {
@@ -30,7 +39,14 @@ const VIEWS: Record<ViewKind, Component> = {
  */
 const isTypeCards = computed(() => isTypeCardsQuery(shell.query.value))
 
-const view = computed(() => VIEWS[shell.query.value.view] ?? ListView)
+const kind = computed<ViewKind>(() => {
+  const asked = shell.query.value.view
+  const offered = props.views ?? []
+  const [fallback] = offered
+  return fallback === undefined || offered.includes(asked) ? asked : fallback
+})
+
+const view = computed(() => VIEWS[kind.value] ?? ListView)
 const hasRows = computed(() => shell.rows.value.length > 0)
 const failed = computed(() => shell.error.value !== null)
 </script>

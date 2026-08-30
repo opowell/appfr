@@ -371,7 +371,7 @@ defineExpose({
       :query="shell.query.value"
       :pending="shell.pending.value"
     >
-      <ResultsArea />
+      <ResultsArea :views="views" />
     </slot>
   </div>
 </template>

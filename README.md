@@ -411,7 +411,7 @@ numeric comparison against one constrains nothing.
 | `defaults` | `ShellQueryDefaults` | home, `cards`, `updated`, `desc` | Fallbacks when the URL omits a field. `landing: 'entity'` opens on one entity's list instead of home. |
 | `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
-| `views` | `ViewKind[]` | all six | Restricts the offered views. |
+| `views` | `ViewKind[]` | all six | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `mono-size` is that theme with its type scale collapsed too, every word at one size and one weight with only colour and opacity varying; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all. |
@@ -528,6 +528,28 @@ shell.query.value.page         // 3
 shell.setPage(shell.query.value.page + 1)
 shell.hrefFor({ page: 4 })     // a link, without navigating
 ```
+
+### The table stays inside the shell
+
+The table view lays out fixed: the metrics, the date, the kind and the state
+get the widths they are declared with, and the name and the secondary share
+whatever is left. So it is exactly as wide as the shell however long a value
+is, and what does not fit is truncated with the whole of it on hover.
+
+```
+  15  Regulatory filings, every word of a name nob…   .crawl-runs/2026-08…  682  116  29 Aug  ok
+  16  Security advisories, every word of a name no…   .crawl-runs/2026-08…  556  260  29 Aug  running
+```
+
+A table laid out by its content instead is as wide as its longest cell, which
+puts the date and the state off the right-hand edge — the two columns a row is
+scanned for — and a wrapped path makes one row four lines deep and the row
+under it one.
+
+Below the widths it needs, columns stand down rather than crowd: the metrics
+first, at the size the list view drops them too, then the kind — which the
+query itself usually says — then the date. The name, the secondary and the
+state are what is left, and they are what a row is for.
 
 ### Composables
 

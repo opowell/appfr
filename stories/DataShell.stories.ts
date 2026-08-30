@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import DataShell from '../src/components/DataShell.vue'
 import { iRadarSchema, legoSchema } from '../src/fixtures/schemas'
 import type { DomainSchema } from '../src/types'
-import { delayedSource, failingSource, renderShell, themeArgTypes } from './helpers'
+import { delayedSource, failingSource, longValueSource, renderShell, themeArgTypes } from './helpers'
 import type { ShellStoryArgs } from './helpers'
 
 const meta = {
@@ -232,6 +232,38 @@ export const GridView = story({ search: '?e=items&v=grid' })
 export const TableView = story({ search: '?e=searches&v=table' })
 export const LinksView = story({ search: '?e=items&v=links' })
 export const PreviewView = story({ search: '?e=items&v=preview' })
+
+/**
+ * The table against values no column can hold. Fixed layout keeps it exactly as
+ * wide as the shell however long a name or a path gets: what does not fit is
+ * truncated, with the whole of it on hover, and every row stays one line deep.
+ * The alternative — a table as wide as its longest cell — puts the date and the
+ * state off the right-hand edge, which are the two columns a row is scanned for.
+ */
+export const TableViewLongValues = story({
+  search: '?e=searches&v=table',
+  source: longValueSource(),
+})
+
+/* ------------------------------------------------------- restricting the views */
+
+/**
+ * `views` says which of the six are on offer. A host that has no use for some
+ * of them takes them off the View control rather than leaving a click to find
+ * out — and a link naming one that is not on the list lands on the first that
+ * is, so an old bookmark cannot reach a view the panel has no way back from.
+ */
+export const RestrictedViews = story({
+  search: '?e=searches&v=table',
+  views: ['list', 'table'],
+  open: true,
+})
+
+/** A link to a view this shell does not offer: it renders the first it does. */
+export const RestrictedViewsUnofferedLink = story({
+  search: '?e=items&v=grid',
+  views: ['list', 'table'],
+})
 
 /** Ascending order, to show the direction control taking effect. */
 export const SortedByNameAscending = story({ search: '?e=searches&v=list&s=name&d=asc' })

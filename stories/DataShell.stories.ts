@@ -1,7 +1,7 @@
 import { h, ref } from 'vue'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import DataShell from '../src/components/DataShell.vue'
-import { iRadarSchema } from '../src/fixtures/schemas'
+import { iRadarSchema, legoSchema } from '../src/fixtures/schemas'
 import type { DomainSchema } from '../src/types'
 import { delayedSource, failingSource, renderShell, themeArgTypes } from './helpers'
 import type { ShellStoryArgs } from './helpers'
@@ -135,6 +135,52 @@ export const HomeCreatable = creatable({})
  * most: a card that would otherwise be a dead end says what to do about it.
  */
 export const HomeCreatableEmpty = creatable({ search: '?q=recall' })
+
+/* ---------------------------------------------------- narrowing to a record */
+
+/**
+ * The LEGO schema, where four of the types say how the rest reach them:
+ * `scope` names the field every other record carries their id in, and `drills`
+ * says what each metric column counts.
+ *
+ * That makes a row two things rather than one. Its **name** opens the record,
+ * as everywhere else. Its **metric** narrows to what the number counts —
+ * pressing `312` under *Parts* on a set means "show me those 312 pieces" —
+ * and the **→** beside it narrows to the record itself without picking a type,
+ * so every card reports what it holds of that one set.
+ *
+ * The shell applies both itself. `activate` and `create` are reported and left
+ * because the shell has no router and makes nothing; this is a query change,
+ * and the query is the shell's own. The term lands in the expression field as
+ * an ordinary one, removable from the header like any other.
+ */
+export const HomeDrillable = story({ schema: legoSchema, liveUrl: true })
+
+/** The same rows as a table, where both metric columns are pressable. */
+export const DrillableTable = story({
+  schema: legoSchema,
+  liveUrl: true,
+  defaults: { entity: 'sets', landing: 'entity', view: 'table' },
+})
+
+/**
+ * Where a drill lands: the pieces of one set, reached by pressing that set's
+ * *Parts*. Nothing here was typed — the expression is what the press wrote.
+ */
+export const DrilledIntoPieces = story({
+  schema: legoSchema,
+  search: '?e=pieces&v=table&q=set%3A%22sets_10007%22',
+})
+
+/**
+ * The other half: narrowed to one set without pivoting to a type, which is
+ * what the → on a row does. Every card is now that set's — its pieces, its
+ * colors, its inventories — and the set itself is still among them.
+ */
+export const DrilledEverything = story({
+  schema: legoSchema,
+  search: '?q=set%3A%22sets_10007%22',
+})
 
 /**
  * A search from home narrows every card at once, and each card's count becomes

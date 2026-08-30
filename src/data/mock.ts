@@ -1,4 +1,5 @@
 import type {
+  DomainSchema,
   EntitySchema,
   FacetDef,
   FacetState,
@@ -30,6 +31,52 @@ export interface MockSourceOptions {
   seed?: string
   /** Most recent `updatedAt` in the generated set. Defaults to 2026-08-25. */
   now?: Date
+  /**
+   * Entity keys whose records every generated row belongs to — the `scope`
+   * fields the schema declares, as `[field, entityKey]`.
+   *
+   * Without these a drill would come back empty: nothing on the far side of
+   * the number says which record it belongs to. `createMockDataSource` reads
+   * them off the schema, so a caller only sets this when generating rows on
+   * its own.
+   */
+  scopes?: Array<readonly [string, string]>
+}
+
+/**
+ * The id {@link generateRows} gives the `index`-th record of an entity.
+ *
+ * A join key is a real id rather than a fresh string, so narrowing to a record
+ * of one type finds rows of another and the demo means something.
+ */
+function mockId(entityKey: string, index: number): string {
+  return `${entityKey}_${10_000 + index * 7}`
+}
+
+/** Records of another type this one belongs to. Coprime with any population. */
+const MEMBERSHIP_STRIDE = 7
+
+/** How many of them, so a drilled list is worth looking at. */
+const MEMBERSHIPS = 3
+
+/**
+ * The records of `entityKey` that the `index`-th row belongs to.
+ *
+ * Strided rather than hashed, so *every* record of that type has rows on the
+ * far side of it. Hashed, a third of them would come up empty, and pressing a
+ * count that says `312` to be told there is nothing there reads as a broken
+ * shell rather than as a thin fixture.
+ *
+ * Several of them, and offset per field, so the memberships of one row are not
+ * the same record twice over and two fields do not move together.
+ */
+function parentIds(entityKey: string, index: number, field: string, population: number): string[] {
+  const first = (index * MEMBERSHIP_STRIDE + fnv1a(field)) % population
+  const ids: string[] = []
+  for (let step = 0; step < Math.min(MEMBERSHIPS, population); step++) {
+    ids.push(mockId(entityKey, (first + step) % population))
+  }
+  return ids
 }
 
 function pickFacetValue(facet: FacetDef, hash: number): ShellRow['facets'][string] {
@@ -71,6 +118,7 @@ export function generateRows(
   const salt = options.seed ?? ''
   const now = options.now ?? new Date('2026-08-25T00:00:00Z')
   const samples = entity.samples
+  const scopes = options.scopes ?? []
   if (!samples.length) return []
 
   const rows: ShellRow[] = []
@@ -79,15 +127,31 @@ export function generateRows(
     const revision = Math.floor(i / samples.length)
     const hash = fnv1a(`${salt}:${entity.key}:${sample[0]}:${i}`)
 
+    const id = mockId(entity.key, i)
+
     const facets: ShellRow['facets'] = {}
     for (const facet of entity.facets) {
       facets[facet.key] = pickFacetValue(facet, fnv1a(`${hash}:${facet.key}`))
     }
 
+    /*
+     * Join keys, written after the entity's own facets so a scope field always
+     * holds an id — a schema that happens to name a facet the same thing would
+     * otherwise leave the drill matching vocabulary instead of records.
+     *
+     * Every row gets every one of them, including rows of types that declare
+     * no scope of their own. A row missing the field would not be excluded by
+     * a term naming it: an unresolvable field matches, so the narrowed list
+     * would quietly carry the whole of that type.
+     */
+    for (const [field, key] of scopes) {
+      facets[field] = key === entity.key ? id : parentIds(key, i, field, population)
+    }
+
     const updatedAt = new Date(now.getTime() - (hash % 900) * 3_600_000).toISOString()
 
     rows.push({
-      id: `${entity.key}_${10_000 + i * 7}`,
+      id,
       entityKey: entity.key,
       entityLabel: entity.label,
       primary: revision ? `${sample[0]} · rev ${revision + 1}` : sample[0],
@@ -163,10 +227,19 @@ function comparatorFor(sortKey: string): (a: ShellRow, b: ShellRow) => number {
 export function createMockDataSource(options: MockSourceOptions = {}): SyncDataSource {
   const cache = new Map<string, ShellRow[]>()
 
-  const rowsFor = (entity: EntitySchema): ShellRow[] => {
+  /*
+   * The join keys, read off the schema on first use rather than configured:
+   * an entity that declares `scope` is saying every other record names it, and
+   * the generated rows have to say so too or a drill finds nothing.
+   */
+  const rowsFor = (entity: EntitySchema, schema: DomainSchema): ShellRow[] => {
     const cached = cache.get(entity.key)
     if (cached) return cached
-    const generated = generateRows(entity, options)
+    const scopes = options.scopes
+      ?? schema.entities.flatMap((candidate) =>
+        candidate.scope ? [[candidate.scope, candidate.key] as const] : [],
+      )
+    const generated = generateRows(entity, { ...options, scopes })
     cache.set(entity.key, generated)
     return generated
   }
@@ -182,7 +255,7 @@ export function createMockDataSource(options: MockSourceOptions = {}): SyncDataS
       const matched: ShellRow[] = []
 
       for (const candidate of scope) {
-        for (const row of rowsFor(candidate)) {
+        for (const row of rowsFor(candidate, schema)) {
           population.push(row)
           // Per-entity facets only apply when that entity is the one selected.
           const passesFacets = entity ? matchesFacets(row, query.facets) : true

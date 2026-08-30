@@ -24,6 +24,7 @@ import type { RouteAdapter } from '../routing/adapter'
 import { ROUTE_ADAPTER_KEY } from '../routing/adapter'
 import { createHistoryAdapter } from '../routing/history'
 import { createMockDataSource } from '../data/mock'
+import { drillExpression } from '../query/drill'
 import { provideShellContext } from '../composables/context'
 import { useQueryState } from '../composables/useQueryState'
 import type { NavigationMode } from '../composables/useQueryState'
@@ -121,6 +122,13 @@ const emit = defineEmits<{
    * request.
    */
   create: [entity: EntitySchema]
+  /**
+   * Narrowing to one record was asked for: from the affordance an entity's
+   * `scope` puts on its rows, or from a metric its `drills` named an entity
+   * for. `entity` is what to list afterwards, null when the row itself was
+   * pressed. The query is unchanged — this is the request.
+   */
+  drill: [row: ShellRow, entity: EntitySchema | null]
   /** The query changed. The URL has already been updated. */
   'query-change': [query: ShellQuery]
   'toggle-pin': [row: ShellRow]
@@ -245,6 +253,23 @@ function togglePin(row: ShellRow) {
   emit('toggle-pin', row)
 }
 
+/* ---------------------------------------------------------------- drilling */
+
+/**
+ * Narrowing to one record, applied here rather than reported and left.
+ *
+ * `activate` and `create` are reported because the shell cannot carry them out
+ * — it has no router and makes nothing. This one it can: the schema already
+ * says which field carries a record's id (`scope`) and what each metric counts
+ * (`drills`), and the rest is a query change, which is the shell's own. The
+ * event still goes out, so a host can follow it; it does not have to.
+ */
+function drill(row: ShellRow, entity: EntitySchema | null) {
+  query.setExpression(drillExpression(props.schema, query.query.value, row))
+  query.setEntity(entity?.key ?? null)
+  emit('drill', row, entity)
+}
+
 /* ----------------------------------------------------------------- context */
 
 const shell = provideShellContext({
@@ -266,6 +291,7 @@ const shell = provideShellContext({
   togglePin,
   activate: (row) => emit('activate', row),
   create: (entity) => emit('create', entity),
+  drill,
 })
 
 /*

@@ -2,14 +2,17 @@
 import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
 import { useEntityPreviews } from '../../composables/useEntityPreviews'
+import MetricDrill from './MetricDrill.vue'
+import ScopeMark from './ScopeMark.vue'
 
 /**
  * The home screen: one card per item type, each naming the type, how many of
  * it there are, and its most recently updated few.
  *
- * A card's header filters the results to that type; a row opens that record;
- * and a type the schema gave a `create` label to ends with the button that
- * asks for a new one.
+ * A card's header filters the results to that type; a row's name opens that
+ * record and its metric narrows to what the number counts; and a type the
+ * schema gave a `create` label to ends with the button that asks for a new
+ * one.
  */
 const shell = useShellContext()
 
@@ -77,25 +80,37 @@ const narrowed = computed(() => !shell.isPristine.value)
         {{ narrowed ? 'No matches' : 'Nothing here yet' }}
       </p>
 
-      <button
+      <!-- Not one button around the row: the name opens the record and the
+           metric beside it narrows to what that number counts, and the two
+           cannot nest. -->
+      <div
         v-for="entry in preview.rows"
         :key="entry.row.id"
-        type="button"
         class="dc-type__row"
-        @click="shell.activate(entry.row)"
       >
-        <span class="dc-type__identity">
-          <span class="dc-type__primary dc-truncate">{{ entry.row.primary }}</span>
-          <span class="dc-type__secondary dc-mono dc-truncate">{{ entry.row.secondary }}</span>
-        </span>
+        <button
+          type="button"
+          class="dc-type__open"
+          @click="shell.activate(entry.row)"
+        >
+          <span class="dc-type__identity">
+            <span class="dc-type__primary dc-truncate">{{ entry.row.primary }}</span>
+            <span class="dc-type__secondary dc-mono dc-truncate">{{ entry.row.secondary }}</span>
+          </span>
+        </button>
         <span class="dc-type__trailing dc-mono">
-          <span class="dc-type__metric">
+          <MetricDrill
+            class="dc-type__metric"
+            :entry="entry"
+            metric="metric1"
+          >
             <span class="dc-type__metric-value">{{ entry.metric1 }}</span>
             <span class="dc-type__metric-label">{{ entry.labels.metric1 }}</span>
-          </span>
+          </MetricDrill>
           <span class="dc-type__date">{{ entry.date }}</span>
+          <ScopeMark :entry="entry" />
         </span>
-      </button>
+      </div>
 
       <!-- Under the records rather than beside the count: making one more is
            what comes after the ones there are, and an empty card is then the
@@ -224,15 +239,24 @@ const narrowed = computed(() => !shell.isPristine.value)
   align-items: center;
   gap: 12px;
   min-height: 54px;
-  padding: 10px 16px;
-  border: none;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
+  padding-right: 16px;
 }
 
 .dc-type__row:hover {
   background: var(--dc-bg-2);
+}
+
+/* The row's own padding, so the whole strip left of the metric opens the
+   record rather than only the words in it. */
+.dc-type__open {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0 10px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
 .dc-type__identity {
@@ -258,6 +282,10 @@ const narrowed = computed(() => !shell.isPristine.value)
   gap: 12px;
   flex: 0 0 auto;
   white-space: nowrap;
+}
+
+.dc-type__metric {
+  align-self: center;
 }
 
 .dc-type__metric-value {

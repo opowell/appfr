@@ -125,6 +125,15 @@ export interface SortDef {
   label: string
 }
 
+/**
+ * The entity each metric column counts, keyed by the column. Either may be
+ * left out — a metric that counts nothing listable is a plain number.
+ */
+export interface MetricDrills {
+  metric1?: string
+  metric2?: string
+}
+
 export interface EntitySchema {
   key: string
   label: string
@@ -144,6 +153,30 @@ export interface EntitySchema {
    * button leads to.
    */
   create?: string
+  /**
+   * The field every other record carries this one's id in — `'host'` for a
+   * tenant whose specs, profiles and runs each name the host they belong to.
+   *
+   * Naming it makes a record *narrowable*: its rows offer the affordance, and
+   * pressing it reports {@link ShellContext.drill}. The shell narrows nothing
+   * itself — what the term does to the query is the host's, the same way
+   * `create` names the button and leaves making one to the host.
+   */
+  scope?: string
+  /**
+   * What each metric column counts, as the {@link EntitySchema.key} of the
+   * entity counted — `{ metric1: 'tests' }` on a tenant whose first metric is
+   * how many specs cover it.
+   *
+   * Naming one makes that number pressable, and pressing it reports the same
+   * `drill` with the entity to narrow to: clicking `12` under **Tests** means
+   * "show me those twelve". A metric counting something the schema has no
+   * entity for is left unnamed and stays a plain number.
+   *
+   * Only meaningful alongside {@link EntitySchema.scope}: the records behind
+   * the number are reachable only if they say which record they belong to.
+   */
+  drills?: MetricDrills
   /** Seed pairs of `[primary, secondary]` the mock source expands into rows. */
   samples: Array<readonly [string, string]>
   /** Overrides the default `updated / score / metric1 / name` sort set. */

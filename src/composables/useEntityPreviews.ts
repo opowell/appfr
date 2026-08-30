@@ -59,7 +59,7 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
   const buildPreview = (entity: EntitySchema, result: QueryResult, pristine: boolean): EntityPreview => ({
     entity,
     rows: result.rows.map((row, index) =>
-      presentRow(row, index, entity.labels, options.isPinned(row.id)),
+      presentRow(row, index, entity, options.isPinned(row.id)),
     ),
     total: result.total,
     count: pristine ? entity.count : String(result.total),

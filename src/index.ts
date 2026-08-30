@@ -35,6 +35,8 @@ export { default as TableView } from './components/views/TableView.vue'
 export { default as LinksView } from './components/views/LinksView.vue'
 export { default as PreviewView } from './components/views/PreviewView.vue'
 export { default as PinStar } from './components/views/PinStar.vue'
+export { default as ScopeMark } from './components/views/ScopeMark.vue'
+export { default as MetricDrill } from './components/views/MetricDrill.vue'
 
 /* Composables */
 export { provideShellContext, useShellContext, SHELL_CONTEXT_KEY } from './composables/context'
@@ -213,6 +215,7 @@ export {
   RESULT_FIELDS,
   sortsFor,
 } from './query/schema'
+export { addTerm, drillExpression, scopeTerm, scopeTermFor } from './query/drill'
 export { ENTITY_TERM, summarizeQuery, summaryTerms } from './query/summary'
 export type { SummaryTerm } from './query/summary'
 
@@ -243,6 +246,7 @@ export type {
   FacetDef,
   FacetState,
   FacetValue,
+  MetricDrills,
   QueryRequest,
   QueryResult,
   RangeFacet,

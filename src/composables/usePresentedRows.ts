@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
-import type { EntityLabels, ShellRow } from '../types'
+import type { EntityLabels, EntitySchema, ShellRow } from '../types'
 import { formatDate, formatMetric, formatOrdinal, formatPercent } from '../data/format'
 import { useShellContext } from './context'
 
@@ -13,6 +13,12 @@ export interface PresentedRow {
   row: ShellRow
   /** The row's entity, worth showing only when the results span several. */
   entityLabel: string
+  /**
+   * The schema of that entity, or null for a row of a type the schema no
+   * longer declares. Views read what the type *offers* from here — whether it
+   * is narrowable, and what its metrics count.
+   */
+  entity: EntitySchema | null
   /**
    * Field names from the row's *own* entity. In a mixed result set this beats
    * a generic fallback: a log entry can be labelled "Trace id" while a LEGO
@@ -52,13 +58,14 @@ export function useViewLabels(): ComputedRef<EntityLabels> {
 export function presentRow(
   row: ShellRow,
   index: number,
-  labels: EntityLabels,
+  entity: EntitySchema | null,
   pinned: boolean,
 ): PresentedRow {
   return {
     row,
     entityLabel: row.entityLabel,
-    labels,
+    entity,
+    labels: entity?.labels ?? GENERIC_LABELS,
     ordinal: formatOrdinal(index),
     metric1: formatMetric(row.metric1),
     metric2: formatMetric(row.metric2),
@@ -72,7 +79,7 @@ export function presentRow(
 export function usePresentedRows(): ComputedRef<PresentedRow[]> {
   const shell = useShellContext()
   const byKey = computed(
-    () => new Map(shell.entities.value.map((entity) => [entity.key, entity.labels])),
+    () => new Map(shell.entities.value.map((entity) => [entity.key, entity])),
   )
   // Offset by where the page starts, so the leading column goes on counting
   // through the result set — page two of fifty opens at 51, not back at 01.
@@ -81,7 +88,7 @@ export function usePresentedRows(): ComputedRef<PresentedRow[]> {
       presentRow(
         row,
         shell.offset.value + index,
-        byKey.value.get(row.entityKey) ?? GENERIC_LABELS,
+        byKey.value.get(row.entityKey) ?? null,
         shell.isPinned(row),
       ),
     ),

@@ -27,6 +27,33 @@ const row = (overrides: Partial<ShellRow> = {}): ShellRow => ({
 const matches = (expr: string, subject = row(), entity = items) =>
   matchesExpression(parseExpression(expr), subject, entity)
 
+describe('field precedence', () => {
+  /*
+   * A declared key beats a name derived from a column heading. The LEGO
+   * categories entity heads its primary column "Category" *and* carries a
+   * `category` join key, and the query has to mean the key.
+   */
+  const categories = findEntity(legoSchema, 'categories')!
+
+  const category = (facets: ShellRow['facets']) =>
+    row({ entityKey: 'categories', primary: 'Bricks', facets })
+
+  it('resolves a facet key over a same-named label alias', () => {
+    const subject = category({ category: 'categories_10007' })
+    expect(matches('category:categories_10007', subject, categories)).toBe(true)
+    expect(matches('category:Bricks', subject, categories)).toBe(false)
+  })
+
+  it('still falls back to the label alias when no such key exists', () => {
+    expect(matches('category:Bricks', category({}), categories)).toBe(true)
+  })
+
+  it('keeps the generic names reserved whatever the schema carries', () => {
+    const subject = category({ name: 'not the primary', category: 'categories_10007' })
+    expect(matches('name:Bricks', subject, categories)).toBe(true)
+  })
+})
+
 describe('parseExpression', () => {
   it('returns nothing for blank input', () => {
     expect(parseExpression('   ')).toEqual([])

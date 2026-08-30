@@ -275,6 +275,74 @@ It sits under the records rather than beside the count, which is also what
 makes it worth having on a type with none: a card that would otherwise be a
 dead end says what to do about it.
 
+### Narrowing to one record
+
+A record is often not just something to open — it is what the other records are
+*about*. A tenant's specs, profiles and runs each name the host they belong to;
+a category's pieces each name the category. Two fields say so:
+
+```ts
+{
+  key: 'tenants',
+  labels: { primary: 'Domain', secondary: 'Crawled as', metric1: 'Tests', metric2: 'URLs' },
+  // The field every other record carries this one's id in.
+  scope: 'host',
+  // What each metric column counts, as the key of the entity counted.
+  drills: { metric1: 'tests', metric2: 'urls' },
+  /* … */
+}
+```
+
+That makes a row two things rather than one:
+
+| | |
+| --- | --- |
+| its **name** | opens the record — `activate(row)`, as everywhere else |
+| its **metric** | narrows to what the number counts: `12` under *Tests* means "show me those twelve" |
+| the **→** beside it | narrows to the record itself without picking a type, so every card reports what it holds of it |
+
+Unlike `activate` and `create`, the shell **applies** this one. Those two are
+reported and left because the shell has no router and makes nothing; narrowing
+is a query change, and the query is the shell's own. The term lands in the
+expression field as an ordinary one — visible in the summary, editable, in the
+URL, and back-buttonable. A `drill(row, entity)` event still goes out for a
+host that wants to follow it; `entity` is null when the → was pressed.
+
+A metric whose count has no entity behind it is left out of `drills` and stays
+the plain number it was, and a type that declares no `scope` offers no → at
+all.
+
+**Every entity must carry the join key**, including the ones that declare no
+scope of their own. An unresolved field in this language *matches* — that is
+what keeps a half-typed expression from emptying the screen — so an entity
+whose rows have never heard of `host` comes through `host:"example.com"`
+completely unfiltered. Give those rows an empty list rather than nothing:
+
+```ts
+{ id: 'crawl_1', facets: { host: [] }, /* … */ }   // correctly excluded
+{ id: 'crawl_1', facets: {}, /* … */ }             // silently included
+```
+
+The bundled mock source does this for you: it reads the `scope` fields off the
+schema and gives every generated row a membership in each, so a drill through
+generated data returns rows rather than nothing.
+
+Two helpers are exported for a host building its own context or its own
+results area, and they are the whole of what applying a drill takes:
+
+```ts
+import { drillExpression, scopeTermFor } from 'header-content-layout'
+
+scopeTermFor(schema, row)              // 'host:"www.example.com"', or null
+drillExpression(schema, query, row)    // the expression with that term added
+```
+
+A scope key beats a column label of the same name in the expression field: an
+entity heading its primary column *Category* and carrying a `category` join key
+means the key. Generic names — `name`, `ref`, `metric1`, `metric2`, `entity`,
+`status`, `score`, `updated` — stay reserved whatever a schema calls its
+fields.
+
 ### A facet a row holds several of
 
 A chips facet is one value per row by default. Mark it `multiple` and a row may
@@ -313,10 +381,11 @@ cve OR advisory
 
 Whitespace means AND (the keyword is accepted too); `OR` splits alternatives; a
 bare word matches the identity fields; `*` is a wildcard. `field:value` and
-`field<op>number` resolve against `entity`, `status`, `score`, `updated`, the
-entity's own column labels, or any facet key. An unrecognised field is ignored
-rather than treated as a mismatch, so a half-typed expression keeps showing
-results.
+`field<op>number` resolve against `entity`, `status`, `score`, `updated`, any
+facet key, or the entity's own column labels — in that order, so a declared key
+is never shadowed by a heading that happens to read the same. An unrecognised
+field is ignored rather than treated as a mismatch, so a half-typed expression
+keeps showing results.
 
 A term against a multi-valued facet is satisfied by any one of the row's
 values, so `region:eu` keeps a tenant that runs in `eu` and `us` both. A
@@ -350,7 +419,8 @@ numeric comparison against one constrains nothing.
 | `facetNavigationMode` | `'push' \| 'replace'` | `'replace'` | For individual facet edits. |
 
 **Events** — `activate(row)` when a row is opened, `create(entity)` when a
-card's create button is pressed, `query-change(query)` after the URL has been
+card's create button is pressed, `drill(row, entity)` when a row is narrowed to
+(already applied), `query-change(query)` after the URL has been
 updated, `toggle-pin(row)`, plus `update:open` and `update:pinned`.
 
 **Slots** — `actions` for extra controls at the right of the header bar,

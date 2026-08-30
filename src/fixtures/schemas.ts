@@ -43,6 +43,10 @@ interface EntityInput {
   facets: EntitySchema['facets']
   tabs: string[]
   samples: Array<readonly [string, string]>
+  /** The field every other record carries this one's id in. */
+  scope?: string
+  /** The entity each metric counts, where the schema has one. */
+  drills?: EntitySchema['drills']
 }
 
 const entity = (input: EntityInput): EntitySchema => ({
@@ -58,6 +62,8 @@ const entity = (input: EntityInput): EntitySchema => ({
   facets: input.facets,
   tabs: input.tabs,
   samples: input.samples,
+  ...(input.scope ? { scope: input.scope } : {}),
+  ...(input.drills ? { drills: input.drills } : {}),
 })
 
 /*
@@ -230,6 +236,10 @@ export const legoSchema: DomainSchema = {
       secondary: 'Set number',
       metric1: 'Parts',
       metric2: 'Minifigs',
+      // Parts leads to the pieces; minifigs is a count of something this
+      // schema does not list, so it stays the plain number it was.
+      scope: 'set',
+      drills: { metric1: 'pieces' },
       facets: [
         chips('theme', 'Theme', ['space', 'castle', 'town', 'technic']),
         range('year', 'Year', 1958, 2026),
@@ -253,8 +263,12 @@ export const legoSchema: DomainSchema = {
       secondary: 'Part number',
       metric1: 'Colors',
       metric2: 'In sets',
+      scope: 'piece',
+      drills: { metric1: 'colors', metric2: 'sets' },
       facets: [
-        chips('category', 'Category', ['brick', 'plate', 'slope', 'minifig']),
+        // `shape` rather than `category`: a category is a record here, and a
+        // facet under that key would shadow the join to it.
+        chips('shape', 'Shape', ['brick', 'plate', 'slope', 'minifig']),
         range('firstYear', 'First year', 1958, 2026),
         toggle('rarity', 'Rarity', 'Only parts in < 5 sets'),
       ],
@@ -276,6 +290,8 @@ export const legoSchema: DomainSchema = {
       secondary: 'Hex',
       metric1: 'Parts',
       metric2: 'Sets',
+      scope: 'color',
+      drills: { metric1: 'pieces', metric2: 'sets' },
       facets: [
         chips('family', 'Family', ['solid', 'transparent', 'metallic', 'glow']),
         range('firstYear', 'First year', 1958, 2026),
@@ -322,6 +338,8 @@ export const legoSchema: DomainSchema = {
       secondary: 'Slug',
       metric1: 'Parts',
       metric2: 'Children',
+      scope: 'category',
+      drills: { metric1: 'pieces' },
       facets: [
         chips('level', 'Level', ['root', 'branch', 'leaf']),
         range('parts', 'Parts', 0, 9000),

@@ -3,7 +3,9 @@ import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import StatusPill from '../StatusPill.vue'
+import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
+import ScopeMark from './ScopeMark.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -27,6 +29,7 @@ const showEntity = computed(() => shell.isEverything.value)
         </span>
         <span class="dc-card__top-right">
           <StatusPill :status="entry.row.status" />
+          <ScopeMark :entry="entry" />
           <PinStar
             v-if="shell.pinnable.value"
             :row="entry.row"
@@ -43,8 +46,18 @@ const showEntity = computed(() => shell.isEverything.value)
         <span class="dc-card__secondary dc-mono">{{ entry.row.secondary }}</span>
       </button>
       <div class="dc-card__metrics dc-mono">
-        <span>{{ entry.labels.metric1 }} {{ entry.metric1 }}</span>
-        <span>{{ entry.labels.metric2 }} {{ entry.metric2 }}</span>
+        <MetricDrill
+          :entry="entry"
+          metric="metric1"
+        >
+          {{ entry.labels.metric1 }} {{ entry.metric1 }}
+        </MetricDrill>
+        <MetricDrill
+          :entry="entry"
+          metric="metric2"
+        >
+          {{ entry.labels.metric2 }} {{ entry.metric2 }}
+        </MetricDrill>
         <span class="dc-card__date">{{ entry.date }}</span>
       </div>
     </div>

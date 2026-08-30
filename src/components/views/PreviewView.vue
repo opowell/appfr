@@ -3,7 +3,9 @@ import { computed, ref, watch } from 'vue'
 import { useShellContext } from '../../composables/context'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import StatusPill from '../StatusPill.vue'
+import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
+import ScopeMark from './ScopeMark.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -24,10 +26,11 @@ const fields = computed(() => {
   const entry = current.value
   if (!entry) return []
   return [
-    { key: entry.labels.secondary, value: entry.row.secondary },
-    { key: entry.labels.metric1, value: entry.metric1 },
-    { key: entry.labels.metric2, value: entry.metric2 },
-    { key: 'Updated', value: entry.date },
+    { key: entry.labels.secondary, value: entry.row.secondary, metric: null },
+    // Named, so the value renders as the drill it may be rather than as text.
+    { key: entry.labels.metric1, value: entry.metric1, metric: 'metric1' as const },
+    { key: entry.labels.metric2, value: entry.metric2, metric: 'metric2' as const },
+    { key: 'Updated', value: entry.date, metric: null },
   ]
 })
 
@@ -91,11 +94,14 @@ const step = (delta: number) => {
                  each one says which it is. -->
             <span class="dc-preview__entity dc-mono">{{ current.entityLabel }}</span>
           </span>
-          <PinStar
-            v-if="shell.pinnable.value"
-            :row="current.row"
-            :pinned="current.pinned"
-          />
+          <span class="dc-preview__marks">
+            <ScopeMark :entry="current" />
+            <PinStar
+              v-if="shell.pinnable.value"
+              :row="current.row"
+              :pinned="current.pinned"
+            />
+          </span>
         </div>
         <div>
           <div class="dc-preview__primary">
@@ -115,7 +121,14 @@ const step = (delta: number) => {
               {{ field.key }}
             </dt>
             <dd class="dc-preview__value dc-mono">
-              {{ field.value }}
+              <MetricDrill
+                v-if="field.metric && current"
+                :entry="current"
+                :metric="field.metric"
+              />
+              <template v-else>
+                {{ field.value }}
+              </template>
             </dd>
           </div>
         </dl>
@@ -201,6 +214,12 @@ const step = (delta: number) => {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.dc-preview__marks {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .dc-preview__badges {

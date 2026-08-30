@@ -129,12 +129,27 @@ function resolveField(
   if (normalized === 'status' || normalized === 'state') return row.status
   if (normalized === 'score') return row.score
   if (normalized === 'updated' || normalized === 'date') return row.updatedAt
-  if (normalized === 'name' || normalized === alias(labels.primary)) return row.primary
-  if (normalized === 'ref' || normalized === alias(labels.secondary)) return row.secondary
-  if (normalized === 'metric1' || normalized === alias(labels.metric1)) return row.metric1
-  if (normalized === 'metric2' || normalized === alias(labels.metric2)) return row.metric2
+  if (normalized === 'name') return row.primary
+  if (normalized === 'ref') return row.secondary
+  if (normalized === 'metric1') return row.metric1
+  if (normalized === 'metric2') return row.metric2
 
+  /*
+   * A key a row actually carries beats a name derived from a column heading.
+   * The aliases below are a convenience — `parts > 300` for whatever the
+   * schema called metric1 — while this is an identifier the schema declared,
+   * and an entity whose primary column happens to be headed "Category" should
+   * not shadow its own `category` field. That is not hypothetical: a `scope`
+   * field is usually the singular of the type it points at, which is exactly
+   * what such a column tends to be called.
+   */
   if (field in row.facets) return row.facets[field]
+
+  if (normalized === alias(labels.primary)) return row.primary
+  if (normalized === alias(labels.secondary)) return row.secondary
+  if (normalized === alias(labels.metric1)) return row.metric1
+  if (normalized === alias(labels.metric2)) return row.metric2
+
   const facet = entity.facets.find((f) => alias(f.label) === normalized)
   return facet ? row.facets[facet.key] : undefined
 }

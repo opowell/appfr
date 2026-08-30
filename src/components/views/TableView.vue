@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
 import { usePresentedRows, useViewLabels } from '../../composables/usePresentedRows'
 import StatusPill from '../StatusPill.vue'
+import MetricDrill from './MetricDrill.vue'
+import ScopeMark from './ScopeMark.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -140,6 +142,7 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
           >
             {{ entry.row.primary }}
           </button>
+          <ScopeMark :entry="entry" />
         </td>
         <td class="dc-table__muted dc-mono">
           {{ entry.row.secondary }}
@@ -151,10 +154,16 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
           {{ entry.entityLabel }}
         </td>
         <td class="dc-table__number dc-mono">
-          {{ entry.metric1 }}
+          <MetricDrill
+            :entry="entry"
+            metric="metric1"
+          />
         </td>
         <td class="dc-table__number dc-mono">
-          {{ entry.metric2 }}
+          <MetricDrill
+            :entry="entry"
+            metric="metric2"
+          />
         </td>
         <td class="dc-table__muted dc-mono">
           {{ entry.date }}
@@ -269,5 +278,11 @@ const sortable = computed(() => new Set(shell.sorts.value.map((sort) => sort.key
 
 .dc-table__open:hover {
   text-decoration: underline;
+}
+
+/* The narrowing mark rides with the name rather than in a column of its own:
+   it belongs to that record, and a column would cost every row the width. */
+.dc-table__primary {
+  white-space: nowrap;
 }
 </style>

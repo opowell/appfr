@@ -4,7 +4,9 @@ import { useShellContext } from '../../composables/context'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import ScoreMeter from '../ScoreMeter.vue'
 import StatusPill from '../StatusPill.vue'
+import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
+import ScopeMark from './ScopeMark.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -23,6 +25,9 @@ const showEntity = computed(() => shell.isEverything.value)
       class="dc-list__row"
       role="listitem"
     >
+      <!-- The name opens the record and the metrics narrow to it, so the two
+           are siblings rather than one button around everything: a count that
+           leads somewhere of its own cannot be nested inside the row's. -->
       <button
         type="button"
         class="dc-list__open"
@@ -33,18 +38,25 @@ const showEntity = computed(() => shell.isEverything.value)
           <span class="dc-list__primary dc-truncate">{{ entry.row.primary }}</span>
           <span class="dc-list__secondary dc-mono dc-truncate">{{ entry.row.secondary }}</span>
         </span>
-        <span
-          v-if="showEntity"
-          class="dc-list__entity dc-mono"
-        >{{ entry.entityLabel }}</span>
-        <span class="dc-list__metrics dc-mono">
-          <span :title="entry.labels.metric1">{{ entry.metric1 }}</span>
-          <span :title="entry.labels.metric2">{{ entry.metric2 }}</span>
-          <ScoreMeter :value="entry.row.score" />
-        </span>
       </button>
+      <span
+        v-if="showEntity"
+        class="dc-list__entity dc-mono"
+      >{{ entry.entityLabel }}</span>
+      <span class="dc-list__metrics dc-mono">
+        <MetricDrill
+          :entry="entry"
+          metric="metric1"
+        />
+        <MetricDrill
+          :entry="entry"
+          metric="metric2"
+        />
+        <ScoreMeter :value="entry.row.score" />
+      </span>
       <span class="dc-list__trailing">
         <StatusPill :status="entry.row.status" />
+        <ScopeMark :entry="entry" />
         <PinStar
           v-if="shell.pinnable.value"
           :row="entry.row"
@@ -80,7 +92,9 @@ const showEntity = computed(() => shell.isEverything.value)
 
 .dc-list__open {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto auto;
+  /* Ordinal and identity only — the entity tag and the metrics moved out of
+     this button so each can lead somewhere of its own. */
+  grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
   gap: 14px;
   flex: 1;

@@ -308,6 +308,11 @@ expression field as an ordinary one — visible in the summary, editable, in the
 URL, and back-buttonable. A `drill(row, entity)` event still goes out for a
 host that wants to follow it; `entity` is null when the → was pressed.
 
+A host applying one itself wants `narrow(expr, entityKey)` from `useQueryState`, not
+`setExpression` followed by `setEntity`: each of those serialises from the query the URL
+currently holds, and a route change is not synchronous, so the second writes over the first
+before it has arrived.
+
 A metric whose count has no entity behind it is left out of `drills` and stays
 the plain number it was, and a type that declares no `scope` offers no → at
 all.

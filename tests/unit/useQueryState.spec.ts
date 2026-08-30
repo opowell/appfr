@@ -4,7 +4,7 @@ import { useQueryState } from '../../src/composables/useQueryState'
 import type { QueryState } from '../../src/composables/useQueryState'
 import { createMemoryAdapter } from '../../src/routing/memory'
 import type { MemoryAdapter } from '../../src/routing/memory'
-import { iRadarSchema } from '../../src/fixtures/schemas'
+import { iRadarSchema, legoSchema } from '../../src/fixtures/schemas'
 
 function setup(search = '', options: Partial<Parameters<typeof useQueryState>[0]> = {}) {
   const adapter = createMemoryAdapter(search)
@@ -377,5 +377,49 @@ describe('useQueryState — landing on an entity instead', () => {
     state.clearEntity()
     expect(state.isEverything.value).toBe(true)
     expect(adapter.search.value).toBe('?e=*')
+  })
+})
+
+describe('narrow', () => {
+  /*
+   * The bug this exists for: two commits in a row each serialise from the query the URL
+   * currently holds, and a route change is not synchronous — so setting the expression and then
+   * the entity wrote the entity over an expression that had not arrived.
+   */
+  it('writes the expression and the entity in one navigation', () => {
+    const adapter = createMemoryAdapter('')
+    const state = useQueryState({ schema: () => legoSchema, adapter })
+    const before = adapter.history.length
+
+    state.narrow('set:"sets_10007"', 'pieces')
+
+    expect(state.query.value.expr).toBe('set:"sets_10007"')
+    expect(state.query.value.entity).toBe('pieces')
+    // One entry, not two. This adapter happens to update synchronously, so two commits would
+    // still come out right here — a router's would not, and the count is what says which
+    // happened either way.
+    expect(adapter.history.length).toBe(before + 1)
+    expect(adapter.history.at(-1)).toContain('q=set')
+    expect(adapter.history.at(-1)).toContain('e=pieces')
+  })
+
+  it('narrows without picking a type when the entity is null', () => {
+    const adapter = createMemoryAdapter('?e=sets')
+    const state = useQueryState({ schema: () => legoSchema, adapter })
+
+    state.narrow('set:"sets_10007"', null)
+
+    expect(state.query.value.entity).toBeNull()
+    expect(state.query.value.expr).toBe('set:"sets_10007"')
+  })
+
+  it('leaves the entity alone when it is already the one asked for', () => {
+    const adapter = createMemoryAdapter('?e=pieces&f_shape=brick')
+    const state = useQueryState({ schema: () => legoSchema, adapter })
+
+    state.narrow('color:"colors_10000"', 'pieces')
+
+    expect(state.query.value.expr).toBe('color:"colors_10000"')
+    expect(state.query.value.facets.shape).toEqual({ kind: 'chips', selected: ['brick'] })
   })
 })

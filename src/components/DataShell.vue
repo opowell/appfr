@@ -265,8 +265,9 @@ function togglePin(row: ShellRow) {
  * event still goes out, so a host can follow it; it does not have to.
  */
 function drill(row: ShellRow, entity: EntitySchema | null) {
-  query.setExpression(drillExpression(props.schema, query.query.value, row))
-  query.setEntity(entity?.key ?? null)
+  // One navigation, not two: a route change is not synchronous, so setting the expression and
+  // then the entity would serialise the second from the query the first had not yet written.
+  query.narrow(drillExpression(props.schema, query.query.value, row), entity?.key ?? null)
   emit('drill', row, entity)
 }
 

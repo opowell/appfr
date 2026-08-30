@@ -79,6 +79,16 @@ export interface QueryState {
   toggleDirection(): void
   setExpression(expr: string): void
   /**
+   * The expression *and* the entity to list, in one navigation.
+   *
+   * Calling {@link QueryState.setExpression} and {@link QueryState.setEntity}
+   * in turn would not do it: each serialises from the query the URL currently
+   * holds, and a route change is not synchronous — so the second would write
+   * over the first before it had arrived. This is what narrowing to a record
+   * needs, since that is both at once.
+   */
+  narrow(expr: string, entityKey: string | null): void
+  /**
    * Moves to a page of the current results, 1-based and clamped there. What
    * the last page is depends on a count this composable has no sight of — the
    * shell knows it, from the total its source reported, and offers the control
@@ -146,19 +156,28 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     commit({ facets }, facetMode())
   }
 
-  const setEntity = (key: string | null) => {
+  /**
+   * What changing the listed entity does to the rest of the query. A different
+   * entity has different facets and its own sort set, so only what still
+   * applies is carried over and the URL stays self-consistent.
+   *
+   * Empty when the entity is already that one, so a caller can spread it into
+   * a larger patch without it clearing facets that were never going to change.
+   */
+  const entityPatch = (key: string | null): Partial<ShellQuery> => {
     const next = key === null ? null : findEntity(schema.value, key)
-    if ((next?.key ?? null) === query.value.entity) return
-    // A different entity has different facets and its own sort set; carry over
-    // only what still applies so the URL stays self-consistent.
-    commit(
-      {
-        entity: next?.key ?? null,
-        sort: findSort(next, query.value.sort).key,
-        facets: emptyFacetState(next),
-      },
-      primaryMode(),
-    )
+    if ((next?.key ?? null) === query.value.entity) return {}
+    return {
+      entity: next?.key ?? null,
+      sort: findSort(next, query.value.sort).key,
+      facets: emptyFacetState(next),
+    }
+  }
+
+  const setEntity = (key: string | null) => {
+    const patch = entityPatch(key)
+    if (!Object.keys(patch).length) return
+    commit(patch, primaryMode())
   }
 
   return {
@@ -186,6 +205,9 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     },
     setExpression(expr) {
       commit({ expr }, primaryMode())
+    },
+    narrow(expr, entityKey) {
+      commit({ expr, ...entityPatch(entityKey) }, primaryMode())
     },
     setPage(page, mode) {
       commit({ page: Math.max(1, Math.floor(page)) }, mode ?? primaryMode())

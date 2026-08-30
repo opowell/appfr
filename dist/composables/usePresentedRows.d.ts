@@ -1,5 +1,5 @@
 import type { ComputedRef } from 'vue';
-import type { EntityLabels, ShellRow } from '../types';
+import type { EntityLabels, EntitySchema, ShellRow } from '../types';
 /**
  * A row with its display strings resolved once. Views render these instead of
  * formatting inline, so the list, table, cards and grid can never disagree
@@ -9,6 +9,12 @@ export interface PresentedRow {
     row: ShellRow;
     /** The row's entity, worth showing only when the results span several. */
     entityLabel: string;
+    /**
+     * The schema of that entity, or null for a row of a type the schema no
+     * longer declares. Views read what the type *offers* from here — whether it
+     * is narrowable, and what its metrics count.
+     */
+    entity: EntitySchema | null;
     /**
      * Field names from the row's *own* entity. In a mixed result set this beats
      * a generic fallback: a log entry can be labelled "Trace id" while a LEGO
@@ -34,5 +40,5 @@ export declare function useViewLabels(): ComputedRef<EntityLabels>;
  * Resolves one row's display strings. Pure, so the per-type cards on the home
  * screen format their rows exactly as the record views do.
  */
-export declare function presentRow(row: ShellRow, index: number, labels: EntityLabels, pinned: boolean): PresentedRow;
+export declare function presentRow(row: ShellRow, index: number, entity: EntitySchema | null, pinned: boolean): PresentedRow;
 export declare function usePresentedRows(): ComputedRef<PresentedRow[]>;

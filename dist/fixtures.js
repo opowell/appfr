@@ -4,13 +4,13 @@ const e = (s, i, n, o = !1) => ({
   label: i,
   options: n,
   ...o ? { multiple: o } : {}
-}), r = (s, i, n, o) => ({
+}), a = (s, i, n, o) => ({
   kind: "range",
   key: s,
   label: i,
   min: n,
   max: o
-}), a = (s, i, n) => ({
+}), r = (s, i, n) => ({
   kind: "toggle",
   key: s,
   label: i,
@@ -27,7 +27,9 @@ const e = (s, i, n, o = !1) => ({
   },
   facets: s.facets,
   tabs: s.tabs,
-  samples: s.samples
+  samples: s.samples,
+  ...s.scope ? { scope: s.scope } : {},
+  ...s.drills ? { drills: s.drills } : {}
 }), c = t({
   key: "settings",
   label: "Settings",
@@ -39,7 +41,7 @@ const e = (s, i, n, o = !1) => ({
   facets: [
     e("section", "Section", ["general", "sources", "query", "notifications", "access"]),
     e("type", "Type", ["text", "toggle"]),
-    a("changed", "Changed", "Only settings changed from their default")
+    r("changed", "Changed", "Only settings changed from their default")
   ],
   tabs: ["Information", "History", "Scopes", "Raw"],
   samples: [
@@ -75,7 +77,7 @@ const e = (s, i, n, o = !1) => ({
   facets: [
     e("level", "Level", ["debug", "info", "warn", "error"]),
     e("source", "Source", ["api", "worker", "ui", "cron"]),
-    a("noise", "Noise", "Hide debug lines")
+    r("noise", "Noise", "Hide debug lines")
   ],
   tabs: ["Information", "Trace", "Records", "Raw"],
   samples: [
@@ -105,7 +107,7 @@ const e = (s, i, n, o = !1) => ({
       facets: [
         e("state", "State", ["running", "paused", "failed"]),
         e("schedule", "Schedule", ["hourly", "daily", "weekly"]),
-        a("hits", "Results", "Only searches with new hits")
+        r("hits", "Results", "Only searches with new hits")
       ],
       tabs: ["Information", "Results", "Sources", "Logs"],
       samples: [
@@ -127,8 +129,8 @@ const e = (s, i, n, o = !1) => ({
       metric2: "Score",
       facets: [
         e("kind", "Kind", ["page", "pdf", "feed", "image"]),
-        r("rank", "Rank", 0, 100),
-        a("seen", "Seen", "Hide items already seen")
+        a("rank", "Rank", 0, 100),
+        r("seen", "Seen", "Hide items already seen")
       ],
       tabs: ["Information", "Content", "Links", "Searches"],
       samples: [
@@ -151,7 +153,7 @@ const e = (s, i, n, o = !1) => ({
       facets: [
         e("state", "State", ["enabled", "disabled"]),
         e("engine", "Engine", ["static", "headless", "api"]),
-        a("health", "Health", "Only failing scrapers")
+        r("health", "Health", "Only failing scrapers")
       ],
       tabs: ["Information", "Rules", "Items", "Logs"],
       samples: [
@@ -180,10 +182,14 @@ const e = (s, i, n, o = !1) => ({
       secondary: "Set number",
       metric1: "Parts",
       metric2: "Minifigs",
+      // Parts leads to the pieces; minifigs is a count of something this
+      // schema does not list, so it stays the plain number it was.
+      scope: "set",
+      drills: { metric1: "pieces" },
       facets: [
         e("theme", "Theme", ["space", "castle", "town", "technic"]),
-        r("year", "Year", 1958, 2026),
-        a("owned", "Owned", "Only sets in my inventory")
+        a("year", "Year", 1958, 2026),
+        r("owned", "Owned", "Only sets in my inventory")
       ],
       tabs: ["Information", "Inventory", "Variants", "Logs"],
       samples: [
@@ -203,10 +209,14 @@ const e = (s, i, n, o = !1) => ({
       secondary: "Part number",
       metric1: "Colors",
       metric2: "In sets",
+      scope: "piece",
+      drills: { metric1: "colors", metric2: "sets" },
       facets: [
-        e("category", "Category", ["brick", "plate", "slope", "minifig"]),
-        r("firstYear", "First year", 1958, 2026),
-        a("rarity", "Rarity", "Only parts in < 5 sets")
+        // `shape` rather than `category`: a category is a record here, and a
+        // facet under that key would shadow the join to it.
+        e("shape", "Shape", ["brick", "plate", "slope", "minifig"]),
+        a("firstYear", "First year", 1958, 2026),
+        r("rarity", "Rarity", "Only parts in < 5 sets")
       ],
       tabs: ["Information", "Colors", "Sets", "Logs"],
       samples: [
@@ -226,10 +236,12 @@ const e = (s, i, n, o = !1) => ({
       secondary: "Hex",
       metric1: "Parts",
       metric2: "Sets",
+      scope: "color",
+      drills: { metric1: "pieces", metric2: "sets" },
       facets: [
         e("family", "Family", ["solid", "transparent", "metallic", "glow"]),
-        r("firstYear", "First year", 1958, 2026),
-        a("retired", "Retired", "Hide retired colors")
+        a("firstYear", "First year", 1958, 2026),
+        r("retired", "Retired", "Hide retired colors")
       ],
       tabs: ["Information", "Parts", "Sets", "Logs"],
       samples: [
@@ -251,8 +263,8 @@ const e = (s, i, n, o = !1) => ({
       metric2: "Spares",
       facets: [
         e("type", "Type", ["set", "minifig", "gear"]),
-        r("version", "Version", 1, 12),
-        a("complete", "Complete", "Only complete inventories")
+        a("version", "Version", 1, 12),
+        r("complete", "Complete", "Only complete inventories")
       ],
       tabs: ["Information", "Lines", "Set", "Logs"],
       samples: [
@@ -272,10 +284,12 @@ const e = (s, i, n, o = !1) => ({
       secondary: "Slug",
       metric1: "Parts",
       metric2: "Children",
+      scope: "category",
+      drills: { metric1: "pieces" },
       facets: [
         e("level", "Level", ["root", "branch", "leaf"]),
-        r("parts", "Parts", 0, 9e3),
-        a("empty", "Empty", "Hide empty categories")
+        a("parts", "Parts", 0, 9e3),
+        r("empty", "Empty", "Hide empty categories")
       ],
       tabs: ["Information", "Parts", "Children", "Logs"],
       samples: [
@@ -290,7 +304,7 @@ const e = (s, i, n, o = !1) => ({
     l,
     c
   ]
-}, u = {
+}, p = {
   key: "Commerce",
   label: "Commerce",
   kicker: "Crawl & test platform",
@@ -309,7 +323,7 @@ const e = (s, i, n, o = !1) => ({
         // Multi-valued: a tenant can run in more than one region, and is in
         // each of their chip sets rather than in a combined one of its own.
         e("region", "Region", ["eu", "us", "apac"], !0),
-        a("health", "Health", "Only tenants with failures")
+        r("health", "Health", "Only tenants with failures")
       ],
       tabs: ["Information", "Crawls", "Tests", "Logs"],
       samples: [
@@ -331,8 +345,8 @@ const e = (s, i, n, o = !1) => ({
       metric2: "Errors",
       facets: [
         e("state", "State", ["running", "done", "failed"]),
-        r("pages", "Pages", 0, 5e4),
-        a("deltas", "Deltas", "Only crawls with changes")
+        a("pages", "Pages", 0, 5e4),
+        r("deltas", "Deltas", "Only crawls with changes")
       ],
       tabs: ["Information", "Results", "Tenant", "Logs"],
       samples: [
@@ -355,7 +369,7 @@ const e = (s, i, n, o = !1) => ({
       facets: [
         e("suite", "Suite", ["checkout", "search", "pdp", "auth"]),
         e("severity", "Severity", ["blocker", "major", "minor"]),
-        a("flaky", "Flaky", "Only flaky tests")
+        r("flaky", "Flaky", "Only flaky tests")
       ],
       tabs: ["Information", "Assertions", "Results", "Logs"],
       samples: [
@@ -377,8 +391,8 @@ const e = (s, i, n, o = !1) => ({
       metric2: "Diffs",
       facets: [
         e("outcome", "Outcome", ["pass", "fail", "skipped"]),
-        r("durationMs", "Duration ms", 0, 6e4),
-        a("noise", "Noise", "Hide known-flaky results")
+        a("durationMs", "Duration ms", 0, 6e4),
+        r("noise", "Noise", "Hide known-flaky results")
       ],
       tabs: ["Information", "Diff", "Test", "Logs"],
       samples: [
@@ -400,8 +414,8 @@ const e = (s, i, n, o = !1) => ({
       metric2: "Links",
       facets: [
         e("status", "Status", ["200", "301", "404", "5xx"]),
-        r("sizeKb", "Size kB", 0, 4e3),
-        a("changes", "Changes", "Only changed since last crawl")
+        a("sizeKb", "Size kB", 0, 4e3),
+        r("changes", "Changes", "Only changed since last crawl")
       ],
       tabs: ["Information", "Content", "Links", "Crawl"],
       samples: [
@@ -416,7 +430,7 @@ const e = (s, i, n, o = !1) => ({
     l,
     c
   ]
-}, p = {
+}, u = {
   key: "Battle-sim",
   label: "Battle-sim",
   kicker: "Simulation runs",
@@ -432,8 +446,8 @@ const e = (s, i, n, o = !1) => ({
       metric2: "In runs",
       facets: [
         e("class", "Class", ["infantry", "armour", "air", "support"]),
-        r("power", "Power", 0, 100),
-        a("retired", "Retired", "Hide retired units")
+        a("power", "Power", 0, 100),
+        r("retired", "Retired", "Hide retired units")
       ],
       tabs: ["Information", "Stats", "Runs", "Logs"],
       samples: [
@@ -455,8 +469,8 @@ const e = (s, i, n, o = !1) => ({
       metric2: "Runs",
       facets: [
         e("doctrine", "Doctrine", ["attrition", "manoeuvre", "siege"]),
-        r("units", "Units", 0, 200),
-        a("active", "Active", "Only factions in active runs")
+        a("units", "Units", 0, 200),
+        r("active", "Active", "Only factions in active runs")
       ],
       tabs: ["Information", "Units", "Runs", "Logs"],
       samples: [
@@ -478,8 +492,8 @@ const e = (s, i, n, o = !1) => ({
       metric2: "Runs",
       facets: [
         e("terrain", "Terrain", ["urban", "open", "mountain", "coast"]),
-        r("rounds", "Rounds", 1, 200),
-        a("balance", "Balance", "Only unbalanced scenarios")
+        a("rounds", "Rounds", 1, 200),
+        r("balance", "Balance", "Only unbalanced scenarios")
       ],
       tabs: ["Information", "Map", "Runs", "Logs"],
       samples: [
@@ -501,8 +515,8 @@ const e = (s, i, n, o = !1) => ({
       metric2: "Casualties",
       facets: [
         e("outcome", "Outcome", ["win", "loss", "draw", "aborted"]),
-        r("rounds", "Rounds", 1, 200),
-        a("seeded", "Seeded", "Only reproducible seeds")
+        a("rounds", "Rounds", 1, 200),
+        r("seeded", "Seeded", "Only reproducible seeds")
       ],
       tabs: ["Information", "Timeline", "Units", "Raw"],
       samples: [
@@ -520,12 +534,12 @@ const e = (s, i, n, o = !1) => ({
 }, y = {
   iRadar: m,
   LEGO: d,
-  Commerce: u,
-  "Battle-sim": p
+  Commerce: p,
+  "Battle-sim": u
 }, g = Object.values(y);
 export {
-  p as battleSimSchema,
-  u as commerceSchema,
+  u as battleSimSchema,
+  p as commerceSchema,
   m as iRadarSchema,
   d as legoSchema,
   l as logsEntity,

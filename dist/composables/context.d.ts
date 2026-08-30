@@ -42,6 +42,17 @@ export interface ShellContext extends QueryState {
      * one is the host's, not the shell's.
      */
     create(entity: EntitySchema): void;
+    /**
+     * Narrowing to one record — from the affordance {@link EntitySchema.scope}
+     * offers on its rows, or from a metric {@link EntitySchema.drills} named an
+     * entity for. `entity` is what to list afterwards, and null when the press
+     * was the row's own: narrow the whole corpus and pivot to nothing.
+     *
+     * Reported rather than applied. The shell holds a query, not a join — how
+     * this record's id reaches the other records is the host's, which is the
+     * only place that knows the term means anything.
+     */
+    drill(row: ShellRow, entity: EntitySchema | null): void;
 }
 export declare const SHELL_CONTEXT_KEY: InjectionKey<ShellContext>;
 export declare function provideShellContext(context: ShellContext): ShellContext;

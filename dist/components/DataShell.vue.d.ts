@@ -109,6 +109,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     openPanel: () => void;
     closePanel: typeof closePanel;
 }, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
+    drill: (row: ShellRow, entity: EntitySchema | null) => any;
     activate: (row: ShellRow) => any;
     create: (entity: EntitySchema) => any;
     "query-change": (query: ShellQuery) => any;
@@ -116,6 +117,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     "update:open": (value: boolean) => any;
     "update:pinned": (value: string[]) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_PublicProps> & Readonly<{
+    onDrill?: ((row: ShellRow, entity: EntitySchema | null) => any) | undefined;
     onActivate?: ((row: ShellRow) => any) | undefined;
     onCreate?: ((entity: EntitySchema) => any) | undefined;
     "onQuery-change"?: ((query: ShellQuery) => any) | undefined;

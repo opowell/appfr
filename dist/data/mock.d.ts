@@ -8,6 +8,16 @@ export interface MockSourceOptions {
     seed?: string;
     /** Most recent `updatedAt` in the generated set. Defaults to 2026-08-25. */
     now?: Date;
+    /**
+     * Entity keys whose records every generated row belongs to — the `scope`
+     * fields the schema declares, as `[field, entityKey]`.
+     *
+     * Without these a drill would come back empty: nothing on the far side of
+     * the number says which record it belongs to. `createMockDataSource` reads
+     * them off the schema, so a caller only sets this when generating rows on
+     * its own.
+     */
+    scopes?: Array<readonly [string, string]>;
 }
 /**
  * Expands an entity's sample pairs into a stable population. Repeats beyond the

@@ -52,7 +52,7 @@ describe('useEntityPreviews', () => {
   it('orders each card by the query’s sort — recency by default', () => {
     const { state } = setup()
     for (const preview of state.previews.value) {
-      const dates = preview.rows.map((entry) => Date.parse(entry.row.updatedAt))
+      const dates = preview.rows.map((entry) => Date.parse(String(entry.row.fields.updatedAt)))
       expect(dates, preview.entity.key).toEqual([...dates].sort((a, b) => b - a))
     }
   })
@@ -60,7 +60,7 @@ describe('useEntityPreviews', () => {
   it('follows a change of sort', () => {
     const { state } = setup('?s=name&d=asc')
     for (const preview of state.previews.value) {
-      const names = preview.rows.map((entry) => entry.row.primary)
+      const names = preview.rows.map((entry) => entry.parts.identity)
       expect(names, preview.entity.key).toEqual([...names].sort((a, b) => a.localeCompare(b)))
     }
   })
@@ -89,8 +89,10 @@ describe('useEntityPreviews', () => {
 
   it('presents rows in their own entity’s vocabulary', () => {
     const byKey = new Map(setup().state.previews.value.map((p) => [p.entity.key, p]))
-    expect(byKey.get('logs')!.rows[0]!.labels.metric1).toBe('Duration')
-    expect(byKey.get('searches')!.rows[0]!.labels.metric1).toBe('New')
+    // Each row's parts come from its own type's columns, so a log entry is
+    // read as a log entry while a search beside it is read as a search.
+    expect(byKey.get('logs')!.rows[0]!.parts.metrics[0]!.label).toBe('Duration')
+    expect(byKey.get('searches')!.rows[0]!.parts.metrics[0]!.label).toBe('New')
   })
 
   it('drops facets, which belong to one entity, but keeps the expression', () => {

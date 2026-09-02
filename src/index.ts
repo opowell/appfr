@@ -46,13 +46,8 @@ export { useQueryState } from './composables/useQueryState'
 export type { NavigationMode, QueryState, UseQueryStateOptions } from './composables/useQueryState'
 export { useResults } from './composables/useResults'
 export type { ResultsState, UseResultsOptions } from './composables/useResults'
-export {
-  GENERIC_LABELS,
-  presentRow,
-  usePresentedRows,
-  useViewLabels,
-} from './composables/usePresentedRows'
-export type { PresentedRow } from './composables/usePresentedRows'
+export { presentParts, presentRow, usePresentedRows } from './composables/usePresentedRows'
+export type { PresentedRow, RowMetric, RowParts } from './composables/usePresentedRows'
 export { useColumns } from './composables/useColumns'
 export { useEntityPreviews } from './composables/useEntityPreviews'
 export type {
@@ -219,6 +214,7 @@ export {
 } from './query/schema'
 export {
   cellText,
+  cellTextOf,
   cellValue,
   columnAlign,
   columnClass,
@@ -228,8 +224,12 @@ export {
   defaultCellText,
   defaultColumns,
   EMPTY_CELL,
+  GENERIC_NAMES,
+  roleColumn,
+  roleColumns,
   rowKey,
 } from './query/columns'
+export type { DefaultColumnNames, DefaultMetric } from './query/columns'
 export { addTerm, drillExpression, scopeTerm, scopeTermFor } from './query/drill'
 export { ENTITY_TERM, summarizeQuery, summaryTerms } from './query/summary'
 export type { SummaryTerm } from './query/summary'
@@ -251,21 +251,26 @@ export type { Comparator, Expression, FieldTerm, Term, TextTerm } from './data/e
 export { fnv1a, formatDate, formatMetric, formatOrdinal, formatPercent } from './data/format'
 
 /* Types */
-export { COLUMN_BREAKPOINTS, RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS } from './types'
+export {
+  COLUMN_BREAKPOINTS,
+  COLUMN_ROLES,
+  RECORD_STATUSES,
+  SHELL_THEMES,
+  VIEW_KINDS,
+} from './types'
 export type {
   ChipsFacet,
   ColumnAlign,
   ColumnBreakpoint,
   ColumnDef,
   ColumnKind,
+  ColumnRole,
   DataSource,
   DomainSchema,
-  EntityLabels,
   EntitySchema,
   FacetDef,
   FacetState,
   FacetValue,
-  MetricDrills,
   QueryRequest,
   QueryResult,
   QuerySink,

@@ -1,7 +1,37 @@
 import type { ComputedRef } from 'vue';
-import type { EntityLabels, EntitySchema, ShellRow } from '../types';
-import { GENERIC_LABELS } from '../query/schema';
-export { GENERIC_LABELS };
+import type { ColumnDef, EntitySchema, RecordStatus, ShellRow } from '../types';
+/**
+ * One metric of a row, with the column that knows what it is: its heading, its
+ * formatted value, and whether pressing it narrows to what it counts.
+ */
+export interface RowMetric {
+    column: ColumnDef;
+    label: string;
+    text: string;
+}
+/**
+ * The parts a view that is not a table is made of.
+ *
+ * A card, a tile, a link row and a preview pane are an identity, a reference,
+ * a number or two and a mark — never a list of columns — so they read this
+ * instead of the row. Every part comes from the column that declared the
+ * matching {@link ColumnRole}, and is empty or null where the schema declared
+ * no column for it.
+ */
+export interface RowParts {
+    identity: string;
+    reference: string;
+    /** The metric columns, in the order the schema declared them. */
+    metrics: RowMetric[];
+    state: RecordStatus | null;
+    /** 0–1, or null where no column plays the part. */
+    score: number | null;
+    percent: string;
+    /** The date, formatted the way every view formats it. */
+    updated: string;
+    /** A colour for the grid view's tile, where a column names one. */
+    tint: string | null;
+}
 /**
  * A row with its display strings resolved once. Views render these instead of
  * formatting inline, so the list, table, cards and grid can never disagree
@@ -20,25 +50,21 @@ export interface PresentedRow {
     /**
      * The schema of that entity, or null for a row of a type the schema no
      * longer declares. Views read what the type *offers* from here — whether it
-     * is narrowable, and what its metrics count.
+     * is narrowable, and what its columns say its fields are.
      */
     entity: EntitySchema | null;
     /**
-     * Field names from the row's *own* entity. In a mixed result set this beats
-     * a generic fallback: a log entry can be labelled "Trace id" while a LEGO
-     * set beside it says "Set number".
+     * That entity's own columns. In a mixed result set this beats the scope's:
+     * a log entry is read in its own vocabulary while a LEGO set beside it is
+     * read in its.
      */
-    labels: EntityLabels;
+    columns: ColumnDef[];
     ordinal: string;
-    metric1: string;
-    metric2: string;
-    date: string;
-    score: string;
-    percent: string;
+    parts: RowParts;
     pinned: boolean;
 }
-/** The column names for the current scope, generic across the whole corpus. */
-export declare function useViewLabels(): ComputedRef<EntityLabels>;
+/** Resolves the roles a view reads, from the columns of the row's own type. */
+export declare function presentParts(row: ShellRow, columns: ColumnDef[]): RowParts;
 /**
  * Resolves one row's display strings. Pure, so the per-type cards on the home
  * screen format their rows exactly as the record views do.

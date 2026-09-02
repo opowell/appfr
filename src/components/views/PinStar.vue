@@ -2,7 +2,12 @@
 import type { ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
 
-const props = defineProps<{ row: ShellRow; pinned: boolean }>()
+const props = defineProps<{
+  row: ShellRow
+  pinned: boolean
+  /** What to call the record. Its identity column, resolved by the view. */
+  name: string
+}>()
 
 const shell = useShellContext()
 
@@ -19,7 +24,7 @@ function toggle(event: MouseEvent) {
     class="dc-star"
     :data-dc-active="pinned ? 'true' : 'false'"
     :aria-pressed="pinned"
-    :aria-label="pinned ? `Unpin ${row.primary}` : `Pin ${row.primary}`"
+    :aria-label="pinned ? `Unpin ${name}` : `Pin ${name}`"
     @click="toggle"
   >
     {{ pinned ? '★' : '☆' }}

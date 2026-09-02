@@ -1,4 +1,4 @@
-import type { EntitySchema, FacetDef, FacetValue, ShellQuery } from '../types'
+import type { DomainSchema, EntitySchema, FacetDef, FacetValue, ShellQuery } from '../types'
 import { findSort, isFacetActive, isPristineQuery } from './schema'
 
 /** One removable term in the header's query summary. */
@@ -64,9 +64,14 @@ export function summaryTerms(query: ShellQuery, entity: EntitySchema | null): Su
  * it is showing and how, so the header is never blank and never implies a
  * filter that is not there.
  */
-export function summarizeQuery(query: ShellQuery, entity: EntitySchema | null): string {
+export function summarizeQuery(
+  query: ShellQuery,
+  entity: EntitySchema | null,
+  /** For the sort's own name, which on the home screen the schema's columns hold. */
+  schema: DomainSchema | null = null,
+): string {
   if (isPristineQuery(query)) {
-    const sort = findSort(entity, query.sort)
+    const sort = findSort(entity, query.sort, schema)
     return `everything · ${query.view} · ${sort.label}`
   }
   const parts = summaryTerms(query, entity).map((term) => term.label)

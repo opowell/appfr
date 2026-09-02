@@ -13,17 +13,20 @@ const rows = usePresentedRows()
       :key="entry.key"
       type="button"
       class="dc-tile"
-      :style="{ '--dc-tile-tint': entry.row.tint }"
+      :style="{ '--dc-tile-tint': entry.parts.tint ?? undefined }"
       @click="shell.activate(entry.row)"
     >
       <span class="dc-tile__scrim">
         <span class="dc-tile__top dc-mono">
           <span class="dc-tile__chip">{{ entry.ordinal }}</span>
-          <span class="dc-tile__chip">{{ entry.score }}</span>
+          <span
+            v-if="entry.parts.percent"
+            class="dc-tile__chip"
+          >{{ entry.parts.percent }}</span>
         </span>
         <span class="dc-tile__caption">
-          <span class="dc-tile__secondary dc-truncate">{{ entry.row.secondary }}</span>
-          <span class="dc-tile__primary">{{ entry.row.primary }}</span>
+          <span class="dc-tile__secondary dc-truncate">{{ entry.parts.reference }}</span>
+          <span class="dc-tile__primary">{{ entry.parts.identity }}</span>
         </span>
       </span>
     </button>

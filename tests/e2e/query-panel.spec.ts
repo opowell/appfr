@@ -282,7 +282,9 @@ test.describe('Query panel — view and sort', () => {
   test('the sort switch reorders the content', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--table-view')
     await openPanel(page)
-    await page.getByRole('radio', { name: 'name', exact: true }).click()
+    // A sort is named as the column offering it is named, and `searches` heads
+    // its identity column "Search".
+    await page.getByRole('radio', { name: 'search', exact: true }).click()
 
     const names = await page.locator('.dc-table__open').allInnerTexts()
     expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a)))
@@ -302,27 +304,33 @@ test.describe('Query panel — view and sort', () => {
     expect(await page.locator('.dc-list__primary').first().innerText()).not.toBe(first)
   })
 
-  test('the metric sorts are generic at home and named once scoped', async ({ page }) => {
+  /*
+   * The sorts are the columns that offer one, named as those columns are named
+   * and in the order the schema declared them — so the panel and the table
+   * headers are offering one list rather than two.
+   */
+  test('the sorts are the columns offering them, in the schema’s own words', async ({ page }) => {
     await gotoStory(page, HOME_OPEN)
     let group = page.getByRole('radiogroup', { name: 'Sort field' })
+    // Across every entity the columns are the schema's generic set.
     await expect(group.getByRole('radio')).toHaveText([
+      'item',
+      'metric',
+      'metric 2',
       'updated',
       'score',
-      'value',
-      'second value',
-      'name',
     ])
 
     await gotoStory(page, ENTITY)
     await openPanel(page)
     group = page.getByRole('radiogroup', { name: 'Sort field' })
-    // iRadar names the metrics of `searches` "New" and "Results".
+    // iRadar heads `searches` "Search" and names its metrics "New" and "Results".
     await expect(group.getByRole('radio')).toHaveText([
-      'updated',
-      'score',
+      'search',
       'new',
       'results',
-      'name',
+      'updated',
+      'score',
     ])
   })
 })

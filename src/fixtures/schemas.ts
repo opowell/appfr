@@ -45,54 +45,54 @@ interface EntityInput {
   key: string
   label: string
   count: string
+  /** What the record's name is called, and what its reference is called. */
   primary: string
   secondary: string
+  /** The two numbers, and what each of them counts where the schema lists it. */
   metric1: string
   metric2: string
+  metric1Drill?: string
+  metric2Drill?: string
   facets: EntitySchema['facets']
   tabs: string[]
   samples: Array<readonly [string, string]>
   /** The field every other record carries this one's id in. */
   scope?: string
-  /** The entity each metric counts, where the schema has one. */
-  drills?: EntitySchema['drills']
-  /** The table's columns, for a type the four labels are not the shape of. */
+  /** The whole set, for a type the familiar one is not the shape of. */
   columns?: ColumnDef[]
 }
 
 /**
  * The shell renders the columns it is given and invents none, so every one of
- * these says what its table is. All but one of them wants the familiar eight,
- * and `defaultColumns` is how a schema asks for those by name rather than by
- * leaving the field out and hoping.
+ * these says what it is. All but one of them wants the familiar set, and
+ * `defaultColumns` is how a schema asks for it by name rather than by leaving
+ * the field out and hoping.
  */
-const entity = (input: EntityInput): EntitySchema => {
-  const built: EntitySchema = {
-    key: input.key,
-    label: input.label,
-    count: input.count,
-    labels: {
-      primary: input.primary,
-      secondary: input.secondary,
-      metric1: input.metric1,
-      metric2: input.metric2,
-    },
-    facets: input.facets,
-    tabs: input.tabs,
-    samples: input.samples,
-    ...(input.scope ? { scope: input.scope } : {}),
-    ...(input.drills ? { drills: input.drills } : {}),
-  }
-  // Built first, because the default set reads the labels and the drills off
-  // the entity it is for.
-  return { ...built, columns: input.columns ?? defaultColumns(built) }
-}
+const entity = (input: EntityInput): EntitySchema => ({
+  key: input.key,
+  label: input.label,
+  count: input.count,
+  facets: input.facets,
+  tabs: input.tabs,
+  samples: input.samples,
+  ...(input.scope ? { scope: input.scope } : {}),
+  columns:
+    input.columns ??
+    defaultColumns({
+      identity: input.primary,
+      reference: input.secondary,
+      metrics: [
+        { label: input.metric1, ...(input.metric1Drill ? { drill: input.metric1Drill } : {}) },
+        { label: input.metric2, ...(input.metric2Drill ? { drill: input.metric2Drill } : {}) },
+      ],
+    }),
+})
 
 /**
  * Columns for the mixed result set, which every one of these schemas takes as
- * it comes: generic labels, and the row's own type among them.
+ * it comes: generic headings, and the row's own type among them.
  */
-const everythingColumns: ColumnDef[] = defaultColumns(null)
+const everythingColumns: ColumnDef[] = defaultColumns()
 
 /*
  * A worked column set — see `legoSchema`'s pieces below.
@@ -112,7 +112,7 @@ const swatch = (row: ShellRow): string =>
   'data:image/svg+xml,' +
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28">` +
-      `<rect width="56" height="28" rx="3" fill="${row.tint}"/></svg>`,
+      `<rect width="56" height="28" rx="3" fill="${String(row.fields.tint)}"/></svg>`,
   )
 
 /**
@@ -132,8 +132,22 @@ const pieceColumns: ColumnDef[] = [
   { key: 'ordinal', kind: 'ordinal', label: '#', width: '48px' },
   // No label: a column of pictures says what it is.
   { key: 'thumb', kind: 'image', width: '56px', height: '28px', value: swatch },
-  { key: 'primary', label: 'Piece', sort: 'name', activate: true, scope: true },
-  { key: 'secondary', label: 'Part no.', width: '104px', mono: true, muted: true },
+  {
+    key: 'primary',
+    role: 'identity',
+    label: 'Piece',
+    sort: 'name',
+    activate: true,
+    scope: true,
+  },
+  {
+    key: 'secondary',
+    role: 'reference',
+    label: 'Part no.',
+    width: '104px',
+    mono: true,
+    muted: true,
+  },
   { key: 'shape', label: 'Shape', width: '92px', hideBelow: 620 },
   {
     key: 'firstYear',
@@ -147,6 +161,7 @@ const pieceColumns: ColumnDef[] = [
   },
   {
     key: 'metric1',
+    role: 'metric',
     kind: 'number',
     label: 'Colors',
     width: '84px',
@@ -156,6 +171,7 @@ const pieceColumns: ColumnDef[] = [
   },
   {
     key: 'metric2',
+    role: 'metric',
     kind: 'number',
     label: 'In sets',
     width: '84px',
@@ -169,7 +185,7 @@ const pieceColumns: ColumnDef[] = [
     width: '88px',
     align: 'right',
     mono: true,
-    value: (row) => Math.round(row.score * 5_000),
+    value: (row) => Math.round(Number(row.fields.score) * 5_000),
     format: grams,
     hideBelow: 1100,
   },
@@ -181,8 +197,19 @@ const pieceColumns: ColumnDef[] = [
     format: (value) => (value === true ? 'rare' : '—'),
     hideBelow: 1100,
   },
-  { key: 'score', kind: 'score', label: 'Match', width: '72px', hideBelow: 900 },
-  { key: 'status', kind: 'status', label: 'State', width: '104px' },
+  {
+    key: 'score',
+    role: 'score',
+    kind: 'score',
+    label: 'Match',
+    sort: 'score',
+    width: '72px',
+    hideBelow: 900,
+  },
+  { key: 'status', role: 'state', kind: 'status', label: 'State', width: '104px' },
+  /* Not a cell — the tile in the grid view is what reads it — but declared
+     here, because this is where this type says what fields it has. */
+  { key: 'tint', role: 'tint' },
 ]
 
 /*
@@ -360,7 +387,7 @@ export const legoSchema: DomainSchema = {
       // Parts leads to the pieces; minifigs is a count of something this
       // schema does not list, so it stays the plain number it was.
       scope: 'set',
-      drills: { metric1: 'pieces' },
+      metric1Drill: 'pieces',
       facets: [
         chips('theme', 'Theme', ['space', 'castle', 'town', 'technic']),
         range('year', 'Year', 1958, 2026),
@@ -385,7 +412,8 @@ export const legoSchema: DomainSchema = {
       metric1: 'Colors',
       metric2: 'In sets',
       scope: 'piece',
-      drills: { metric1: 'colors', metric2: 'sets' },
+      metric1Drill: 'colors',
+      metric2Drill: 'sets',
       facets: [
         // `shape` rather than `category`: a category is a record here, and a
         // facet under that key would shadow the join to it.
@@ -416,7 +444,8 @@ export const legoSchema: DomainSchema = {
       metric1: 'Parts',
       metric2: 'Sets',
       scope: 'color',
-      drills: { metric1: 'pieces', metric2: 'sets' },
+      metric1Drill: 'pieces',
+      metric2Drill: 'sets',
       facets: [
         chips('family', 'Family', ['solid', 'transparent', 'metallic', 'glow']),
         range('firstYear', 'First year', 1958, 2026),
@@ -464,7 +493,7 @@ export const legoSchema: DomainSchema = {
       metric1: 'Parts',
       metric2: 'Children',
       scope: 'category',
-      drills: { metric1: 'pieces' },
+      metric1Drill: 'pieces',
       facets: [
         chips('level', 'Level', ['root', 'branch', 'leaf']),
         range('parts', 'Parts', 0, 9000),

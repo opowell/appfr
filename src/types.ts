@@ -132,6 +132,48 @@ export type ColumnKind =
 export type ColumnAlign = 'left' | 'center' | 'right'
 
 /**
+ * What part a column plays in the views that are not tables.
+ *
+ * A table renders columns; a card, a tile, a link row and a preview pane do
+ * not — they are an identity, a reference, a number or two and a mark, and
+ * they have to be told which column is which. That is what a role is: the
+ * schema names its fields once, in `columns`, and every view reads the ones it
+ * is made of.
+ *
+ * A column with no role is a column and nothing else: it appears in the table
+ * and nowhere else, which is what most columns are.
+ */
+export type ColumnRole =
+  /** The record's name — what a card heads, and what opening the row opens. */
+  | 'identity'
+  /** The reference under it: a URL, a path, a part number. */
+  | 'reference'
+  /** A number worth showing beside the name. Views take the first one or two. */
+  | 'metric'
+  /** Lifecycle, drawn as a pill. Its value should be a {@link RecordStatus}. */
+  | 'state'
+  /** Relevance from 0 to 1, drawn as a meter. */
+  | 'score'
+  /** When the record last changed, as an ISO-8601 date. */
+  | 'updated'
+  /**
+   * A colour for the grid view's tile. Declared as a column so the schema
+   * names its fields in one place, but never drawn as a cell — a background
+   * is not a value — so the table leaves it out.
+   */
+  | 'tint'
+
+export const COLUMN_ROLES = [
+  'identity',
+  'reference',
+  'metric',
+  'state',
+  'score',
+  'updated',
+  'tint',
+] as const
+
+/**
  * The container widths a column may stand down at, narrowest first. A fixed
  * ladder rather than a free number because the rule is a container query in a
  * stylesheet, and a stylesheet cannot be handed an arbitrary breakpoint per
@@ -164,6 +206,11 @@ export interface ColumnDef {
   /** The header. A column whose content says what it is can leave it out. */
   label?: string
   kind?: ColumnKind
+  /**
+   * What this column is to the views that are not tables — see
+   * {@link ColumnRole}. A column that names none is a column only.
+   */
+  role?: ColumnRole
   /**
    * The row field to read, when it is not the column's own key. Looked up on
    * {@link ShellRow} first and in {@link ShellRow.facets} after, so the values
@@ -252,30 +299,9 @@ export interface ColumnDef {
 
 /* ------------------------------------------------------------------ schema */
 
-/**
- * Labels for the four data columns every entity exposes. Views read these
- * instead of hard-coding column names, which is what lets one set of
- * renderers serve every schema.
- */
-export interface EntityLabels {
-  primary: string
-  secondary: string
-  metric1: string
-  metric2: string
-}
-
 export interface SortDef {
   key: string
   label: string
-}
-
-/**
- * The entity each metric column counts, keyed by the column. Either may be
- * left out — a metric that counts nothing listable is a plain number.
- */
-export interface MetricDrills {
-  metric1?: string
-  metric2?: string
 }
 
 export interface EntitySchema {
@@ -283,7 +309,6 @@ export interface EntitySchema {
   label: string
   /** Total population, pre-formatted for display (e.g. `'9,988'`). */
   count: string
-  labels: EntityLabels
   facets: FacetDef[]
   /** Detail tabs offered when a record is opened. */
   tabs: string[]
@@ -308,36 +333,27 @@ export interface EntitySchema {
    */
   scope?: string
   /**
-   * What each metric column counts, as the {@link EntitySchema.key} of the
-   * entity counted — `{ metric1: 'tests' }` on a tenant whose first metric is
-   * how many specs cover it.
-   *
-   * Naming one makes that number pressable, and pressing it reports the same
-   * `drill` with the entity to narrow to: clicking `12` under **Tests** means
-   * "show me those twelve". A metric counting something the schema has no
-   * entity for is left unnamed and stays a plain number.
-   *
-   * Only meaningful alongside {@link EntitySchema.scope}: the records behind
-   * the number are reachable only if they say which record they belong to.
+   * Seed pairs of `[identity, reference]` the mock source expands into rows,
+   * filling the rest of each row from what the columns say it holds.
    */
-  drills?: MetricDrills
-  /** Seed pairs of `[primary, secondary]` the mock source expands into rows. */
   samples: Array<readonly [string, string]>
-  /** Overrides the default `updated / score / metric1 / name` sort set. */
+  /**
+   * Overrides the sorts derived from the columns — one per column that names a
+   * {@link ColumnDef.sort}.
+   */
   sorts?: SortDef[]
   /**
-   * The table view's columns: what it renders, in the order given, and nothing
-   * else. Eleven of them, or two.
+   * What this type *is*: every field the shell shows, in the order a table
+   * shows them, with {@link ColumnDef.role} saying which of them a card, a
+   * tile, a link row and a preview pane are made of.
    *
-   * The shell invents none. A type that declares nothing here has no table to
-   * draw — the four {@link EntitySchema.labels} are what a card and a tile are
-   * made of, and reading a table out of them would be the shell deciding what
-   * this type is. `defaultColumns(entity)` is exported for the schema that
-   * wants the ordinal, identity pair, metrics, date and state after all, and
-   * spreading it is how that schema says so.
-   *
-   * The other five views go on reading the labels: a card and a tile are an
-   * identity and a number or two by construction, and a column set is a table.
+   * The shell invents none. A type that declares nothing here has nothing to
+   * draw anywhere — no table, and no identity for a card to head — because
+   * which fields a record has is the schema's to say and a set of columns
+   * nobody asked for is the component deciding what the data is.
+   * `defaultColumns()` is exported for the schema that wants the ordinal,
+   * identity pair, metrics, date, state and score after all, and spreading it
+   * is how that schema says so.
    */
   columns?: ColumnDef[]
 }
@@ -408,8 +424,13 @@ export interface ShellQueryDefaults {
 /* -------------------------------------------------------------------- rows */
 
 /**
- * A single result. Views render `primary`/`secondary` as identity and the two
- * metrics as data; `facets` holds the raw values a data source filters on.
+ * A single result.
+ *
+ * Three fields the shell owns and one bag it does not. `id` is what a row is
+ * tracked and narrowed by, `entityKey` says which type it is — so a mixed
+ * result set can read every row in its own type's vocabulary — and everything
+ * else about the record is in `fields`, under whatever names the schema's
+ * columns read.
  */
 export interface ShellRow {
   id: string
@@ -417,22 +438,14 @@ export interface ShellRow {
   entityKey: string
   /** {@link EntitySchema.label}, so a cross-entity result set can say so. */
   entityLabel: string
-  primary: string
-  secondary: string
-  status: RecordStatus
-  /** Normalised 0–1 relevance, drawn as a meter and shown in the grid view. */
-  score: number
-  metric1: number
-  metric2: number
-  /** ISO-8601 date of the last change. */
-  updatedAt: string
-  /** Background colour for the grid view's tile. */
-  tint: string
   /**
-   * Values behind this row, keyed by {@link FacetDef.key}. A chips facet may
-   * hold a list rather than one string — see {@link ChipsFacet.multiple}.
+   * The record itself, keyed however the source likes: a name, a URL, two
+   * counts, a state, a date, the values a facet filters on. Columns say which
+   * of these are shown and what they are called, and roles say which of them a
+   * card or a tile is made of — the shell reads nothing here by name of its
+   * own.
    */
-  facets: Record<string, string | number | boolean | string[]>
+  fields: Record<string, unknown>
 }
 
 export interface QueryRequest {

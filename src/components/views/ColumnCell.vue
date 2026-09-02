@@ -79,7 +79,7 @@ function press(event: MouseEvent) {
     v-else-if="kind === 'image'"
     class="dc-cell__image"
     :src="String(value ?? '')"
-    :alt="entry.row.primary"
+    :alt="entry.parts.identity"
     loading="lazy"
     :style="{ maxHeight: column.height }"
     @click="press"
@@ -90,11 +90,8 @@ function press(event: MouseEvent) {
   <MetricDrill
     v-else-if="column.drill"
     :entry="entry"
-    :to="column.drill"
-    :label="column.label"
-  >
-    {{ text }}
-  </MetricDrill>
+    :column="column"
+  />
 
   <button
     v-else-if="pressable"

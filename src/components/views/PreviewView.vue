@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useShellContext } from '../../composables/context'
 import { usePresentedRows } from '../../composables/usePresentedRows'
+import { roleColumn } from '../../query/columns'
 import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
@@ -20,17 +21,28 @@ watch(rows, (list) => {
 
 const current = computed(() => rows.value[index.value])
 
-// Field names come from the record's own entity, so a preview reads in that
-// entity's vocabulary even when the result set is of mixed kinds.
+/**
+ * The record, field by field, in its own type's vocabulary — so a preview
+ * reads as that type even when the result set is of mixed kinds.
+ *
+ * The reference, then every number the type declared, then the date. A number
+ * carries its column so it renders as the drill it may be rather than as text.
+ */
 const fields = computed(() => {
   const entry = current.value
   if (!entry) return []
+  const reference = roleColumn(entry.columns, 'reference')
+  const updated = roleColumn(entry.columns, 'updated')
   return [
-    { key: entry.labels.secondary, value: entry.row.secondary, metric: null },
-    // Named, so the value renders as the drill it may be rather than as text.
-    { key: entry.labels.metric1, value: entry.metric1, metric: 'metric1' as const },
-    { key: entry.labels.metric2, value: entry.metric2, metric: 'metric2' as const },
-    { key: 'Updated', value: entry.date, metric: null },
+    ...(reference
+      ? [{ key: reference.label ?? 'Reference', value: entry.parts.reference, column: null }]
+      : []),
+    ...entry.parts.metrics.map((metric) => ({
+      key: metric.label,
+      value: metric.text,
+      column: metric.column,
+    })),
+    ...(updated ? [{ key: updated.label ?? 'Updated', value: entry.parts.updated, column: null }] : []),
   ]
 })
 
@@ -81,7 +93,7 @@ const step = (delta: number) => {
     >
       <div
         class="dc-preview__media"
-        :style="{ background: current.row.tint }"
+        :style="{ background: current.parts.tint ?? undefined }"
         aria-hidden="true"
       >
         preview
@@ -89,7 +101,10 @@ const step = (delta: number) => {
       <div class="dc-preview__body">
         <div class="dc-preview__top">
           <span class="dc-preview__badges">
-            <StatusPill :status="current.row.status" />
+            <StatusPill
+              v-if="current.parts.state"
+              :status="current.parts.state"
+            />
             <!-- Preview is the home view, where records are of mixed kinds, so
                  each one says which it is. -->
             <span class="dc-preview__entity dc-mono">{{ current.entityLabel }}</span>
@@ -99,16 +114,17 @@ const step = (delta: number) => {
             <PinStar
               v-if="shell.pinnable.value"
               :row="current.row"
+              :name="current.parts.identity"
               :pinned="current.pinned"
             />
           </span>
         </div>
         <div>
           <div class="dc-preview__primary">
-            {{ current.row.primary }}
+            {{ current.parts.identity }}
           </div>
           <div class="dc-preview__secondary dc-mono">
-            {{ current.row.secondary }}
+            {{ current.parts.reference }}
           </div>
         </div>
         <dl class="dc-preview__fields">
@@ -122,9 +138,9 @@ const step = (delta: number) => {
             </dt>
             <dd class="dc-preview__value dc-mono">
               <MetricDrill
-                v-if="field.metric && current"
+                v-if="field.column && current"
                 :entry="current"
-                :metric="field.metric"
+                :column="field.column"
               />
               <template v-else>
                 {{ field.value }}

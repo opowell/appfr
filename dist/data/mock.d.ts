@@ -20,9 +20,10 @@ export interface MockSourceOptions {
     scopes?: Array<readonly [string, string]>;
 }
 /**
- * Expands an entity's sample pairs into a stable population. Repeats beyond the
- * sample length are suffixed as revisions, which keeps every `primary` unique
- * without inventing vocabulary the schema did not supply.
+ * Expands an entity's sample pairs into a stable population, filling each row
+ * from what the entity's columns say it holds. Repeats beyond the sample
+ * length are suffixed as revisions, which keeps every identity unique without
+ * inventing vocabulary the schema did not supply.
  */
 export declare function generateRows(entity: EntitySchema, options?: MockSourceOptions): ShellRow[];
 /** Applies the facet state to a row. Neutral facets never exclude anything. */

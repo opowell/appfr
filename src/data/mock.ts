@@ -1,4 +1,5 @@
 import type {
+  ColumnDef,
   DomainSchema,
   EntitySchema,
   FacetDef,
@@ -10,7 +11,8 @@ import type {
   SyncDataSource,
 } from '../types'
 import { RECORD_STATUSES } from '../types'
-import { findSort } from '../query/schema'
+import { columnsForSort, findSort } from '../query/schema'
+import { cellValue } from '../query/columns'
 import { matchesExpression, parseExpression } from './expression'
 import { fnv1a } from './format'
 
@@ -79,7 +81,7 @@ function parentIds(entityKey: string, index: number, field: string, population: 
   return ids
 }
 
-function pickFacetValue(facet: FacetDef, hash: number): ShellRow['facets'][string] {
+function pickFacetValue(facet: FacetDef, hash: number): ShellRow['fields'][string] {
   switch (facet.kind) {
     case 'chips':
       // A multi-valued facet takes one, two or three of its options, so the
@@ -106,9 +108,58 @@ function pickSeveral(options: string[], hash: number): string[] {
 }
 
 /**
- * Expands an entity's sample pairs into a stable population. Repeats beyond the
- * sample length are suffixed as revisions, which keeps every `primary` unique
- * without inventing vocabulary the schema did not supply.
+ * What the mock puts in a field, from what its column says the field is.
+ *
+ * The row shape is the schema's now, so the generator reads it off the columns
+ * rather than filling in a set of names it knew in advance: a role for the
+ * parts a card is made of, and the kind for the rest.
+ */
+function pickColumnValue(
+  column: ColumnDef,
+  context: { hash: number; sample: readonly [string, string]; revision: number; updatedAt: string },
+): unknown {
+  const { hash, sample, revision, updatedAt } = context
+  const suffix = revision ? ` · rev ${revision + 1}` : ''
+
+  switch (column.role) {
+    case 'identity':
+      return `${sample[0]}${suffix}`
+    case 'reference':
+      return revision ? `${sample[1]}-${revision + 1}` : sample[1]
+    case 'state':
+      return RECORD_STATUSES[hash % RECORD_STATUSES.length] as RecordStatus
+    case 'score':
+      return Number((0.35 + (hash % 64) / 100).toFixed(3))
+    case 'updated':
+      return updatedAt
+    case 'tint':
+      return MOCK_TINTS[hash % MOCK_TINTS.length] as string
+    case 'metric':
+      return 1 + (hash % 940)
+  }
+
+  switch (column.kind) {
+    case 'number':
+      return 1 + (hash % 940)
+    case 'status':
+      return RECORD_STATUSES[hash % RECORD_STATUSES.length] as RecordStatus
+    case 'score':
+      return Number((0.35 + (hash % 64) / 100).toFixed(3))
+    case 'date':
+      return updatedAt
+    default:
+      // Text with nothing else said about it. The generator has no vocabulary
+      // for a field the schema only named, and inventing one would put lorem
+      // ipsum in a column whose facet — if it has one — says what it holds.
+      return undefined
+  }
+}
+
+/**
+ * Expands an entity's sample pairs into a stable population, filling each row
+ * from what the entity's columns say it holds. Repeats beyond the sample
+ * length are suffixed as revisions, which keeps every identity unique without
+ * inventing vocabulary the schema did not supply.
  */
 export function generateRows(
   entity: EntitySchema,
@@ -126,18 +177,41 @@ export function generateRows(
     const sample = samples[i % samples.length] as readonly [string, string]
     const revision = Math.floor(i / samples.length)
     const hash = fnv1a(`${salt}:${entity.key}:${sample[0]}:${i}`)
-
     const id = mockId(entity.key, i)
+    const updatedAt = new Date(now.getTime() - (hash % 900) * 3_600_000).toISOString()
 
-    const facets: ShellRow['facets'] = {}
-    for (const facet of entity.facets) {
-      facets[facet.key] = pickFacetValue(facet, fnv1a(`${hash}:${facet.key}`))
+    const fields: ShellRow['fields'] = {}
+
+    /*
+     * The columns first, each field hashed by its own name so two metrics of
+     * one row are two different numbers rather than the same one twice.
+     */
+    for (const column of entity.columns ?? []) {
+      const field = column.field ?? column.key
+      // A column that computes its own value reads the other fields, so there
+      // is nothing to generate for it.
+      if (!field || column.value) continue
+      const value = pickColumnValue(column, {
+        hash: fnv1a(`${hash}:${field}`),
+        sample,
+        revision,
+        updatedAt,
+      })
+      if (value !== undefined) fields[field] = value
     }
 
     /*
-     * Join keys, written after the entity's own facets so a scope field always
-     * holds an id — a schema that happens to name a facet the same thing would
-     * otherwise leave the drill matching vocabulary instead of records.
+     * Then the facets, which know their own options, ranges and flags — and so
+     * say more about a field than a column naming it ever could.
+     */
+    for (const facet of entity.facets) {
+      fields[facet.key] = pickFacetValue(facet, fnv1a(`${hash}:${facet.key}`))
+    }
+
+    /*
+     * Join keys last, so a scope field always holds an id — a schema that
+     * happens to name a facet or a column the same thing would otherwise leave
+     * the drill matching vocabulary instead of records.
      *
      * Every row gets every one of them, including rows of types that declare
      * no scope of their own. A row missing the field would not be excluded by
@@ -145,25 +219,10 @@ export function generateRows(
      * would quietly carry the whole of that type.
      */
     for (const [field, key] of scopes) {
-      facets[field] = key === entity.key ? id : parentIds(key, i, field, population)
+      fields[field] = key === entity.key ? id : parentIds(key, i, field, population)
     }
 
-    const updatedAt = new Date(now.getTime() - (hash % 900) * 3_600_000).toISOString()
-
-    rows.push({
-      id,
-      entityKey: entity.key,
-      entityLabel: entity.label,
-      primary: revision ? `${sample[0]} · rev ${revision + 1}` : sample[0],
-      secondary: revision ? `${sample[1]}-${revision + 1}` : sample[1],
-      status: RECORD_STATUSES[hash % RECORD_STATUSES.length] as RecordStatus,
-      score: Number((0.35 + (hash % 64) / 100).toFixed(3)),
-      metric1: 1 + (hash % 940),
-      metric2: 1 + ((hash >> 3) % 320),
-      updatedAt,
-      tint: MOCK_TINTS[hash % MOCK_TINTS.length] as string,
-      facets,
-    })
+    rows.push({ id, entityKey: entity.key, entityLabel: entity.label, fields })
   }
   return rows
 }
@@ -171,14 +230,14 @@ export function generateRows(
 /** Applies the facet state to a row. Neutral facets never exclude anything. */
 export function matchesFacets(row: ShellRow, facets: FacetState): boolean {
   for (const [key, value] of Object.entries(facets)) {
-    const actual = row.facets[key]
+    const actual = row.fields[key]
     switch (value.kind) {
       case 'chips': {
         if (!value.selected.length) break
         // The chips of one facet are an OR, so a row holding several values is
         // in the set when any one of them is selected.
         if (Array.isArray(actual)) {
-          if (!actual.some((entry) => value.selected.includes(entry))) return false
+          if (!actual.some((entry) => value.selected.includes(String(entry)))) return false
           break
         }
         if (typeof actual !== 'string' || !value.selected.includes(actual)) return false
@@ -202,20 +261,34 @@ export function matchesFacets(row: ShellRow, facets: FacetState): boolean {
   return true
 }
 
-function comparatorFor(sortKey: string): (a: ShellRow, b: ShellRow) => number {
-  switch (sortKey) {
-    case 'score':
-      return (a, b) => b.score - a.score
-    case 'metric1':
-      return (a, b) => b.metric1 - a.metric1
-    case 'metric2':
-      return (a, b) => b.metric2 - a.metric2
-    case 'name':
-      // Descending sort should reverse to A→Z, so order names Z→A here.
-      return (a, b) => b.primary.localeCompare(a.primary)
-    case 'updated':
-    default:
-      return (a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)
+/**
+ * Orders rows by a sort key, resolving it through the column that offers it.
+ *
+ * How to compare comes from what the column *says* it holds rather than from
+ * what its values look like: `Date.parse` will read "Firmware release notes ·
+ * rev 2" as a date in February 2001, so a sniffing comparator sorts a corpus
+ * of names into nonsense. Numbers descend, dates run newest first, and text
+ * goes Z→A so that reversing the direction reads A→Z.
+ */
+function comparatorFor(columns: ColumnDef[], sortKey: string) {
+  const column = columns.find((candidate) => candidate.sort === sortKey)
+  if (!column) return () => 0
+
+  const kind = column.kind ?? 'text'
+  const numeric =
+    kind === 'number' ||
+    kind === 'score' ||
+    column.role === 'metric' ||
+    column.role === 'score'
+  const dated = kind === 'date' || column.role === 'updated'
+
+  return (a: ShellRow, b: ShellRow): number => {
+    const left = cellValue(column, a)
+    const right = cellValue(column, b)
+
+    if (numeric) return Number(right ?? 0) - Number(left ?? 0)
+    if (dated) return Date.parse(String(right ?? '')) - Date.parse(String(left ?? ''))
+    return String(right ?? '').localeCompare(String(left ?? ''))
   }
 }
 
@@ -263,8 +336,8 @@ export function createMockDataSource(options: MockSourceOptions = {}): SyncDataS
         }
       }
 
-      const sort = findSort(entity, query.sort)
-      const sorted = matched.sort(comparatorFor(sort.key))
+      const sort = findSort(entity, query.sort, schema)
+      const sorted = matched.sort(comparatorFor(columnsForSort(entity, schema), sort.key))
       if (query.dir === 'asc') sorted.reverse()
 
       return {

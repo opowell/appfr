@@ -8,10 +8,12 @@ import type { EntitySchema, ShellRow } from '../types';
  *   cve OR advisory
  *
  * `AND` is implicit and the literal keyword is accepted for readability.
- * A bare word matches the primary or secondary field. `field:value` and
- * `field<op>number` match a named field or facet. Anything unresolvable is
- * ignored rather than treated as a mismatch, so a half-typed expression keeps
- * showing results instead of emptying the screen.
+ * A bare word matches the identity or the reference — whichever columns the
+ * schema gave those roles. `field:value` and `field<op>number` match a field
+ * the row carries, a column by name or heading, or one of the generic names
+ * below. Anything unresolvable is ignored rather than treated as a mismatch,
+ * so a half-typed expression keeps showing results instead of emptying the
+ * screen.
  */
 export type Comparator = ':' | '=' | '>' | '<' | '>=' | '<=';
 export interface FieldTerm {

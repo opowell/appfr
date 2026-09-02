@@ -1,14 +1,50 @@
 import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
-import type { EntityLabels, EntitySchema, ShellRow } from '../types'
-import { formatDate, formatMetric, formatOrdinal, formatPercent } from '../data/format'
-import { rowKey } from '../query/columns'
-import { GENERIC_LABELS } from '../query/schema'
+import type { ColumnDef, EntitySchema, RecordStatus, ShellRow } from '../types'
+import { formatOrdinal, formatPercent } from '../data/format'
+import {
+  cellText,
+  cellTextOf,
+  cellValue,
+  roleColumn,
+  roleColumns,
+  rowKey,
+} from '../query/columns'
 import { useShellContext } from './context'
 
-/* Re-exported from where the pure resolvers live, so the composable stays the
-   one import a view needs. */
-export { GENERIC_LABELS }
+/**
+ * One metric of a row, with the column that knows what it is: its heading, its
+ * formatted value, and whether pressing it narrows to what it counts.
+ */
+export interface RowMetric {
+  column: ColumnDef
+  label: string
+  text: string
+}
+
+/**
+ * The parts a view that is not a table is made of.
+ *
+ * A card, a tile, a link row and a preview pane are an identity, a reference,
+ * a number or two and a mark — never a list of columns — so they read this
+ * instead of the row. Every part comes from the column that declared the
+ * matching {@link ColumnRole}, and is empty or null where the schema declared
+ * no column for it.
+ */
+export interface RowParts {
+  identity: string
+  reference: string
+  /** The metric columns, in the order the schema declared them. */
+  metrics: RowMetric[]
+  state: RecordStatus | null
+  /** 0–1, or null where no column plays the part. */
+  score: number | null
+  percent: string
+  /** The date, formatted the way every view formats it. */
+  updated: string
+  /** A colour for the grid view's tile, where a column names one. */
+  tint: string | null
+}
 
 /**
  * A row with its display strings resolved once. Views render these instead of
@@ -28,29 +64,46 @@ export interface PresentedRow {
   /**
    * The schema of that entity, or null for a row of a type the schema no
    * longer declares. Views read what the type *offers* from here — whether it
-   * is narrowable, and what its metrics count.
+   * is narrowable, and what its columns say its fields are.
    */
   entity: EntitySchema | null
   /**
-   * Field names from the row's *own* entity. In a mixed result set this beats
-   * a generic fallback: a log entry can be labelled "Trace id" while a LEGO
-   * set beside it says "Set number".
+   * That entity's own columns. In a mixed result set this beats the scope's:
+   * a log entry is read in its own vocabulary while a LEGO set beside it is
+   * read in its.
    */
-  labels: EntityLabels
+  columns: ColumnDef[]
   ordinal: string
-  metric1: string
-  metric2: string
-  date: string
-  score: string
-  percent: string
+  parts: RowParts
   pinned: boolean
 }
 
+const asNumber = (value: unknown): number | null => {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : null
+}
 
-/** The column names for the current scope, generic across the whole corpus. */
-export function useViewLabels(): ComputedRef<EntityLabels> {
-  const shell = useShellContext()
-  return computed(() => shell.entity.value?.labels ?? GENERIC_LABELS)
+/** Resolves the roles a view reads, from the columns of the row's own type. */
+export function presentParts(row: ShellRow, columns: ColumnDef[]): RowParts {
+  const state = roleColumn(columns, 'state')
+  const score = roleColumn(columns, 'score')
+  const tint = roleColumn(columns, 'tint')
+  const value = score ? asNumber(cellValue(score, row)) : null
+
+  return {
+    identity: cellTextOf(roleColumn(columns, 'identity'), row),
+    reference: cellTextOf(roleColumn(columns, 'reference'), row),
+    metrics: roleColumns(columns, 'metric').map((column) => ({
+      column,
+      label: column.label ?? '',
+      text: cellText(column, row),
+    })),
+    state: state ? ((cellValue(state, row) as RecordStatus) ?? null) : null,
+    score: value,
+    percent: value === null ? '' : formatPercent(value),
+    updated: cellTextOf(roleColumn(columns, 'updated'), row),
+    tint: tint ? ((cellValue(tint, row) as string) ?? null) : null,
+  }
 }
 
 /**
@@ -63,18 +116,15 @@ export function presentRow(
   entity: EntitySchema | null,
   pinned: boolean,
 ): PresentedRow {
+  const columns = entity?.columns ?? []
   return {
     row,
     key: rowKey(row, index),
     entityLabel: row.entityLabel,
     entity,
-    labels: entity?.labels ?? GENERIC_LABELS,
+    columns,
     ordinal: formatOrdinal(index),
-    metric1: formatMetric(row.metric1),
-    metric2: formatMetric(row.metric2),
-    date: formatDate(row.updatedAt),
-    score: row.score.toFixed(2),
-    percent: formatPercent(row.score),
+    parts: presentParts(row, columns),
     pinned,
   }
 }

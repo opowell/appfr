@@ -28,11 +28,15 @@ const showEntity = computed(() => shell.isEverything.value)
           >{{ entry.entityLabel }}</span>
         </span>
         <span class="dc-card__top-right">
-          <StatusPill :status="entry.row.status" />
+          <StatusPill
+            v-if="entry.parts.state"
+            :status="entry.parts.state"
+          />
           <ScopeMark :entry="entry" />
           <PinStar
             v-if="shell.pinnable.value"
             :row="entry.row"
+            :name="entry.parts.identity"
             :pinned="entry.pinned"
           />
         </span>
@@ -42,23 +46,24 @@ const showEntity = computed(() => shell.isEverything.value)
         class="dc-card__open"
         @click="shell.activate(entry.row)"
       >
-        <span class="dc-card__primary">{{ entry.row.primary }}</span>
-        <span class="dc-card__secondary dc-mono">{{ entry.row.secondary }}</span>
+        <span class="dc-card__primary">{{ entry.parts.identity }}</span>
+        <span class="dc-card__secondary dc-mono">{{ entry.parts.reference }}</span>
       </button>
+      <!-- Each number under its own heading: a card has the room a table row
+           does not, and `1.2k` on its own says nothing. -->
       <div class="dc-card__metrics dc-mono">
         <MetricDrill
+          v-for="metric in entry.parts.metrics.slice(0, 2)"
+          :key="metric.column.key ?? metric.label"
           :entry="entry"
-          metric="metric1"
+          :column="metric.column"
         >
-          {{ entry.labels.metric1 }} {{ entry.metric1 }}
+          {{ metric.label }} {{ metric.text }}
         </MetricDrill>
-        <MetricDrill
-          :entry="entry"
-          metric="metric2"
-        >
-          {{ entry.labels.metric2 }} {{ entry.metric2 }}
-        </MetricDrill>
-        <span class="dc-card__date">{{ entry.date }}</span>
+        <span
+          v-if="entry.parts.updated"
+          class="dc-card__date"
+        >{{ entry.parts.updated }}</span>
       </div>
     </div>
   </div>

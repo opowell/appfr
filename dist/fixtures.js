@@ -1,52 +1,64 @@
 import { d } from "./columns.js";
-const t = (e, a, n, o = !1) => ({
+const t = (e, i, n, o = !1) => ({
   kind: "chips",
   key: e,
-  label: a,
+  label: i,
   options: n,
   ...o ? { multiple: o } : {}
-}), i = (e, a, n, o) => ({
+}), a = (e, i, n, o) => ({
   kind: "range",
   key: e,
-  label: a,
+  label: i,
   min: n,
   max: o
-}), r = (e, a, n) => ({
+}), r = (e, i, n) => ({
   kind: "toggle",
   key: e,
-  label: a,
+  label: i,
   text: n
-}), s = (e) => {
-  const a = {
-    key: e.key,
-    label: e.label,
-    count: e.count,
-    labels: {
-      primary: e.primary,
-      secondary: e.secondary,
-      metric1: e.metric1,
-      metric2: e.metric2
-    },
-    facets: e.facets,
-    tabs: e.tabs,
-    samples: e.samples,
-    ...e.scope ? { scope: e.scope } : {},
-    ...e.drills ? { drills: e.drills } : {}
-  };
-  return { ...a, columns: e.columns ?? d(a) };
-}, c = d(null), u = (e) => "data:image/svg+xml," + encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28"><rect width="56" height="28" rx="3" fill="${e.tint}"/></svg>`
+}), s = (e) => ({
+  key: e.key,
+  label: e.label,
+  count: e.count,
+  facets: e.facets,
+  tabs: e.tabs,
+  samples: e.samples,
+  ...e.scope ? { scope: e.scope } : {},
+  columns: e.columns ?? d({
+    identity: e.primary,
+    reference: e.secondary,
+    metrics: [
+      { label: e.metric1, ...e.metric1Drill ? { drill: e.metric1Drill } : {} },
+      { label: e.metric2, ...e.metric2Drill ? { drill: e.metric2Drill } : {} }
+    ]
+  })
+}), c = d(), u = (e) => "data:image/svg+xml," + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28"><rect width="56" height="28" rx="3" fill="${String(e.fields.tint)}"/></svg>`
 );
 function p(e) {
-  const a = Number(e);
-  return Number.isFinite(a) ? a < 100 ? `${Math.round(a)}cg` : a < 1e5 ? `${(a / 100).toFixed(1)}g` : `${(a / 1e5).toFixed(1)}kg` : "—";
+  const i = Number(e);
+  return Number.isFinite(i) ? i < 100 ? `${Math.round(i)}cg` : i < 1e5 ? `${(i / 100).toFixed(1)}g` : `${(i / 1e5).toFixed(1)}kg` : "—";
 }
 const y = [
   { key: "ordinal", kind: "ordinal", label: "#", width: "48px" },
   // No label: a column of pictures says what it is.
   { key: "thumb", kind: "image", width: "56px", height: "28px", value: u },
-  { key: "primary", label: "Piece", sort: "name", activate: !0, scope: !0 },
-  { key: "secondary", label: "Part no.", width: "104px", mono: !0, muted: !0 },
+  {
+    key: "primary",
+    role: "identity",
+    label: "Piece",
+    sort: "name",
+    activate: !0,
+    scope: !0
+  },
+  {
+    key: "secondary",
+    role: "reference",
+    label: "Part no.",
+    width: "104px",
+    mono: !0,
+    muted: !0
+  },
   { key: "shape", label: "Shape", width: "92px", hideBelow: 620 },
   {
     key: "firstYear",
@@ -60,6 +72,7 @@ const y = [
   },
   {
     key: "metric1",
+    role: "metric",
     kind: "number",
     label: "Colors",
     width: "84px",
@@ -69,6 +82,7 @@ const y = [
   },
   {
     key: "metric2",
+    role: "metric",
     kind: "number",
     label: "In sets",
     width: "84px",
@@ -82,7 +96,7 @@ const y = [
     width: "88px",
     align: "right",
     mono: !0,
-    value: (e) => Math.round(e.score * 5e3),
+    value: (e) => Math.round(Number(e.fields.score) * 5e3),
     format: p,
     hideBelow: 1100
   },
@@ -94,8 +108,19 @@ const y = [
     format: (e) => e === !0 ? "rare" : "—",
     hideBelow: 1100
   },
-  { key: "score", kind: "score", label: "Match", width: "72px", hideBelow: 900 },
-  { key: "status", kind: "status", label: "State", width: "104px" }
+  {
+    key: "score",
+    role: "score",
+    kind: "score",
+    label: "Match",
+    sort: "score",
+    width: "72px",
+    hideBelow: 900
+  },
+  { key: "status", role: "state", kind: "status", label: "State", width: "104px" },
+  /* Not a cell — the tile in the grid view is what reads it — but declared
+     here, because this is where this type says what fields it has. */
+  { key: "tint", role: "tint" }
 ], l = s({
   key: "settings",
   label: "Settings",
@@ -196,7 +221,7 @@ const y = [
       metric2: "Score",
       facets: [
         t("kind", "Kind", ["page", "pdf", "feed", "image"]),
-        i("rank", "Rank", 0, 100),
+        a("rank", "Rank", 0, 100),
         r("seen", "Seen", "Hide items already seen")
       ],
       tabs: ["Information", "Content", "Links", "Searches"],
@@ -253,10 +278,10 @@ const y = [
       // Parts leads to the pieces; minifigs is a count of something this
       // schema does not list, so it stays the plain number it was.
       scope: "set",
-      drills: { metric1: "pieces" },
+      metric1Drill: "pieces",
       facets: [
         t("theme", "Theme", ["space", "castle", "town", "technic"]),
-        i("year", "Year", 1958, 2026),
+        a("year", "Year", 1958, 2026),
         r("owned", "Owned", "Only sets in my inventory")
       ],
       tabs: ["Information", "Inventory", "Variants", "Logs"],
@@ -278,12 +303,13 @@ const y = [
       metric1: "Colors",
       metric2: "In sets",
       scope: "piece",
-      drills: { metric1: "colors", metric2: "sets" },
+      metric1Drill: "colors",
+      metric2Drill: "sets",
       facets: [
         // `shape` rather than `category`: a category is a record here, and a
         // facet under that key would shadow the join to it.
         t("shape", "Shape", ["brick", "plate", "slope", "minifig"]),
-        i("firstYear", "First year", 1958, 2026),
+        a("firstYear", "First year", 1958, 2026),
         r("rarity", "Rarity", "Only parts in < 5 sets")
       ],
       tabs: ["Information", "Colors", "Sets", "Logs"],
@@ -309,10 +335,11 @@ const y = [
       metric1: "Parts",
       metric2: "Sets",
       scope: "color",
-      drills: { metric1: "pieces", metric2: "sets" },
+      metric1Drill: "pieces",
+      metric2Drill: "sets",
       facets: [
         t("family", "Family", ["solid", "transparent", "metallic", "glow"]),
-        i("firstYear", "First year", 1958, 2026),
+        a("firstYear", "First year", 1958, 2026),
         r("retired", "Retired", "Hide retired colors")
       ],
       tabs: ["Information", "Parts", "Sets", "Logs"],
@@ -335,7 +362,7 @@ const y = [
       metric2: "Spares",
       facets: [
         t("type", "Type", ["set", "minifig", "gear"]),
-        i("version", "Version", 1, 12),
+        a("version", "Version", 1, 12),
         r("complete", "Complete", "Only complete inventories")
       ],
       tabs: ["Information", "Lines", "Set", "Logs"],
@@ -357,10 +384,10 @@ const y = [
       metric1: "Parts",
       metric2: "Children",
       scope: "category",
-      drills: { metric1: "pieces" },
+      metric1Drill: "pieces",
       facets: [
         t("level", "Level", ["root", "branch", "leaf"]),
-        i("parts", "Parts", 0, 9e3),
+        a("parts", "Parts", 0, 9e3),
         r("empty", "Empty", "Hide empty categories")
       ],
       tabs: ["Information", "Parts", "Children", "Logs"],
@@ -418,7 +445,7 @@ const y = [
       metric2: "Errors",
       facets: [
         t("state", "State", ["running", "done", "failed"]),
-        i("pages", "Pages", 0, 5e4),
+        a("pages", "Pages", 0, 5e4),
         r("deltas", "Deltas", "Only crawls with changes")
       ],
       tabs: ["Information", "Results", "Tenant", "Logs"],
@@ -464,7 +491,7 @@ const y = [
       metric2: "Diffs",
       facets: [
         t("outcome", "Outcome", ["pass", "fail", "skipped"]),
-        i("durationMs", "Duration ms", 0, 6e4),
+        a("durationMs", "Duration ms", 0, 6e4),
         r("noise", "Noise", "Hide known-flaky results")
       ],
       tabs: ["Information", "Diff", "Test", "Logs"],
@@ -487,7 +514,7 @@ const y = [
       metric2: "Links",
       facets: [
         t("status", "Status", ["200", "301", "404", "5xx"]),
-        i("sizeKb", "Size kB", 0, 4e3),
+        a("sizeKb", "Size kB", 0, 4e3),
         r("changes", "Changes", "Only changed since last crawl")
       ],
       tabs: ["Information", "Content", "Links", "Crawl"],
@@ -520,7 +547,7 @@ const y = [
       metric2: "In runs",
       facets: [
         t("class", "Class", ["infantry", "armour", "air", "support"]),
-        i("power", "Power", 0, 100),
+        a("power", "Power", 0, 100),
         r("retired", "Retired", "Hide retired units")
       ],
       tabs: ["Information", "Stats", "Runs", "Logs"],
@@ -543,7 +570,7 @@ const y = [
       metric2: "Runs",
       facets: [
         t("doctrine", "Doctrine", ["attrition", "manoeuvre", "siege"]),
-        i("units", "Units", 0, 200),
+        a("units", "Units", 0, 200),
         r("active", "Active", "Only factions in active runs")
       ],
       tabs: ["Information", "Units", "Runs", "Logs"],
@@ -566,7 +593,7 @@ const y = [
       metric2: "Runs",
       facets: [
         t("terrain", "Terrain", ["urban", "open", "mountain", "coast"]),
-        i("rounds", "Rounds", 1, 200),
+        a("rounds", "Rounds", 1, 200),
         r("balance", "Balance", "Only unbalanced scenarios")
       ],
       tabs: ["Information", "Map", "Runs", "Logs"],
@@ -589,7 +616,7 @@ const y = [
       metric2: "Casualties",
       facets: [
         t("outcome", "Outcome", ["win", "loss", "draw", "aborted"]),
-        i("rounds", "Rounds", 1, 200),
+        a("rounds", "Rounds", 1, 200),
         r("seeded", "Seeded", "Only reproducible seeds")
       ],
       tabs: ["Information", "Timeline", "Units", "Raw"],

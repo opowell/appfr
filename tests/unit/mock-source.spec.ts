@@ -3,7 +3,7 @@ import { createMockDataSource, generateRows, matchesFacets } from '../../src/dat
 import { parseQuery } from '../../src/query/codec'
 import { defaultQuery, findEntity } from '../../src/query/schema'
 import { commerceSchema, iRadarSchema, schemaList } from '../../src/fixtures/schemas'
-import type { ChipsFacet, QueryResult } from '../../src/types'
+import type { ChipsFacet, QueryResult, ShellRow } from '../../src/types'
 
 const searches = findEntity(iRadarSchema, 'searches')!
 const items = findEntity(iRadarSchema, 'items')!
@@ -52,16 +52,18 @@ describe('generateRows', () => {
   it('gives every row a unique id and identity', () => {
     const rows = generateRows(searches, { seed: 'x', population: 30 })
     expect(new Set(rows.map((r) => r.id)).size).toBe(30)
-    expect(new Set(rows.map((r) => r.primary)).size).toBe(30)
+    expect(new Set(rows.map((r) => r.fields.primary)).size).toBe(30)
   })
 
   it('populates a value for every facet the entity declares', () => {
     const rows = generateRows(items, { seed: 'x', population: 10 })
     for (const row of rows) {
-      expect(Object.keys(row.facets).sort()).toEqual(items.facets.map((f) => f.key).sort())
-      expect(typeof row.facets.kind).toBe('string')
-      expect(typeof row.facets.rank).toBe('number')
-      expect(typeof row.facets.seen).toBe('boolean')
+      // The bag holds the columns' fields too, so this asks that the facets
+      // are among them rather than that they are all of them.
+      for (const facet of items.facets) expect(row.fields).toHaveProperty(facet.key)
+      expect(typeof row.fields.kind).toBe('string')
+      expect(typeof row.fields.rank).toBe('number')
+      expect(typeof row.fields.seen).toBe('boolean')
     }
   })
 
@@ -69,7 +71,7 @@ describe('generateRows', () => {
     const options = new Set(REGION.options)
     let sawSeveral = false
     for (const row of generateRows(tenants, { seed: 'x', population: PER_ENTITY })) {
-      const values = row.facets[REGION.key]
+      const values = row.fields[REGION.key]
       expect(Array.isArray(values)).toBe(true)
       const list = values as string[]
       expect(list.length).toBeGreaterThan(0)
@@ -82,15 +84,15 @@ describe('generateRows', () => {
 
   it('keeps range values inside the facet bounds', () => {
     for (const row of generateRows(items, { seed: 'x', population: PER_ENTITY })) {
-      expect(row.facets.rank).toBeGreaterThanOrEqual(0)
-      expect(row.facets.rank).toBeLessThanOrEqual(100)
+      expect(row.fields.rank).toBeGreaterThanOrEqual(0)
+      expect(row.fields.rank).toBeLessThanOrEqual(100)
     }
   })
 
   it('dates every row at or before `now`', () => {
     const now = new Date('2026-08-25T00:00:00Z')
     for (const row of generateRows(searches, { seed: 'x', population: 20, now })) {
-      expect(Date.parse(row.updatedAt)).toBeLessThanOrEqual(now.getTime())
+      expect(Date.parse(String(row.fields.updatedAt))).toBeLessThanOrEqual(now.getTime())
     }
   })
 })
@@ -104,31 +106,31 @@ describe('matchesFacets', () => {
 
   it('excludes a row outside a selected chip set', () => {
     const facets = { kind: { kind: 'chips' as const, selected: ['feed'] } }
-    expect(matchesFacets({ ...subject!, facets: { ...subject!.facets, kind: 'page' } }, facets)).toBe(
+    expect(matchesFacets({ ...subject!, fields: { ...subject!.fields, kind: 'page' } }, facets)).toBe(
       false,
     )
   })
 
   it('keeps a row holding a selected value among several', () => {
-    const row = { ...subject!, facets: { ...subject!.facets, kind: ['feed', 'page'] } }
+    const row = { ...subject!, fields: { ...subject!.fields, kind: ['feed', 'page'] } }
     expect(matchesFacets(row, { kind: { kind: 'chips' as const, selected: ['feed'] } })).toBe(true)
     expect(matchesFacets(row, { kind: { kind: 'chips' as const, selected: ['image'] } })).toBe(false)
   })
 
   it('excludes a row holding no value at all for a selected chip set', () => {
-    const row = { ...subject!, facets: { ...subject!.facets, kind: [] } }
+    const row = { ...subject!, fields: { ...subject!.fields, kind: [] } }
     expect(matchesFacets(row, { kind: { kind: 'chips' as const, selected: ['feed'] } })).toBe(false)
   })
 
   it('applies range bounds inclusively', () => {
-    const row = { ...subject!, facets: { ...subject!.facets, rank: 40 } }
+    const row = { ...subject!, fields: { ...subject!.fields, rank: 40 } }
     expect(matchesFacets(row, { rank: { kind: 'range', min: 40, max: 40 } })).toBe(true)
     expect(matchesFacets(row, { rank: { kind: 'range', min: 41, max: null } })).toBe(false)
     expect(matchesFacets(row, { rank: { kind: 'range', min: null, max: 39 } })).toBe(false)
   })
 
   it('only constrains a toggle when it is on', () => {
-    const row = { ...subject!, facets: { ...subject!.facets, seen: false } }
+    const row = { ...subject!, fields: { ...subject!.fields, seen: false } }
     expect(matchesFacets(row, { seen: { kind: 'toggle', on: false } })).toBe(true)
     expect(matchesFacets(row, { seen: { kind: 'toggle', on: true } })).toBe(false)
   })
@@ -176,7 +178,7 @@ describe('createMockDataSource — the whole corpus', () => {
   })
 
   it('sorts a mixed result set by date', () => {
-    const dates = run('').rows.map((row) => Date.parse(row.updatedAt))
+    const dates = run('').rows.map((row) => Date.parse(String(row.fields.updatedAt)))
     expect(dates).toEqual([...dates].sort((a, b) => b - a))
   })
 })
@@ -192,7 +194,7 @@ describe('createMockDataSource — one entity', () => {
     const result = run('?e=searches&f_state=running')
     expect(result.total).toBeGreaterThan(0)
     expect(result.total).toBeLessThan(PER_ENTITY)
-    expect(result.rows.every((r) => r.facets.state === 'running')).toBe(true)
+    expect(result.rows.every((r) => r.fields.state === 'running')).toBe(true)
     expect(result.unfiltered).toBe(false)
   })
 
@@ -207,7 +209,7 @@ describe('createMockDataSource — one entity', () => {
     const both = run('?e=searches&f_state=running&f_schedule=daily')
     expect(both.total).toBeLessThanOrEqual(state)
     expect(
-      both.rows.every((r) => r.facets.state === 'running' && r.facets.schedule === 'daily'),
+      both.rows.every((r) => r.fields.state === 'running' && r.fields.schedule === 'daily'),
     ).toBe(true)
   })
 
@@ -217,7 +219,7 @@ describe('createMockDataSource — one entity', () => {
     expect(both.total).toBeLessThanOrEqual(facetOnly)
     expect(
       both.rows.every(
-        (r) => r.facets.kind === 'page' && /release/i.test(`${r.primary} ${r.secondary}`),
+        (r) => r.fields.kind === 'page' && /release/i.test(`${r.fields.primary} ${r.fields.secondary}`),
       ),
     ).toBe(true)
   })
@@ -229,23 +231,24 @@ describe('createMockDataSource — one entity', () => {
   })
 
   it('reverses on ascending', () => {
-    const desc = run('?e=searches').rows.map((r) => Date.parse(r.updatedAt))
-    const asc = run('?e=searches&d=asc').rows.map((r) => Date.parse(r.updatedAt))
+    const parseDate = (row: ShellRow) => Date.parse(String(row.fields.updatedAt))
+    const desc = run('?e=searches').rows.map(parseDate)
+    const asc = run('?e=searches&d=asc').rows.map(parseDate)
     expect(asc).toEqual([...desc].reverse())
   })
 
   it('sorts by score', () => {
-    const scores = run('?e=searches&s=score').rows.map((r) => r.score)
+    const scores = run('?e=searches&s=score').rows.map((r) => Number(r.fields.score))
     expect(scores).toEqual([...scores].sort((a, b) => b - a))
   })
 
   it('sorts by name A→Z when ascending', () => {
-    const names = run('?e=searches&s=name&d=asc').rows.map((r) => r.primary)
+    const names = run('?e=searches&s=name&d=asc').rows.map((r) => String(r.fields.primary))
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)))
   })
 
   it('sorts by the entity metric', () => {
-    const values = run('?e=searches&s=metric1').rows.map((r) => r.metric1)
+    const values = run('?e=searches&s=metric1').rows.map((r) => Number(r.fields.metric1))
     expect(values).toEqual([...values].sort((a, b) => b - a))
   })
 })
@@ -355,7 +358,7 @@ describe('createMockDataSource — every bundled schema', () => {
           offset: 0,
         })
         expect(result.rows.length, `${schema.key}/${entity.key}`).toBe(10)
-        expect(result.rows[0]!.primary).toBeTruthy()
+        expect(result.rows[0]!.fields.primary).toBeTruthy()
       }
     }
   })

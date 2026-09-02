@@ -6,6 +6,8 @@ import {
   columnClass,
   columnKey,
   columnsFor,
+  roleColumn,
+  roleColumns,
   columnTruncates,
   defaultCellText,
   defaultColumns,
@@ -19,27 +21,40 @@ import type { ColumnDef, DomainSchema, EntitySchema, ShellRow } from '../../src/
 const searches = findEntity(iRadarSchema, 'searches')!
 const pieces = findEntity(legoSchema, 'pieces')!
 
-const row = (overrides: Partial<ShellRow> = {}): ShellRow => ({
+/**
+ * A row is an id, a type and a bag. What is in the bag is whatever the
+ * schema's columns say this type holds — here, the fields `defaultColumns`
+ * names plus the ones LEGO's pieces add.
+ */
+const row = (fields: Record<string, unknown> = {}): ShellRow => ({
   id: 'pieces_10007',
   entityKey: 'pieces',
   entityLabel: 'Pieces',
-  primary: 'Brick 2 x 4',
-  secondary: '3001',
-  status: 'ok',
-  score: 0.6,
-  metric1: 1240,
-  metric2: 8,
-  updatedAt: '2026-08-20T00:00:00.000Z',
-  tint: 'oklch(0.36 0.06 240)',
-  facets: { shape: 'brick', firstYear: 1958, rarity: true, colors: ['red', 'blue'] },
-  ...overrides,
+  fields: {
+    primary: 'Brick 2 x 4',
+    secondary: '3001',
+    status: 'ok',
+    score: 0.6,
+    metric1: 1240,
+    metric2: 8,
+    updatedAt: '2026-08-20T00:00:00.000Z',
+    tint: 'oklch(0.36 0.06 240)',
+    shape: 'brick',
+    firstYear: 1958,
+    rarity: true,
+    colors: ['red', 'blue'],
+    ...fields,
+  },
 })
 
-const keys = (columns: ColumnDef[]) => columns.map((column) => column.key)
+const keys = (columns: ColumnDef[]) => columns.map((column) => column.key ?? '')
+
+const named = (columns: ColumnDef[], key: string) => columns.find((column) => column.key === key)
 
 describe('defaultColumns', () => {
-  it('is the eight the shell drew before columns existed', () => {
-    expect(keys(defaultColumns(searches))).toEqual([
+  it('is the familiar set, and says what each of its columns is for', () => {
+    const columns = defaultColumns({ identity: 'Search', reference: 'Query' })
+    expect(keys(columns)).toEqual([
       'ordinal',
       'primary',
       'secondary',
@@ -48,27 +63,88 @@ describe('defaultColumns', () => {
       'metric2',
       'updatedAt',
       'status',
+      'score',
+      'tint',
+    ])
+    // The roles are what a card, a tile and a preview pane read.
+    expect(columns.map((column) => column.role)).toEqual([
+      undefined,
+      'identity',
+      'reference',
+      undefined,
+      'metric',
+      'metric',
+      'updated',
+      'state',
+      'score',
+      'tint',
     ])
   })
 
-  it('heads the identity and metric columns with the entity’s own labels', () => {
-    const columns = defaultColumns(searches)
-    expect(columns.find((column) => column.key === 'primary')?.label).toBe(searches.labels.primary)
-    expect(columns.find((column) => column.key === 'metric1')?.label).toBe(searches.labels.metric1)
+  it('heads the identity, reference and metric columns as it was told', () => {
+    const columns = defaultColumns({
+      identity: 'Search',
+      reference: 'Query',
+      metrics: ['Hits', 'Sources'],
+    })
+    expect(named(columns, 'primary')?.label).toBe('Search')
+    expect(named(columns, 'secondary')?.label).toBe('Query')
+    expect(named(columns, 'metric1')?.label).toBe('Hits')
+    expect(named(columns, 'metric2')?.label).toBe('Sources')
   })
 
-  it('falls back to generic labels across every entity', () => {
-    const columns = defaultColumns(null)
-    expect(columns.find((column) => column.key === 'primary')?.label).toBe('Item')
-    expect(columns.find((column) => column.key === 'metric1')?.label).toBe('Metric')
+  it('is the generic set when it is told nothing', () => {
+    const columns = defaultColumns()
+    expect(named(columns, 'primary')?.label).toBe('Item')
+    expect(named(columns, 'metric1')?.label).toBe('Metric')
   })
 
-  it('makes a metric pressable only where the entity says what it counts', () => {
-    const sets = findEntity(legoSchema, 'sets')!
-    const columns = defaultColumns(sets)
+  it('takes as many metrics as it is given, or none at all', () => {
+    expect(keys(defaultColumns({ metrics: [] })).filter((key) => key.startsWith('metric'))).toEqual([])
+    const three = defaultColumns({ metrics: ['One', 'Two', 'Three'] })
+    expect(keys(three).filter((key) => key.startsWith('metric'))).toEqual([
+      'metric1',
+      'metric2',
+      'metric3',
+    ])
+  })
+
+  it('makes a metric pressable where it is told what the number counts', () => {
+    const columns = defaultColumns({
+      metrics: [{ label: 'Parts', drill: 'pieces' }, { label: 'Minifigs' }],
+    })
     // Parts leads to the pieces; minifigs counts nothing this schema lists.
-    expect(columns.find((column) => column.key === 'metric1')?.drill).toBe('pieces')
-    expect(columns.find((column) => column.key === 'metric2')?.drill).toBeUndefined()
+    expect(named(columns, 'metric1')?.drill).toBe('pieces')
+    expect(named(columns, 'metric2')?.drill).toBeUndefined()
+  })
+
+  it('reads the fields the row shape used to fix, so a source can move over', () => {
+    const fields = defaultColumns().map((column) => column.field ?? column.key)
+    expect(fields).toContain('primary')
+    expect(fields).toContain('updatedAt')
+    expect(fields).toContain('status')
+  })
+})
+
+describe('roles', () => {
+  it('finds the column playing a part, and every column playing one', () => {
+    const columns = defaultColumns({ metrics: ['One', 'Two'] })
+    expect(roleColumn(columns, 'identity')?.key).toBe('primary')
+    expect(roleColumns(columns, 'metric').map((column) => column.key)).toEqual([
+      'metric1',
+      'metric2',
+    ])
+  })
+
+  it('is undefined for a part the schema gave to nothing', () => {
+    expect(roleColumn([{ key: 'name' }], 'identity')).toBeUndefined()
+    expect(roleColumns([{ key: 'name' }], 'metric')).toEqual([])
+  })
+
+  it('keeps the tint out of the table, a colour being no kind of cell', () => {
+    const entity: EntitySchema = { ...searches, columns: defaultColumns() }
+    expect(keys(columnsFor(iRadarSchema, entity))).not.toContain('tint')
+    expect(roleColumn(entity.columns!, 'tint')?.key).toBe('tint')
   })
 })
 
@@ -78,9 +154,12 @@ describe('columnsFor', () => {
     expect(keys(columnsFor(iRadarSchema, searches))).not.toContain('entityLabel')
   })
 
-  it('takes the entity’s own set over the default one', () => {
-    expect(keys(columnsFor(legoSchema, pieces))).toEqual(keys(pieces.columns!))
-    expect(keys(columnsFor(legoSchema, pieces))).not.toEqual(keys(defaultColumns(pieces)))
+  it('takes the entity’s own set over the familiar one', () => {
+    // Every column of it but the tint, which is a colour rather than a cell.
+    expect(keys(columnsFor(legoSchema, pieces))).toEqual(
+      keys(pieces.columns!.filter((column) => column.role !== 'tint')),
+    )
+    expect(keys(columnsFor(legoSchema, pieces))).not.toEqual(keys(defaultColumns()))
   })
 
   it('takes the schema’s set across every entity', () => {
@@ -125,8 +204,8 @@ describe('columnsFor', () => {
     expect(columnsFor(schema, null)).toEqual([])
   })
 
-  it('asks for the familiar eight by name, rather than being given them', () => {
-    const entity: EntitySchema = { ...searches, columns: defaultColumns(searches) }
+  it('asks for the familiar set by name, rather than being given it', () => {
+    const entity: EntitySchema = { ...searches, columns: defaultColumns() }
     expect(keys(columnsFor(iRadarSchema, entity))).toEqual([
       'ordinal',
       'primary',
@@ -135,6 +214,7 @@ describe('columnsFor', () => {
       'metric2',
       'updatedAt',
       'status',
+      'score',
     ])
   })
 })
@@ -160,18 +240,26 @@ describe('a key for a column that named none', () => {
 })
 
 describe('a key for a row that came back without an id', () => {
+  const idless = (id: string, entityKey = 'pieces'): ShellRow => ({
+    ...row(),
+    id,
+    entityKey,
+  })
+
+
+
   it('is the id wherever there is one', () => {
     expect(rowKey(row(), 4)).toBe('pieces_10007')
   })
 
   it('falls back to where the row sits in the result', () => {
-    expect(rowKey(row({ id: '' }), 4)).toBe('pieces-4')
-    expect(rowKey(row({ id: '   ' }), 0)).toBe('pieces-0')
-    expect(rowKey(row({ id: '', entityKey: '' }), 1)).toBe('row-1')
+    expect(rowKey(idless(''), 4)).toBe('pieces-4')
+    expect(rowKey(idless('   '), 0)).toBe('pieces-0')
+    expect(rowKey(idless('', ''), 1)).toBe('row-1')
   })
 
   it('tells apart a page of rows that came back with no ids at all', () => {
-    const page = [row({ id: '' }), row({ id: '' }), row({ id: '' })]
+    const page = [idless(''), idless(''), idless('')]
     expect(new Set(page.map((entry, index) => rowKey(entry, index))).size).toBe(3)
   })
 })
@@ -197,7 +285,7 @@ describe('cellValue', () => {
   it('lets the column compute its own, over everything else', () => {
     const column: ColumnDef = {
       key: 'primary',
-      value: (given) => `${given.primary} (${given.secondary})`,
+      value: (given) => `${String(given.fields.primary)} (${String(given.fields.secondary)})`,
     }
     expect(cellValue(column, row())).toBe('Brick 2 x 4 (3001)')
   })
@@ -269,10 +357,6 @@ describe('the worked column set on LEGO pieces', () => {
   const columns = pieces.columns!
   const find = (key: string) => columns.find((column) => column.key === key)!
 
-  it('is more columns than the four labels can describe', () => {
-    expect(columns.length).toBeGreaterThan(defaultColumns(pieces).length)
-  })
-
   it('reads a year as a year', () => {
     expect(cellText(find('firstYear'), row())).toBe('1958')
   })
@@ -284,10 +368,14 @@ describe('the worked column set on LEGO pieces', () => {
     expect(cellText(weight, row({ score: 400 }))).toBe('20.0kg')
   })
 
+  it('is more columns than the familiar set has', () => {
+    expect(columns.length).toBeGreaterThan(defaultColumns().length)
+  })
+
   it('says which pieces are rare, rather than printing a boolean', () => {
     const rarity = find('rarity')
     expect(cellText(rarity, row())).toBe('rare')
-    expect(cellText(rarity, row({ facets: { rarity: false } }))).toBe(EMPTY_CELL)
+    expect(cellText(rarity, row({ rarity: false }))).toBe(EMPTY_CELL)
   })
 
   it('gives the picture a source that needs no network', () => {

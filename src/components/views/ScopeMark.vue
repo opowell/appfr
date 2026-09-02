@@ -33,7 +33,7 @@ function narrow(event: MouseEvent) {
     type="button"
     class="dc-scope"
     :title="`Narrow everything to ${scope}: ${entry.row.id}`"
-    :aria-label="`Narrow everything to ${entry.row.primary}`"
+    :aria-label="`Narrow everything to ${entry.parts.identity}`"
     @click="narrow"
   >
     →

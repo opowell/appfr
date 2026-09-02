@@ -29,25 +29,37 @@ describe('useQueryState — the home screen', () => {
     expect(state.focus.value.key).toBe('searches')
   })
 
-  it('names the metric sorts generically until an entity is chosen', () => {
+  /*
+   * The sorts are the columns that offer one, named as those columns are named
+   * — so the list is the schema's own vocabulary, and it is generic across
+   * every entity only because the schema's own set of columns is.
+   */
+  it('names the sorts as the columns naming them are named', () => {
     const { state } = setup('')
     expect(state.sorts.value.map((sort) => sort.label)).toEqual([
+      'item',
+      'metric',
+      'metric 2',
       'updated',
       'score',
-      'value',
-      'second value',
-      'name',
     ])
 
     state.setEntity('searches')
-    // `searches` calls its metrics "New" and "Results".
+    // `searches` calls its identity "Search" and its metrics "New" and "Results".
     expect(state.sorts.value.map((sort) => sort.label)).toEqual([
-      'updated',
-      'score',
+      'search',
       'new',
       'results',
-      'name',
+      'updated',
+      'score',
     ])
+  })
+
+  /* Recency, not the first column declared: a corpus ordered A→Z on arrival
+     says less than one showing what changed last. */
+  it('still lands on the recency sort, wherever it sits in the set', () => {
+    expect(setup('').state.query.value.sort).toBe('updated')
+    expect(setup('?e=searches').state.query.value.sort).toBe('updated')
   })
 })
 

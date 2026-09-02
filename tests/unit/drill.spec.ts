@@ -12,15 +12,7 @@ const row = (overrides: Partial<ShellRow> = {}): ShellRow => ({
   id: 'categories_10007',
   entityKey: 'categories',
   entityLabel: 'Categories',
-  primary: 'Bricks',
-  secondary: 'bricks',
-  status: 'ok',
-  score: 0.6,
-  metric1: 120,
-  metric2: 8,
-  updatedAt: '2026-08-20T00:00:00.000Z',
-  tint: 'oklch(0.36 0.06 240)',
-  facets: {},
+  fields: { primary: 'Bricks', secondary: 'bricks' },
   ...overrides,
 })
 
@@ -96,7 +88,7 @@ describe('a drilled query, against the mock source', () => {
     expect(result.total).toBeLessThan(run('').total)
     for (const found of result.rows) {
       // Several memberships per row, so this is one of them rather than it.
-      expect(found.facets.category).toContain('categories_10007')
+      expect(found.fields.category).toContain('categories_10007')
     }
   })
 
@@ -123,7 +115,7 @@ describe('a drilled query, against the mock source', () => {
         ),
       })) {
         // Its own id, or the ids of the records it belongs to — never absent.
-        for (const field of scopes) expect(generated.facets[field]).toBeTruthy()
+        for (const field of scopes) expect(generated.fields[field]).toBeTruthy()
       }
     }
   })

@@ -125,8 +125,8 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
   const query = computed(() => parseQuery(adapter.search.value, schema.value, defaults.value))
   const entity = computed(() => findEntity(schema.value, query.value.entity))
   const focus = computed(() => entity.value ?? focusEntity(schema.value, defaults.value))
-  const sorts = computed(() => sortsFor(entity.value))
-  const sort = computed(() => findSort(entity.value, query.value.sort))
+  const sorts = computed(() => sortsFor(entity.value, schema.value))
+  const sort = computed(() => findSort(entity.value, query.value.sort, schema.value))
 
   const navigate = (next: ShellQuery, mode: NavigationMode) => {
     const search = serializeQuery(next, schema.value, defaults.value, adapter.search.value)
@@ -169,7 +169,7 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     if ((next?.key ?? null) === query.value.entity) return {}
     return {
       entity: next?.key ?? null,
-      sort: findSort(next, query.value.sort).key,
+      sort: findSort(next, query.value.sort, schema.value).key,
       facets: emptyFacetState(next),
     }
   }
@@ -186,7 +186,7 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     focus,
     sort,
     sorts,
-    summary: computed(() => summarizeQuery(query.value, entity.value)),
+    summary: computed(() => summarizeQuery(query.value, entity.value, schema.value)),
     terms: computed(() => summaryTerms(query.value, entity.value)),
     isPristine: computed(() => isPristineQuery(query.value)),
     isEverything: computed(() => query.value.entity === null),
@@ -198,7 +198,7 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
       commit({ view }, primaryMode())
     },
     setSort(key) {
-      commit({ sort: findSort(entity.value, key).key }, primaryMode())
+      commit({ sort: findSort(entity.value, key, schema.value).key }, primaryMode())
     },
     toggleDirection() {
       commit({ dir: query.value.dir === 'desc' ? 'asc' : 'desc' }, primaryMode())

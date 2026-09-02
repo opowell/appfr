@@ -8,20 +8,23 @@ import type { ShellRow } from '../../src/types'
 const items = findEntity(iRadarSchema, 'items')!
 const sets = findEntity(legoSchema, 'sets')!
 
-const row = (overrides: Partial<ShellRow> = {}): ShellRow => ({
+const row = (fields: Record<string, unknown> = {}): ShellRow => ({
   id: 'items_1',
   entityKey: 'items',
   entityLabel: 'Items',
-  primary: 'Q3 price list',
-  secondary: 'shop.example.com/pricing',
-  status: 'ok',
-  score: 0.6,
-  metric1: 120,
-  metric2: 8,
-  updatedAt: '2026-08-20T00:00:00.000Z',
-  tint: 'oklch(0.36 0.06 240)',
-  facets: { kind: 'pdf', rank: 55, seen: true },
-  ...overrides,
+  fields: {
+    primary: 'Q3 price list',
+    secondary: 'shop.example.com/pricing',
+    status: 'ok',
+    score: 0.6,
+    metric1: 120,
+    metric2: 8,
+    updatedAt: '2026-08-20T00:00:00.000Z',
+    kind: 'pdf',
+    rank: 55,
+    seen: true,
+    ...fields,
+  },
 })
 
 const matches = (expr: string, subject = row(), entity = items) =>
@@ -35,8 +38,10 @@ describe('field precedence', () => {
    */
   const categories = findEntity(legoSchema, 'categories')!
 
-  const category = (facets: ShellRow['facets']) =>
-    row({ entityKey: 'categories', primary: 'Bricks', facets })
+  const category = (fields: Record<string, unknown> = {}) => ({
+    ...row({ primary: 'Bricks', ...fields }),
+    entityKey: 'categories',
+  })
 
   it('resolves a facet key over a same-named label alias', () => {
     const subject = category({ category: 'categories_10007' })
@@ -48,9 +53,26 @@ describe('field precedence', () => {
     expect(matches('category:Bricks', category({}), categories)).toBe(true)
   })
 
-  it('keeps the generic names reserved whatever the schema carries', () => {
-    const subject = category({ name: 'not the primary', category: 'categories_10007' })
-    expect(matches('name:Bricks', subject, categories)).toBe(true)
+  /*
+   * The generic names are a fallback, not a reservation. They exist so that a
+   * query written against a corpus whose vocabulary you do not know can still
+   * say `name:` or `status:` — and a schema that has a field of that name has
+   * said what it means here, which is more specific than a convention.
+   */
+  it('lets a field of the schema\u2019s own beat the generic name for it', () => {
+    const subject = category({ name: 'not the identity', category: 'categories_10007' })
+    expect(matches('name:identity', subject, categories)).toBe(true)
+    expect(matches('name:Bricks', subject, categories)).toBe(false)
+  })
+
+  it('falls back to the generic name where the schema has no such field', () => {
+    expect(matches('name:Bricks', category(), categories)).toBe(true)
+    expect(matches('ref:bricks', category({ secondary: 'bricks' }), categories)).toBe(true)
+  })
+
+  it('keeps `entity` the shell\u2019s own, so a corpus can always be narrowed by kind', () => {
+    const subject = category({ entity: 'something else' })
+    expect(matches('entity:categories', subject, categories)).toBe(true)
   })
 })
 
@@ -109,7 +131,7 @@ describe('matchesExpression', () => {
   })
 
   it('matches a multi-valued facet on any one of its values', () => {
-    const multi = row({ facets: { kind: ['pdf', 'feed'], rank: 55, seen: true } })
+    const multi = row({ kind: ['pdf', 'feed'] })
     expect(matches('kind:pdf', multi)).toBe(true)
     expect(matches('kind:feed', multi)).toBe(true)
     expect(matches('kind:image', multi)).toBe(false)
@@ -117,12 +139,12 @@ describe('matchesExpression', () => {
   })
 
   it('treats a comparison against a multi-valued facet as no constraint', () => {
-    const multi = row({ facets: { kind: ['pdf'], rank: 55, seen: true } })
+    const multi = row({ kind: ['pdf'] })
     expect(matches('kind>2', multi)).toBe(true)
   })
 
   it('matches a facet by its label, spaces removed', () => {
-    const piece = row({ facets: { category: 'brick', firstYear: 1974, rarity: false } })
+    const piece = row({ shape: 'brick', firstYear: 1974, rarity: false })
     expect(matches('firstyear>=1970', piece, findEntity(legoSchema, 'pieces')!)).toBe(true)
     expect(matches('firstyear>=1980', piece, findEntity(legoSchema, 'pieces')!)).toBe(false)
   })
@@ -171,7 +193,7 @@ describe('matchesExpression', () => {
     expect(all).toHaveLength(48)
     expect(spaceOnly.length).toBeGreaterThan(0)
     expect(spaceOnly.length).toBeLessThan(48)
-    expect(spaceOnly.every((r) => r.facets.theme === 'space')).toBe(true)
+    expect(spaceOnly.every((r) => r.fields.theme === 'space')).toBe(true)
   })
 
   it('evaluates the schema placeholder expression without throwing', () => {

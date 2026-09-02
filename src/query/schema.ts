@@ -1,6 +1,6 @@
 import type {
+  ColumnDef,
   DomainSchema,
-  EntityLabels,
   EntitySchema,
   FacetDef,
   FacetState,
@@ -43,36 +43,65 @@ export function focusEntity(schema: DomainSchema, defaults: ShellQueryDefaults =
 }
 
 /**
- * Column names to use when the results span every entity, where no single
- * schema's vocabulary applies.
+ * The columns an ordering can be read out of: the entity's own where one is
+ * filtered to, and the schema's across every entity — where no one type's
+ * columns describe the rows, exactly as the table finds its headings.
  */
-export const GENERIC_LABELS: EntityLabels = {
-  primary: 'Item',
-  secondary: 'Reference',
-  metric1: 'Metric',
-  metric2: 'Metric 2',
+export function columnsForSort(
+  entity: EntitySchema | null,
+  schema: DomainSchema | null = null,
+): ColumnDef[] {
+  return entity?.columns ?? schema?.columns ?? []
 }
 
 /**
- * Sort options. Across every entity the metric columns have no single name, so
- * the metric sorts are labelled generically; inside one entity each takes that
- * entity's own column name.
+ * The sorts on offer: one per column that names a {@link ColumnDef.sort},
+ * labelled with that column's own heading, in the order the schema declared
+ * them. A column is what knows both what it holds and what ordering it means,
+ * so the panel and the table headers are offering one list rather than two.
+ *
+ * An entity may state its own set instead, for an ordering no column shows.
  */
-export function sortsFor(entity: EntitySchema | null): SortDef[] {
+export function sortsFor(
+  entity: EntitySchema | null,
+  schema: DomainSchema | null = null,
+): SortDef[] {
   if (entity?.sorts?.length) return entity.sorts
-  return [
-    { key: 'updated', label: 'updated' },
-    { key: 'score', label: 'score' },
-    { key: 'metric1', label: entity ? entity.labels.metric1.toLowerCase() : 'value' },
-    { key: 'metric2', label: entity ? entity.labels.metric2.toLowerCase() : 'second value' },
-    { key: 'name', label: 'name' },
-  ]
+  const seen = new Set<string>()
+  const sorts: SortDef[] = []
+  for (const column of columnsForSort(entity, schema)) {
+    if (!column.sort || seen.has(column.sort)) continue
+    seen.add(column.sort)
+    sorts.push({ key: column.sort, label: (column.label ?? column.sort).toLowerCase() })
+  }
+  return sorts
 }
 
-export function findSort(entity: EntitySchema | null, key: string | undefined): SortDef {
-  const sorts = sortsFor(entity)
+/** The ordering a query falls back to, where the columns offer it. */
+const FALLBACK_SORT: SortDef = { key: DEFAULT_SORT, label: DEFAULT_SORT }
+
+/**
+ * The sort a key names.
+ *
+ * Falling back to the recency sort rather than to the first declared, because
+ * the first column of a set is the identity and landing on a corpus ordered
+ * A-to-Z says less than landing on what changed last. Where nothing is
+ * offered at all — a type with no columns — the key stands on its own, so a
+ * URL and a request still say something a source can act on.
+ */
+export function findSort(
+  entity: EntitySchema | null,
+  key: string | undefined,
+  schema: DomainSchema | null = null,
+): SortDef {
+  const sorts = sortsFor(entity, schema)
   const found = key ? sorts.find((sort) => sort.key === key) : undefined
-  return found ?? (sorts[0] as SortDef)
+  return (
+    found ??
+    sorts.find((sort) => sort.key === DEFAULT_SORT) ??
+    sorts[0] ??
+    FALLBACK_SORT
+  )
 }
 
 /** The neutral value for a facet — the state in which it narrows nothing. */

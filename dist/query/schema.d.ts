@@ -1,4 +1,4 @@
-import type { DomainSchema, EntityLabels, EntitySchema, FacetDef, FacetState, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
+import type { ColumnDef, DomainSchema, EntitySchema, FacetDef, FacetState, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
 /**
  * Cards. On the home screen — where no entity is filtered to — that means a
  * card per item type rather than per record: what each type is, how many of it
@@ -16,17 +16,30 @@ export declare function findEntity(schema: DomainSchema, key: string | null | un
  */
 export declare function focusEntity(schema: DomainSchema, defaults?: ShellQueryDefaults): EntitySchema;
 /**
- * Column names to use when the results span every entity, where no single
- * schema's vocabulary applies.
+ * The columns an ordering can be read out of: the entity's own where one is
+ * filtered to, and the schema's across every entity — where no one type's
+ * columns describe the rows, exactly as the table finds its headings.
  */
-export declare const GENERIC_LABELS: EntityLabels;
+export declare function columnsForSort(entity: EntitySchema | null, schema?: DomainSchema | null): ColumnDef[];
 /**
- * Sort options. Across every entity the metric columns have no single name, so
- * the metric sorts are labelled generically; inside one entity each takes that
- * entity's own column name.
+ * The sorts on offer: one per column that names a {@link ColumnDef.sort},
+ * labelled with that column's own heading, in the order the schema declared
+ * them. A column is what knows both what it holds and what ordering it means,
+ * so the panel and the table headers are offering one list rather than two.
+ *
+ * An entity may state its own set instead, for an ordering no column shows.
  */
-export declare function sortsFor(entity: EntitySchema | null): SortDef[];
-export declare function findSort(entity: EntitySchema | null, key: string | undefined): SortDef;
+export declare function sortsFor(entity: EntitySchema | null, schema?: DomainSchema | null): SortDef[];
+/**
+ * The sort a key names.
+ *
+ * Falling back to the recency sort rather than to the first declared, because
+ * the first column of a set is the identity and landing on a corpus ordered
+ * A-to-Z says less than landing on what changed last. Where nothing is
+ * offered at all — a type with no columns — the key stands on its own, so a
+ * URL and a request still say something a source can act on.
+ */
+export declare function findSort(entity: EntitySchema | null, key: string | undefined, schema?: DomainSchema | null): SortDef;
 /** The neutral value for a facet — the state in which it narrows nothing. */
 export declare function emptyFacetValue(facet: FacetDef): FacetValue;
 export declare function emptyFacetState(entity: EntitySchema | null): FacetState;

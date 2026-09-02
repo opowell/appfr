@@ -94,20 +94,27 @@ const narrowed = computed(() => !shell.isPristine.value)
           @click="shell.activate(entry.row)"
         >
           <span class="dc-type__identity">
-            <span class="dc-type__primary dc-truncate">{{ entry.row.primary }}</span>
-            <span class="dc-type__secondary dc-mono dc-truncate">{{ entry.row.secondary }}</span>
+            <span class="dc-type__primary dc-truncate">{{ entry.parts.identity }}</span>
+            <span class="dc-type__secondary dc-mono dc-truncate">{{ entry.parts.reference }}</span>
           </span>
         </button>
+        <!-- One number, the first this type declared: a preview row is a
+             glance, and the type's own list is where the rest of them are. -->
         <span class="dc-type__trailing dc-mono">
           <MetricDrill
+            v-for="metric in entry.parts.metrics.slice(0, 1)"
+            :key="metric.column.key ?? metric.label"
             class="dc-type__metric"
             :entry="entry"
-            metric="metric1"
+            :column="metric.column"
           >
-            <span class="dc-type__metric-value">{{ entry.metric1 }}</span>
-            <span class="dc-type__metric-label">{{ entry.labels.metric1 }}</span>
+            <span class="dc-type__metric-value">{{ metric.text }}</span>
+            <span class="dc-type__metric-label">{{ metric.label }}</span>
           </MetricDrill>
-          <span class="dc-type__date">{{ entry.date }}</span>
+          <span
+            v-if="entry.parts.updated"
+            class="dc-type__date"
+          >{{ entry.parts.updated }}</span>
           <ScopeMark :entry="entry" />
         </span>
       </div>

@@ -1,4 +1,4 @@
-import type { EntitySchema, ShellQuery } from '../types';
+import type { DomainSchema, EntitySchema, ShellQuery } from '../types';
 /** One removable term in the header's query summary. */
 export interface SummaryTerm {
     /** Stable identity for list rendering and for the remove handler. */
@@ -24,4 +24,6 @@ export declare function summaryTerms(query: ShellQuery, entity: EntitySchema | n
  * it is showing and how, so the header is never blank and never implies a
  * filter that is not there.
  */
-export declare function summarizeQuery(query: ShellQuery, entity: EntitySchema | null): string;
+export declare function summarizeQuery(query: ShellQuery, entity: EntitySchema | null, 
+/** For the sort's own name, which on the home screen the schema's columns hold. */
+schema?: DomainSchema | null): string;

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { EntitySchema } from '../../types'
+import type { ColumnDef, EntitySchema } from '../../types'
 import { useShellContext } from '../../composables/context'
 import type { PresentedRow } from '../../composables/usePresentedRows'
+import { cellText } from '../../query/columns'
 
 /**
- * A metric, as a button when its entity's `drills` says the number counts
- * something the schema also lists: clicking `12` under **Tests** means "show
+ * A value, as a button when its column's `drill` says the number counts
+ * something the schema also lists: clicking `12` under **Colors** means "show
  * me those twelve", which is the one thing a count is ever wanted for.
  *
  * A number that counts nothing listable renders as the plain text it was, so
@@ -16,35 +17,27 @@ import type { PresentedRow } from '../../composables/usePresentedRows'
  */
 const props = defineProps<{
   entry: PresentedRow
-  /** Which of the two metrics this is, when it is one of them. */
-  metric?: 'metric1' | 'metric2'
-  /**
-   * The entity to narrow to, named by the caller rather than looked up in
-   * `drills` — what a {@link ColumnDef.drill} says a column of any name
-   * counts. Beats `metric` when both are given.
-   */
-  to?: string
-  /** What the number is called, when it is not one of the two metrics. */
-  label?: string
+  /** The column this value came from — what says where pressing it leads. */
+  column: ColumnDef
 }>()
 
 const shell = useShellContext()
 
 /**
- * The entity this number counts. Null unless the type both names one *and*
- * declares `scope` — without that, nothing on the far side says which record
- * it belongs to and the narrowed list would be the whole population.
+ * The entity this value counts. Null unless the column names one *and* the
+ * row's type declares `scope` — without that, nothing on the far side says
+ * which record it belongs to and the narrowed list would be the whole
+ * population.
  */
 const target = computed<EntitySchema | null>(() => {
   const entity = props.entry.entity
-  if (!entity?.scope) return null
-  const key = props.to ?? (props.metric ? entity.drills?.[props.metric] : undefined)
-  return shell.entities.value.find((candidate) => candidate.key === key) ?? null
+  if (!entity?.scope || !props.column.drill) return null
+  return shell.entities.value.find((candidate) => candidate.key === props.column.drill) ?? null
 })
 
-const name = computed(() => props.label ?? (props.metric ? props.entry.labels[props.metric] : ''))
+const name = computed(() => props.column.label ?? '')
 
-const text = computed(() => (props.metric ? props.entry[props.metric] : ''))
+const text = computed(() => cellText(props.column, props.entry.row))
 
 /** Stops the click reaching the row, which would open the record instead. */
 function drill(event: MouseEvent) {
@@ -58,7 +51,7 @@ function drill(event: MouseEvent) {
     v-if="target"
     type="button"
     class="dc-drill"
-    :title="`${name} of ${entry.row.primary} — show the ${target.label.toLowerCase()}`"
+    :title="`${name} of ${entry.parts.identity} — show the ${target.label.toLowerCase()}`"
     @click="drill"
   >
     <slot>{{ text }}</slot>

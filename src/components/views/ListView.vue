@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
 import { usePresentedRows } from '../../composables/usePresentedRows'
+import type { PresentedRow } from '../../composables/usePresentedRows'
+import { roleColumn } from '../../query/columns'
 import ScoreMeter from '../ScoreMeter.vue'
 import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
@@ -12,6 +14,10 @@ const shell = useShellContext()
 const rows = usePresentedRows()
 /* With no entity filter the rows are of mixed kinds, so each says which. */
 const showEntity = computed(() => shell.isEverything.value)
+
+/** What the meter is called — the score column's own heading. */
+const scoreLabel = (entry: PresentedRow) =>
+  roleColumn(entry.columns, 'score')?.label ?? 'Score'
 </script>
 
 <template>
@@ -35,31 +41,40 @@ const showEntity = computed(() => shell.isEverything.value)
       >
         <span class="dc-list__ordinal dc-mono">{{ entry.ordinal }}</span>
         <span class="dc-list__identity">
-          <span class="dc-list__primary dc-truncate">{{ entry.row.primary }}</span>
-          <span class="dc-list__secondary dc-mono dc-truncate">{{ entry.row.secondary }}</span>
+          <span class="dc-list__primary dc-truncate">{{ entry.parts.identity }}</span>
+          <span class="dc-list__secondary dc-mono dc-truncate">{{ entry.parts.reference }}</span>
         </span>
       </button>
       <span
         v-if="showEntity"
         class="dc-list__entity dc-mono"
       >{{ entry.entityLabel }}</span>
+      <!-- The first two numbers the type declared, whatever they are called.
+           A row is scanned, not read, and a third number in the same line is
+           one more thing to scan past. -->
       <span class="dc-list__metrics dc-mono">
         <MetricDrill
+          v-for="metric in entry.parts.metrics.slice(0, 2)"
+          :key="metric.column.key ?? metric.label"
           :entry="entry"
-          metric="metric1"
+          :column="metric.column"
         />
-        <MetricDrill
-          :entry="entry"
-          metric="metric2"
+        <ScoreMeter
+          v-if="entry.parts.score !== null"
+          :value="entry.parts.score"
+          :label="scoreLabel(entry)"
         />
-        <ScoreMeter :value="entry.row.score" />
       </span>
       <span class="dc-list__trailing">
-        <StatusPill :status="entry.row.status" />
+        <StatusPill
+          v-if="entry.parts.state"
+          :status="entry.parts.state"
+        />
         <ScopeMark :entry="entry" />
         <PinStar
           v-if="shell.pinnable.value"
           :row="entry.row"
+          :name="entry.parts.identity"
           :pinned="entry.pinned"
         />
       </span>

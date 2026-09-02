@@ -17,15 +17,7 @@ const row = (id: string): ShellRow => ({
   id,
   entityKey: 'searches',
   entityLabel: 'Searches',
-  primary: id,
-  secondary: id,
-  status: 'ok',
-  score: 0.5,
-  metric1: 1,
-  metric2: 2,
-  updatedAt: '2026-08-20T00:00:00.000Z',
-  tint: 'oklch(0.36 0.06 240)',
-  facets: {},
+  fields: { primary: id, secondary: id },
 })
 
 const rows = (...ids: string[]) => ids.map(row)

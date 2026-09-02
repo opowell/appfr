@@ -1,4 +1,5 @@
-import type { EntitySchema, ShellRow } from '../types'
+import type { ColumnRole, EntitySchema, ShellRow } from '../types'
+import { cellValue, roleColumn, roleColumns } from '../query/columns'
 
 /**
  * A minimal query language for the expression field: whitespace-separated
@@ -9,10 +10,12 @@ import type { EntitySchema, ShellRow } from '../types'
  *   cve OR advisory
  *
  * `AND` is implicit and the literal keyword is accepted for readability.
- * A bare word matches the primary or secondary field. `field:value` and
- * `field<op>number` match a named field or facet. Anything unresolvable is
- * ignored rather than treated as a mismatch, so a half-typed expression keeps
- * showing results instead of emptying the screen.
+ * A bare word matches the identity or the reference — whichever columns the
+ * schema gave those roles. `field:value` and `field<op>number` match a field
+ * the row carries, a column by name or heading, or one of the generic names
+ * below. Anything unresolvable is ignored rather than treated as a mismatch,
+ * so a half-typed expression keeps showing results instead of emptying the
+ * screen.
  */
 
 export type Comparator = ':' | '=' | '>' | '<' | '>=' | '<='
@@ -107,51 +110,72 @@ export function parseExpression(input: string): Expression {
   return groups
 }
 
+/** Compares field names written by hand with names declared in a schema. */
+const alias = (name: string) => name.toLowerCase().replace(/\s+/g, '')
+
 /**
- * Resolves a field name against a row. Recognises the generic field names, the
- * entity's own column labels, and any facet key — so `price>40` works when the
- * schema calls a metric "Price", and `theme:space` works when `theme` is a
- * facet.
+ * The generic names, and the role each one asks for. A query written against a
+ * corpus whose vocabulary you do not know can still say `status:failed` or
+ * `updated>2026-01-01`, because those are what the roles mean — while a schema
+ * naming a field `status` of its own is read first, below.
  */
-function resolveField(
-  field: string,
-  row: ShellRow,
-  entity: EntitySchema,
-): ShellRow['facets'][string] | undefined {
-  const labels = entity.labels
-  const alias = (label: string) => label.toLowerCase().replace(/\s+/g, '')
-  const normalized = field.replace(/\s+/g, '')
+const ROLE_ALIASES: Array<readonly [string, ColumnRole]> = [
+  ['status', 'state'],
+  ['state', 'state'],
+  ['score', 'score'],
+  ['updated', 'updated'],
+  ['date', 'updated'],
+  ['name', 'identity'],
+  ['ref', 'reference'],
+]
+
+/**
+ * Resolves a field name against a row.
+ *
+ * In order: the row's own fields, then the columns by key, field or heading,
+ * then a facet by heading, then the generic role names. A key the row actually
+ * carries beats a name derived from a heading — the aliases are a convenience,
+ * `price > 40` for whatever the schema called that column, while a field is an
+ * identifier the schema declared, and an entity whose identity column happens
+ * to be headed "Category" should not shadow its own `category` field. That is
+ * not hypothetical: a `scope` field is usually the singular of the type it
+ * points at, which is exactly what such a column tends to be called.
+ */
+function resolveField(field: string, row: ShellRow, entity: EntitySchema): unknown {
+  const normalized = alias(field)
+  const columns = entity.columns ?? []
 
   // Lets a cross-corpus query narrow by kind — `entity:logs` — without the
   // entity being anything more special than another field. Deliberately not
   // aliased to `kind`, which is a facet key in its own right.
   if (normalized === 'entity') return row.entityKey
-  if (normalized === 'status' || normalized === 'state') return row.status
-  if (normalized === 'score') return row.score
-  if (normalized === 'updated' || normalized === 'date') return row.updatedAt
-  if (normalized === 'name') return row.primary
-  if (normalized === 'ref') return row.secondary
-  if (normalized === 'metric1') return row.metric1
-  if (normalized === 'metric2') return row.metric2
 
-  /*
-   * A key a row actually carries beats a name derived from a column heading.
-   * The aliases below are a convenience — `parts > 300` for whatever the
-   * schema called metric1 — while this is an identifier the schema declared,
-   * and an entity whose primary column happens to be headed "Category" should
-   * not shadow its own `category` field. That is not hypothetical: a `scope`
-   * field is usually the singular of the type it points at, which is exactly
-   * what such a column tends to be called.
-   */
-  if (field in row.facets) return row.facets[field]
+  if (field in row.fields) return row.fields[field]
 
-  if (normalized === alias(labels.primary)) return row.primary
-  if (normalized === alias(labels.secondary)) return row.secondary
-  if (normalized === alias(labels.metric1)) return row.metric1
-  if (normalized === alias(labels.metric2)) return row.metric2
+  const named = columns.find(
+    (column) =>
+      column.key === field ||
+      column.field === field ||
+      (column.label !== undefined && alias(column.label) === normalized),
+  )
+  if (named) return cellValue(named, row)
 
-  const facet = entity.facets.find((f) => alias(f.label) === normalized)
-  return facet ? row.facets[facet.key] : undefined
+  const facet = entity.facets.find((candidate) => alias(candidate.label) === normalized)
+  if (facet && facet.key in row.fields) return row.fields[facet.key]
+
+  const role = ROLE_ALIASES.find(([name]) => name === normalized)?.[1]
+  if (role) {
+    const column = roleColumn(columns, role)
+    if (column) return cellValue(column, row)
+  }
+  // `metric1`, `metric2`, … name the metric columns by position, for a query
+  // written before anyone knew what this corpus calls its numbers.
+  const positional = /^metric(\d+)$/.exec(normalized)
+  if (positional) {
+    const column = roleColumns(columns, 'metric')[Number(positional[1]) - 1]
+    if (column) return cellValue(column, row)
+  }
+  return undefined
 }
 
 /**
@@ -168,7 +192,14 @@ function matchesText(haystack: string, needle: string): boolean {
 
 function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
   if (term.kind === 'text') {
-    return matchesText(row.primary, term.value) || matchesText(row.secondary, term.value)
+    // The identity and the reference: what a bare word is looking for, in
+    // whichever columns this type gave those roles to.
+    const columns = entity.columns ?? []
+    return (['identity', 'reference'] as const).some((role) => {
+      const column = roleColumn(columns, role)
+      const value = column ? cellValue(column, row) : undefined
+      return typeof value === 'string' && matchesText(value, term.value)
+    })
   }
 
   const actual = resolveField(term.field, row, entity)
@@ -178,7 +209,9 @@ function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
   // there is a number, so a comparison against one constrains nothing.
   if (Array.isArray(actual)) {
     const equality = term.comparator === ':' || term.comparator === '='
-    return equality ? actual.some((entry) => matchesText(entry, term.value)) : true
+    return equality
+      ? actual.some((entry) => matchesText(String(entry), term.value))
+      : true
   }
 
   if (term.comparator === ':' || term.comparator === '=') {
@@ -192,22 +225,28 @@ function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
       const wanted = Number(term.value)
       return Number.isFinite(wanted) ? actual === wanted : true
     }
-    return matchesText(actual, term.value)
+    return matchesText(String(actual), term.value)
   }
 
   const wanted = Number(term.value)
   const actualNumber = typeof actual === 'number' ? actual : Number(actual)
   if (!Number.isFinite(wanted) || !Number.isFinite(actualNumber)) return true
 
-  switch (term.comparator) {
+  return compare(term.comparator, actualNumber, wanted)
+}
+
+function compare(comparator: Comparator, left: number, right: number): boolean {
+  switch (comparator) {
     case '>':
-      return actualNumber > wanted
+      return left > right
     case '>=':
-      return actualNumber >= wanted
+      return left >= right
     case '<':
-      return actualNumber < wanted
+      return left < right
     case '<=':
-      return actualNumber <= wanted
+      return left <= right
+    default:
+      return left === right
   }
 }
 

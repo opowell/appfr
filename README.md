@@ -143,6 +143,8 @@ const source: DataSource = {
     })}`)
     const body = await response.json()
     return { rows: body.rows, total: body.total, unfiltered: body.unfiltered }
+    // A row is `{ id, entityKey, entityLabel, fields }` — `fields` holding the
+    // record under whatever names this type's columns read.
   },
 }
 ```
@@ -151,8 +153,9 @@ const source: DataSource = {
 it — the shell counts pages with it, and the header states them.
 
 Each row it returns carries its own `entityKey` and `entityLabel`, which is
-what lets a mixed result set label every record in its own entity's vocabulary
-— a log entry showing "Trace id" beside a LEGO set showing "Set number".
+what lets a mixed result set read every record in its own entity's vocabulary —
+a log entry headed "Trace id" beside a LEGO set headed "Set number", each
+resolved through that type's own [`columns`](#columns-of-your-own).
 
 ```vue
 <DataShell :schema="schema" :source="source" />
@@ -302,7 +305,14 @@ const schema: DomainSchema = {
       label: 'Items',
       count: '9,988',
       // Views read these instead of hard-coding column names.
-      labels: { primary: 'Item', secondary: 'URL', metric1: 'Links', metric2: 'Score' },
+      // What this type is: every field the shell shows, and which of them a
+      // card, a tile and a preview pane are made of. `defaultColumns` is the
+      // familiar set — ordinal, identity pair, metrics, date, state, score.
+      columns: defaultColumns({
+        identity: 'Item',
+        reference: 'URL',
+        metrics: [{ label: 'Links', drill: 'links' }, { label: 'Score' }],
+      }),
       facets: [
         { kind: 'chips', key: 'kind', label: 'Kind', options: ['page', 'pdf', 'feed'] },
         { kind: 'range', key: 'rank', label: 'Rank', min: 0, max: 100 },
@@ -317,12 +327,13 @@ const schema: DomainSchema = {
 }
 ```
 
-Every entity has the same shape — an identity pair, two named metrics, a date,
-a state and a score — which is what lets one set of renderers serve all of
-them, and what lets them share a result set. A card and a tile really are that
-shape. A table is whatever its [`columns`](#columns-of-your-own) say and
-nothing besides — eleven of them, or two — which is the one thing here the
-shell does not derive from the labels.
+A row is three fields the shell owns and one bag it does not: an `id`, an
+`entityKey`, an `entityLabel`, and `fields` holding the record itself under
+whatever names the columns read. What each type *is* — how many fields, what
+they are called, which of them is the name and which the state — is
+[`columns`](#columns-of-your-own), and the shell invents none of it. That is
+what lets one set of renderers serve every schema, and what lets records of
+different types share a result set.
 
 Four worked examples ship in `header-content-layout/fixtures`: `iRadarSchema`,
 `legoSchema`, `commerceSchema`, `battleSimSchema`. Each also gets `logsEntity`
@@ -333,62 +344,85 @@ are the worked set of twelve.
 
 ### Columns of your own
 
-`labels` names four columns because a card and a tile really are an identity
-and a number or two. A table is not: a catalogue piece is a picture, a shape, a
-year, two counts, a weight and a flag, and no four of those are the four.
+An entity's `columns` are what it *is*: every field the shell shows, in the
+order a table shows them, with a `role` saying which of them the views that are
+not tables are made of.
 
-So a table is the `columns` its entity declares — exactly those, in that order,
-however many. **The shell invents none.** A type that declares nothing has no
-table to draw, and says so where one would have been; reading a table out of
-the labels would be the component deciding what your data is, which is the same
-line it does not cross for `create` or for a drill.
+**The shell invents none.** A type that declares nothing has nothing to draw
+anywhere — no table, and no identity for a card to head. Which fields a record
+has is the schema's to say, and a set of columns nobody asked for would be the
+component deciding what your data is, which is the same line it does not cross
+for `create` or for a drill.
 
 ```ts
 {
   key: 'pieces',
-  labels: { primary: 'Piece', secondary: 'Part number', metric1: 'Colors', metric2: 'In sets' },
   columns: [
     { key: 'ordinal', kind: 'ordinal', label: '#', width: '48px' },
     // No label: a column of pictures says what it is.
-    { key: 'thumb', kind: 'image', width: '56px', height: '28px', value: (row) => row.facets.image },
-    { key: 'primary', label: 'Piece', sort: 'name', activate: true, scope: true },
-    { key: 'secondary', label: 'Part no.', width: '104px', mono: true, muted: true },
+    { key: 'image', kind: 'image', width: '56px', height: '28px' },
+    { key: 'name', role: 'identity', label: 'Piece', sort: 'name', activate: true, scope: true },
+    { key: 'partNo', role: 'reference', label: 'Part no.', width: '104px', mono: true },
     { key: 'shape', label: 'Shape', width: '92px', hideBelow: 620 },
     // A year is a number and not a quantity: 1988, never 2.0k.
     { key: 'firstYear', label: 'First year', width: '88px', align: 'right', format: String },
-    { key: 'metric1', kind: 'number', label: 'Colors', sort: 'metric1', drill: 'colors' },
-    { key: 'weight', label: 'Weight', value: (row) => row.facets.cg, format: grams },
-    { key: 'status', kind: 'status', label: 'State', width: '104px' },
+    { key: 'colors', role: 'metric', kind: 'number', label: 'Colors', sort: 'colors', drill: 'colors' },
+    { key: 'cg', label: 'Weight', format: grams, align: 'right' },
+    { key: 'state', role: 'state', kind: 'status', label: 'State', width: '104px' },
+    { key: 'match', role: 'score', kind: 'score', label: 'Match', sort: 'match' },
+    // A background is not a value, so the table leaves this one out.
+    { key: 'colour', role: 'tint' },
   ],
 }
 ```
 
-The familiar eight — ordinal, identity pair, type, two metrics, date, state —
-are exported as `defaultColumns(entity)`, for the schema that wants them after
-all. Nothing applies it: spreading it is how a schema *asks*, which is also how
-it takes those eight and adds a ninth.
+The familiar set — ordinal, identity pair, type, metrics, date, state, score
+and tint — is exported as `defaultColumns(names)`, for the schema that wants it
+after all. Nothing applies it: spreading it is how a schema *asks*, which is
+also how it takes that set and adds to it.
 
 ```ts
 import { defaultColumns } from 'header-content-layout'
 
-columns: defaultColumns(entity)                                   // the eight
-columns: [...defaultColumns(entity), { key: 'owner', label: 'Owner' }]  // and one
+columns: defaultColumns({ identity: 'Item', reference: 'URL', metrics: ['Links'] })
+columns: [...defaultColumns({ identity: 'Item', reference: 'URL' }), { key: 'owner', label: 'Owner' }]
 ```
 
-The four shipped fixtures do exactly that — `legoSchema`'s pieces are the one
-entity of the four with a set of its own.
+It reads the fields the row shape used to fix — `primary`, `secondary`,
+`metric1`, `updatedAt`, `status`, `score`, `tint` — so a source that already
+returns those moves over by putting them in `fields`. The four shipped fixtures
+all ask for it; `legoSchema`'s pieces are the one entity with a set of its own.
 
 **Where a value comes from**, in order: the column's own `value(row)` if it has
-one; otherwise the field it names — `field`, or its `key` — looked for on the
-row first and in `row.facets` after. That last step is the one that matters: a
-source already returns whatever it likes in `facets`, so a column of anything
-needs no change to `ShellRow`.
+one; otherwise the field it names — `field`, or its `key` — read off
+`row.fields`, and then off the row's own `id`, `entityKey` and `entityLabel`.
+The bag comes first, because those names are the schema's: a type with a field
+called `id` of its own means that one.
 
 ```ts
-{ key: 'shape' }                              // row.shape, then row.facets.shape
-{ key: 'year', field: 'firstYear' }           // row.facets.firstYear, under another name
-{ key: 'name', value: (row) => `${row.primary} (${row.id})` }
+{ key: 'shape' }                                  // row.fields.shape
+{ key: 'year', field: 'firstYear' }               // row.fields.firstYear, under another name
+{ key: 'entityLabel', label: 'Kind' }             // the row's own type
+{ key: 'label', value: (row) => `${row.fields.name} (${row.id})` }
 ```
+
+**Roles** are how the other five views read a column set. A card, a tile, a
+link row and a preview pane are an identity, a reference, a number or two and a
+mark — never a list of columns — so they ask for those parts by name:
+
+| Role | Read by |
+| --- | --- |
+| `identity` | every view, as the record's name; the drill and pin labels |
+| `reference` | the line under it in the list, cards, links, grid and preview |
+| `metric` | the numbers on a list row (first two), a card (first two), a home-screen preview row (first one), and every one of them in the preview pane |
+| `state` | the pill |
+| `score` | the meter in the list, the chip on a tile |
+| `updated` | the date on a card, a home-screen row and the preview pane |
+| `tint` | the grid tile's background and the preview pane's banner — never drawn as a cell, so the table leaves it out |
+
+A column with no role is a column and nothing else: it is in the table and
+nowhere else, which is what most columns are. A role nothing plays is a part
+those views leave out — no score column, no meter.
 
 | | |
 | --- | --- |
@@ -480,10 +514,10 @@ const schema: DomainSchema = {
 the two scopes — the row's type across every entity, and nothing there when the
 results are already of one.
 
-The other five views go on reading `labels`. A card and a tile are an identity
-and a number or two by construction; a column set is a table. `columnsFor`,
-`cellValue`, `cellText` and the rest of the resolvers are exported for a host
-rendering its own, and `useColumns()` is the same thing inside a shell.
+`columnsFor`, `roleColumn`, `roleColumns`, `cellValue`, `cellText` and the rest
+of the resolvers are exported for a host rendering its own views; `useColumns()`
+is the scope's set inside a shell, and `PresentedRow.parts` is a row with every
+role already resolved.
 
 ### A type you can make more of
 
@@ -517,12 +551,17 @@ a category's pieces each name the category. Two fields say so:
 ```ts
 {
   key: 'tenants',
-  labels: { primary: 'Domain', secondary: 'Crawled as', metric1: 'Tests', metric2: 'URLs' },
   // The field every other record carries this one's id in.
   scope: 'host',
-  // What each metric column counts, as the key of the entity counted.
-  drills: { metric1: 'tests', metric2: 'urls' },
-  /* … */
+  columns: defaultColumns({
+    identity: 'Domain',
+    reference: 'Crawled as',
+    // What each number counts, as the key of the entity counted.
+    metrics: [
+      { label: 'Tests', drill: 'tests' },
+      { label: 'URLs', drill: 'urls' },
+    ],
+  }),
 }
 ```
 
@@ -531,7 +570,7 @@ That makes a row two things rather than one:
 | | |
 | --- | --- |
 | its **name** | opens the record — `activate(row)`, as everywhere else |
-| its **metric** | narrows to what the number counts: `12` under *Tests* means "show me those twelve" |
+| its **metric** | narrows to what its column's `drill` counts: `12` under *Tests* means "show me those twelve" |
 | the **→** beside it | narrows to the record itself without picking a type, so every card reports what it holds of it |
 
 Unlike `activate` and `create`, the shell **applies** this one. Those two are
@@ -546,9 +585,8 @@ A host applying one itself wants `narrow(expr, entityKey)` from `useQueryState`,
 currently holds, and a route change is not synchronous, so the second writes over the first
 before it has arrived.
 
-A metric whose count has no entity behind it is left out of `drills` and stays
-the plain number it was, and a type that declares no `scope` offers no → at
-all.
+A number whose count has no entity behind it names no `drill` and stays the
+plain number it was, and a type that declares no `scope` offers no → at all.
 
 **Every entity must carry the join key**, including the ones that declare no
 scope of their own. An unresolved field in this language *matches* — that is
@@ -557,8 +595,8 @@ whose rows have never heard of `host` comes through `host:"example.com"`
 completely unfiltered. Give those rows an empty list rather than nothing:
 
 ```ts
-{ id: 'crawl_1', facets: { host: [] }, /* … */ }   // correctly excluded
-{ id: 'crawl_1', facets: {}, /* … */ }             // silently included
+{ id: 'crawl_1', fields: { host: [] }, /* … */ }   // correctly excluded
+{ id: 'crawl_1', fields: {}, /* … */ }             // silently included
 ```
 
 The bundled mock source does this for you: it reads the `scope` fields off the
@@ -575,11 +613,12 @@ scopeTermFor(schema, row)              // 'host:"www.example.com"', or null
 drillExpression(schema, query, row)    // the expression with that term added
 ```
 
-A scope key beats a column label of the same name in the expression field: an
-entity heading its primary column *Category* and carrying a `category` join key
-means the key. Generic names — `name`, `ref`, `metric1`, `metric2`, `entity`,
-`status`, `score`, `updated` — stay reserved whatever a schema calls its
-fields.
+A scope key beats a column heading of the same name in the expression field: an
+entity heading its identity column *Category* and carrying a `category` join
+key means the key. The generic names — `name`, `ref`, `status`, `score`,
+`updated`, `metric1`… — are a fallback rather than a reservation, so a schema
+with a field of that name means its own; only `entity` stays the shell's, so
+that any corpus can be narrowed by kind.
 
 ### A facet a row holds several of
 
@@ -591,7 +630,7 @@ hold a list instead, and it answers to each of its values on its own:
 ```
 
 ```ts
-{ id: 'acme', primary: 'Acme Retail', facets: { region: ['eu', 'us'] }, /* … */ }
+{ id: 'acme', fields: { primary: 'Acme Retail', region: ['eu', 'us'] }, /* … */ }
 ```
 
 That tenant is in `eu`'s set and in `us`'s, so the chips overlap rather than
@@ -618,12 +657,14 @@ cve OR advisory
 ```
 
 Whitespace means AND (the keyword is accepted too); `OR` splits alternatives; a
-bare word matches the identity fields; `*` is a wildcard. `field:value` and
-`field<op>number` resolve against `entity`, `status`, `score`, `updated`, any
-facet key, or the entity's own column labels — in that order, so a declared key
-is never shadowed by a heading that happens to read the same. An unrecognised
-field is ignored rather than treated as a mismatch, so a half-typed expression
-keeps showing results.
+bare word matches the identity and reference columns; `*` is a wildcard.
+`field:value` and `field<op>number` resolve in this order: `entity`, then a
+field the row actually carries, then a column by key or heading, then a facet
+by heading, then the generic role names (`name`, `ref`, `status`, `score`,
+`updated`, `metric1`…). So a declared field is never shadowed by a heading or a
+convention that happens to read the same. An unrecognised field is ignored
+rather than treated as a mismatch, so a half-typed expression keeps showing
+results.
 
 A term against a multi-valued facet is satisfied by any one of the row's
 values, so `region:eu` keeps a tenant that runs in `eu` and `us` both. A
@@ -808,7 +849,8 @@ state.hrefFor({ view: 'grid' })   // build a link without navigating
 
 Also exported: `useResults` — which is what drives a source, streaming or not,
 and hands back `rows`, `total`, `pageCount`, `pending`, `error` and `refresh` —
-plus `usePresentedRows`, `useColumns` and `useShellContext`.
+plus `useColumns` for the scope's column set, `usePresentedRows` for rows with
+every role already resolved into `parts`, and `useShellContext`.
 
 ## Windows
 

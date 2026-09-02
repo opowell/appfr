@@ -15,8 +15,8 @@ const rows = usePresentedRows()
       class="dc-link"
       @click="shell.activate(entry.row)"
     >
-      <span class="dc-link__primary dc-truncate">{{ entry.row.primary }}</span>
-      <span class="dc-link__secondary dc-mono dc-truncate">{{ entry.row.secondary }}</span>
+      <span class="dc-link__primary dc-truncate">{{ entry.parts.identity }}</span>
+      <span class="dc-link__secondary dc-mono dc-truncate">{{ entry.parts.reference }}</span>
     </button>
   </div>
 </template>

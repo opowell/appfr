@@ -167,7 +167,7 @@ export function parseQuery(
   const view = viewParam && isViewKind(decodeValue(viewParam)) ? decodeValue(viewParam) : base.view
 
   const sortParam = params.get(PARAM_SORT)
-  const sort = findSort(entity, sortParam ? decodeValue(sortParam) : defaults.sort)
+  const sort = findSort(entity, sortParam ? decodeValue(sortParam) : defaults.sort, schema)
 
   const dirParam = params.get(PARAM_DIR)
   const dir = dirParam ? (decodeValue(dirParam) === 'asc' ? 'asc' : 'desc') : base.dir

@@ -85,7 +85,7 @@ const narrowed = computed(() => !shell.isPristine.value)
            cannot nest. -->
       <div
         v-for="entry in preview.rows"
-        :key="entry.row.id"
+        :key="entry.key"
         class="dc-type__row"
       >
         <button

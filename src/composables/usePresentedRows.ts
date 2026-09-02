@@ -2,7 +2,13 @@ import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 import type { EntityLabels, EntitySchema, ShellRow } from '../types'
 import { formatDate, formatMetric, formatOrdinal, formatPercent } from '../data/format'
+import { rowKey } from '../query/columns'
+import { GENERIC_LABELS } from '../query/schema'
 import { useShellContext } from './context'
+
+/* Re-exported from where the pure resolvers live, so the composable stays the
+   one import a view needs. */
+export { GENERIC_LABELS }
 
 /**
  * A row with its display strings resolved once. Views render these instead of
@@ -11,6 +17,12 @@ import { useShellContext } from './context'
  */
 export interface PresentedRow {
   row: ShellRow
+  /**
+   * What the views track this row by: its id, or its place in the result where
+   * a source returned none. Rows keyed alike are rows a renderer reuses for
+   * each other, so this is never empty and never repeats within a page.
+   */
+  key: string
   /** The row's entity, worth showing only when the results span several. */
   entityLabel: string
   /**
@@ -34,16 +46,6 @@ export interface PresentedRow {
   pinned: boolean
 }
 
-/**
- * Column names to use when the results span every entity, where no single
- * schema's vocabulary applies.
- */
-export const GENERIC_LABELS: EntityLabels = {
-  primary: 'Item',
-  secondary: 'Reference',
-  metric1: 'Metric',
-  metric2: 'Metric 2',
-}
 
 /** The column names for the current scope, generic across the whole corpus. */
 export function useViewLabels(): ComputedRef<EntityLabels> {
@@ -63,6 +65,7 @@ export function presentRow(
 ): PresentedRow {
   return {
     row,
+    key: rowKey(row, index),
     entityLabel: row.entityLabel,
     entity,
     labels: entity?.labels ?? GENERIC_LABELS,

@@ -27,6 +27,12 @@ export default defineConfig({
       external: ['vue', 'vue-router', '@nuxt/kit'],
       output: {
         assetFileNames: 'style.css',
+        /*
+         * Stable names for the chunks two entry points share — `columns.js`,
+         * imported by both `index.js` and `fixtures.js`. Hashed, every edit to
+         * a shared module would rename its file, and `dist/` is committed.
+         */
+        chunkFileNames: '[name].js',
       },
     },
   },

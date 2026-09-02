@@ -1,5 +1,6 @@
 import type {
   DomainSchema,
+  EntityLabels,
   EntitySchema,
   FacetDef,
   FacetState,
@@ -39,6 +40,17 @@ export function focusEntity(schema: DomainSchema, defaults: ShellQueryDefaults =
   const first = schema.entities[0]
   if (!nominated && !first) throw new Error(`Schema "${schema.key}" declares no entities`)
   return nominated ?? (first as EntitySchema)
+}
+
+/**
+ * Column names to use when the results span every entity, where no single
+ * schema's vocabulary applies.
+ */
+export const GENERIC_LABELS: EntityLabels = {
+  primary: 'Item',
+  secondary: 'Reference',
+  metric1: 'Metric',
+  metric2: 'Metric 2',
 }
 
 /**

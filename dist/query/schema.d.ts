@@ -1,4 +1,4 @@
-import type { DomainSchema, EntitySchema, FacetDef, FacetState, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
+import type { DomainSchema, EntityLabels, EntitySchema, FacetDef, FacetState, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
 /**
  * Cards. On the home screen — where no entity is filtered to — that means a
  * card per item type rather than per record: what each type is, how many of it
@@ -15,6 +15,11 @@ export declare function findEntity(schema: DomainSchema, key: string | null | un
  * so the panel and the home screen's search box have somewhere to go.
  */
 export declare function focusEntity(schema: DomainSchema, defaults?: ShellQueryDefaults): EntitySchema;
+/**
+ * Column names to use when the results span every entity, where no single
+ * schema's vocabulary applies.
+ */
+export declare const GENERIC_LABELS: EntityLabels;
 /**
  * Sort options. Across every entity the metric columns have no single name, so
  * the metric sorts are labelled generically; inside one entity each takes that

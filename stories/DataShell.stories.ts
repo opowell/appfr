@@ -3,7 +3,16 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import DataShell from '../src/components/DataShell.vue'
 import { iRadarSchema, legoSchema } from '../src/fixtures/schemas'
 import type { DomainSchema } from '../src/types'
-import { delayedSource, failingSource, longValueSource, renderShell, themeArgTypes } from './helpers'
+import {
+  delayedSource,
+  everythingColumnsSchema,
+  failingSource,
+  longValueSource,
+  noColumnsSchema,
+  renderShell,
+  selectableSchema,
+  themeArgTypes,
+} from './helpers'
 import type { ShellStoryArgs } from './helpers'
 
 const meta = {
@@ -243,6 +252,58 @@ export const PreviewView = story({ search: '?e=items&v=preview' })
 export const TableViewLongValues = story({
   search: '?e=searches&v=table',
   source: longValueSource(),
+})
+
+/* ------------------------------------------------------------------ columns */
+
+/**
+ * A table of the schema's own columns rather than the default eight.
+ *
+ * The four `labels` describe a shape — an identity pair and two metrics — that
+ * a card and a tile really are, and that a catalogue is not. LEGO's pieces
+ * declare `columns` instead: a picture, a shape, a first year that is a year
+ * and not a quantity, two counts that each lead to what they count, a weight
+ * in whatever unit the number is actually in, and a rarity flag. Twelve
+ * columns, and the shell knows what none of them mean.
+ */
+export const TableColumns = story({
+  schema: legoSchema,
+  search: '?e=pieces&v=table',
+})
+
+/**
+ * A cell of the host's own. `kind: 'component'` hands the cell whatever you
+ * give it — here the row checkbox a table that selects rows needs, which the
+ * shell has no opinion about: it passes the row, and what a tick means is the
+ * host's. Ticks survive sorting, paging and a change of view, because they are
+ * the host's state and not the table's.
+ */
+export const TableColumnsWithSelection = story({
+  schema: selectableSchema(),
+  search: '?e=items&v=table',
+})
+
+/**
+ * And a type that has not said what its table is.
+ *
+ * The shell renders the columns it is given and invents none, so this one has
+ * no table. It says which type and what would fix it, rather than drawing an
+ * empty frame — the other views still work, because a card and a tile are made
+ * of the labels rather than of columns.
+ */
+export const TableNoColumns = story({
+  schema: noColumnsSchema(),
+  search: '?e=searches&v=table',
+})
+
+/**
+ * Columns for the mixed result set — every entity at once, where an entity's
+ * own set would be describing the wrong rows. Declared on the schema rather
+ * than on any one type, and the row's kind earns a column of its own.
+ */
+export const TableColumnsEverything = story({
+  schema: everythingColumnsSchema(),
+  search: '?v=table',
 })
 
 /* ------------------------------------------------------- restricting the views */

@@ -6,6 +6,7 @@
  * and the sort options. Swapping the schema swaps the vocabulary; the shell
  * itself never changes.
  */
+import type { Component } from 'vue';
 /** The result renderers the shell ships with. */
 export type ViewKind = 'list' | 'cards' | 'grid' | 'table' | 'links' | 'preview';
 export declare const VIEW_KINDS: readonly ["list", "cards", "grid", "table", "links", "preview"];
@@ -79,6 +80,133 @@ export type FacetValue = {
 /** Facet values keyed by {@link FacetDef.key}. */
 export type FacetState = Record<string, FacetValue>;
 /**
+ * What a cell draws. `text` when a column does not say.
+ *
+ * The first four are values formatted onto the page; `status`, `score` and
+ * `image` are the shell's own marks; `ordinal` is the row's position in the
+ * result rather than anything on the row; and `component` hands the cell to
+ * something of yours — the escape hatch, and the reason there is no HTML
+ * string here to inject into.
+ */
+export type ColumnKind = 'text' | 'number' | 'date' | 'status' | 'score' | 'image' | 'ordinal' | 'component';
+export type ColumnAlign = 'left' | 'center' | 'right';
+/**
+ * The container widths a column may stand down at, narrowest first. A fixed
+ * ladder rather than a free number because the rule is a container query in a
+ * stylesheet, and a stylesheet cannot be handed an arbitrary breakpoint per
+ * column. Pick the rung that says how expendable the column is.
+ */
+export declare const COLUMN_BREAKPOINTS: readonly [480, 620, 760, 900, 1100];
+export type ColumnBreakpoint = (typeof COLUMN_BREAKPOINTS)[number];
+/**
+ * One column of the table view.
+ *
+ * A column says where its value comes from, how it is drawn, and what pressing
+ * it means. Declaring any replaces the default set entirely — the ordinal, the
+ * identity pair, the two metrics, the date and the state — so an entity with
+ * eleven columns and no state among them is describable, which the four
+ * {@link EntityLabels} on their own are not.
+ */
+export interface ColumnDef {
+    /**
+     * Identifies the column, and is the field read off the row when
+     * {@link ColumnDef.field} and {@link ColumnDef.value} are both absent.
+     *
+     * Optional, because a column that names its field or computes its value has
+     * already said what it is. What identifies it then falls back to the field,
+     * then to its label, then to where it sits in the list — never to nothing,
+     * which is a table whose rows cannot be told apart.
+     */
+    key?: string;
+    /** The header. A column whose content says what it is can leave it out. */
+    label?: string;
+    kind?: ColumnKind;
+    /**
+     * The row field to read, when it is not the column's own key. Looked up on
+     * {@link ShellRow} first and in {@link ShellRow.facets} after, so the values
+     * a source already carries per row are columns without a change of shape.
+     */
+    field?: string;
+    /**
+     * Reads the cell's value off the row, for a column that is a computation
+     * rather than a field — two fields joined, a unit converted, a name with its
+     * id after it. Beats {@link ColumnDef.field} when both are given.
+     */
+    value?: (row: ShellRow) => unknown;
+    /**
+     * Turns that value into what the cell says. Beats the formatting the kind
+     * would have done — which is where a metric in grams, a currency or a
+     * duration goes, the shell knowing only how to count.
+     */
+    format?: (value: unknown, row: ShellRow) => string;
+    /**
+     * CSS width. Columns that name one keep it at every shell width; what is
+     * left over is shared between the columns that do not, so at least one
+     * column should go without.
+     */
+    width?: string;
+    /** Caps the height of an `image` cell. */
+    height?: string;
+    align?: ColumnAlign;
+    /** Sets the cell in the monospace face — for ids, paths and numbers. */
+    mono?: boolean;
+    /** Draws the cell in the secondary ink: present, but not what is scanned. */
+    muted?: boolean;
+    /**
+     * Truncates rather than wraps, with the whole value on hover. On by default
+     * for the text kinds, which is what keeps every row one line deep.
+     */
+    truncate?: boolean;
+    /**
+     * The {@link SortDef.key} this header sorts by. The header is a button only
+     * when the key is one the entity actually offers, so a column can name a
+     * sort the entity may or may not declare and the table stays honest.
+     */
+    sort?: string;
+    /** Opens the record when pressed — what the identity column does. */
+    activate?: boolean;
+    /**
+     * Puts the narrow-to-this-record affordance beside the value — the → an
+     * entity's {@link EntitySchema.scope} earns. On the identity column by
+     * default; a type declaring no scope offers it nowhere.
+     */
+    scope?: boolean;
+    /**
+     * Narrows to what this cell's value counts, as the {@link EntitySchema.key}
+     * of the entity counted. Pressing `12` under **Tests** means "show me those
+     * twelve", exactly as {@link EntitySchema.drills} does for the two metrics —
+     * and, like it, needs the row's entity to declare a {@link EntitySchema.scope},
+     * without which nothing on the far side says which record it belongs to.
+     */
+    drill?: string;
+    /**
+     * Called with the row when the cell is pressed, for a column that means
+     * something only the host knows. The shell reports and applies nothing, as
+     * it does for {@link ColumnDef.activate}.
+     */
+    click?: (row: ShellRow) => void;
+    /**
+     * The component a `component` cell renders, given `{ row, entry, value,
+     * column }`. Anything a host wants a cell to be — a sparkline, a thumbnail
+     * stack, a set of buttons — without a string of HTML anywhere near it.
+     */
+    component?: Component;
+    /**
+     * Which scope the column appears in. `everything` is the mixed result set,
+     * where no single entity's vocabulary applies; `scoped` is one entity's own
+     * list. `always` when unsaid.
+     */
+    when?: 'always' | 'everything' | 'scoped';
+    /**
+     * The container width below which the column stands down, so a narrow table
+     * loses what it can do without rather than crowding what it cannot. Columns
+     * that name nothing are always on screen.
+     */
+    hideBelow?: ColumnBreakpoint;
+    /** Extra class on the header and every cell of the column. */
+    class?: string;
+}
+/**
  * Labels for the four data columns every entity exposes. Views read these
  * instead of hard-coding column names, which is what lets one set of
  * renderers serve every schema.
@@ -148,6 +276,21 @@ export interface EntitySchema {
     samples: Array<readonly [string, string]>;
     /** Overrides the default `updated / score / metric1 / name` sort set. */
     sorts?: SortDef[];
+    /**
+     * The table view's columns: what it renders, in the order given, and nothing
+     * else. Eleven of them, or two.
+     *
+     * The shell invents none. A type that declares nothing here has no table to
+     * draw — the four {@link EntitySchema.labels} are what a card and a tile are
+     * made of, and reading a table out of them would be the shell deciding what
+     * this type is. `defaultColumns(entity)` is exported for the schema that
+     * wants the ordinal, identity pair, metrics, date and state after all, and
+     * spreading it is how that schema says so.
+     *
+     * The other five views go on reading the labels: a card and a tile are an
+     * identity and a number or two by construction, and a column set is a table.
+     */
+    columns?: ColumnDef[];
 }
 export interface DomainSchema {
     key: string;
@@ -157,6 +300,13 @@ export interface DomainSchema {
     /** Example expression, used as the expression field's placeholder. */
     placeholder: string;
     entities: EntitySchema[];
+    /**
+     * Columns for the mixed result set — every entity at once, where no single
+     * type's vocabulary applies and an entity's own {@link EntitySchema.columns}
+     * would be describing the wrong rows. Declared here or nowhere: as with an
+     * entity's, the shell invents none.
+     */
+    columns?: ColumnDef[];
 }
 /**
  * The complete, serialisable description of what the content area shows.

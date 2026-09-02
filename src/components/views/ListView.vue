@@ -21,7 +21,7 @@ const showEntity = computed(() => shell.isEverything.value)
   >
     <div
       v-for="entry in rows"
-      :key="entry.row.id"
+      :key="entry.key"
       class="dc-list__row"
       role="listitem"
     >

@@ -1,4 +1,13 @@
-import type { ChipsFacet, DomainSchema, EntitySchema, RangeFacet, ToggleFacet } from '../types'
+import type {
+  ChipsFacet,
+  ColumnDef,
+  DomainSchema,
+  EntitySchema,
+  RangeFacet,
+  ShellRow,
+  ToggleFacet,
+} from '../types'
+import { defaultColumns } from '../query/columns'
 
 /**
  * The four schemas the design was drawn against. They exist to prove the point
@@ -47,24 +56,134 @@ interface EntityInput {
   scope?: string
   /** The entity each metric counts, where the schema has one. */
   drills?: EntitySchema['drills']
+  /** The table's columns, for a type the four labels are not the shape of. */
+  columns?: ColumnDef[]
 }
 
-const entity = (input: EntityInput): EntitySchema => ({
-  key: input.key,
-  label: input.label,
-  count: input.count,
-  labels: {
-    primary: input.primary,
-    secondary: input.secondary,
-    metric1: input.metric1,
-    metric2: input.metric2,
+/**
+ * The shell renders the columns it is given and invents none, so every one of
+ * these says what its table is. All but one of them wants the familiar eight,
+ * and `defaultColumns` is how a schema asks for those by name rather than by
+ * leaving the field out and hoping.
+ */
+const entity = (input: EntityInput): EntitySchema => {
+  const built: EntitySchema = {
+    key: input.key,
+    label: input.label,
+    count: input.count,
+    labels: {
+      primary: input.primary,
+      secondary: input.secondary,
+      metric1: input.metric1,
+      metric2: input.metric2,
+    },
+    facets: input.facets,
+    tabs: input.tabs,
+    samples: input.samples,
+    ...(input.scope ? { scope: input.scope } : {}),
+    ...(input.drills ? { drills: input.drills } : {}),
+  }
+  // Built first, because the default set reads the labels and the drills off
+  // the entity it is for.
+  return { ...built, columns: input.columns ?? defaultColumns(built) }
+}
+
+/**
+ * Columns for the mixed result set, which every one of these schemas takes as
+ * it comes: generic labels, and the row's own type among them.
+ */
+const everythingColumns: ColumnDef[] = defaultColumns(null)
+
+/*
+ * A worked column set — see `legoSchema`'s pieces below.
+ *
+ * A catalogue is the case the four labels cannot describe: a thumbnail, a
+ * shape, a year that is not a quantity, two counts that each lead somewhere, a
+ * weight in units of its own, a flag. Twelve columns rather than the default
+ * eight, and none of them a compromise about which two numbers matter most.
+ */
+
+/**
+ * The piece's picture, as a data URI rather than a URL. A fixture that fetched
+ * anything would make every story and every test depend on a network and on
+ * whoever is hosting the images this week.
+ */
+const swatch = (row: ShellRow): string =>
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28">` +
+      `<rect width="56" height="28" rx="3" fill="${row.tint}"/></svg>`,
+  )
+
+/**
+ * Weight, held in centigrams and read in whatever unit the number is actually
+ * in — `48cg`, `21.4g`, `1.3kg`. The shell counts things and knows nothing of
+ * grams, so this is what `format` is for.
+ */
+function grams(value: unknown): string {
+  const cg = Number(value)
+  if (!Number.isFinite(cg)) return '—'
+  if (cg < 100) return `${Math.round(cg)}cg`
+  if (cg < 100_000) return `${(cg / 100).toFixed(1)}g`
+  return `${(cg / 100_000).toFixed(1)}kg`
+}
+
+const pieceColumns: ColumnDef[] = [
+  { key: 'ordinal', kind: 'ordinal', label: '#', width: '48px' },
+  // No label: a column of pictures says what it is.
+  { key: 'thumb', kind: 'image', width: '56px', height: '28px', value: swatch },
+  { key: 'primary', label: 'Piece', sort: 'name', activate: true, scope: true },
+  { key: 'secondary', label: 'Part no.', width: '104px', mono: true, muted: true },
+  { key: 'shape', label: 'Shape', width: '92px', hideBelow: 620 },
+  {
+    key: 'firstYear',
+    label: 'First year',
+    width: '88px',
+    align: 'right',
+    mono: true,
+    // A year is a number and not a quantity: 1988, never 2.0k.
+    format: (value) => String(value ?? '—'),
+    hideBelow: 760,
   },
-  facets: input.facets,
-  tabs: input.tabs,
-  samples: input.samples,
-  ...(input.scope ? { scope: input.scope } : {}),
-  ...(input.drills ? { drills: input.drills } : {}),
-})
+  {
+    key: 'metric1',
+    kind: 'number',
+    label: 'Colors',
+    width: '84px',
+    sort: 'metric1',
+    drill: 'colors',
+    hideBelow: 900,
+  },
+  {
+    key: 'metric2',
+    kind: 'number',
+    label: 'In sets',
+    width: '84px',
+    sort: 'metric2',
+    drill: 'sets',
+    hideBelow: 900,
+  },
+  {
+    key: 'weight',
+    label: 'Weight',
+    width: '88px',
+    align: 'right',
+    mono: true,
+    value: (row) => Math.round(row.score * 5_000),
+    format: grams,
+    hideBelow: 1100,
+  },
+  {
+    key: 'rarity',
+    label: 'Rare',
+    width: '64px',
+    muted: true,
+    format: (value) => (value === true ? 'rare' : '—'),
+    hideBelow: 1100,
+  },
+  { key: 'score', kind: 'score', label: 'Match', width: '72px', hideBelow: 900 },
+  { key: 'status', kind: 'status', label: 'State', width: '104px' },
+]
 
 /*
  * Logs and settings are entities like any other. They carry the same shape as
@@ -145,6 +264,7 @@ export const iRadarSchema: DomainSchema = {
   label: 'iRadar',
   kicker: 'Web monitoring',
   placeholder: 'site:*.shop AND price < 40 AND seen:false',
+  columns: everythingColumns,
   entities: [
     entity({
       key: 'searches',
@@ -227,6 +347,7 @@ export const legoSchema: DomainSchema = {
   label: 'LEGO',
   kicker: 'Catalogue & inventory',
   placeholder: 'theme:space AND year >= 1988 AND parts > 300',
+  columns: everythingColumns,
   entities: [
     entity({
       key: 'sets',
@@ -273,6 +394,10 @@ export const legoSchema: DomainSchema = {
         toggle('rarity', 'Rarity', 'Only parts in < 5 sets'),
       ],
       tabs: ['Information', 'Colors', 'Sets', 'Logs'],
+      // The one type in these four fixtures whose table is not the default
+      // eight columns: a catalogue piece is a picture, a shape, a year, two
+      // counts, a weight and a flag, and no four of those are the four.
+      columns: pieceColumns,
       samples: [
         ['Brick 2 x 4', '3001'],
         ['Plate 1 x 2', '3023'],
@@ -367,6 +492,7 @@ export const commerceSchema: DomainSchema = {
   label: 'Commerce',
   kicker: 'Crawl & test platform',
   placeholder: 'tenant:acme AND status:failed AND run > 2026-08-01',
+  columns: everythingColumns,
   entities: [
     entity({
       key: 'tenants',
@@ -497,6 +623,7 @@ export const battleSimSchema: DomainSchema = {
   label: 'Battle-sim',
   kicker: 'Simulation runs',
   placeholder: 'faction:north AND rounds > 40 AND outcome:draw',
+  columns: everythingColumns,
   entities: [
     entity({
       key: 'units',

@@ -1,5 +1,7 @@
 import type { ComputedRef } from 'vue';
 import type { EntityLabels, EntitySchema, ShellRow } from '../types';
+import { GENERIC_LABELS } from '../query/schema';
+export { GENERIC_LABELS };
 /**
  * A row with its display strings resolved once. Views render these instead of
  * formatting inline, so the list, table, cards and grid can never disagree
@@ -7,6 +9,12 @@ import type { EntityLabels, EntitySchema, ShellRow } from '../types';
  */
 export interface PresentedRow {
     row: ShellRow;
+    /**
+     * What the views track this row by: its id, or its place in the result where
+     * a source returned none. Rows keyed alike are rows a renderer reuses for
+     * each other, so this is never empty and never repeats within a page.
+     */
+    key: string;
     /** The row's entity, worth showing only when the results span several. */
     entityLabel: string;
     /**
@@ -29,11 +37,6 @@ export interface PresentedRow {
     percent: string;
     pinned: boolean;
 }
-/**
- * Column names to use when the results span every entity, where no single
- * schema's vocabulary applies.
- */
-export declare const GENERIC_LABELS: EntityLabels;
 /** The column names for the current scope, generic across the whole corpus. */
 export declare function useViewLabels(): ComputedRef<EntityLabels>;
 /**

@@ -8,8 +8,9 @@ sort order. **The query lives in the URL**, so every state the shell can be in
 is a link someone can paste, bookmark, or reload into.
 
 It is schema-driven: one `DomainSchema` describes the entities, their facets,
-and what their columns are called. The same header, panel and six views serve
-any schema — swapping the schema swaps the vocabulary, not the component.
+what their fields are called, and what the columns of each one's table are. The
+same header, panel and six views serve any schema: swapping the schema swaps
+the vocabulary, not the component.
 
 For screens that are several things at once there is a second component:
 [`<WindowFrame>`](#windows) arranges panels in a recursively split grid, tabbed
@@ -245,12 +246,171 @@ const schema: DomainSchema = {
 
 Every entity has the same shape — an identity pair, two named metrics, a date,
 a state and a score — which is what lets one set of renderers serve all of
-them, and what lets them share a result set.
+them, and what lets them share a result set. A card and a tile really are that
+shape. A table is whatever its [`columns`](#columns-of-your-own) say and
+nothing besides — eleven of them, or two — which is the one thing here the
+shell does not derive from the labels.
 
 Four worked examples ship in `header-content-layout/fixtures`: `iRadarSchema`,
 `legoSchema`, `commerceSchema`, `battleSimSchema`. Each also gets `logsEntity`
 and `settingsEntity`, which are exported on their own and are entities like any
-other — no special casing anywhere in the shell.
+other — no special casing anywhere in the shell. Each entity asks for its
+table by name: all but one spread `defaultColumns`, and `legoSchema`'s pieces
+are the worked set of twelve.
+
+### Columns of your own
+
+`labels` names four columns because a card and a tile really are an identity
+and a number or two. A table is not: a catalogue piece is a picture, a shape, a
+year, two counts, a weight and a flag, and no four of those are the four.
+
+So a table is the `columns` its entity declares — exactly those, in that order,
+however many. **The shell invents none.** A type that declares nothing has no
+table to draw, and says so where one would have been; reading a table out of
+the labels would be the component deciding what your data is, which is the same
+line it does not cross for `create` or for a drill.
+
+```ts
+{
+  key: 'pieces',
+  labels: { primary: 'Piece', secondary: 'Part number', metric1: 'Colors', metric2: 'In sets' },
+  columns: [
+    { key: 'ordinal', kind: 'ordinal', label: '#', width: '48px' },
+    // No label: a column of pictures says what it is.
+    { key: 'thumb', kind: 'image', width: '56px', height: '28px', value: (row) => row.facets.image },
+    { key: 'primary', label: 'Piece', sort: 'name', activate: true, scope: true },
+    { key: 'secondary', label: 'Part no.', width: '104px', mono: true, muted: true },
+    { key: 'shape', label: 'Shape', width: '92px', hideBelow: 620 },
+    // A year is a number and not a quantity: 1988, never 2.0k.
+    { key: 'firstYear', label: 'First year', width: '88px', align: 'right', format: String },
+    { key: 'metric1', kind: 'number', label: 'Colors', sort: 'metric1', drill: 'colors' },
+    { key: 'weight', label: 'Weight', value: (row) => row.facets.cg, format: grams },
+    { key: 'status', kind: 'status', label: 'State', width: '104px' },
+  ],
+}
+```
+
+The familiar eight — ordinal, identity pair, type, two metrics, date, state —
+are exported as `defaultColumns(entity)`, for the schema that wants them after
+all. Nothing applies it: spreading it is how a schema *asks*, which is also how
+it takes those eight and adds a ninth.
+
+```ts
+import { defaultColumns } from 'header-content-layout'
+
+columns: defaultColumns(entity)                                   // the eight
+columns: [...defaultColumns(entity), { key: 'owner', label: 'Owner' }]  // and one
+```
+
+The four shipped fixtures do exactly that — `legoSchema`'s pieces are the one
+entity of the four with a set of its own.
+
+**Where a value comes from**, in order: the column's own `value(row)` if it has
+one; otherwise the field it names — `field`, or its `key` — looked for on the
+row first and in `row.facets` after. That last step is the one that matters: a
+source already returns whatever it likes in `facets`, so a column of anything
+needs no change to `ShellRow`.
+
+```ts
+{ key: 'shape' }                              // row.shape, then row.facets.shape
+{ key: 'year', field: 'firstYear' }           // row.facets.firstYear, under another name
+{ key: 'name', value: (row) => `${row.primary} (${row.id})` }
+```
+
+| | |
+| --- | --- |
+| `key` | identifies the column, and is the field read when nothing else says |
+| `label` | the header. A column whose content says what it is leaves it out |
+| `kind` | `text` (the default), `number`, `date`, `status`, `score`, `image`, `ordinal`, `component` |
+| `field` / `value` / `format` | where the value comes from and how it reads |
+| `width` / `height` / `align` / `mono` / `muted` / `truncate` | how it is drawn |
+| `sort` | the `SortDef` key this header sorts by |
+| `activate` / `click` / `drill` / `scope` | what pressing it does |
+| `when` | `always`, or only in one of the two scopes |
+| `hideBelow` | the container width it stands down at |
+| `component` | what a `component` cell renders |
+
+**What pressing a cell means** is said per column rather than per table.
+`activate` opens the record — `activate(row)`, as everywhere else. `drill`
+names the entity the value counts, and pressing `12` under *Colors* means "show
+me those twelve", exactly as `drills` does for the two metrics and under the
+same condition: the row's entity has to declare a `scope`, or nothing on the
+far side says which record it belongs to. `scope` puts the → beside the value.
+`click` is called with the row, for a column that means something only you
+know.
+
+**Sorting** is offered where the column names a sort the entity actually
+declares, so a set written for several types cannot offer an ordering the query
+has no way to hold. Everything else about it is unchanged: the header is the
+same button the query panel's control is, and the sort is in the URL.
+
+**Standing down.** `hideBelow` names the container width a column leaves at,
+from the ladder `480 | 620 | 760 | 900 | 1100` — a ladder rather than a free
+number because the rule is a container query in a stylesheet, and a stylesheet
+cannot be handed an arbitrary breakpoint per column. Columns that name none are
+always on screen.
+
+**A cell of your own.** `kind: 'component'` hands the cell to a component of
+yours, given `{ row, entry, value, column }` — a sparkline, a thumbnail stack,
+a row of buttons, the checkbox a table that selects rows needs. The shell has
+no selection model and does not need one: it passes the row, and what a tick
+means is yours. Whatever you render has to stop the click reaching the row,
+which would open the record.
+
+```ts
+{ key: 'select', kind: 'component', component: SelectCell, width: '36px' }
+```
+
+There is deliberately no HTML-string cell. A column that wants markup gets a
+component, which is the same expressiveness without a `v-html` in the middle of
+a table of other people's data.
+
+**Keys have a fallback; nothing else does.** A `key` is what a rendered column
+is tracked by, so it has to be there and it has to be distinct — two columns
+keyed alike are two the renderer cannot tell apart, and a column keyed
+`undefined` is every column at once. A column that named its field or computed
+its value has already said enough, so `key` is optional and falls back along a
+chain that always ends somewhere: the key, then `field`, then `label`, then its
+position.
+
+```ts
+{ key: 'shape' }                        // 'shape'
+{ field: 'firstYear', label: 'Year' }   // 'firstYear'
+{ label: 'Weight', value: grams }       // 'Weight'
+{ kind: 'ordinal' }                     // 'column-0'
+```
+
+The same one level up: a row is tracked by `row.id`, and a source that returns
+none gets the row's place in the result instead — `pieces-4`. Rows keyed alike
+are rows a renderer reuses for each other, which is a checkbox ticked against
+the row that replaced it and an open row that stays open under a different
+record. `columnKey(column, index)` and `rowKey(row, index)` are both exported,
+and `PresentedRow.key` is the resolved one the views actually use.
+
+**Across every entity** — the mixed result set — an entity's own columns would
+be describing the wrong rows, so the set comes from the schema instead:
+
+```ts
+const schema: DomainSchema = {
+  /* … */
+  columns: [
+    { key: 'ordinal', kind: 'ordinal', label: '#', width: '48px' },
+    // Across kinds, the type is the column that tells you most.
+    { key: 'entityLabel', label: 'Kind', width: '120px', when: 'everything' },
+    { key: 'primary', label: 'Record', sort: 'name', activate: true, scope: true },
+    { key: 'status', kind: 'status', label: 'State', width: '104px' },
+  ],
+}
+```
+
+`when` is what lets one set carry a column that only means something in one of
+the two scopes — the row's type across every entity, and nothing there when the
+results are already of one.
+
+The other five views go on reading `labels`. A card and a tile are an identity
+and a number or two by construction; a column set is a table. `columnsFor`,
+`cellValue`, `cellText` and the rest of the resolvers are exported for a host
+rendering its own, and `useColumns()` is the same thing inside a shell.
 
 ### A type you can make more of
 
@@ -531,10 +691,12 @@ shell.hrefFor({ page: 4 })     // a link, without navigating
 
 ### The table stays inside the shell
 
-The table view lays out fixed: the metrics, the date, the kind and the state
-get the widths they are declared with, and the name and the secondary share
-whatever is left. So it is exactly as wide as the shell however long a value
-is, and what does not fit is truncated with the whole of it on hover.
+The table view lays out fixed: every column that names a `width` keeps it, and
+the ones that name none share whatever is left. So it is exactly as wide as the
+shell however long a value is, and what does not fit is truncated with the
+whole of it on hover. (In `defaultColumns` that means the metrics, the date,
+the kind and the state are fixed, and the name and the secondary share the
+rest.)
 
 ```
   15  Regulatory filings, every word of a name nob…   .crawl-runs/2026-08…  682  116  29 Aug  ok
@@ -546,10 +708,11 @@ puts the date and the state off the right-hand edge — the two columns a row is
 scanned for — and a wrapped path makes one row four lines deep and the row
 under it one.
 
-Below the widths it needs, columns stand down rather than crowd: the metrics
-first, at the size the list view drops them too, then the kind — which the
-query itself usually says — then the date. The name, the secondary and the
-state are what is left, and they are what a row is for.
+Below the widths it needs, columns stand down rather than crowd — each at the
+container width its [`hideBelow`](#columns-of-your-own) names. In the default
+set that is the metrics first, at the size the list view drops them too, then
+the kind, which the query itself usually says, then the date. The name, the
+secondary and the state are what is left, and they are what a row is for.
 
 ### Composables
 
@@ -570,7 +733,8 @@ state.setPage(3)        // paging, which any filter change returns to page 1
 state.hrefFor({ view: 'grid' })   // build a link without navigating
 ```
 
-Also exported: `useResults`, `usePresentedRows`, `useShellContext`.
+Also exported: `useResults`, `usePresentedRows`, `useColumns`,
+`useShellContext`.
 
 ## Windows
 

@@ -10,7 +10,7 @@ const rows = usePresentedRows()
   <div class="dc-links">
     <button
       v-for="entry in rows"
-      :key="entry.row.id"
+      :key="entry.key"
       type="button"
       class="dc-link"
       @click="shell.activate(entry.row)"

@@ -1,36 +1,102 @@
-const e = (s, i, n, o = !1) => ({
+import { d } from "./columns.js";
+const t = (e, a, n, o = !1) => ({
   kind: "chips",
-  key: s,
-  label: i,
+  key: e,
+  label: a,
   options: n,
   ...o ? { multiple: o } : {}
-}), a = (s, i, n, o) => ({
+}), i = (e, a, n, o) => ({
   kind: "range",
-  key: s,
-  label: i,
+  key: e,
+  label: a,
   min: n,
   max: o
-}), r = (s, i, n) => ({
+}), r = (e, a, n) => ({
   kind: "toggle",
-  key: s,
-  label: i,
+  key: e,
+  label: a,
   text: n
-}), t = (s) => ({
-  key: s.key,
-  label: s.label,
-  count: s.count,
-  labels: {
-    primary: s.primary,
-    secondary: s.secondary,
-    metric1: s.metric1,
-    metric2: s.metric2
+}), s = (e) => {
+  const a = {
+    key: e.key,
+    label: e.label,
+    count: e.count,
+    labels: {
+      primary: e.primary,
+      secondary: e.secondary,
+      metric1: e.metric1,
+      metric2: e.metric2
+    },
+    facets: e.facets,
+    tabs: e.tabs,
+    samples: e.samples,
+    ...e.scope ? { scope: e.scope } : {},
+    ...e.drills ? { drills: e.drills } : {}
+  };
+  return { ...a, columns: e.columns ?? d(a) };
+}, c = d(null), u = (e) => "data:image/svg+xml," + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28"><rect width="56" height="28" rx="3" fill="${e.tint}"/></svg>`
+);
+function p(e) {
+  const a = Number(e);
+  return Number.isFinite(a) ? a < 100 ? `${Math.round(a)}cg` : a < 1e5 ? `${(a / 100).toFixed(1)}g` : `${(a / 1e5).toFixed(1)}kg` : "—";
+}
+const y = [
+  { key: "ordinal", kind: "ordinal", label: "#", width: "48px" },
+  // No label: a column of pictures says what it is.
+  { key: "thumb", kind: "image", width: "56px", height: "28px", value: u },
+  { key: "primary", label: "Piece", sort: "name", activate: !0, scope: !0 },
+  { key: "secondary", label: "Part no.", width: "104px", mono: !0, muted: !0 },
+  { key: "shape", label: "Shape", width: "92px", hideBelow: 620 },
+  {
+    key: "firstYear",
+    label: "First year",
+    width: "88px",
+    align: "right",
+    mono: !0,
+    // A year is a number and not a quantity: 1988, never 2.0k.
+    format: (e) => String(e ?? "—"),
+    hideBelow: 760
   },
-  facets: s.facets,
-  tabs: s.tabs,
-  samples: s.samples,
-  ...s.scope ? { scope: s.scope } : {},
-  ...s.drills ? { drills: s.drills } : {}
-}), c = t({
+  {
+    key: "metric1",
+    kind: "number",
+    label: "Colors",
+    width: "84px",
+    sort: "metric1",
+    drill: "colors",
+    hideBelow: 900
+  },
+  {
+    key: "metric2",
+    kind: "number",
+    label: "In sets",
+    width: "84px",
+    sort: "metric2",
+    drill: "sets",
+    hideBelow: 900
+  },
+  {
+    key: "weight",
+    label: "Weight",
+    width: "88px",
+    align: "right",
+    mono: !0,
+    value: (e) => Math.round(e.score * 5e3),
+    format: p,
+    hideBelow: 1100
+  },
+  {
+    key: "rarity",
+    label: "Rare",
+    width: "64px",
+    muted: !0,
+    format: (e) => e === !0 ? "rare" : "—",
+    hideBelow: 1100
+  },
+  { key: "score", kind: "score", label: "Match", width: "72px", hideBelow: 900 },
+  { key: "status", kind: "status", label: "State", width: "104px" }
+], l = s({
   key: "settings",
   label: "Settings",
   count: "20",
@@ -39,8 +105,8 @@ const e = (s, i, n, o = !1) => ({
   metric1: "Changes",
   metric2: "Scopes",
   facets: [
-    e("section", "Section", ["general", "sources", "query", "notifications", "access"]),
-    e("type", "Type", ["text", "toggle"]),
+    t("section", "Section", ["general", "sources", "query", "notifications", "access"]),
+    t("type", "Type", ["text", "toggle"]),
     r("changed", "Changed", "Only settings changed from their default")
   ],
   tabs: ["Information", "History", "Scopes", "Raw"],
@@ -66,7 +132,7 @@ const e = (s, i, n, o = !1) => ({
     ["API tokens", "access.api_tokens"],
     ["Audit log", "access.audit_log"]
   ]
-}), l = t({
+}), m = s({
   key: "logs",
   label: "Logs",
   count: "184k",
@@ -75,8 +141,8 @@ const e = (s, i, n, o = !1) => ({
   metric1: "Duration",
   metric2: "Records",
   facets: [
-    e("level", "Level", ["debug", "info", "warn", "error"]),
-    e("source", "Source", ["api", "worker", "ui", "cron"]),
+    t("level", "Level", ["debug", "info", "warn", "error"]),
+    t("source", "Source", ["api", "worker", "ui", "cron"]),
     r("noise", "Noise", "Hide debug lines")
   ],
   tabs: ["Information", "Trace", "Records", "Raw"],
@@ -90,13 +156,14 @@ const e = (s, i, n, o = !1) => ({
     ["Index rebuilt", "trc_63d1c7"],
     ["Export finished", "trc_18ff02"]
   ]
-}), m = {
+}), h = {
   key: "iRadar",
   label: "iRadar",
   kicker: "Web monitoring",
   placeholder: "site:*.shop AND price < 40 AND seen:false",
+  columns: c,
   entities: [
-    t({
+    s({
       key: "searches",
       label: "Searches",
       count: "38",
@@ -105,8 +172,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "New",
       metric2: "Results",
       facets: [
-        e("state", "State", ["running", "paused", "failed"]),
-        e("schedule", "Schedule", ["hourly", "daily", "weekly"]),
+        t("state", "State", ["running", "paused", "failed"]),
+        t("schedule", "Schedule", ["hourly", "daily", "weekly"]),
         r("hits", "Results", "Only searches with new hits")
       ],
       tabs: ["Information", "Results", "Sources", "Logs"],
@@ -119,7 +186,7 @@ const e = (s, i, n, o = !1) => ({
         ["Marketplace listings", "category:resale"]
       ]
     }),
-    t({
+    s({
       key: "items",
       label: "Items",
       count: "9,988",
@@ -128,8 +195,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Links",
       metric2: "Score",
       facets: [
-        e("kind", "Kind", ["page", "pdf", "feed", "image"]),
-        a("rank", "Rank", 0, 100),
+        t("kind", "Kind", ["page", "pdf", "feed", "image"]),
+        i("rank", "Rank", 0, 100),
         r("seen", "Seen", "Hide items already seen")
       ],
       tabs: ["Information", "Content", "Links", "Searches"],
@@ -142,7 +209,7 @@ const e = (s, i, n, o = !1) => ({
         ["Recall notice", "safety.example.gov/recall/8812"]
       ]
     }),
-    t({
+    s({
       key: "scrapers",
       label: "Scrapers",
       count: "24",
@@ -151,8 +218,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Rules",
       metric2: "Items",
       facets: [
-        e("state", "State", ["enabled", "disabled"]),
-        e("engine", "Engine", ["static", "headless", "api"]),
+        t("state", "State", ["enabled", "disabled"]),
+        t("engine", "Engine", ["static", "headless", "api"]),
         r("health", "Health", "Only failing scrapers")
       ],
       tabs: ["Information", "Rules", "Items", "Logs"],
@@ -165,16 +232,17 @@ const e = (s, i, n, o = !1) => ({
         ["Docs crawler", "docs.example.io"]
       ]
     }),
-    l,
-    c
+    m,
+    l
   ]
-}, d = {
+}, g = {
   key: "LEGO",
   label: "LEGO",
   kicker: "Catalogue & inventory",
   placeholder: "theme:space AND year >= 1988 AND parts > 300",
+  columns: c,
   entities: [
-    t({
+    s({
       key: "sets",
       label: "Sets",
       count: "19,412",
@@ -187,8 +255,8 @@ const e = (s, i, n, o = !1) => ({
       scope: "set",
       drills: { metric1: "pieces" },
       facets: [
-        e("theme", "Theme", ["space", "castle", "town", "technic"]),
-        a("year", "Year", 1958, 2026),
+        t("theme", "Theme", ["space", "castle", "town", "technic"]),
+        i("year", "Year", 1958, 2026),
         r("owned", "Owned", "Only sets in my inventory")
       ],
       tabs: ["Information", "Inventory", "Variants", "Logs"],
@@ -201,7 +269,7 @@ const e = (s, i, n, o = !1) => ({
         ["Café Corner", "10182-1"]
       ]
     }),
-    t({
+    s({
       key: "pieces",
       label: "Pieces",
       count: "58,203",
@@ -214,11 +282,15 @@ const e = (s, i, n, o = !1) => ({
       facets: [
         // `shape` rather than `category`: a category is a record here, and a
         // facet under that key would shadow the join to it.
-        e("shape", "Shape", ["brick", "plate", "slope", "minifig"]),
-        a("firstYear", "First year", 1958, 2026),
+        t("shape", "Shape", ["brick", "plate", "slope", "minifig"]),
+        i("firstYear", "First year", 1958, 2026),
         r("rarity", "Rarity", "Only parts in < 5 sets")
       ],
       tabs: ["Information", "Colors", "Sets", "Logs"],
+      // The one type in these four fixtures whose table is not the default
+      // eight columns: a catalogue piece is a picture, a shape, a year, two
+      // counts, a weight and a flag, and no four of those are the four.
+      columns: y,
       samples: [
         ["Brick 2 x 4", "3001"],
         ["Plate 1 x 2", "3023"],
@@ -228,7 +300,7 @@ const e = (s, i, n, o = !1) => ({
         ["Windscreen 3 x 4", "2437"]
       ]
     }),
-    t({
+    s({
       key: "colors",
       label: "Colors",
       count: "267",
@@ -239,8 +311,8 @@ const e = (s, i, n, o = !1) => ({
       scope: "color",
       drills: { metric1: "pieces", metric2: "sets" },
       facets: [
-        e("family", "Family", ["solid", "transparent", "metallic", "glow"]),
-        a("firstYear", "First year", 1958, 2026),
+        t("family", "Family", ["solid", "transparent", "metallic", "glow"]),
+        i("firstYear", "First year", 1958, 2026),
         r("retired", "Retired", "Hide retired colors")
       ],
       tabs: ["Information", "Parts", "Sets", "Logs"],
@@ -253,7 +325,7 @@ const e = (s, i, n, o = !1) => ({
         ["Medium Azure", "#36aebf"]
       ]
     }),
-    t({
+    s({
       key: "inventories",
       label: "Inventories",
       count: "21,884",
@@ -262,8 +334,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Lines",
       metric2: "Spares",
       facets: [
-        e("type", "Type", ["set", "minifig", "gear"]),
-        a("version", "Version", 1, 12),
+        t("type", "Type", ["set", "minifig", "gear"]),
+        i("version", "Version", 1, 12),
         r("complete", "Complete", "Only complete inventories")
       ],
       tabs: ["Information", "Lines", "Set", "Logs"],
@@ -276,7 +348,7 @@ const e = (s, i, n, o = !1) => ({
         ["Renegade v1", "inv-6954-1-r1"]
       ]
     }),
-    t({
+    s({
       key: "categories",
       label: "Categories",
       count: "68",
@@ -287,8 +359,8 @@ const e = (s, i, n, o = !1) => ({
       scope: "category",
       drills: { metric1: "pieces" },
       facets: [
-        e("level", "Level", ["root", "branch", "leaf"]),
-        a("parts", "Parts", 0, 9e3),
+        t("level", "Level", ["root", "branch", "leaf"]),
+        i("parts", "Parts", 0, 9e3),
         r("empty", "Empty", "Hide empty categories")
       ],
       tabs: ["Information", "Parts", "Children", "Logs"],
@@ -301,16 +373,17 @@ const e = (s, i, n, o = !1) => ({
         ["Wheels & tyres", "wheels-tyres"]
       ]
     }),
-    l,
-    c
+    m,
+    l
   ]
-}, p = {
+}, f = {
   key: "Commerce",
   label: "Commerce",
   kicker: "Crawl & test platform",
   placeholder: "tenant:acme AND status:failed AND run > 2026-08-01",
+  columns: c,
   entities: [
-    t({
+    s({
       key: "tenants",
       label: "Tenants",
       count: "142",
@@ -319,10 +392,10 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Crawls",
       metric2: "Tests",
       facets: [
-        e("plan", "Plan", ["trial", "growth", "enterprise"]),
+        t("plan", "Plan", ["trial", "growth", "enterprise"]),
         // Multi-valued: a tenant can run in more than one region, and is in
         // each of their chip sets rather than in a combined one of its own.
-        e("region", "Region", ["eu", "us", "apac"], !0),
+        t("region", "Region", ["eu", "us", "apac"], !0),
         r("health", "Health", "Only tenants with failures")
       ],
       tabs: ["Information", "Crawls", "Tests", "Logs"],
@@ -335,7 +408,7 @@ const e = (s, i, n, o = !1) => ({
         ["Soylent Foods", "soylent"]
       ]
     }),
-    t({
+    s({
       key: "crawls",
       label: "Crawls",
       count: "3,410",
@@ -344,8 +417,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Pages",
       metric2: "Errors",
       facets: [
-        e("state", "State", ["running", "done", "failed"]),
-        a("pages", "Pages", 0, 5e4),
+        t("state", "State", ["running", "done", "failed"]),
+        i("pages", "Pages", 0, 5e4),
         r("deltas", "Deltas", "Only crawls with changes")
       ],
       tabs: ["Information", "Results", "Tenant", "Logs"],
@@ -358,7 +431,7 @@ const e = (s, i, n, o = !1) => ({
         ["Image audit", "crw_2026_0819_f"]
       ]
     }),
-    t({
+    s({
       key: "tests",
       label: "Tests",
       count: "486",
@@ -367,8 +440,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Assertions",
       metric2: "Runs",
       facets: [
-        e("suite", "Suite", ["checkout", "search", "pdp", "auth"]),
-        e("severity", "Severity", ["blocker", "major", "minor"]),
+        t("suite", "Suite", ["checkout", "search", "pdp", "auth"]),
+        t("severity", "Severity", ["blocker", "major", "minor"]),
         r("flaky", "Flaky", "Only flaky tests")
       ],
       tabs: ["Information", "Assertions", "Results", "Logs"],
@@ -381,7 +454,7 @@ const e = (s, i, n, o = !1) => ({
         ["Coupon stacking blocked", "chk.coupon.stack"]
       ]
     }),
-    t({
+    s({
       key: "testresults",
       label: "Test results",
       count: "92,117",
@@ -390,8 +463,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Duration",
       metric2: "Diffs",
       facets: [
-        e("outcome", "Outcome", ["pass", "fail", "skipped"]),
-        a("durationMs", "Duration ms", 0, 6e4),
+        t("outcome", "Outcome", ["pass", "fail", "skipped"]),
+        i("durationMs", "Duration ms", 0, 6e4),
         r("noise", "Noise", "Hide known-flaky results")
       ],
       tabs: ["Information", "Diff", "Test", "Logs"],
@@ -404,7 +477,7 @@ const e = (s, i, n, o = !1) => ({
         ["chk.coupon.stack #4407", "res_4407"]
       ]
     }),
-    t({
+    s({
       key: "crawlresults",
       label: "Crawl results",
       count: "1.2m",
@@ -413,8 +486,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Size kB",
       metric2: "Links",
       facets: [
-        e("status", "Status", ["200", "301", "404", "5xx"]),
-        a("sizeKb", "Size kB", 0, 4e3),
+        t("status", "Status", ["200", "301", "404", "5xx"]),
+        i("sizeKb", "Size kB", 0, 4e3),
         r("changes", "Changes", "Only changed since last crawl")
       ],
       tabs: ["Information", "Content", "Links", "Crawl"],
@@ -427,16 +500,17 @@ const e = (s, i, n, o = !1) => ({
         ["Checkout step 2", "acme.example/checkout/2"]
       ]
     }),
-    l,
-    c
+    m,
+    l
   ]
-}, u = {
+}, b = {
   key: "Battle-sim",
   label: "Battle-sim",
   kicker: "Simulation runs",
   placeholder: "faction:north AND rounds > 40 AND outcome:draw",
+  columns: c,
   entities: [
-    t({
+    s({
       key: "units",
       label: "Units",
       count: "612",
@@ -445,8 +519,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Power",
       metric2: "In runs",
       facets: [
-        e("class", "Class", ["infantry", "armour", "air", "support"]),
-        a("power", "Power", 0, 100),
+        t("class", "Class", ["infantry", "armour", "air", "support"]),
+        i("power", "Power", 0, 100),
         r("retired", "Retired", "Hide retired units")
       ],
       tabs: ["Information", "Stats", "Runs", "Logs"],
@@ -459,7 +533,7 @@ const e = (s, i, n, o = !1) => ({
         ["Sapper Team", "inf.sapper"]
       ]
     }),
-    t({
+    s({
       key: "factions",
       label: "Factions",
       count: "18",
@@ -468,8 +542,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Units",
       metric2: "Runs",
       facets: [
-        e("doctrine", "Doctrine", ["attrition", "manoeuvre", "siege"]),
-        a("units", "Units", 0, 200),
+        t("doctrine", "Doctrine", ["attrition", "manoeuvre", "siege"]),
+        i("units", "Units", 0, 200),
         r("active", "Active", "Only factions in active runs")
       ],
       tabs: ["Information", "Units", "Runs", "Logs"],
@@ -482,7 +556,7 @@ const e = (s, i, n, o = !1) => ({
         ["Sea Concord", "sea"]
       ]
     }),
-    t({
+    s({
       key: "scenarios",
       label: "Scenarios",
       count: "94",
@@ -491,8 +565,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Rounds",
       metric2: "Runs",
       facets: [
-        e("terrain", "Terrain", ["urban", "open", "mountain", "coast"]),
-        a("rounds", "Rounds", 1, 200),
+        t("terrain", "Terrain", ["urban", "open", "mountain", "coast"]),
+        i("rounds", "Rounds", 1, 200),
         r("balance", "Balance", "Only unbalanced scenarios")
       ],
       tabs: ["Information", "Map", "Runs", "Logs"],
@@ -505,7 +579,7 @@ const e = (s, i, n, o = !1) => ({
         ["Salt Flats", "salt-flats"]
       ]
     }),
-    t({
+    s({
       key: "runs",
       label: "Runs",
       count: "48,220",
@@ -514,8 +588,8 @@ const e = (s, i, n, o = !1) => ({
       metric1: "Rounds",
       metric2: "Casualties",
       facets: [
-        e("outcome", "Outcome", ["win", "loss", "draw", "aborted"]),
-        a("rounds", "Rounds", 1, 200),
+        t("outcome", "Outcome", ["win", "loss", "draw", "aborted"]),
+        i("rounds", "Rounds", 1, 200),
         r("seeded", "Seeded", "Only reproducible seeds")
       ],
       tabs: ["Information", "Timeline", "Units", "Raw"],
@@ -528,22 +602,22 @@ const e = (s, i, n, o = !1) => ({
         ["Salt Flats #8816", "run_8816"]
       ]
     }),
-    l,
-    c
+    m,
+    l
   ]
-}, y = {
-  iRadar: m,
-  LEGO: d,
-  Commerce: p,
-  "Battle-sim": u
-}, g = Object.values(y);
+}, k = {
+  iRadar: h,
+  LEGO: g,
+  Commerce: f,
+  "Battle-sim": b
+}, S = Object.values(k);
 export {
-  u as battleSimSchema,
-  p as commerceSchema,
-  m as iRadarSchema,
-  d as legoSchema,
-  l as logsEntity,
-  g as schemaList,
-  y as schemas,
-  c as settingsEntity
+  b as battleSimSchema,
+  f as commerceSchema,
+  h as iRadarSchema,
+  g as legoSchema,
+  m as logsEntity,
+  S as schemaList,
+  k as schemas,
+  l as settingsEntity
 };

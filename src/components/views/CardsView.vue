@@ -16,7 +16,7 @@ const showEntity = computed(() => shell.isEverything.value)
   <div class="dc-cards">
     <div
       v-for="entry in rows"
-      :key="entry.row.id"
+      :key="entry.key"
       class="dc-card"
     >
       <div class="dc-card__top dc-mono">

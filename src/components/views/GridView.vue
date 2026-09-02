@@ -10,7 +10,7 @@ const rows = usePresentedRows()
   <div class="dc-grid">
     <button
       v-for="entry in rows"
-      :key="entry.row.id"
+      :key="entry.key"
       type="button"
       class="dc-tile"
       :style="{ '--dc-tile-tint': entry.row.tint }"

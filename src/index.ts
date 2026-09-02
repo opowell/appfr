@@ -37,6 +37,7 @@ export { default as PreviewView } from './components/views/PreviewView.vue'
 export { default as PinStar } from './components/views/PinStar.vue'
 export { default as ScopeMark } from './components/views/ScopeMark.vue'
 export { default as MetricDrill } from './components/views/MetricDrill.vue'
+export { default as ColumnCell } from './components/views/ColumnCell.vue'
 
 /* Composables */
 export { provideShellContext, useShellContext, SHELL_CONTEXT_KEY } from './composables/context'
@@ -52,6 +53,7 @@ export {
   useViewLabels,
 } from './composables/usePresentedRows'
 export type { PresentedRow } from './composables/usePresentedRows'
+export { useColumns } from './composables/useColumns'
 export { useEntityPreviews } from './composables/useEntityPreviews'
 export type {
   EntityPreview,
@@ -215,6 +217,19 @@ export {
   RESULT_FIELDS,
   sortsFor,
 } from './query/schema'
+export {
+  cellText,
+  cellValue,
+  columnAlign,
+  columnClass,
+  columnKey,
+  columnsFor,
+  columnTruncates,
+  defaultCellText,
+  defaultColumns,
+  EMPTY_CELL,
+  rowKey,
+} from './query/columns'
 export { addTerm, drillExpression, scopeTerm, scopeTermFor } from './query/drill'
 export { ENTITY_TERM, summarizeQuery, summaryTerms } from './query/summary'
 export type { SummaryTerm } from './query/summary'
@@ -236,9 +251,13 @@ export type { Comparator, Expression, FieldTerm, Term, TextTerm } from './data/e
 export { fnv1a, formatDate, formatMetric, formatOrdinal, formatPercent } from './data/format'
 
 /* Types */
-export { RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS } from './types'
+export { COLUMN_BREAKPOINTS, RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS } from './types'
 export type {
   ChipsFacet,
+  ColumnAlign,
+  ColumnBreakpoint,
+  ColumnDef,
+  ColumnKind,
   DataSource,
   DomainSchema,
   EntityLabels,

@@ -60,5 +60,5 @@ export { matchesExpression, parseExpression } from './data/expression';
 export type { Comparator, Expression, FieldTerm, Term, TextTerm } from './data/expression';
 export { fnv1a, formatDate, formatMetric, formatOrdinal, formatPercent } from './data/format';
 export { COLUMN_BREAKPOINTS, RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS } from './types';
-export type { ChipsFacet, ColumnAlign, ColumnBreakpoint, ColumnDef, ColumnKind, DataSource, DomainSchema, EntityLabels, EntitySchema, FacetDef, FacetState, FacetValue, MetricDrills, QueryRequest, QueryResult, RangeFacet, RecordStatus, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, SortDef, SortDirection, SyncDataSource, ToggleFacet, ViewKind, } from './types';
+export type { ChipsFacet, ColumnAlign, ColumnBreakpoint, ColumnDef, ColumnKind, DataSource, DomainSchema, EntityLabels, EntitySchema, FacetDef, FacetState, FacetValue, MetricDrills, QueryRequest, QueryResult, QuerySink, QueryUpdate, RangeFacet, RecordStatus, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, SortDef, SortDirection, StreamingDataSource, SyncDataSource, ToggleFacet, ViewKind, } from './types';
 export { default as HeaderContentLayoutPlugin } from './plugin';

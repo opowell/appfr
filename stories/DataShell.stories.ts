@@ -7,10 +7,12 @@ import {
   delayedSource,
   everythingColumnsSchema,
   failingSource,
+  failingStreamSource,
   longValueSource,
   noColumnsSchema,
   renderShell,
   selectableSchema,
+  streamingSource,
   themeArgTypes,
 } from './helpers'
 import type { ShellStoryArgs } from './helpers'
@@ -305,6 +307,50 @@ export const TableColumnsEverything = story({
   schema: everythingColumnsSchema(),
   search: '?v=table',
 })
+
+/* ---------------------------------------------------------------- streaming */
+
+/**
+ * Results that arrive over time rather than all at once.
+ *
+ * A source that declares `stream` is handed a sink and pushes into it for as
+ * long as it has anything to say — `insert` for rows found, `set` for what it
+ * now knows, `close` when it is done. The shell renders every push, so the
+ * table fills in as the crawl runs and the count in the header climbs with it.
+ *
+ * The query is still the query: change a facet, a sort or a page and the sink
+ * closes, the source is torn down, and a new one starts. Rows from the query
+ * you just left cannot land in the one you are looking at.
+ */
+export const StreamedResults = story({
+  search: '?e=searches&v=table',
+  source: streamingSource(),
+})
+
+/**
+ * The same, inserting at the front — what a scan that finds the newest first
+ * looks like. A page holds `limit` rows, so each insert at 0 pushes the last
+ * row of the page onto page two, which is where a `query` for this page would
+ * have left it anyway.
+ */
+export const StreamedNewestFirst = story({
+  search: '?e=searches&v=list',
+  source: streamingSource({ newestFirst: true, chunk: 2, every: 200 }),
+  limit: 12,
+})
+
+/** A stream that fails part of the way in, reported the way a rejected query is. */
+export const StreamFailure = story({
+  search: '?e=searches&v=list',
+  source: failingStreamSource(),
+})
+
+/**
+ * The home screen against a streaming source. Each type's card runs its own
+ * `query`, so the cards are answered at once and the stream is what the result
+ * list is made of.
+ */
+export const StreamedHome = story({ source: streamingSource() })
 
 /* ------------------------------------------------------- restricting the views */
 

@@ -120,7 +120,9 @@ backend exists.
 
 ## Wiring it to your data
 
-Implement `DataSource`. The shell calls nothing else.
+Implement `DataSource`. The shell calls nothing else — `query` for a result
+that arrives at once, and [`stream`](#results-that-arrive-over-time) for one
+that arrives over time.
 
 ```ts
 import type { DataSource } from 'header-content-layout'
@@ -159,6 +161,77 @@ what lets a mixed result set label every record in its own entity's vocabulary
 A synchronous source is applied in the same tick, so SSR emits complete markup
 and tests can assert without awaiting. An async source gets a pending state,
 and slow responses can never overwrite newer ones.
+
+### Results that arrive over time
+
+A `query` answers once and is done, which is the wrong shape for a result that
+takes seconds to assemble — a crawl, a scan, a set of pages fetched one after
+another. A source can declare `stream` as well, and push rows in as it finds
+them:
+
+```ts
+import type { StreamingDataSource } from 'header-content-layout'
+
+const source: StreamingDataSource = {
+  query: (request) => fetchPage(request),          // still needed — see below
+
+  stream({ query, entity, limit, offset }, sink) {
+    const socket = new WebSocket(`/api/crawl?q=${encodeURIComponent(query.expr)}`)
+
+    socket.onmessage = (event) => {
+      const found = JSON.parse(event.data)
+      sink.insert(found.rows)                      // at the end of the page
+      // or sink.insert(found.rows, 0)             // newest first
+    }
+    socket.onerror = () => sink.fail(new Error('The crawl stopped responding'))
+    socket.onclose = () => {
+      sink.set({ total: 1_284 })                   // what it turned out to be
+      sink.close()                                 // no longer pending
+    }
+
+    return () => socket.close()                    // the shell calls this
+  },
+}
+```
+
+Four methods and a flag, and they are the whole of it:
+
+| | |
+| --- | --- |
+| `insert(rows, at?)` | rows found, put at `at` — the end of the page when left out, `0` for a scan that finds the newest first. The running total goes up by what was inserted |
+| `set({ rows, total })` | what is known, rather than more of it: the page as it now stands, or the real total once the source has counted |
+| `close()` | nothing more is coming; the shell stops reporting the query as pending |
+| `fail(error)` | reported exactly as a rejected `query` is |
+| `open` | false once the shell has moved on. A source doing real work should stop |
+
+**The page still holds `limit` rows.** An insert past the end is dropped — it
+is page two's, and a `query` for this page would never have returned it — while
+the total goes on counting, so the pager grows as more is found. Insert at `0`
+on a full page and the last row falls off the bottom onto page two, which is
+where it belongs.
+
+**The first row-bearing push replaces; the rest add.** So paging or re-sorting
+does not flash empty: the rows of the query you just left stay up until the new
+stream has some of its own, exactly as they do while an async `query` is in
+flight.
+
+**The query still owns the stream.** Change the entity, the sort, the
+expression, a facet or the page and the sink closes — `open` goes false, every
+method on it becomes a no-op, your teardown runs, and a new stream starts for
+the new query. Rows from the query someone just left cannot land in the one
+they are looking at. Changing the *view* does not restart it: the same rows
+drawn as a table are the same rows, and re-crawling to redraw them would be
+absurd.
+
+**`query` is still required.** The home screen's cards each run their own
+per-entity query — five types, five queries, answered at once — and `stream` is
+what the result *list* is made of. A source that can only stream should answer
+`query` with an empty page and let the cards fill in when a type is picked.
+
+This is the streaming Brickzuke's `addRow(item, index)` was reaching for —
+`sink.insert(row, index)` is the same call — with the two things a component
+ref could not give it: rows that stop arriving when the query they belong to is
+gone, and a page whose size the table still decides.
 
 ## Routing
 
@@ -733,8 +806,9 @@ state.setPage(3)        // paging, which any filter change returns to page 1
 state.hrefFor({ view: 'grid' })   // build a link without navigating
 ```
 
-Also exported: `useResults`, `usePresentedRows`, `useColumns`,
-`useShellContext`.
+Also exported: `useResults` — which is what drives a source, streaming or not,
+and hands back `rows`, `total`, `pageCount`, `pending`, `error` and `refresh` —
+plus `usePresentedRows`, `useColumns` and `useShellContext`.
 
 ## Windows
 

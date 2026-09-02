@@ -405,12 +405,75 @@ export interface QueryResult {
     /** True when no facet or expression narrowed the population. */
     unfiltered: boolean;
 }
+/** What a stream says it has learned since the last time it said anything. */
+export interface QueryUpdate {
+    /** The page, replacing whatever is held. */
+    rows?: ShellRow[];
+    /** Rows matching the query, across every page — see {@link QueryResult.total}. */
+    total?: number;
+}
 /**
- * Where rows come from. The shell only ever calls {@link DataSource.query}, so
- * a host can back it with an API, a store, or the bundled mock source.
+ * Where a streaming source puts rows as it finds them.
+ *
+ * A `query` answers once and is done, which is the wrong shape for a result
+ * that arrives over seconds — a crawl, a scan, a scroll of pages fetched one
+ * after another. A source with a {@link DataSource.stream} is handed one of
+ * these instead and pushes into it for as long as it has anything to say, and
+ * the shell renders each push.
+ *
+ * The sink belongs to one request. Change the query and it closes: `open` goes
+ * false and every method becomes a no-op, so a source that is slow to notice
+ * cannot write the old query's rows over the new query's.
+ */
+export interface QuerySink {
+    /**
+     * False once the shell has moved on — the query changed, or the shell went
+     * away. A source doing real work should stop when this goes false, since
+     * nothing it pushes afterwards is kept.
+     */
+    readonly open: boolean;
+    /**
+     * Rows found, put at `at` — the end of the page when it is left out, and 0
+     * for a stream that finds the newest first.
+     *
+     * The page holds {@link QueryRequest.limit} rows and no more: what an insert
+     * pushes past the end is dropped, the way it would never have been returned
+     * by a `query` for this page. The total goes up by what was inserted
+     * regardless, so the pager knows there is more even while this page is full.
+     */
+    insert(rows: ShellRow | ShellRow[], at?: number): void;
+    /**
+     * States what is known, rather than adding to it: the page as it now stands,
+     * or the real total once the source has counted.
+     */
+    set(update: QueryUpdate): void;
+    /** Nothing more is coming. The shell stops reporting the query as pending. */
+    close(): void;
+    /** The stream failed. Reported the way a rejected `query` is. */
+    fail(error: unknown): void;
+}
+/**
+ * Where rows come from. A host can back it with an API, a store, or the
+ * bundled mock source.
  */
 export interface DataSource {
+    /**
+     * The rows for one page of one query. Asked once per query — and once per
+     * entity by the home screen, whose cards each run their own — so a source
+     * has to answer this whether or not it also streams.
+     */
     query(request: QueryRequest): QueryResult | Promise<QueryResult>;
+    /**
+     * The same rows, as they are found rather than all at once. Declaring it is
+     * what makes the shell prefer it: the result list comes from here, and
+     * `query` goes on serving the home screen's per-type cards.
+     *
+     * Return a teardown and the shell calls it when the query changes or the
+     * shell unmounts — the place to abort the request or close the socket.
+     * Whatever the source does about it, {@link QuerySink.open} has already gone
+     * false by then.
+     */
+    stream?(request: QueryRequest, sink: QuerySink): (() => void) | void;
 }
 /**
  * A source that answers in the same tick. The shell applies these during the
@@ -419,4 +482,8 @@ export interface DataSource {
  */
 export interface SyncDataSource extends DataSource {
     query(request: QueryRequest): QueryResult;
+}
+/** A source that pushes rows in as it finds them. */
+export interface StreamingDataSource extends DataSource {
+    stream(request: QueryRequest, sink: QuerySink): (() => void) | void;
 }

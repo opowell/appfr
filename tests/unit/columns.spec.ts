@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  cellFull,
   cellText,
   cellValue,
   columnAlign,
@@ -322,6 +323,35 @@ describe('cellText', () => {
       format: (value) => `${value} colours`,
     }
     expect(cellText(column, row())).toBe('1240 colours')
+  })
+})
+
+describe('cellFull', () => {
+  it('is every digit of a number the cell rounded', () => {
+    expect(cellFull({ key: 'metric1', kind: 'number' }, row())).toBe('1240')
+  })
+
+  it('undoes a host’s own shortening, whatever the kind says', () => {
+    const column: ColumnDef = { key: 'metric1', format: (value) => `${Number(value) / 1000}k` }
+    expect(cellText(column, row())).toBe('1.24k')
+    expect(cellFull(column, row())).toBe('1240')
+  })
+
+  it('is the cell’s own words where the value is already what it shows', () => {
+    // The whole of a name the column's width cut off, and a year that was
+    // never shortened — both hover as exactly what the cell says.
+    expect(cellFull({ key: 'primary' }, row())).toBe('Brick 2 x 4')
+    expect(cellFull({ key: 'firstYear' }, row())).toBe('1958')
+    expect(cellFull({ key: 'colors' }, row())).toBe('red, blue')
+  })
+
+  it('is the stored date behind the day the cell reads', () => {
+    expect(cellFull({ key: 'updatedAt', kind: 'date' }, row())).toBe('2026-08-20T00:00:00.000Z')
+  })
+
+  it('says a value is absent where the cell does, having none to expand', () => {
+    expect(cellFull({ key: 'missing' }, row())).toBe(EMPTY_CELL)
+    expect(cellFull({ key: 'status', kind: 'status' }, row())).toBe('ok')
   })
 })
 

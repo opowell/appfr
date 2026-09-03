@@ -254,6 +254,38 @@ export function cellText(column: ColumnDef, row: ShellRow): string {
   return defaultCellText(value, column.kind)
 }
 
+/**
+ * The value as the row actually holds it, where that is something a cell could
+ * have said. Nothing for the values that have no text of their own — a status
+ * object, a component's props — which is the signal to leave the cell's own
+ * words alone.
+ */
+function plainValue(value: unknown): string {
+  if (typeof value === 'number') return Number.isFinite(value) ? String(value) : ''
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return value.join(', ')
+  return ''
+}
+
+/**
+ * The whole of a cell, for the hover.
+ *
+ * A cell says as much as its column has room for, and there are two ways that
+ * is less than the value: a formatter that rounds — `1.3k` where the row holds
+ * 1300 — and a width that cuts a long name off. This answers both. The exact
+ * value where the text is a shortened one, and the text itself where it is
+ * not, which is the whole of the name the column truncated.
+ *
+ * Nothing is invented on the way: the number is every digit of it rather than
+ * a grouped rendering, so a cell whose text is already the plain value — a
+ * year, a part number — hovers as exactly what it shows.
+ */
+export function cellFull(column: ColumnDef, row: ShellRow): string {
+  const text = cellText(column, row)
+  const plain = plainValue(cellValue(column, row))
+  return plain && plain !== text ? plain : text
+}
+
 /** The same for a column that may not be there at all — a role nothing plays. */
 export function cellTextOf(column: ColumnDef | undefined, row: ShellRow): string {
   return column ? cellText(column, row) : ''

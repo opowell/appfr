@@ -213,6 +213,7 @@ export {
   sortsFor,
 } from './query/schema'
 export {
+  cellFull,
   cellText,
   cellTextOf,
   cellValue,

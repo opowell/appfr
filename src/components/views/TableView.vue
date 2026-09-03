@@ -5,7 +5,7 @@ import { useShellContext } from '../../composables/context'
 import { useColumns } from '../../composables/useColumns'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
-import { cellText, columnAlign, columnClass, columnKey, columnTruncates } from '../../query/columns'
+import { cellFull, columnAlign, columnClass, columnKey, columnTruncates } from '../../query/columns'
 import ColumnCell from './ColumnCell.vue'
 import ScopeMark from './ScopeMark.vue'
 
@@ -65,13 +65,14 @@ function cellClass(column: ColumnDef): string {
 }
 
 /**
- * The whole of a truncated value, on hover. A pressable cell carries its own —
- * on the button, where the pointer actually is — so the cell around it does not
- * repeat it.
+ * The whole of a value, on hover: every digit of a number the cell rounded to
+ * `1.3k`, and the rest of a name the width cut off. A pressable cell carries
+ * its own — on the button, where the pointer actually is — so the cell around
+ * it does not repeat it.
  */
 function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
   if (!columnTruncates(column) || column.activate || column.click) return undefined
-  return cellText(column, entry.row)
+  return cellFull(column, entry.row)
 }
 </script>
 

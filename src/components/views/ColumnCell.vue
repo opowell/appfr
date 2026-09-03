@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { ColumnDef, RecordStatus } from '../../types'
 import { useShellContext } from '../../composables/context'
 import type { PresentedRow } from '../../composables/usePresentedRows'
-import { cellText, cellValue, columnTruncates } from '../../query/columns'
+import { cellFull, cellText, cellValue, columnTruncates } from '../../query/columns'
 import MetricDrill from './MetricDrill.vue'
 import ScoreMeter from '../ScoreMeter.vue'
 import StatusPill from '../StatusPill.vue'
@@ -44,6 +44,13 @@ const score = computed(() => {
 const pressable = computed(() => props.column.activate === true || Boolean(props.column.click))
 
 const truncates = computed(() => columnTruncates(props.column))
+
+/**
+ * What the button says on hover — the whole of the value, the rounding and the
+ * truncation undone, since the pointer is on the button rather than on the
+ * cell that would otherwise carry it.
+ */
+const title = computed(() => cellFull(props.column, props.entry.row))
 
 /**
  * Stops the click reaching the row, which would open the record — a cell that
@@ -98,7 +105,7 @@ function press(event: MouseEvent) {
     type="button"
     class="dc-table__open"
     :class="{ 'dc-truncate': truncates }"
-    :title="text"
+    :title="title"
     @click="press"
   >
     {{ text }}

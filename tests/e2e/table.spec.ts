@@ -61,6 +61,25 @@ test.describe('Table — as wide as the shell, never wider', () => {
     await expect(name).toHaveAttribute('title', (await name.textContent())?.trim() ?? '')
   })
 
+  test('keeps every digit of a rounded number on hover', async ({ page }) => {
+    await gotoStory(page, LONG)
+    const cells = page.locator('.dc-table td.dc-table__number')
+    const shown = await cells.evaluateAll((elements) =>
+      elements.map((element) => ({
+        text: (element.textContent ?? '').trim(),
+        title: element.getAttribute('title'),
+      })),
+    )
+
+    expect(shown.length).toBeGreaterThan(0)
+    for (const cell of shown) {
+      // Every digit, and nothing the cell did to them: a number the column
+      // rounded to `1.2k` hovers as the 1240 the row holds.
+      expect(cell.title).toMatch(/^-?\d+(\.\d+)?$/)
+      if (/[km]$/.test(cell.text)) expect(cell.title).not.toBe(cell.text)
+    }
+  })
+
   test('still fits once the shell is too narrow for every column', async ({ page }) => {
     await gotoStory(page, LONG)
 

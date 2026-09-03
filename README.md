@@ -812,6 +812,12 @@ whole of it on hover. (In `defaultColumns` that means the metrics, the date,
 the kind and the state are fixed, and the name and the secondary share the
 rest.)
 
+Hovering says the whole of the *value*, not the whole of the text: a metric
+the cell rounds to `1.2k` — the shell's own compact numbers, or a `format` of
+yours that shortens — hovers as the 1240 the row holds, and a name the width
+cut off hovers as the name. `cellFull(column, row)` is that string, where a
+cell of your own wants it too.
+
 ```
   15  Regulatory filings, every word of a name nob…   .crawl-runs/2026-08…  682  116  29 Aug  ok
   16  Security advisories, every word of a name no…   .crawl-runs/2026-08…  556  260  29 Aug  running

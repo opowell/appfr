@@ -43,7 +43,7 @@ export { PANE_CONTEXT_KEY, providePaneContext, usePaneContext, usePaneMenu, } fr
 export type { PaneContext } from './composables/paneMenu';
 export { ENTITY_ALL, FACET_PREFIX, PARAM_DIR, PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_SORT, PARAM_VIEW, parseQuery, serializeQuery, } from './query/codec';
 export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, defaultQuery, emptyFacetState, emptyFacetValue, findEntity, findSort, focusEntity, hasActiveFacets, isEntityScoped, isFacetActive, isPristineQuery, isTypeCardsQuery, isViewKind, reconcileFacets, RESULT_FIELDS, sortsFor, } from './query/schema';
-export { cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, defaultColumns, EMPTY_CELL, GENERIC_NAMES, roleColumn, roleColumns, rowKey, } from './query/columns';
+export { cellFull, cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, defaultColumns, EMPTY_CELL, GENERIC_NAMES, roleColumn, roleColumns, rowKey, } from './query/columns';
 export type { DefaultColumnNames, DefaultMetric } from './query/columns';
 export { addTerm, drillExpression, scopeTerm, scopeTermFor } from './query/drill';
 export { ENTITY_TERM, summarizeQuery, summaryTerms } from './query/summary';

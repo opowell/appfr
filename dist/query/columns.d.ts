@@ -107,6 +107,20 @@ export declare function rowKey(row: ShellRow, index: number): string;
 export declare function defaultCellText(value: unknown, kind: ColumnDef['kind']): string;
 /** What the cell says: the column's own formatting, or the kind's. */
 export declare function cellText(column: ColumnDef, row: ShellRow): string;
+/**
+ * The whole of a cell, for the hover.
+ *
+ * A cell says as much as its column has room for, and there are two ways that
+ * is less than the value: a formatter that rounds — `1.3k` where the row holds
+ * 1300 — and a width that cuts a long name off. This answers both. The exact
+ * value where the text is a shortened one, and the text itself where it is
+ * not, which is the whole of the name the column truncated.
+ *
+ * Nothing is invented on the way: the number is every digit of it rather than
+ * a grouped rendering, so a cell whose text is already the plain value — a
+ * year, a part number — hovers as exactly what it shows.
+ */
+export declare function cellFull(column: ColumnDef, row: ShellRow): string;
 /** The same for a column that may not be there at all — a role nothing plays. */
 export declare function cellTextOf(column: ColumnDef | undefined, row: ShellRow): string;
 /** Numbers line up on the right, and everything else reads from the left. */

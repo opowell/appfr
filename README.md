@@ -673,6 +673,27 @@ numeric comparison against one constrains nothing.
 `entity:` is what makes kind filterable from the expression alone —
 `entity:logs` from home narrows to logs without leaving the whole-corpus view.
 
+### The parts of a query
+
+The header shows a narrowed query as the parts it is made of — the entity
+filter, each active facet, and each term of the expression — every one of them
+a button. Press one and that part comes out; the rest goes on running. The
+one-line summary is what the bar says while there is nothing there to lift.
+
+```
+Query  [entity:items] [year>=1988] [release] or [recall]
+                       ^ press: that constraint is gone
+```
+
+`OR` groups are alternatives rather than requirements, so the bar says `or`
+between them, and lifting the last term of one drops that alternative with it.
+
+Lifting a part writes the expression back out from what it parsed to, so
+`Theme:space AND price < 40` returns as `theme:space price<40` — the parse
+keeps neither the case nor the spacing it was written with. `formatExpression`
+and `withoutTerm` are exported for a host doing the same thing itself, as are
+`summaryTerms(query, entity)` for the list and `removeTerm(term)` for the press.
+
 ## Component API
 
 ### `<DataShell>`
@@ -845,7 +866,7 @@ state.query.value       // the live ShellQuery, derived from the URL
 state.entity.value      // the EntitySchema filtered to, or null for everything
 state.isEverything.value
 state.summary.value     // 'entity:searches · state:running'
-state.terms.value       // individually removable terms, entity filter included
+state.terms.value       // the removable parts: entity, facets, expression terms
 state.setEntity('logs')
 state.clearEntity()     // back to everything
 state.toggleChip('state', 'running')

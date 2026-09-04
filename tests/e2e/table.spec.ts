@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Locator, Page } from '@playwright/test'
-import { gotoStory, openPanel, summary } from './story'
+import { gotoStory, openPanel, termBar } from './story'
 
 /**
  * The table against a corpus whose names are sentences and whose secondaries
@@ -181,9 +181,9 @@ test.describe('Columns — as many as the schema declares', () => {
     await expect(colors.locator('button.dc-drill')).toHaveCount(1)
     await colors.locator('button.dc-drill').click()
     // This story holds its query in memory rather than the address bar, so the
-    // header's summary of it is where the narrowing shows.
-    await expect(summary(page)).toContainText('colors')
-    await expect(summary(page)).toContainText('piece:')
+    // header's account of it is where the narrowing shows.
+    await expect(termBar(page)).toContainText('colors')
+    await expect(termBar(page)).toContainText('piece:')
   })
 
   test('heads a column with a button only where that sort is offered', async ({ page }) => {

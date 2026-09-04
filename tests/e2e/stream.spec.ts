@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { gotoStory, listRows, openPanel, pageReadout, summary } from './story'
+import { gotoStory, listRows, openPanel, pageReadout, termBar } from './story'
 
 /**
  * Results that arrive over time.
@@ -104,7 +104,7 @@ test.describe('A stream and a change of query', () => {
     await page.locator('.dc-panel').getByRole('button', { name: 'running' }).first().click()
     await page.keyboard.press('Escape')
 
-    await expect(summary(page)).toContainText('running')
+    await expect(termBar(page)).toContainText('running')
     // Fewer than the whole population, and every row of it the new query's.
     await expect.poll(() => rowCount(page), { timeout: 15_000 }).toBeGreaterThan(0)
     expect(await rowCount(page)).toBeLessThan(48)

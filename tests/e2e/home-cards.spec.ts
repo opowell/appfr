@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { gotoStory, listRows, summary } from './story'
+import { gotoStory, listRows, summary, terms } from './story'
 import { iRadarSchema } from '../../src/fixtures/schemas'
 
 /**
@@ -88,7 +88,7 @@ test.describe('Home — the cards are navigation', () => {
     await gotoStory(page, HOME)
     await card(page, 'Scrapers').locator('.dc-type__head').click()
 
-    await expect(summary(page)).toHaveText('entity:scrapers')
+    await expect(terms(page)).toHaveText(['entity:scrapers'])
     await expect(page.locator('.dc-header__crumb-root')).toHaveText('Scrapers')
     // Scoped to one type, cards mean one card per record again.
     await expect(page.locator('.dc-types')).toHaveCount(0)
@@ -163,7 +163,7 @@ test.describe('Home — making a new one', () => {
 test.describe('Home — cards under a query', () => {
   test('a search narrows every card, and the counts become the breakdown', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-search')
-    await expect(summary(page)).toHaveText('"recall"')
+    await expect(terms(page)).toHaveText(['recall'])
 
     // "recall" is an Items sample; nothing in Searches mentions it.
     const items = Number(await card(page, 'Items').locator('.dc-type__count').innerText())

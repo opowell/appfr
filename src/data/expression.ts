@@ -259,3 +259,47 @@ export function matchesExpression(
   if (!expression.length) return true
   return expression.some((group) => group.every((term) => matchesTerm(term, row, entity)))
 }
+
+/**
+ * Wraps a value the tokenizer would otherwise read as two terms. Quotes inside
+ * are dropped rather than escaped: there is no escape in this language, so a
+ * kept quote would end the value early.
+ */
+function quote(value: string): string {
+  return /[\s"']/.test(value) ? `"${value.replace(/["']/g, '')}"` : value
+}
+
+/**
+ * One term, written back as the source that parses to it.
+ *
+ * Normalized rather than original: the field is lowercased and the value
+ * re-quoted only where it has to be, since the parse keeps neither the case
+ * nor the spacing it was written with. `parseExpression(formatTerm(t))` is `t`.
+ */
+export function formatTerm(term: Term): string {
+  if (term.kind === 'text') return quote(term.value)
+  return `${term.field}${term.comparator}${quote(term.value)}`
+}
+
+/**
+ * A whole expression, written back as source: terms spaced within a group,
+ * `OR` between them. A group with nothing left in it is dropped — an
+ * alternative with no terms would match every row, and so would the expression.
+ */
+export function formatExpression(expression: Expression): string {
+  return expression
+    .filter((group) => group.length)
+    .map((group) => group.map(formatTerm).join(' '))
+    .join(' OR ')
+}
+
+/**
+ * The expression with one term taken out of it, addressed by which `OR` group
+ * it is in and where in that group it sits — what removing one part of a query
+ * means when the parts are what is on screen.
+ */
+export function withoutTerm(expression: Expression, group: number, index: number): Expression {
+  return expression
+    .map((terms, at) => (at === group ? terms.filter((_, i) => i !== index) : terms))
+    .filter((terms) => terms.length)
+}

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { matchesExpression, parseExpression } from '../../src/data/expression'
+import {
+  formatExpression,
+  formatTerm,
+  matchesExpression,
+  parseExpression,
+  withoutTerm,
+} from '../../src/data/expression'
 import { generateRows } from '../../src/data/mock'
 import { findEntity } from '../../src/query/schema'
 import { iRadarSchema, legoSchema } from '../../src/fixtures/schemas'
@@ -200,5 +206,51 @@ describe('matchesExpression', () => {
     const rows = generateRows(sets, { seed: 'LEGO', population: 24 })
     const expression = parseExpression(legoSchema.placeholder)
     expect(() => rows.map((r) => matchesExpression(expression, r, sets))).not.toThrow()
+  })
+})
+
+describe('writing an expression back out', () => {
+  const round = (expr: string) => formatExpression(parseExpression(expr))
+
+  it('gives back what it was given, normalized', () => {
+    expect(round('theme:space year>=1988 parts>300')).toBe('theme:space year>=1988 parts>300')
+    expect(round('release OR recall')).toBe('release OR recall')
+    // `AND` is implicit, the field is lowercased, and the spacing around an
+    // operator is not part of the term.
+    expect(round('Theme:space AND price < 40')).toBe('theme:space price<40')
+  })
+
+  it('quotes a value only where the tokenizer needs it', () => {
+    expect(formatTerm({ kind: 'field', field: 'name', comparator: ':', value: 'brick' })).toBe(
+      'name:brick',
+    )
+    expect(round('name:"Brick 2 x 4"')).toBe('name:"Brick 2 x 4"')
+    expect(round('"a phrase"')).toBe('"a phrase"')
+  })
+
+  it('re-reads what it wrote as the same expression', () => {
+    const expr = parseExpression('name:"Brick 2 x 4" year>=1988 OR recall')
+    expect(parseExpression(formatExpression(expr))).toEqual(expr)
+  })
+})
+
+describe('taking one part out', () => {
+  const without = (expr: string, group: number, index: number) =>
+    formatExpression(withoutTerm(parseExpression(expr), group, index))
+
+  it('leaves the rest of the group standing', () => {
+    expect(without('theme:space year>=1988 parts>300', 0, 1)).toBe('theme:space parts>300')
+  })
+
+  it('takes it out of the alternative it is in and no other', () => {
+    // Two identical words in different alternatives are two separate parts.
+    expect(without('recall OR theme:space recall', 1, 1)).toBe('recall OR theme:space')
+  })
+
+  /* An alternative with nothing left in it constrains nothing, so it would put
+     every row back — dropping it is what removing its last part meant. */
+  it('drops an alternative once its last part goes', () => {
+    expect(without('release OR recall', 0, 0)).toBe('recall')
+    expect(without('release', 0, 0)).toBe('')
   })
 })

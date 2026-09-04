@@ -25,7 +25,8 @@ import {
   sortsFor,
 } from '../query/schema'
 import type { SummaryTerm } from '../query/summary'
-import { ENTITY_TERM, summarizeQuery, summaryTerms } from '../query/summary'
+import { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from '../query/summary'
+import { formatExpression, parseExpression, withoutTerm } from '../data/expression'
 
 export type NavigationMode = 'push' | 'replace'
 
@@ -237,6 +238,15 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
       // results back out to every entity rather than doing something special.
       if (term.facetKey === ENTITY_TERM) {
         setEntity(null)
+        return
+      }
+      // A part of the expression is lifted by writing the expression back
+      // without it. What returns is normalized rather than the text as typed —
+      // the parse keeps neither case nor spacing — which is the price of the
+      // expression being a set of parts rather than a string.
+      if (term.facetKey === EXPRESSION_TERM) {
+        const rest = withoutTerm(parseExpression(query.value.expr), term.group ?? 0, term.index ?? 0)
+        commit({ expr: formatExpression(rest) }, primaryMode())
         return
       }
       patchFacets(term.facetKey, (current) => {

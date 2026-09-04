@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { gotoStory, openPanel, summary } from './story'
+import { gotoStory, openPanel, termBar } from './story'
 
 /**
  * Narrowing to one record.
@@ -38,7 +38,7 @@ test.describe('A metric that counts something listable', () => {
     await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click()
     expect(queryOf(page)).toMatch(/^set:"sets_\d+"$/)
     expect(entityOf(page)).toBe('pieces')
-    await expect(summary(page)).toContainText('pieces')
+    await expect(termBar(page)).toContainText('pieces')
   })
 
   test('leaves fewer rows than the type has in total', async ({ page }) => {
@@ -82,11 +82,11 @@ test.describe('The → on a row', () => {
 })
 
 test.describe('A narrowed query', () => {
-  test('is an ordinary expression, in the summary and in the panel', async ({ page }) => {
+  test('is an ordinary expression, in the header and in the panel', async ({ page }) => {
     await gotoStory(page, HOME)
     await card(page, 'Sets').locator('.dc-scope').first().click()
     const term = queryOf(page)!
-    await expect(summary(page)).toContainText('set:')
+    await expect(termBar(page)).toContainText('set:')
     await openPanel(page)
     await expect(page.locator('.dc-panel input[type="search"], .dc-panel input[type="text"]').first())
       .toHaveValue(term)

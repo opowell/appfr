@@ -1,4 +1,5 @@
 import type { DomainSchema, EntitySchema, FacetDef, FacetValue, ShellQuery } from '../types'
+import { formatTerm, parseExpression } from '../data/expression'
 import { findSort, isFacetActive, isPristineQuery } from './schema'
 
 /** One removable term in the header's query summary. */
@@ -10,10 +11,21 @@ export interface SummaryTerm {
   facetKey: string
   /** For chips terms, the single option this term stands for. */
   option?: string
+  /**
+   * For expression terms, where in the expression the term sits: which `OR`
+   * group, and where in that group. That pair is its address — the text of a
+   * term is not unique, and two identical words in different alternatives are
+   * two separate parts.
+   */
+  group?: number
+  index?: number
 }
 
 /** The term id the entity filter uses, so it can be lifted like any other. */
 export const ENTITY_TERM = 'entity'
+
+/** The facet key the expression's own parts carry. */
+export const EXPRESSION_TERM = 'expr'
 
 function describeFacet(facet: FacetDef, value: FacetValue): SummaryTerm[] {
   const name = facet.label.toLowerCase()
@@ -56,6 +68,19 @@ export function summaryTerms(query: ShellQuery, entity: EntitySchema | null): Su
     const value = query.facets[facet.key]
     if (value && isFacetActive(value)) terms.push(...describeFacet(facet, value))
   }
+  // The expression is not one term but as many as it was written with: each is
+  // a constraint of its own, and each can be lifted on its own.
+  parseExpression(query.expr).forEach((group, at) => {
+    group.forEach((term, index) => {
+      terms.push({
+        id: `${EXPRESSION_TERM}:${at}:${index}`,
+        label: formatTerm(term),
+        facetKey: EXPRESSION_TERM,
+        group: at,
+        index,
+      })
+    })
+  })
   return terms
 }
 
@@ -74,7 +99,12 @@ export function summarizeQuery(
     const sort = findSort(entity, query.sort, schema)
     return `everything · ${query.view} · ${sort.label}`
   }
-  const parts = summaryTerms(query, entity).map((term) => term.label)
+  // The expression goes in whole, as written and quoted, rather than as the
+  // parts `summaryTerms` breaks it into: this is one line of prose about the
+  // query, and `release OR recall` said as two terms is a different query.
+  const parts = summaryTerms(query, entity)
+    .filter((term) => term.facetKey !== EXPRESSION_TERM)
+    .map((term) => term.label)
   const expr = query.expr.trim()
   if (expr) parts.push(`"${expr}"`)
   return parts.join(' · ')

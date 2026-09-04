@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { gotoStory, listRows, openPanel, panel, pickEntity, summary } from './story'
+import { gotoStory, listRows, openPanel, panel, pickEntity, summary, termBar, terms } from './story'
 import { commerceSchema, iRadarSchema } from '../../src/fixtures/schemas'
 import { findEntity } from '../../src/query/schema'
 import type { ChipsFacet } from '../../src/types'
@@ -47,7 +47,7 @@ test.describe('Query panel — scope', () => {
     await expect(page.locator('.dc-facet__label')).toHaveText(['State', 'Schedule', 'Results'])
     const after = await listRows(page).count()
     expect(after).toBeLessThan(before)
-    await expect(summary(page)).toHaveText('entity:searches')
+    await expect(terms(page)).toHaveText(['entity:searches'])
   })
 
   test('Everything puts every kind back in the results', async ({ page }) => {
@@ -95,7 +95,7 @@ test.describe('Query panel — narrowing the result set', () => {
     await openPanel(page)
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
 
-    await expect(summary(page)).toHaveText('entity:searches · state:running')
+    await expect(terms(page)).toHaveText(['entity:searches', 'state:running'])
     const after = await listRows(page).count()
     expect(after).toBeGreaterThan(0)
     expect(after).toBeLessThan(before)
@@ -112,7 +112,7 @@ test.describe('Query panel — narrowing the result set', () => {
     const two = await listRows(page).count()
 
     expect(two).toBeGreaterThan(one)
-    await expect(summary(page)).toHaveText('entity:searches · state:running · state:paused')
+    await expect(terms(page)).toHaveText(['entity:searches', 'state:running', 'state:paused'])
   })
 
   test('a chip keeps the rows holding its value among several', async ({ page }) => {
@@ -126,7 +126,7 @@ test.describe('Query panel — narrowing the result set', () => {
     let summed = 0
     for (const option of REGION.options) {
       await chip(option).click()
-      await expect(summary(page)).toHaveText(`entity:tenants · ${REGION.key}:${option}`)
+      await expect(terms(page)).toHaveText(['entity:tenants', `${REGION.key}:${option}`])
       const narrowed = await listRows(page).count()
       expect(narrowed).toBeGreaterThan(0)
       expect(narrowed).toBeLessThan(all)
@@ -159,7 +159,7 @@ test.describe('Query panel — narrowing the result set', () => {
     await expect(chip).toHaveAttribute('aria-pressed', 'true')
     await chip.click()
     await expect(chip).toHaveAttribute('aria-pressed', 'false')
-    await expect(summary(page)).toHaveText('entity:searches')
+    await expect(terms(page)).toHaveText(['entity:searches'])
   })
 
   test('a range narrows on commit, not on keystroke', async ({ page }) => {
@@ -168,10 +168,10 @@ test.describe('Query panel — narrowing the result set', () => {
 
     const min = page.locator('.dc-facet__range input').first()
     await min.fill('90')
-    await expect(summary(page)).toHaveText('entity:items')
+    await expect(terms(page)).toHaveText(['entity:items'])
 
     await min.press('Enter')
-    await expect(summary(page)).toHaveText('entity:items · rank:90..')
+    await expect(terms(page)).toHaveText(['entity:items', 'rank:90..'])
   })
 
   test('a toggle narrows to the rows carrying its flag', async ({ page }) => {
@@ -184,7 +184,7 @@ test.describe('Query panel — narrowing the result set', () => {
     await flag.click()
 
     await expect(flag).toHaveAttribute('aria-checked', 'true')
-    await expect(summary(page)).toHaveText('entity:searches · results:on')
+    await expect(terms(page)).toHaveText(['entity:searches', 'results:on'])
     expect(await listRows(page).count()).toBeLessThan(before)
   })
 
@@ -193,10 +193,10 @@ test.describe('Query panel — narrowing the result set', () => {
     await openPanel(page)
 
     await page.locator('.dc-expression').fill('regulatory')
-    await expect(summary(page)).toHaveText('entity:searches')
+    await expect(terms(page)).toHaveText(['entity:searches'])
 
     await page.locator('.dc-button--primary').click()
-    await expect(summary(page)).toHaveText('entity:searches · "regulatory"')
+    await expect(terms(page)).toHaveText(['entity:searches', 'regulatory'])
     await expect(listRows(page)).toHaveCount(8)
   })
 
@@ -206,7 +206,7 @@ test.describe('Query panel — narrowing the result set', () => {
     await page.locator('.dc-expression').fill('digest')
     await page.locator('.dc-button--primary').click()
 
-    await expect(summary(page)).toHaveText('"digest"')
+    await expect(terms(page)).toHaveText(['digest'])
     const kinds = new Set(await page.locator('.dc-list__entity').allInnerTexts())
     expect(kinds).toEqual(new Set(['Settings']))
   })
@@ -216,7 +216,7 @@ test.describe('Query panel — narrowing the result set', () => {
     await openPanel(page)
     await page.locator('.dc-expression').fill('firmware')
     await page.locator('.dc-expression').press('Enter')
-    await expect(summary(page)).toHaveText('entity:searches · "firmware"')
+    await expect(terms(page)).toHaveText(['entity:searches', 'firmware'])
   })
 
   test('an expression also commits on Meta+Enter', async ({ page }) => {
@@ -224,7 +224,7 @@ test.describe('Query panel — narrowing the result set', () => {
     await openPanel(page)
     await page.locator('.dc-expression').fill('firmware')
     await page.locator('.dc-expression').press('Meta+Enter')
-    await expect(summary(page)).toHaveText('entity:searches · "firmware"')
+    await expect(terms(page)).toHaveText(['entity:searches', 'firmware'])
   })
 
   test('committing the expression closes the panel, so results are visible', async ({ page }) => {
@@ -237,7 +237,7 @@ test.describe('Query panel — narrowing the result set', () => {
 
   test('Reset lifts the entity, the facets and the expression at once', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--facets-and-expression')
-    await expect(summary(page)).toContainText('entity:items')
+    await expect(termBar(page)).toContainText('entity:items')
 
     await openPanel(page)
     await page.locator('.dc-panel__actions button', { hasText: 'Reset' }).click()
@@ -288,7 +288,7 @@ test.describe('Query panel — view and sort', () => {
 
     const names = await page.locator('.dc-table__open').allInnerTexts()
     expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a)))
-    await expect(summary(page)).toHaveText('entity:searches')
+    await expect(terms(page)).toHaveText(['entity:searches'])
   })
 
   test('the direction button reverses the order', async ({ page }) => {

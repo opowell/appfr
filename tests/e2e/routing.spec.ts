@@ -8,6 +8,7 @@ import {
   shellParams,
   stepPage,
   summary,
+  terms,
   trigger,
 } from './story'
 
@@ -40,7 +41,7 @@ test.describe('URL — the query is the route', () => {
     await openPanel(page)
 
     await pickEntity(page, 'Scrapers')
-    await expect(summary(page)).toHaveText('entity:scrapers')
+    await expect(terms(page)).toHaveText(['entity:scrapers'])
     expect(shellParams(page.url())).toEqual({ e: 'scrapers' })
 
     await page.locator('.dc-entity--all').click()
@@ -54,7 +55,7 @@ test.describe('URL — the query is the route', () => {
 
     await pickEntity(page, 'Settings')
     expect(shellParams(page.url())).toEqual({ e: 'settings' })
-    await expect(summary(page)).toHaveText('entity:settings')
+    await expect(terms(page)).toHaveText(['entity:settings'])
   })
 
   test('facets appear in the URL, with readable separators', async ({ page }) => {
@@ -62,7 +63,7 @@ test.describe('URL — the query is the route', () => {
     await pickEntity(page, 'Searches')
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
     await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
-    await expect(summary(page)).toHaveText('entity:searches · state:running · state:paused')
+    await expect(terms(page)).toHaveText(['entity:searches', 'state:running', 'state:paused'])
 
     expect(shellParams(page.url())).toEqual({ e: 'searches', f_state: 'running,paused' })
     // The comma is left literal rather than percent-encoded.
@@ -73,7 +74,8 @@ test.describe('URL — the query is the route', () => {
     await gotoStory(page, LIVE_OPEN)
     await page.locator('.dc-expression').fill('price < 40')
     await page.locator('.dc-button--primary').click()
-    await expect(summary(page)).toHaveText('"price < 40"')
+    // Three tokens as typed, one term as parsed: `price < 40` is a comparison.
+    await expect(terms(page)).toHaveText(['price<40'])
     expect(shellParams(page.url()).q).toBe('price < 40')
   })
 
@@ -110,13 +112,13 @@ test.describe('URL — reload and history', () => {
 
     expect(page.url()).toBe(before)
     await expect(page.locator('.dc-table')).toBeVisible()
-    await expect(summary(page)).toHaveText('entity:searches · state:running')
+    await expect(terms(page)).toHaveText(['entity:searches', 'state:running'])
   })
 
   test('a pasted URL renders that query without any interaction', async ({ page }) => {
     await gotoStory(page, LIVE, '&e=items&v=grid&f_kind=pdf&s=score')
     await expect(page.locator('.dc-grid')).toBeVisible()
-    await expect(summary(page)).toHaveText('entity:items · kind:pdf')
+    await expect(terms(page)).toHaveText(['entity:items', 'kind:pdf'])
   })
 
   test('Back returns to the previous query', async ({ page }) => {
@@ -143,7 +145,7 @@ test.describe('URL — reload and history', () => {
 
     await openPanel(page)
     await pickEntity(page, 'Logs')
-    await expect(summary(page)).toHaveText('entity:logs')
+    await expect(terms(page)).toHaveText(['entity:logs'])
 
     await page.goBack()
     await expect(summary(page)).toHaveText('everything · list · updated')
@@ -155,14 +157,17 @@ test.describe('URL — reload and history', () => {
     await openPanel(page)
     // One pushed entry for the entity, then three facet edits that replace.
     await pickEntity(page, 'Searches')
-    await expect(summary(page)).toHaveText('entity:searches')
+    await expect(terms(page)).toHaveText(['entity:searches'])
 
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
     await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
     await page.locator('.dc-chip', { hasText: 'hourly' }).first().click()
-    await expect(summary(page)).toHaveText(
-      'entity:searches · state:running · state:paused · schedule:hourly',
-    )
+    await expect(terms(page)).toHaveText([
+      'entity:searches',
+      'state:running',
+      'state:paused',
+      'schedule:hourly',
+    ])
 
     // A single Back should land before the facets, not step through them.
     await page.goBack()

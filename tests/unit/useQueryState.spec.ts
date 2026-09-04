@@ -252,6 +252,51 @@ describe('useQueryState — reading and writing the URL', () => {
     expect(adapter.search.value).toBe('?e=searches&f_state=paused')
   })
 
+  /*
+   * The expression is not one term but as many as it was written with: a query
+   * someone assembled a piece at a time comes apart the same way.
+   */
+  it('lists each part of the expression as a term of its own', () => {
+    const { state } = setup('?e=items&q=theme:space+year>=1988')
+    expect(state.terms.value.map((t) => t.label)).toEqual([
+      'entity:items',
+      'theme:space',
+      'year>=1988',
+    ])
+  })
+
+  it('lifting one part leaves the rest of the expression running', () => {
+    const { state, adapter } = setup('?e=items&q=theme:space+year>=1988')
+    state.removeTerm(state.terms.value[1]!)
+    expect(adapter.search.value).toBe('?e=items&q=year%3E%3D1988')
+    expect(state.query.value.expr).toBe('year>=1988')
+  })
+
+  it('lifting the last part leaves no expression at all', () => {
+    const { state, adapter } = setup('?e=items&q=recall')
+    state.removeTerm(state.terms.value[1]!)
+    expect(adapter.search.value).toBe('?e=items')
+  })
+
+  /* Which alternative a term is in is part of its address, so lifting one of
+     two identical words takes out the one that was pressed. */
+  it('lifts a part from the alternative it is in', () => {
+    const { state } = setup('?e=items&q=recall+OR+theme:space+recall')
+    const terms = state.terms.value.filter((term) => term.facetKey === 'expr')
+    expect(terms.map((term) => [term.group, term.index])).toEqual([
+      [0, 0],
+      [1, 0],
+      [1, 1],
+    ])
+    state.removeTerm(terms[2]!)
+    expect(state.query.value.expr).toBe('recall OR theme:space')
+  })
+
+  it('summarises the expression whole, however many parts it has', () => {
+    const { state } = setup('?e=items&q=release+OR+recall')
+    expect(state.summary.value).toBe('entity:items · "release OR recall"')
+  })
+
   it('builds an href for a prospective change without navigating', () => {
     const { state, adapter } = setup('')
     expect(state.hrefFor({ view: 'grid' })).toBe('/?v=grid')

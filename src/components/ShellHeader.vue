@@ -36,6 +36,24 @@ const count = computed(() => {
   return String(shell.total.value)
 })
 
+/**
+ * The parts of the query, each one liftable on its own — the entity filter,
+ * every active facet, and every term of the expression.
+ *
+ * `or` marks a term that starts a new alternative. An expression's `OR` groups
+ * are alternatives, and a plain row of pills would otherwise read them as one
+ * list of things that all have to hold.
+ */
+const terms = computed(() =>
+  shell.terms.value.map((term, at, all) => {
+    const before = all[at - 1]
+    return {
+      term,
+      or: before?.group !== undefined && term.group !== undefined && term.group !== before.group,
+    }
+  }),
+)
+
 /* -------------------------------------------------------------------- pages */
 
 const page = computed(() => shell.query.value.page)
@@ -90,7 +108,10 @@ const position = computed(() => {
         >{{ count }}</span>
       </span>
 
-      <span class="dc-header__query">
+      <span
+        v-if="!terms.length"
+        class="dc-header__query"
+      >
         <span class="dc-header__query-label">Query</span>
         <span
           class="dc-header__summary dc-mono dc-truncate"
@@ -105,6 +126,36 @@ const position = computed(() => {
       >{{ expanded ? '▲' : '▼' }}</span>
       <span class="dc-header__sr">{{ expanded ? 'Hide query panel' : 'Edit query' }}</span>
     </button>
+
+    <!-- Outside the trigger for the same reason the pager is: each part of the
+         query is a button of its own, and a button cannot hold another. The
+         summary above says the same thing in one line, and gives way to these
+         as soon as there is a part to lift. -->
+    <div
+      v-if="terms.length"
+      class="dc-header__query dc-header__terms"
+    >
+      <span class="dc-header__query-label">Query</span>
+      <template
+        v-for="entry in terms"
+        :key="entry.term.id"
+      >
+        <span
+          v-if="entry.or"
+          class="dc-header__or dc-mono"
+          aria-hidden="true"
+        >or</span>
+        <button
+          type="button"
+          class="dc-term dc-mono"
+          :title="`Remove ${entry.term.label}`"
+          :aria-label="`Remove ${entry.term.label}`"
+          @click="shell.removeTerm(entry.term)"
+        >
+          {{ entry.term.label }}
+        </button>
+      </template>
+    </div>
 
     <!-- Outside the trigger, which is itself a button: these are controls of
          their own, and a button cannot hold another. -->
@@ -244,6 +295,57 @@ const position = computed(() => {
   overflow: hidden;
   padding-left: 12px;
   border-left: 1px solid var(--dc-line);
+}
+
+/*
+ * The parts take the space the summary had, since they are what replaced it:
+ * the trigger keeps the domain and the scope and no longer stretches.
+ */
+.dc-header__terms {
+  flex: 1;
+  gap: 5px;
+  /* One line, scrolled rather than wrapped: the bar is one row high, and a
+     query long enough to wrap would push the pager off it. */
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.dc-header__terms::-webkit-scrollbar {
+  display: none;
+}
+
+.dc-header:has(.dc-header__terms) .dc-header__trigger {
+  flex: 0 1 auto;
+}
+
+/*
+ * A part of the query, and pressing it takes that part out. The strikethrough
+ * on hover is the promise: this is the term, and this is it gone.
+ */
+.dc-term {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  background: var(--dc-accent-bg);
+  border: 1px solid var(--dc-accent-dim);
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-accent);
+  font-size: var(--dc-text-code);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.dc-term:hover,
+.dc-term:focus-visible {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+/* The one thing here that is not a term: what separates two alternatives. */
+.dc-header__or {
+  flex: 0 0 auto;
+  font-size: var(--dc-text-micro);
+  color: var(--dc-fg-3);
 }
 
 .dc-header__query-label {

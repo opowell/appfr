@@ -14,6 +14,8 @@ import {
   rowOrdinals,
   stepPage,
   summary,
+  termBar,
+  terms,
   trigger,
 } from './story'
 
@@ -38,18 +40,22 @@ test.describe('Header — summary of the current query', () => {
   test('names the entity once one is filtered to', async ({ page }) => {
     await gotoStory(page, ENTITY)
     await expect(page.locator('.dc-header__crumb-root')).toHaveText('Searches')
-    await expect(summary(page)).toHaveText('entity:searches')
-    await expect(summary(page)).toHaveAttribute('data-dc-active', 'true')
+    // A query with something in it is shown as the parts it is made of, and
+    // the one-line summary gives way to them.
+    await expect(summary(page)).toHaveCount(0)
+    await expect(terms(page)).toHaveText(['entity:searches'])
   })
 
   test('describes a narrowed query by its terms', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
-    await expect(summary(page)).toHaveText('entity:searches · state:running · schedule:daily')
+    await expect(terms(page)).toHaveText(['entity:searches', 'state:running', 'schedule:daily'])
   })
 
-  test('includes a committed expression in the summary', async ({ page }) => {
+  test('breaks a committed expression into its own parts', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--expression-query')
-    await expect(summary(page)).toHaveText('entity:items · "release OR recall"')
+    await expect(terms(page)).toHaveText(['entity:items', 'release', 'recall'])
+    // Two alternatives rather than two requirements, and the bar says which.
+    await expect(termBar(page)).toContainText('or')
   })
 
   test('counts the whole corpus at home and the entity population when scoped', async ({ page }) => {
@@ -73,7 +79,7 @@ test.describe('Header — summary of the current query', () => {
     await openPanel(page)
     await pickEntity(page, 'Items')
     await expect(page.locator('.dc-header__crumb-root')).toHaveText('Items')
-    await expect(summary(page)).toHaveText('entity:items')
+    await expect(terms(page)).toHaveText(['entity:items'])
   })
 
   test('widens back to everything when the scope is lifted', async ({ page }) => {
@@ -82,6 +88,45 @@ test.describe('Header — summary of the current query', () => {
     await page.locator('.dc-entity--all').click()
     await expect(page.locator('.dc-header__crumb-root')).toHaveText('Everything')
     await expect(summary(page)).toHaveText('everything · list · updated')
+  })
+})
+
+test.describe('Header — lifting a part of the query', () => {
+  test('pressing a part of the expression takes that part out', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--expression-query')
+    const before = await listRows(page).count()
+
+    await terms(page).filter({ hasText: 'release' }).click()
+
+    await expect(terms(page)).toHaveText(['entity:items', 'recall'])
+    // One alternative gone rather than one requirement lifted, so the results
+    // narrow rather than widen.
+    expect(await listRows(page).count()).toBeLessThan(before)
+  })
+
+  test('pressing the last part of the expression leaves the entity behind', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--expression-query')
+    await terms(page).filter({ hasText: 'release' }).click()
+    await terms(page).filter({ hasText: 'recall' }).click()
+    await expect(terms(page)).toHaveText(['entity:items'])
+  })
+
+  test('pressing the entity widens back to everything, and the summary returns', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    await terms(page).first().click()
+    await expect(terms(page)).toHaveCount(0)
+    await expect(summary(page)).toHaveText('everything · list · updated')
+  })
+
+  test('says what pressing one does before it is pressed', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--filtered-query')
+    const running = terms(page).filter({ hasText: 'state:running' })
+    await expect(running).toHaveAttribute('aria-label', 'Remove state:running')
+
+    // Struck through and faded on hover: this is the term, and this is it gone.
+    await running.hover()
+    await expect(running).toHaveCSS('text-decoration-line', 'line-through')
+    await expect(running).toHaveCSS('opacity', '0.5')
   })
 })
 

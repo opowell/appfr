@@ -8,9 +8,19 @@ export interface SummaryTerm {
     facetKey: string;
     /** For chips terms, the single option this term stands for. */
     option?: string;
+    /**
+     * For expression terms, where in the expression the term sits: which `OR`
+     * group, and where in that group. That pair is its address — the text of a
+     * term is not unique, and two identical words in different alternatives are
+     * two separate parts.
+     */
+    group?: number;
+    index?: number;
 }
 /** The term id the entity filter uses, so it can be lifted like any other. */
 export declare const ENTITY_TERM = "entity";
+/** The facet key the expression's own parts carry. */
+export declare const EXPRESSION_TERM = "expr";
 /**
  * The terms currently narrowing the corpus, in schema order.
  *

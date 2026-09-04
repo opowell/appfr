@@ -32,3 +32,23 @@ export type Expression = Term[][];
 export declare function parseExpression(input: string): Expression;
 /** True when the row satisfies at least one `OR` group in full. */
 export declare function matchesExpression(expression: Expression, row: ShellRow, entity: EntitySchema): boolean;
+/**
+ * One term, written back as the source that parses to it.
+ *
+ * Normalized rather than original: the field is lowercased and the value
+ * re-quoted only where it has to be, since the parse keeps neither the case
+ * nor the spacing it was written with. `parseExpression(formatTerm(t))` is `t`.
+ */
+export declare function formatTerm(term: Term): string;
+/**
+ * A whole expression, written back as source: terms spaced within a group,
+ * `OR` between them. A group with nothing left in it is dropped — an
+ * alternative with no terms would match every row, and so would the expression.
+ */
+export declare function formatExpression(expression: Expression): string;
+/**
+ * The expression with one term taken out of it, addressed by which `OR` group
+ * it is in and where in that group it sits — what removing one part of a query
+ * means when the parts are what is on screen.
+ */
+export declare function withoutTerm(expression: Expression, group: number, index: number): Expression;

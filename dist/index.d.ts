@@ -46,7 +46,7 @@ export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, defaultQuery, e
 export { cellFull, cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, defaultColumns, EMPTY_CELL, GENERIC_NAMES, roleColumn, roleColumns, rowKey, } from './query/columns';
 export type { DefaultColumnNames, DefaultMetric } from './query/columns';
 export { addTerm, drillExpression, scopeTerm, scopeTermFor } from './query/drill';
-export { ENTITY_TERM, summarizeQuery, summaryTerms } from './query/summary';
+export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary';
 export type { SummaryTerm } from './query/summary';
 export { normalizeSearch, ROUTE_ADAPTER_KEY } from './routing/adapter';
 export type { RouteAdapter } from './routing/adapter';
@@ -57,7 +57,7 @@ export { createVueRouterAdapter } from './routing/vueRouter';
 export type { RouterLike } from './routing/vueRouter';
 export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS } from './data/mock';
 export type { MockSourceOptions } from './data/mock';
-export { matchesExpression, parseExpression } from './data/expression';
+export { formatExpression, formatTerm, matchesExpression, parseExpression, withoutTerm, } from './data/expression';
 export type { Comparator, Expression, FieldTerm, Term, TextTerm } from './data/expression';
 export { fnv1a, formatDate, formatMetric, formatOrdinal, formatPercent } from './data/format';
 export { COLUMN_BREAKPOINTS, COLUMN_ROLES, RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS, } from './types';

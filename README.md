@@ -671,8 +671,8 @@ a button. Press one and that part comes out; the rest goes on running. The
 one-line summary is what the bar says while there is nothing there to lift.
 
 ```
-Query  [entity:items] [year>=1988] [release] or [recall]
-                       ^ press: that constraint is gone
+[entity:items] [year>=1988] [release] or [recall]
+                ^ press: that constraint is gone
 ```
 
 `OR` groups are alternatives rather than requirements, so the bar says `or`

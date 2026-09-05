@@ -168,7 +168,6 @@ const position = computed(() => {
         v-if="!terms.length"
         class="dc-header__query"
       >
-        <span class="dc-header__query-label">Query</span>
         <span
           class="dc-header__summary dc-mono dc-truncate"
           :data-dc-active="shell.isPristine.value ? 'false' : 'true'"
@@ -194,7 +193,6 @@ const position = computed(() => {
       :data-dc-more="more"
       @scroll="measureTerms"
     >
-      <span class="dc-header__query-label">Query</span>
       <template
         v-for="entry in terms"
         :key="entry.term.id"
@@ -385,7 +383,7 @@ const position = computed(() => {
  * its own — so the edge with parts behind it is softened instead. Which edge
  * that is is measured rather than animated: a scroll timeline leaves its end
  * state applied once the row stops overflowing, which is exactly what lifting
- * a part does, and the fade would sit over the label for good.
+ * a part does, and the fade would sit over a full row for good.
  */
 .dc-header__terms[data-dc-more='start'] {
   mask-image: linear-gradient(to right, transparent, #000 var(--dc-terms-cue));
@@ -433,15 +431,6 @@ const position = computed(() => {
   flex: 0 0 auto;
   font-size: var(--dc-text-micro);
   color: var(--dc-fg-3);
-}
-
-.dc-header__query-label {
-  flex: 0 0 auto;
-  font-size: var(--dc-text-eyebrow);
-  font-weight: var(--dc-weight-semibold);
-  color: var(--dc-fg-3);
-  text-transform: var(--dc-caps);
-  letter-spacing: var(--dc-tracking-caps-wide);
 }
 
 .dc-header__summary {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { addTerm, drillExpression, scopeTerm, scopeTermFor } from '../../src/query/drill'
 import { createMockDataSource, generateRows } from '../../src/data/mock'
+import { formatExpression, parseExpression } from '../../src/data/expression'
 import { defaultQuery, findEntity } from '../../src/query/schema'
 import { legoSchema } from '../../src/fixtures/schemas'
 import type { ShellRow } from '../../src/types'
@@ -49,6 +50,34 @@ describe('addTerm', () => {
   it('does not add the same term twice', () => {
     const once = addTerm('theme:space', 'color:"colors_10000"')
     expect(addTerm(once, 'color:"colors_10000"')).toBe(once)
+  })
+
+  /*
+   * The same constraint has more than one spelling, and both are ours: this
+   * writes the term quoted, while lifting any *other* part of the query writes
+   * the rest back out unquoted. A drill after a lift was adding a second copy.
+   */
+  it('does not add a term the expression already holds in another spelling', () => {
+    const lifted = formatExpression(parseExpression('theme:space color:"colors_10000"'))
+    expect(lifted).toBe('theme:space color:colors_10000')
+    expect(addTerm(lifted, 'color:"colors_10000"')).toBe(lifted)
+  })
+
+  it('reads case the way matching does, which is not at all', () => {
+    expect(addTerm('theme:Space', 'theme:space')).toBe('theme:Space')
+  })
+
+  it('tells two constraints on one field apart', () => {
+    expect(addTerm('year>=1988', 'year>=1999')).toBe('year>=1988 year>=1999')
+    expect(addTerm('year>=1988', 'year<=1988')).toBe('year>=1988 year<=1988')
+  })
+
+  it('tells a bare word from a field of the same name', () => {
+    expect(addTerm('recall', 'kind:recall')).toBe('recall kind:recall')
+  })
+
+  it('finds the term in whichever alternative holds it', () => {
+    expect(addTerm('release OR recall', 'recall')).toBe('release OR recall')
   })
 
   it('leaves the expression alone when the row is unscopable', () => {

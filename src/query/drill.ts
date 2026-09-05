@@ -1,4 +1,6 @@
 import type { DomainSchema, EntitySchema, ShellRow } from '../types'
+import { parseExpression } from '../data/expression'
+import type { Term } from '../data/expression'
 
 /**
  * Turning a `drill` into an expression.
@@ -35,18 +37,49 @@ export function scopeTermFor(schema: DomainSchema, row: ShellRow): string | null
   )
 }
 
+/** Values compare as they match: case is not a constraint in this language. */
+const sameValue = (one: string, other: string) => one.toLowerCase() === other.toLowerCase()
+
+/**
+ * Whether two terms say the same thing.
+ *
+ * By what they parse to rather than by how they were written, because the same
+ * constraint has more than one spelling: `scopeTerm` always quotes, while
+ * lifting any part of a query writes the rest back out through
+ * `formatExpression`, which quotes only where it has to. `host:"a.example"`
+ * and `host:a.example` are one term, and a comparison of text would call them
+ * two and let a second copy in.
+ */
+function sameTerm(one: Term, other: Term): boolean {
+  if (one.kind === 'field') {
+    return (
+      other.kind === 'field' &&
+      one.field === other.field &&
+      one.comparator === other.comparator &&
+      sameValue(one.value, other.value)
+    )
+  }
+  return other.kind === 'text' && sameValue(one.value, other.value)
+}
+
 /**
  * `expr` with `term` added, or unchanged when it is already there.
  *
  * Narrowing twice to the same record is a thing people do — press the count,
  * come back, press it again — and it should not leave the field carrying the
- * term twice.
+ * term twice. What goes in is the caller's own text; what decides it is
+ * already there is the term it parses to.
  */
 export function addTerm(expr: string, term: string | null): string {
   if (!term) return expr
   const current = expr.trim()
   if (!current) return term
-  return current.split(/\s+/).includes(term) ? current : `${current} ${term}`
+  const [added] = parseExpression(term).flat()
+  if (!added) return current
+  const has = parseExpression(current).some((group) =>
+    group.some((existing) => sameTerm(existing, added)),
+  )
+  return has ? current : `${current} ${term}`
 }
 
 /**

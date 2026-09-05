@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useShellContext } from '../composables/context'
 import { isTypeCardsQuery } from '../query/schema'
 
@@ -53,6 +53,62 @@ const terms = computed(() =>
     }
   }),
 )
+
+/* --------------------------------------------------------- parts off the end */
+
+const termBar = ref<HTMLElement | null>(null)
+
+/**
+ * Which side of the row has parts on it that are not on screen — `start`,
+ * `end`, `both`, or nothing at all.
+ *
+ * The row scrolls rather than wraps and its scrollbar is hidden, so without
+ * this a long query is silently cut: constraints the results are already
+ * filtered by, with nothing on screen to say they are there. The edge with
+ * more behind it is softened instead, which is what the attribute drives.
+ */
+const more = ref<'' | 'start' | 'end' | 'both'>('')
+
+function measureTerms(): void {
+  const element = termBar.value
+  if (!element) {
+    more.value = ''
+    return
+  }
+  // A fraction of a pixel is not somewhere anyone can scroll to, and flex
+  // rounding leaves one about as often as not.
+  const before = element.scrollLeft > 1
+  const after = element.scrollWidth - element.clientWidth - element.scrollLeft > 1
+  more.value = before && after ? 'both' : before ? 'start' : after ? 'end' : ''
+}
+
+/*
+ * Measured rather than derived, because whether the parts fit is a fact about
+ * the rendered row: the width of the bar, the length of every label, and the
+ * font they came out in. Watched only while there is a row to watch.
+ */
+let watching: ResizeObserver | null = null
+watch(
+  termBar,
+  (element) => {
+    watching?.disconnect()
+    watching = null
+    measureTerms()
+    if (!element || typeof ResizeObserver === 'undefined') return
+    watching = new ResizeObserver(measureTerms)
+    watching.observe(element)
+  },
+  { flush: 'post' },
+)
+
+/*
+ * The row keeps its element while its contents change — lifting a part of a
+ * query that stays narrowed — and the observer sees no resize in that, since
+ * what changed is inside it.
+ */
+watch(terms, measureTerms, { flush: 'post' })
+
+onBeforeUnmount(() => watching?.disconnect())
 
 /* -------------------------------------------------------------------- pages */
 
@@ -133,7 +189,10 @@ const position = computed(() => {
          as soon as there is a part to lift. -->
     <div
       v-if="terms.length"
+      ref="termBar"
       class="dc-header__query dc-header__terms"
+      :data-dc-more="more"
+      @scroll="measureTerms"
     >
       <span class="dc-header__query-label">Query</span>
       <template
@@ -302,6 +361,10 @@ const position = computed(() => {
  * the trigger keeps the domain and the scope and no longer stretches.
  */
 .dc-header__terms {
+  /* How much of the edge the cue below softens — a good part of a pill, so
+     that what is cut off reads as cut off rather than as ending there. */
+  --dc-terms-cue: 32px;
+
   flex: 1;
   gap: 5px;
   /* One line, scrolled rather than wrapped: the bar is one row high, and a
@@ -313,6 +376,30 @@ const position = computed(() => {
 
 .dc-header__terms::-webkit-scrollbar {
   display: none;
+}
+
+/*
+ * And the cut says that it is one.
+ *
+ * A scrollbar is what would otherwise say there is more, and this row hides
+ * its own — so the edge with parts behind it is softened instead. Which edge
+ * that is is measured rather than animated: a scroll timeline leaves its end
+ * state applied once the row stops overflowing, which is exactly what lifting
+ * a part does, and the fade would sit over the label for good.
+ */
+.dc-header__terms[data-dc-more='start'] {
+  mask-image: linear-gradient(to right, transparent, #000 var(--dc-terms-cue));
+}
+
+.dc-header__terms[data-dc-more='end'] {
+  mask-image: linear-gradient(to left, transparent, #000 var(--dc-terms-cue));
+}
+
+.dc-header__terms[data-dc-more='both'] {
+  mask-image:
+    linear-gradient(to right, transparent, #000 var(--dc-terms-cue)),
+    linear-gradient(to left, transparent, #000 var(--dc-terms-cue));
+  mask-composite: intersect;
 }
 
 .dc-header:has(.dc-header__terms) .dc-header__trigger {

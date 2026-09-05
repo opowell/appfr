@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { gotoStory, openPanel, termBar } from './story'
+import { gotoStory, openPanel, termBar, terms } from './story'
 
 /**
  * Narrowing to one record.
@@ -98,6 +98,30 @@ test.describe('A narrowed query', () => {
     const once = queryOf(page)
     await card(page, 'Sets').locator('.dc-scope').first().click()
     expect(queryOf(page)).toBe(once)
+  })
+
+  /*
+   * The same constraint has two spellings, and both are the shell's own: the →
+   * writes it quoted, while lifting any *other* part of the query writes the
+   * rest back out unquoted. Pressing → again after a lift was adding a second
+   * copy of a term that was already there.
+   */
+  test('does not carry it twice once another part has been lifted', async ({ page }) => {
+    await gotoStory(page, HOME, '&q=theme%3Aspace')
+    await card(page, 'Sets').locator('.dc-scope').first().click()
+    const scoped = queryOf(page)!
+    expect(scoped).toContain('theme:space')
+
+    await terms(page).filter({ hasText: 'theme:space' }).click()
+    const lifted = queryOf(page)!
+    // Rewritten from what it parsed to, which is where the second spelling
+    // comes from: the quotes the → wrote are not in it any more.
+    expect(lifted).not.toBe(scoped)
+    expect(lifted).toMatch(/^set:sets_\d+$/)
+
+    await card(page, 'Sets').locator('.dc-scope').first().click()
+    expect(queryOf(page)).toBe(lifted)
+    await expect(terms(page)).toHaveCount(1)
   })
 
   test('narrows types that declare no scope of their own too', async ({ page }) => {

@@ -27,7 +27,8 @@ export declare function scopeTermFor(schema: DomainSchema, row: ShellRow): strin
  *
  * Narrowing twice to the same record is a thing people do — press the count,
  * come back, press it again — and it should not leave the field carrying the
- * term twice.
+ * term twice. What goes in is the caller's own text; what decides it is
+ * already there is the term it parses to.
  */
 export declare function addTerm(expr: string, term: string | null): string;
 /**

@@ -236,6 +236,19 @@ export const FacetsAndExpression = story({
   search: '?e=items&v=list&f_kind=page,pdf&f_rank=40..100&q=example.com',
 })
 
+/**
+ * More parts than the bar has room for.
+ *
+ * The row scrolls rather than wraps and hides its scrollbar, so the fade at
+ * whichever edge has parts behind it is the only thing saying the query goes
+ * on past the end of the bar.
+ */
+export const LongQuery = story({
+  search:
+    '?e=items&v=list&f_kind=page,pdf&f_rank=40..100' +
+    '&q=example.com+year>=1988+digest+advisory+recall+bulletin+retraction+erratum+notice+revision',
+})
+
 /* --------------------------------------------------------------- the views */
 
 export const CardsView = story({ search: '?e=searches&v=cards' })

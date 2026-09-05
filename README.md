@@ -694,6 +694,18 @@ keeps neither the case nor the spacing it was written with. `formatExpression`
 and `withoutTerm` are exported for a host doing the same thing itself, as are
 `summaryTerms(query, entity)` for the list and `removeTerm(term)` for the press.
 
+That rewriting is why `addTerm` compares terms rather than text: `scopeTerm`
+always quotes and a rewrite quotes only where it has to, so `host:"a.example"`
+and `host:a.example` are the same constraint written twice. Drilling into a
+record after lifting any other part of the query adds nothing the second time.
+
+A query too long for the bar scrolls rather than wraps, and the row hides its
+scrollbar — so the edge with parts behind it is faded, and the row says which
+in `data-dc-more` (`start`, `end`, `both`, or empty). It is measured from the
+rendered row rather than driven by a scroll timeline: a timeline leaves its end
+state applied once the row stops overflowing, which is what lifting a part
+does, and the fade would then sit over the label for good.
+
 ## Component API
 
 ### `<DataShell>`

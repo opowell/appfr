@@ -130,6 +130,73 @@ test.describe('Header — lifting a part of the query', () => {
   })
 })
 
+/*
+ * A query the bar cannot hold is scrolled rather than wrapped, and the row
+ * hides its scrollbar — so the fade at whichever edge has parts behind it is
+ * the whole of what says the query goes on. `data-dc-more` is what draws it,
+ * and it is measured from the rendered row rather than animated: a scroll
+ * timeline leaves its end state applied once the row stops overflowing, which
+ * is exactly what lifting a part does.
+ */
+test.describe('Header — a query longer than the bar', () => {
+  const LONG = 'shell-data-shell--long-query'
+
+  // Narrow enough that a real query is longer than the row, which at a desktop
+  // width takes more parts than anyone assembles by hand.
+  test.use({ viewport: { width: 760, height: 720 } })
+
+  /** Scrolls the row of parts and waits for the cue to catch up. */
+  const scrollTerms = async (page: Page, to: 'start' | 'middle' | 'end') => {
+    await termBar(page).evaluate((element, where) => {
+      const max = element.scrollWidth - element.clientWidth
+      element.scrollLeft = where === 'start' ? 0 : where === 'end' ? max : max / 2
+    }, to)
+  }
+
+  test('says there is more of it off the end', async ({ page }) => {
+    await gotoStory(page, LONG)
+    await expect(termBar(page)).toHaveAttribute('data-dc-more', 'end')
+  })
+
+  test('says which side the rest of it is on, as it is scrolled', async ({ page }) => {
+    await gotoStory(page, LONG)
+    await scrollTerms(page, 'middle')
+    await expect(termBar(page)).toHaveAttribute('data-dc-more', 'both')
+    await scrollTerms(page, 'end')
+    await expect(termBar(page)).toHaveAttribute('data-dc-more', 'start')
+  })
+
+  test('softens the edge it says has more behind it', async ({ page }) => {
+    await gotoStory(page, LONG)
+    await expect(termBar(page)).toHaveCSS('mask-image', /linear-gradient/)
+  })
+
+  test('says nothing at all when the whole query fits', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--filtered-query')
+    await expect(termBar(page)).toHaveAttribute('data-dc-more', '')
+    await expect(termBar(page)).toHaveCSS('mask-image', 'none')
+  })
+
+  /*
+   * The row keeps its element while its parts change, so nothing about its own
+   * size changes when a query stops overflowing — and a cue left behind sits
+   * over the label for as long as the query lasts.
+   */
+  test('stops saying it once enough parts have been lifted', async ({ page }) => {
+    // A dozen lifts, and each one is a navigation and a requery.
+    test.slow()
+    await gotoStory(page, LONG)
+    await expect(termBar(page)).toHaveAttribute('data-dc-more', 'end')
+
+    while ((await terms(page).count()) > 2) {
+      await terms(page).last().click()
+    }
+
+    await expect(termBar(page)).toHaveAttribute('data-dc-more', '')
+    await expect(termBar(page)).toHaveCSS('mask-image', 'none')
+  })
+})
+
 test.describe('Header — opening the expanded query view', () => {
   test('starts closed', async ({ page }) => {
     await gotoStory(page, HOME)

@@ -1,11 +1,10 @@
-import { d } from "./columns.js";
 const t = (e, i, n, o = !1) => ({
   kind: "chips",
   key: e,
   label: i,
   options: n,
   ...o ? { multiple: o } : {}
-}), a = (e, i, n, o) => ({
+}), s = (e, i, n, o) => ({
   kind: "range",
   key: e,
   label: i,
@@ -16,7 +15,72 @@ const t = (e, i, n, o = !1) => ({
   key: e,
   label: i,
   text: n
-}), s = (e) => ({
+}), d = (e) => [
+  { key: "ordinal", kind: "ordinal", label: "#", width: "52px" },
+  {
+    key: "primary",
+    role: "identity",
+    label: e.primary,
+    sort: "name",
+    activate: !0,
+    scope: !0,
+    truncate: !0,
+    class: "dc-table__primary"
+  },
+  {
+    key: "secondary",
+    role: "reference",
+    label: e.secondary,
+    mono: !0,
+    muted: !0,
+    truncate: !0
+  },
+  {
+    key: "entityLabel",
+    label: "Entity",
+    when: "everything",
+    width: "130px",
+    mono: !0,
+    truncate: !0,
+    hideBelow: 900,
+    class: "dc-table__entity"
+  },
+  {
+    key: "metric1",
+    role: "metric",
+    kind: "number",
+    label: e.metric1,
+    sort: "metric1",
+    width: "110px",
+    hideBelow: 760,
+    ...e.metric1Drill ? { drill: e.metric1Drill } : {}
+  },
+  {
+    key: "metric2",
+    role: "metric",
+    kind: "number",
+    label: e.metric2,
+    sort: "metric2",
+    width: "110px",
+    hideBelow: 760,
+    ...e.metric2Drill ? { drill: e.metric2Drill } : {}
+  },
+  {
+    key: "updatedAt",
+    role: "updated",
+    kind: "date",
+    label: "Updated",
+    sort: "updated",
+    width: "120px",
+    mono: !0,
+    muted: !0,
+    hideBelow: 620
+  },
+  { key: "status", role: "state", kind: "status", label: "State", width: "110px" },
+  /* A background is not a value, so the table leaves this one out. It is
+     declared so that the schema names every field it has in one place. */
+  { key: "tint", role: "tint" }
+], a = (e) => ({
   key: e.key,
   label: e.label,
   count: e.count,
@@ -24,15 +88,13 @@ const t = (e, i, n, o = !1) => ({
   tabs: e.tabs,
   samples: e.samples,
   ...e.scope ? { scope: e.scope } : {},
-  columns: e.columns ?? d({
-    identity: e.primary,
-    reference: e.secondary,
-    metrics: [
-      { label: e.metric1, ...e.metric1Drill ? { drill: e.metric1Drill } : {} },
-      { label: e.metric2, ...e.metric2Drill ? { drill: e.metric2Drill } : {} }
-    ]
-  })
-}), c = d(), u = (e) => "data:image/svg+xml," + encodeURIComponent(
+  columns: e.columns ?? d(e)
+}), l = d({
+  primary: "Item",
+  secondary: "Reference",
+  metric1: "Metric",
+  metric2: "Metric 2"
+}), u = (e) => "data:image/svg+xml," + encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28"><rect width="56" height="28" rx="3" fill="${String(e.fields.tint)}"/></svg>`
 );
 function p(e) {
@@ -96,7 +158,9 @@ const y = [
     width: "88px",
     align: "right",
     mono: !0,
-    value: (e) => Math.round(Number(e.fields.score) * 5e3),
+    /* Centigrams, off a number the row already carries: the fixtures generate
+       no field the schema has not named, and a weight is what `format` is for. */
+    value: (e) => Math.round(Number(e.fields.metric1) * 37),
     format: p,
     hideBelow: 1100
   },
@@ -108,20 +172,11 @@ const y = [
     format: (e) => e === !0 ? "rare" : "—",
     hideBelow: 1100
   },
-  {
-    key: "score",
-    role: "score",
-    kind: "score",
-    label: "Match",
-    sort: "score",
-    width: "72px",
-    hideBelow: 900
-  },
   { key: "status", role: "state", kind: "status", label: "State", width: "104px" },
   /* Not a cell — the tile in the grid view is what reads it — but declared
      here, because this is where this type says what fields it has. */
   { key: "tint", role: "tint" }
-], l = s({
+], c = a({
   key: "settings",
   label: "Settings",
   count: "20",
@@ -157,7 +212,7 @@ const y = [
     ["API tokens", "access.api_tokens"],
     ["Audit log", "access.audit_log"]
   ]
-}), m = s({
+}), m = a({
   key: "logs",
   label: "Logs",
   count: "184k",
@@ -186,9 +241,9 @@ const y = [
   label: "iRadar",
   kicker: "Web monitoring",
   placeholder: "site:*.shop AND price < 40 AND seen:false",
-  columns: c,
+  columns: l,
   entities: [
-    s({
+    a({
       key: "searches",
       label: "Searches",
       count: "38",
@@ -211,7 +266,7 @@ const y = [
         ["Marketplace listings", "category:resale"]
       ]
     }),
-    s({
+    a({
       key: "items",
       label: "Items",
       count: "9,988",
@@ -221,7 +276,7 @@ const y = [
       metric2: "Score",
       facets: [
         t("kind", "Kind", ["page", "pdf", "feed", "image"]),
-        a("rank", "Rank", 0, 100),
+        s("rank", "Rank", 0, 100),
         r("seen", "Seen", "Hide items already seen")
       ],
       tabs: ["Information", "Content", "Links", "Searches"],
@@ -234,7 +289,7 @@ const y = [
         ["Recall notice", "safety.example.gov/recall/8812"]
       ]
     }),
-    s({
+    a({
       key: "scrapers",
       label: "Scrapers",
       count: "24",
@@ -258,16 +313,16 @@ const y = [
       ]
     }),
     m,
-    l
+    c
   ]
 }, g = {
   key: "LEGO",
   label: "LEGO",
   kicker: "Catalogue & inventory",
   placeholder: "theme:space AND year >= 1988 AND parts > 300",
-  columns: c,
+  columns: l,
   entities: [
-    s({
+    a({
       key: "sets",
       label: "Sets",
       count: "19,412",
@@ -281,7 +336,7 @@ const y = [
       metric1Drill: "pieces",
       facets: [
         t("theme", "Theme", ["space", "castle", "town", "technic"]),
-        a("year", "Year", 1958, 2026),
+        s("year", "Year", 1958, 2026),
         r("owned", "Owned", "Only sets in my inventory")
       ],
       tabs: ["Information", "Inventory", "Variants", "Logs"],
@@ -294,7 +349,7 @@ const y = [
         ["Café Corner", "10182-1"]
       ]
     }),
-    s({
+    a({
       key: "pieces",
       label: "Pieces",
       count: "58,203",
@@ -309,13 +364,13 @@ const y = [
         // `shape` rather than `category`: a category is a record here, and a
         // facet under that key would shadow the join to it.
         t("shape", "Shape", ["brick", "plate", "slope", "minifig"]),
-        a("firstYear", "First year", 1958, 2026),
+        s("firstYear", "First year", 1958, 2026),
         r("rarity", "Rarity", "Only parts in < 5 sets")
       ],
       tabs: ["Information", "Colors", "Sets", "Logs"],
-      // The one type in these four fixtures whose table is not the default
-      // eight columns: a catalogue piece is a picture, a shape, a year, two
-      // counts, a weight and a flag, and no four of those are the four.
+      // The one type in these four fixtures whose table is not the familiar
+      // set: a catalogue piece is a picture, a shape, a year, two counts, a
+      // weight and a flag, and no four of those are the four.
       columns: y,
       samples: [
         ["Brick 2 x 4", "3001"],
@@ -326,7 +381,7 @@ const y = [
         ["Windscreen 3 x 4", "2437"]
       ]
     }),
-    s({
+    a({
       key: "colors",
       label: "Colors",
       count: "267",
@@ -339,7 +394,7 @@ const y = [
       metric2Drill: "sets",
       facets: [
         t("family", "Family", ["solid", "transparent", "metallic", "glow"]),
-        a("firstYear", "First year", 1958, 2026),
+        s("firstYear", "First year", 1958, 2026),
         r("retired", "Retired", "Hide retired colors")
       ],
       tabs: ["Information", "Parts", "Sets", "Logs"],
@@ -352,7 +407,7 @@ const y = [
         ["Medium Azure", "#36aebf"]
       ]
     }),
-    s({
+    a({
       key: "inventories",
       label: "Inventories",
       count: "21,884",
@@ -362,7 +417,7 @@ const y = [
       metric2: "Spares",
       facets: [
         t("type", "Type", ["set", "minifig", "gear"]),
-        a("version", "Version", 1, 12),
+        s("version", "Version", 1, 12),
         r("complete", "Complete", "Only complete inventories")
       ],
       tabs: ["Information", "Lines", "Set", "Logs"],
@@ -375,7 +430,7 @@ const y = [
         ["Renegade v1", "inv-6954-1-r1"]
       ]
     }),
-    s({
+    a({
       key: "categories",
       label: "Categories",
       count: "68",
@@ -387,7 +442,7 @@ const y = [
       metric1Drill: "pieces",
       facets: [
         t("level", "Level", ["root", "branch", "leaf"]),
-        a("parts", "Parts", 0, 9e3),
+        s("parts", "Parts", 0, 9e3),
         r("empty", "Empty", "Hide empty categories")
       ],
       tabs: ["Information", "Parts", "Children", "Logs"],
@@ -401,16 +456,16 @@ const y = [
       ]
     }),
     m,
-    l
+    c
   ]
 }, f = {
   key: "Commerce",
   label: "Commerce",
   kicker: "Crawl & test platform",
   placeholder: "tenant:acme AND status:failed AND run > 2026-08-01",
-  columns: c,
+  columns: l,
   entities: [
-    s({
+    a({
       key: "tenants",
       label: "Tenants",
       count: "142",
@@ -435,7 +490,7 @@ const y = [
         ["Soylent Foods", "soylent"]
       ]
     }),
-    s({
+    a({
       key: "crawls",
       label: "Crawls",
       count: "3,410",
@@ -445,7 +500,7 @@ const y = [
       metric2: "Errors",
       facets: [
         t("state", "State", ["running", "done", "failed"]),
-        a("pages", "Pages", 0, 5e4),
+        s("pages", "Pages", 0, 5e4),
         r("deltas", "Deltas", "Only crawls with changes")
       ],
       tabs: ["Information", "Results", "Tenant", "Logs"],
@@ -458,7 +513,7 @@ const y = [
         ["Image audit", "crw_2026_0819_f"]
       ]
     }),
-    s({
+    a({
       key: "tests",
       label: "Tests",
       count: "486",
@@ -481,7 +536,7 @@ const y = [
         ["Coupon stacking blocked", "chk.coupon.stack"]
       ]
     }),
-    s({
+    a({
       key: "testresults",
       label: "Test results",
       count: "92,117",
@@ -491,7 +546,7 @@ const y = [
       metric2: "Diffs",
       facets: [
         t("outcome", "Outcome", ["pass", "fail", "skipped"]),
-        a("durationMs", "Duration ms", 0, 6e4),
+        s("durationMs", "Duration ms", 0, 6e4),
         r("noise", "Noise", "Hide known-flaky results")
       ],
       tabs: ["Information", "Diff", "Test", "Logs"],
@@ -504,7 +559,7 @@ const y = [
         ["chk.coupon.stack #4407", "res_4407"]
       ]
     }),
-    s({
+    a({
       key: "crawlresults",
       label: "Crawl results",
       count: "1.2m",
@@ -514,7 +569,7 @@ const y = [
       metric2: "Links",
       facets: [
         t("status", "Status", ["200", "301", "404", "5xx"]),
-        a("sizeKb", "Size kB", 0, 4e3),
+        s("sizeKb", "Size kB", 0, 4e3),
         r("changes", "Changes", "Only changed since last crawl")
       ],
       tabs: ["Information", "Content", "Links", "Crawl"],
@@ -528,16 +583,16 @@ const y = [
       ]
     }),
     m,
-    l
+    c
   ]
 }, b = {
   key: "Battle-sim",
   label: "Battle-sim",
   kicker: "Simulation runs",
   placeholder: "faction:north AND rounds > 40 AND outcome:draw",
-  columns: c,
+  columns: l,
   entities: [
-    s({
+    a({
       key: "units",
       label: "Units",
       count: "612",
@@ -547,7 +602,7 @@ const y = [
       metric2: "In runs",
       facets: [
         t("class", "Class", ["infantry", "armour", "air", "support"]),
-        a("power", "Power", 0, 100),
+        s("power", "Power", 0, 100),
         r("retired", "Retired", "Hide retired units")
       ],
       tabs: ["Information", "Stats", "Runs", "Logs"],
@@ -560,7 +615,7 @@ const y = [
         ["Sapper Team", "inf.sapper"]
       ]
     }),
-    s({
+    a({
       key: "factions",
       label: "Factions",
       count: "18",
@@ -570,7 +625,7 @@ const y = [
       metric2: "Runs",
       facets: [
         t("doctrine", "Doctrine", ["attrition", "manoeuvre", "siege"]),
-        a("units", "Units", 0, 200),
+        s("units", "Units", 0, 200),
         r("active", "Active", "Only factions in active runs")
       ],
       tabs: ["Information", "Units", "Runs", "Logs"],
@@ -583,7 +638,7 @@ const y = [
         ["Sea Concord", "sea"]
       ]
     }),
-    s({
+    a({
       key: "scenarios",
       label: "Scenarios",
       count: "94",
@@ -593,7 +648,7 @@ const y = [
       metric2: "Runs",
       facets: [
         t("terrain", "Terrain", ["urban", "open", "mountain", "coast"]),
-        a("rounds", "Rounds", 1, 200),
+        s("rounds", "Rounds", 1, 200),
         r("balance", "Balance", "Only unbalanced scenarios")
       ],
       tabs: ["Information", "Map", "Runs", "Logs"],
@@ -606,7 +661,7 @@ const y = [
         ["Salt Flats", "salt-flats"]
       ]
     }),
-    s({
+    a({
       key: "runs",
       label: "Runs",
       count: "48,220",
@@ -616,7 +671,7 @@ const y = [
       metric2: "Casualties",
       facets: [
         t("outcome", "Outcome", ["win", "loss", "draw", "aborted"]),
-        a("rounds", "Rounds", 1, 200),
+        s("rounds", "Rounds", 1, 200),
         r("seeded", "Seeded", "Only reproducible seeds")
       ],
       tabs: ["Information", "Timeline", "Units", "Raw"],
@@ -630,21 +685,21 @@ const y = [
       ]
     }),
     m,
-    l
+    c
   ]
 }, k = {
   iRadar: h,
   LEGO: g,
   Commerce: f,
   "Battle-sim": b
-}, S = Object.values(k);
+}, w = Object.values(k);
 export {
   b as battleSimSchema,
   f as commerceSchema,
   h as iRadarSchema,
   g as legoSchema,
   m as logsEntity,
-  S as schemaList,
+  w as schemaList,
   k as schemas,
-  l as settingsEntity
+  c as settingsEntity
 };

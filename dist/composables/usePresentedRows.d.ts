@@ -24,9 +24,6 @@ export interface RowParts {
     /** The metric columns, in the order the schema declared them. */
     metrics: RowMetric[];
     state: RecordStatus | null;
-    /** 0–1, or null where no column plays the part. */
-    score: number | null;
-    percent: string;
     /** The date, formatted the way every view formats it. */
     updated: string;
     /** A colour for the grid view's tile, where a column names one. */

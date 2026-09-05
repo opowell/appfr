@@ -7,7 +7,6 @@ const u = [
   "FacetControl",
   "SegmentedControl",
   "StatusPill",
-  "ScoreMeter",
   "WindowFrame",
   "WindowPane",
   "ListView",

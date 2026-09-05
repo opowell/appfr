@@ -20,7 +20,6 @@ const COMPONENTS = [
   'FacetControl',
   'SegmentedControl',
   'StatusPill',
-  'ScoreMeter',
   'WindowFrame',
   'WindowPane',
   'ListView',

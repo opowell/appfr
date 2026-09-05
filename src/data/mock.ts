@@ -128,8 +128,6 @@ function pickColumnValue(
       return revision ? `${sample[1]}-${revision + 1}` : sample[1]
     case 'state':
       return RECORD_STATUSES[hash % RECORD_STATUSES.length] as RecordStatus
-    case 'score':
-      return Number((0.35 + (hash % 64) / 100).toFixed(3))
     case 'updated':
       return updatedAt
     case 'tint':
@@ -143,8 +141,6 @@ function pickColumnValue(
       return 1 + (hash % 940)
     case 'status':
       return RECORD_STATUSES[hash % RECORD_STATUSES.length] as RecordStatus
-    case 'score':
-      return Number((0.35 + (hash % 64) / 100).toFixed(3))
     case 'date':
       return updatedAt
     default:
@@ -275,11 +271,7 @@ function comparatorFor(columns: ColumnDef[], sortKey: string) {
   if (!column) return () => 0
 
   const kind = column.kind ?? 'text'
-  const numeric =
-    kind === 'number' ||
-    kind === 'score' ||
-    column.role === 'metric' ||
-    column.role === 'score'
+  const numeric = kind === 'number' || column.role === 'metric'
   const dated = kind === 'date' || column.role === 'updated'
 
   return (a: ShellRow, b: ShellRow): number => {

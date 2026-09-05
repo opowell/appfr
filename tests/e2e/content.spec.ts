@@ -121,7 +121,7 @@ test.describe('Content — the view renders what the query asked for', () => {
     await expect(row.locator('.dc-list__ordinal')).toHaveText('01')
     await expect(row.locator('.dc-list__primary')).not.toBeEmpty()
     await expect(row.locator('.dc-list__secondary')).not.toBeEmpty()
-    await expect(row.locator('.dc-meter')).toBeVisible()
+    await expect(row.locator('.dc-list__metrics')).toBeVisible()
     await expect(row.locator('.dc-pill')).toBeVisible()
   })
 

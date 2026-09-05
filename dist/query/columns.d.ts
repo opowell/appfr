@@ -4,59 +4,16 @@ import type { ColumnAlign, ColumnDef, ColumnRole, DomainSchema, EntitySchema, Sh
  *
  * A table is the {@link ColumnDef}s its entity declares — exactly those, in
  * that order, however many. The shell reads none of a row's fields by a name
- * of its own: which fields a record has is the schema's to say, and a set of
- * columns nobody asked for would be the component deciding what the data is.
+ * of its own, and offers no set of its own to fall back on: which fields a
+ * record has is the schema's to say, and a set of columns nobody asked for
+ * would be the component deciding what the data is.
  *
  * The views that are not tables — a card, a tile, a link row, a preview pane —
  * are an identity, a reference, a number or two and a mark, so they read the
- * columns by {@link ColumnRole} rather than by position. {@link defaultColumns}
- * is here for the schema that wants the familiar set: something to ask for,
- * not something to be given.
+ * columns by {@link ColumnRole} rather than by position.
  */
 /** Shown when a column resolves to nothing — absent, rather than empty. */
 export declare const EMPTY_CELL = "\u2014";
-/** Headings for {@link defaultColumns} where the caller names none. */
-export declare const GENERIC_NAMES: {
-    readonly identity: "Item";
-    readonly reference: "Reference";
-    readonly metrics: readonly ["Metric", "Metric 2"];
-};
-/** One metric of the default set: what it is called, and what it counts. */
-export interface DefaultMetric {
-    label: string;
-    /** The row field it reads. `metric1`, `metric2`, … in order when unsaid. */
-    field?: string;
-    /**
-     * The {@link EntitySchema.key} this number counts, where the schema lists
-     * it — what makes the number pressable.
-     */
-    drill?: string;
-}
-export interface DefaultColumnNames {
-    identity: string;
-    reference: string;
-    metrics: Array<string | DefaultMetric>;
-}
-/**
- * The familiar set: an ordinal, the identity pair, the row's type, a metric or
- * two, the date, the state, the score and the tint — reading the fields the
- * shell used to fix on the row itself, so a source that already returns those
- * keeps working by moving them into {@link ShellRow.fields}.
- *
- * Nothing applies this. It is what a schema spreads into its own `columns`
- * when that set is what it wanted, whole or as a starting point:
- *
- * ```ts
- * columns: [
- *   ...defaultColumns({ identity: 'Piece', reference: 'Part no.', metrics: ['Colors'] }),
- *   { key: 'owner', label: 'Owner' },
- * ]
- * ```
- *
- * Called with nothing it is the generic set, for the mixed result where no one
- * type's vocabulary applies.
- */
-export declare function defaultColumns(names?: Partial<DefaultColumnNames>): ColumnDef[];
 /** The first column playing a part, or undefined where nothing plays it. */
 export declare function roleColumn(columns: ColumnDef[], role: ColumnRole): ColumnDef | undefined;
 /** Every column playing a part, in the order the schema declared them. */

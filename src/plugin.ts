@@ -3,7 +3,6 @@ import DataShell from './components/DataShell.vue'
 import FacetControl from './components/FacetControl.vue'
 import QueryPanel from './components/QueryPanel.vue'
 import ResultsArea from './components/ResultsArea.vue'
-import ScoreMeter from './components/ScoreMeter.vue'
 import SegmentedControl from './components/SegmentedControl.vue'
 import ShellHeader from './components/ShellHeader.vue'
 import StatusPill from './components/StatusPill.vue'
@@ -37,7 +36,6 @@ const COMPONENTS = {
   FacetControl,
   SegmentedControl,
   StatusPill,
-  ScoreMeter,
   WindowFrame,
   WindowPane,
   ListView,

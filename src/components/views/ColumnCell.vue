@@ -5,7 +5,6 @@ import { useShellContext } from '../../composables/context'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { cellFull, cellText, cellValue, columnTruncates } from '../../query/columns'
 import MetricDrill from './MetricDrill.vue'
-import ScoreMeter from '../ScoreMeter.vue'
 import StatusPill from '../StatusPill.vue'
 
 /**
@@ -34,11 +33,6 @@ const text = computed(() =>
 )
 
 const status = computed(() => value.value as RecordStatus)
-
-const score = computed(() => {
-  const numeric = Number(value.value)
-  return Number.isFinite(numeric) ? numeric : 0
-})
 
 /** Whether the value is a button of its own rather than part of the row's. */
 const pressable = computed(() => props.column.activate === true || Boolean(props.column.click))
@@ -76,11 +70,6 @@ function press(event: MouseEvent) {
   <StatusPill
     v-else-if="kind === 'status'"
     :status="status"
-  />
-  <ScoreMeter
-    v-else-if="kind === 'score'"
-    :value="score"
-    :label="column.label"
   />
   <img
     v-else-if="kind === 'image'"

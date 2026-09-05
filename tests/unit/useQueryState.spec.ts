@@ -41,7 +41,6 @@ describe('useQueryState — the home screen', () => {
       'metric',
       'metric 2',
       'updated',
-      'score',
     ])
 
     state.setEntity('searches')
@@ -51,7 +50,6 @@ describe('useQueryState — the home screen', () => {
       'new',
       'results',
       'updated',
-      'score',
     ])
   })
 
@@ -190,9 +188,9 @@ describe('useQueryState — reading and writing the URL', () => {
   })
 
   it('keeps a sort that both entities share', () => {
-    const { state } = setup('?s=score')
+    const { state } = setup('?s=metric1')
     state.setEntity('items')
-    expect(state.query.value.sort).toBe('score')
+    expect(state.query.value.sort).toBe('metric1')
   })
 
   it('sets and clears a range', () => {
@@ -219,15 +217,15 @@ describe('useQueryState — reading and writing the URL', () => {
   })
 
   it('clears the entity, the expression and every facet, keeping view and sort', () => {
-    const { state, adapter } = setup('?e=items&v=table&s=score&f_kind=page&q=release')
+    const { state, adapter } = setup('?e=items&v=table&s=metric1&f_kind=page&q=release')
     state.clearFilters()
-    expect(adapter.search.value).toBe('?v=table&s=score')
+    expect(adapter.search.value).toBe('?v=table&s=metric1')
     expect(state.isEverything.value).toBe(true)
     expect(state.isPristine.value).toBe(true)
   })
 
   it('resets everything back to the home screen', () => {
-    const { state, adapter } = setup('?e=items&v=table&s=score&f_kind=page')
+    const { state, adapter } = setup('?e=items&v=table&s=metric1&f_kind=page')
     state.reset()
     expect(adapter.search.value).toBe('')
     expect(state.isPristine.value).toBe(true)
@@ -371,12 +369,12 @@ describe('useQueryState — what returns to the first page', () => {
 
   it('the sort field, and the direction', () => {
     const { state, adapter } = setup('?e=items&p=5')
-    state.setSort('score')
-    expect(adapter.search.value).toBe('?e=items&s=score')
+    state.setSort('metric1')
+    expect(adapter.search.value).toBe('?e=items&s=metric1')
 
     state.setPage(5)
     state.toggleDirection()
-    expect(adapter.search.value).toBe('?e=items&s=score&d=asc')
+    expect(adapter.search.value).toBe('?e=items&s=metric1&d=asc')
   })
 
   it('the expression', () => {
@@ -415,7 +413,7 @@ describe('useQueryState — what returns to the first page', () => {
   it('and an href agrees with the click it stands in for', () => {
     const { state } = setup('?e=items&v=list&p=5')
     expect(state.hrefFor({ view: 'grid' })).toBe('/?e=items&v=grid&p=5')
-    expect(state.hrefFor({ sort: 'score' })).toBe('/?e=items&v=list&s=score')
+    expect(state.hrefFor({ sort: 'metric1' })).toBe('/?e=items&v=list&s=metric1')
     expect(state.hrefFor({ page: 2 })).toBe('/?e=items&v=list&p=2')
   })
 })

@@ -237,9 +237,9 @@ describe('createMockDataSource — one entity', () => {
     expect(asc).toEqual([...desc].reverse())
   })
 
-  it('sorts by score', () => {
-    const scores = run('?e=searches&s=score').rows.map((r) => Number(r.fields.score))
-    expect(scores).toEqual([...scores].sort((a, b) => b - a))
+  it('leaves the order alone for a sort no column offers', () => {
+    const asDeclared = run('?e=searches').rows.map((r) => r.id)
+    expect(run('?e=searches&s=nothingoffersthis').rows.map((r) => r.id)).toEqual(asDeclared)
   })
 
   it('sorts by name A→Z when ascending', () => {

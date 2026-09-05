@@ -137,7 +137,7 @@ async function column(page: Page, label: string): Promise<Locator> {
 }
 
 test.describe('Columns — as many as the schema declares', () => {
-  test('draws the declared set, in order, rather than the default eight', async ({ page }) => {
+  test('draws the declared set, in order, and nothing the shell added', async ({ page }) => {
     await gotoStory(page, COLUMNS)
     const labels = (await headings(page).allInnerTexts()).map((text) => text.trim())
     expect(labels).toEqual([
@@ -152,7 +152,6 @@ test.describe('Columns — as many as the schema declares', () => {
       'In sets',
       'Weight',
       'Rare',
-      'Match',
       'State',
     ])
   })
@@ -167,11 +166,10 @@ test.describe('Columns — as many as the schema declares', () => {
     await expect((await column(page, 'Colors')).first()).toHaveText(/^\d+(\.\d)?[km]?$/)
   })
 
-  test('draws the marks a column asks for — a picture, a meter, a pill', async ({ page }) => {
+  test('draws the marks a column asks for — a picture and a pill', async ({ page }) => {
     await gotoStory(page, COLUMNS)
     const row = page.locator('.dc-table__row').first()
     await expect(row.locator('img')).toHaveCount(1)
-    await expect(row.locator('.dc-meter')).toHaveCount(1)
     await expect(row.locator('.dc-pill')).toHaveCount(1)
   })
 

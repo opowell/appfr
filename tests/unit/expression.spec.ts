@@ -22,7 +22,6 @@ const row = (fields: Record<string, unknown> = {}): ShellRow => ({
     primary: 'Q3 price list',
     secondary: 'shop.example.com/pricing',
     status: 'ok',
-    score: 0.6,
     metric1: 120,
     metric2: 8,
     updatedAt: '2026-08-20T00:00:00.000Z',
@@ -162,10 +161,10 @@ describe('matchesExpression', () => {
     expect(matches('metric1<=120')).toBe(true)
   })
 
-  it('handles status and score', () => {
+  it('handles status under either of its generic names', () => {
     expect(matches('status:ok')).toBe(true)
+    expect(matches('state:ok')).toBe(true)
     expect(matches('state:failed')).toBe(false)
-    expect(matches('score>=0.5')).toBe(true)
   })
 
   it('reads booleans on either spelling', () => {

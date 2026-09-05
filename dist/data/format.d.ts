@@ -12,4 +12,3 @@ export declare function formatMetric(value: number): string;
 export declare function formatDate(iso: string): string;
 /** Two-digit ordinal for the leading column of the list and table views. */
 export declare function formatOrdinal(index: number): string;
-export declare function formatPercent(fraction: number): string;

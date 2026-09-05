@@ -7,13 +7,12 @@ import type {
   ShellRow,
   ToggleFacet,
 } from '../types'
-import { defaultColumns } from '../query/columns'
 
 /**
  * The four schemas the design was drawn against. They exist to prove the point
  * the shell is built on: every entity is the same shape — an identity pair,
- * two named metrics, a date, a state and a score — and use cases differ only
- * in vocabulary.
+ * two named metrics, a date and a state — and use cases differ only in
+ * vocabulary.
  *
  * Import them for stories, tests, and as worked examples of the schema shape.
  */
@@ -62,11 +61,91 @@ interface EntityInput {
   columns?: ColumnDef[]
 }
 
+type ColumnNames = Pick<
+  EntityInput,
+  'primary' | 'secondary' | 'metric1' | 'metric2' | 'metric1Drill' | 'metric2Drill'
+>
+
+/**
+ * The set all but one of these types is: an ordinal, the identity pair, the
+ * row's own kind, two metrics, the date and the state, named in each type's
+ * own words.
+ *
+ * The shell renders the columns it is given and invents none — there is no
+ * familiar set to fall back on — so this is the fixtures' own, written out
+ * here where the fixtures can be read as the worked examples they are.
+ */
+const familiarColumns = (input: ColumnNames): ColumnDef[] => [
+  { key: 'ordinal', kind: 'ordinal', label: '#', width: '52px' },
+  {
+    key: 'primary',
+    role: 'identity',
+    label: input.primary,
+    sort: 'name',
+    activate: true,
+    scope: true,
+    truncate: true,
+    class: 'dc-table__primary',
+  },
+  {
+    key: 'secondary',
+    role: 'reference',
+    label: input.secondary,
+    mono: true,
+    muted: true,
+    truncate: true,
+  },
+  {
+    key: 'entityLabel',
+    label: 'Entity',
+    when: 'everything',
+    width: '130px',
+    mono: true,
+    truncate: true,
+    hideBelow: 900,
+    class: 'dc-table__entity',
+  },
+  {
+    key: 'metric1',
+    role: 'metric',
+    kind: 'number',
+    label: input.metric1,
+    sort: 'metric1',
+    width: '110px',
+    hideBelow: 760,
+    ...(input.metric1Drill ? { drill: input.metric1Drill } : {}),
+  },
+  {
+    key: 'metric2',
+    role: 'metric',
+    kind: 'number',
+    label: input.metric2,
+    sort: 'metric2',
+    width: '110px',
+    hideBelow: 760,
+    ...(input.metric2Drill ? { drill: input.metric2Drill } : {}),
+  },
+  {
+    key: 'updatedAt',
+    role: 'updated',
+    kind: 'date',
+    label: 'Updated',
+    sort: 'updated',
+    width: '120px',
+    mono: true,
+    muted: true,
+    hideBelow: 620,
+  },
+  { key: 'status', role: 'state', kind: 'status', label: 'State', width: '110px' },
+  /* A background is not a value, so the table leaves this one out. It is
+     declared so that the schema names every field it has in one place. */
+  { key: 'tint', role: 'tint' },
+]
+
 /**
  * The shell renders the columns it is given and invents none, so every one of
- * these says what it is. All but one of them wants the familiar set, and
- * `defaultColumns` is how a schema asks for it by name rather than by leaving
- * the field out and hoping.
+ * these says what it is — the familiar set above unless the type hands over a
+ * set of its own.
  */
 const entity = (input: EntityInput): EntitySchema => ({
   key: input.key,
@@ -76,31 +155,27 @@ const entity = (input: EntityInput): EntitySchema => ({
   tabs: input.tabs,
   samples: input.samples,
   ...(input.scope ? { scope: input.scope } : {}),
-  columns:
-    input.columns ??
-    defaultColumns({
-      identity: input.primary,
-      reference: input.secondary,
-      metrics: [
-        { label: input.metric1, ...(input.metric1Drill ? { drill: input.metric1Drill } : {}) },
-        { label: input.metric2, ...(input.metric2Drill ? { drill: input.metric2Drill } : {}) },
-      ],
-    }),
+  columns: input.columns ?? familiarColumns(input),
 })
 
 /**
  * Columns for the mixed result set, which every one of these schemas takes as
  * it comes: generic headings, and the row's own type among them.
  */
-const everythingColumns: ColumnDef[] = defaultColumns()
+const everythingColumns: ColumnDef[] = familiarColumns({
+  primary: 'Item',
+  secondary: 'Reference',
+  metric1: 'Metric',
+  metric2: 'Metric 2',
+})
 
 /*
  * A worked column set — see `legoSchema`'s pieces below.
  *
  * A catalogue is the case the four labels cannot describe: a thumbnail, a
  * shape, a year that is not a quantity, two counts that each lead somewhere, a
- * weight in units of its own, a flag. Twelve columns rather than the default
- * eight, and none of them a compromise about which two numbers matter most.
+ * weight in units of its own, a flag. Twelve columns rather than the familiar
+ * nine, and none of them a compromise about which two numbers matter most.
  */
 
 /**
@@ -185,7 +260,9 @@ const pieceColumns: ColumnDef[] = [
     width: '88px',
     align: 'right',
     mono: true,
-    value: (row) => Math.round(Number(row.fields.score) * 5_000),
+    /* Centigrams, off a number the row already carries: the fixtures generate
+       no field the schema has not named, and a weight is what `format` is for. */
+    value: (row) => Math.round(Number(row.fields.metric1) * 37),
     format: grams,
     hideBelow: 1100,
   },
@@ -196,15 +273,6 @@ const pieceColumns: ColumnDef[] = [
     muted: true,
     format: (value) => (value === true ? 'rare' : '—'),
     hideBelow: 1100,
-  },
-  {
-    key: 'score',
-    role: 'score',
-    kind: 'score',
-    label: 'Match',
-    sort: 'score',
-    width: '72px',
-    hideBelow: 900,
   },
   { key: 'status', role: 'state', kind: 'status', label: 'State', width: '104px' },
   /* Not a cell — the tile in the grid view is what reads it — but declared
@@ -422,9 +490,9 @@ export const legoSchema: DomainSchema = {
         toggle('rarity', 'Rarity', 'Only parts in < 5 sets'),
       ],
       tabs: ['Information', 'Colors', 'Sets', 'Logs'],
-      // The one type in these four fixtures whose table is not the default
-      // eight columns: a catalogue piece is a picture, a shape, a year, two
-      // counts, a weight and a flag, and no four of those are the four.
+      // The one type in these four fixtures whose table is not the familiar
+      // set: a catalogue piece is a picture, a shape, a year, two counts, a
+      // weight and a flag, and no four of those are the four.
       columns: pieceColumns,
       samples: [
         ['Brick 2 x 4', '3001'],

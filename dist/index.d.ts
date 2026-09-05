@@ -8,7 +8,6 @@ export { default as MenuBar } from './components/MenuBar.vue';
 export { default as MenuButton } from './components/MenuButton.vue';
 export { default as MenuList } from './components/MenuList.vue';
 export { default as StatusPill } from './components/StatusPill.vue';
-export { default as ScoreMeter } from './components/ScoreMeter.vue';
 export { default as WindowFrame } from './components/WindowFrame.vue';
 export { default as WindowPane } from './components/WindowPane.vue';
 export { default as ListView } from './components/views/ListView.vue';
@@ -43,8 +42,7 @@ export { PANE_CONTEXT_KEY, providePaneContext, usePaneContext, usePaneMenu, } fr
 export type { PaneContext } from './composables/paneMenu';
 export { ENTITY_ALL, FACET_PREFIX, PARAM_DIR, PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_SORT, PARAM_VIEW, parseQuery, serializeQuery, } from './query/codec';
 export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, defaultQuery, emptyFacetState, emptyFacetValue, findEntity, findSort, focusEntity, hasActiveFacets, isEntityScoped, isFacetActive, isPristineQuery, isTypeCardsQuery, isViewKind, reconcileFacets, RESULT_FIELDS, sortsFor, } from './query/schema';
-export { cellFull, cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, defaultColumns, EMPTY_CELL, GENERIC_NAMES, roleColumn, roleColumns, rowKey, } from './query/columns';
-export type { DefaultColumnNames, DefaultMetric } from './query/columns';
+export { cellFull, cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, EMPTY_CELL, roleColumn, roleColumns, rowKey, } from './query/columns';
 export { addTerm, drillExpression, scopeTerm, scopeTermFor } from './query/drill';
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary';
 export type { SummaryTerm } from './query/summary';
@@ -59,7 +57,7 @@ export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS } from '.
 export type { MockSourceOptions } from './data/mock';
 export { formatExpression, formatTerm, matchesExpression, parseExpression, withoutTerm, } from './data/expression';
 export type { Comparator, Expression, FieldTerm, Term, TextTerm } from './data/expression';
-export { fnv1a, formatDate, formatMetric, formatOrdinal, formatPercent } from './data/format';
+export { fnv1a, formatDate, formatMetric, formatOrdinal } from './data/format';
 export { COLUMN_BREAKPOINTS, COLUMN_ROLES, RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS, } from './types';
 export type { ChipsFacet, ColumnAlign, ColumnBreakpoint, ColumnDef, ColumnKind, ColumnRole, DataSource, DomainSchema, EntitySchema, FacetDef, FacetState, FacetValue, QueryRequest, QueryResult, QuerySink, QueryUpdate, RangeFacet, RecordStatus, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, SortDef, SortDirection, StreamingDataSource, SyncDataSource, ToggleFacet, ViewKind, } from './types';
 export { default as HeaderContentLayoutPlugin } from './plugin';

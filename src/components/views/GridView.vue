@@ -19,10 +19,6 @@ const rows = usePresentedRows()
       <span class="dc-tile__scrim">
         <span class="dc-tile__top dc-mono">
           <span class="dc-tile__chip">{{ entry.ordinal }}</span>
-          <span
-            v-if="entry.parts.percent"
-            class="dc-tile__chip"
-          >{{ entry.parts.percent }}</span>
         </span>
         <span class="dc-tile__caption">
           <span class="dc-tile__secondary dc-truncate">{{ entry.parts.reference }}</span>

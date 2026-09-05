@@ -16,7 +16,6 @@ export { default as MenuBar } from './components/MenuBar.vue'
 export { default as MenuButton } from './components/MenuButton.vue'
 export { default as MenuList } from './components/MenuList.vue'
 export { default as StatusPill } from './components/StatusPill.vue'
-export { default as ScoreMeter } from './components/ScoreMeter.vue'
 
 /* Window */
 export { default as WindowFrame } from './components/WindowFrame.vue'
@@ -223,14 +222,11 @@ export {
   columnsFor,
   columnTruncates,
   defaultCellText,
-  defaultColumns,
   EMPTY_CELL,
-  GENERIC_NAMES,
   roleColumn,
   roleColumns,
   rowKey,
 } from './query/columns'
-export type { DefaultColumnNames, DefaultMetric } from './query/columns'
 export { addTerm, drillExpression, scopeTerm, scopeTermFor } from './query/drill'
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary'
 export type { SummaryTerm } from './query/summary'
@@ -255,7 +251,7 @@ export {
   withoutTerm,
 } from './data/expression'
 export type { Comparator, Expression, FieldTerm, Term, TextTerm } from './data/expression'
-export { fnv1a, formatDate, formatMetric, formatOrdinal, formatPercent } from './data/format'
+export { fnv1a, formatDate, formatMetric, formatOrdinal } from './data/format'
 
 /* Types */
 export {

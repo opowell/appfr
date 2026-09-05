@@ -122,7 +122,6 @@ const alias = (name: string) => name.toLowerCase().replace(/\s+/g, '')
 const ROLE_ALIASES: Array<readonly [string, ColumnRole]> = [
   ['status', 'state'],
   ['state', 'state'],
-  ['score', 'score'],
   ['updated', 'updated'],
   ['date', 'updated'],
   ['name', 'identity'],

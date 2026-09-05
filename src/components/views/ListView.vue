@@ -2,9 +2,6 @@
 import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
 import { usePresentedRows } from '../../composables/usePresentedRows'
-import type { PresentedRow } from '../../composables/usePresentedRows'
-import { roleColumn } from '../../query/columns'
-import ScoreMeter from '../ScoreMeter.vue'
 import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
@@ -14,10 +11,6 @@ const shell = useShellContext()
 const rows = usePresentedRows()
 /* With no entity filter the rows are of mixed kinds, so each says which. */
 const showEntity = computed(() => shell.isEverything.value)
-
-/** What the meter is called — the score column's own heading. */
-const scoreLabel = (entry: PresentedRow) =>
-  roleColumn(entry.columns, 'score')?.label ?? 'Score'
 </script>
 
 <template>
@@ -58,11 +51,6 @@ const scoreLabel = (entry: PresentedRow) =>
           :key="metric.column.key ?? metric.label"
           :entry="entry"
           :column="metric.column"
-        />
-        <ScoreMeter
-          v-if="entry.parts.score !== null"
-          :value="entry.parts.score"
-          :label="scoreLabel(entry)"
         />
       </span>
       <span class="dc-list__trailing">

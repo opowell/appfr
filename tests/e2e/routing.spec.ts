@@ -81,9 +81,9 @@ test.describe('URL — the query is the route', () => {
 
   test('sort field and direction appear in the URL', async ({ page }) => {
     await gotoStory(page, LIVE_OPEN)
-    await page.getByRole('radio', { name: 'score', exact: true }).click()
+    await page.getByRole('radio', { name: 'metric', exact: true }).click()
     await page.locator('.dc-button--icon').click()
-    expect(shellParams(page.url())).toEqual({ s: 'score', d: 'asc' })
+    expect(shellParams(page.url())).toEqual({ s: 'metric1', d: 'asc' })
   })
 
   test('leaves the parameters it does not own alone', async ({ page }) => {
@@ -116,7 +116,7 @@ test.describe('URL — reload and history', () => {
   })
 
   test('a pasted URL renders that query without any interaction', async ({ page }) => {
-    await gotoStory(page, LIVE, '&e=items&v=grid&f_kind=pdf&s=score')
+    await gotoStory(page, LIVE, '&e=items&v=grid&f_kind=pdf&s=metric1')
     await expect(page.locator('.dc-grid')).toBeVisible()
     await expect(terms(page)).toHaveText(['entity:items', 'kind:pdf'])
   })

@@ -82,13 +82,13 @@ export type FacetState = Record<string, FacetValue>;
 /**
  * What a cell draws. `text` when a column does not say.
  *
- * The first four are values formatted onto the page; `status`, `score` and
- * `image` are the shell's own marks; `ordinal` is the row's position in the
- * result rather than anything on the row; and `component` hands the cell to
+ * The first four are values formatted onto the page; `status` and `image` are
+ * the shell's own marks; `ordinal` is the row's position in the result rather
+ * than anything on the row; and `component` hands the cell to
  * something of yours — the escape hatch, and the reason there is no HTML
  * string here to inject into.
  */
-export type ColumnKind = 'text' | 'number' | 'date' | 'status' | 'score' | 'image' | 'ordinal' | 'component';
+export type ColumnKind = 'text' | 'number' | 'date' | 'status' | 'image' | 'ordinal' | 'component';
 export type ColumnAlign = 'left' | 'center' | 'right';
 /**
  * What part a column plays in the views that are not tables.
@@ -111,8 +111,6 @@ export type ColumnRole =
  | 'metric'
 /** Lifecycle, drawn as a pill. Its value should be a {@link RecordStatus}. */
  | 'state'
-/** Relevance from 0 to 1, drawn as a meter. */
- | 'score'
 /** When the record last changed, as an ISO-8601 date. */
  | 'updated'
 /**
@@ -121,7 +119,7 @@ export type ColumnRole =
  * is not a value — so the table leaves it out.
  */
  | 'tint';
-export declare const COLUMN_ROLES: readonly ["identity", "reference", "metric", "state", "score", "updated", "tint"];
+export declare const COLUMN_ROLES: readonly ["identity", "reference", "metric", "state", "updated", "tint"];
 /**
  * The container widths a column may stand down at, narrowest first. A fixed
  * ladder rather than a free number because the rule is a container query in a
@@ -290,13 +288,11 @@ export interface EntitySchema {
      * shows them, with {@link ColumnDef.role} saying which of them a card, a
      * tile, a link row and a preview pane are made of.
      *
-     * The shell invents none. A type that declares nothing here has nothing to
-     * draw anywhere — no table, and no identity for a card to head — because
-     * which fields a record has is the schema's to say and a set of columns
-     * nobody asked for is the component deciding what the data is.
-     * `defaultColumns()` is exported for the schema that wants the ordinal,
-     * identity pair, metrics, date, state and score after all, and spreading it
-     * is how that schema says so.
+     * The shell invents none, and offers no familiar set to fall back on. A type
+     * that declares nothing here has nothing to draw anywhere — no table, and no
+     * identity for a card to head — because which fields a record has is the
+     * schema's to say and a set of columns nobody asked for is the component
+     * deciding what the data is.
      */
     columns?: ColumnDef[];
 }

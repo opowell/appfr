@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { h, ref } from 'vue'
-import ScoreMeter from '../src/components/ScoreMeter.vue'
 import SegmentedControl from '../src/components/SegmentedControl.vue'
 import StatusPill from '../src/components/StatusPill.vue'
 import { RECORD_STATUSES } from '../src/types'
@@ -37,22 +36,6 @@ export const StatusPills: Story = {
   }),
 }
 
-/** The relevance meter across its range. */
-export const ScoreMeters: Story = {
-  render: () => ({
-    setup: () => () =>
-      partSurface(
-        [0, 0.25, 0.5, 0.75, 1].map((value) =>
-          h('div', { style: 'display:flex; align-items:center; gap:12px' }, [
-            h('span', { class: 'dc-mono', style: 'width:4ch; color:var(--dc-fg-2)' }, String(value)),
-            h(ScoreMeter, { value, label: 'Score' }),
-          ]),
-        ),
-        'display:flex; flex-direction:column; gap:12px',
-      ),
-  }),
-}
-
 /** A single-choice switch. One tab stop; arrow keys move between segments. */
 export const Segmented: Story = {
   render: () => ({
@@ -81,7 +64,7 @@ export const Segmented: Story = {
               modelValue: sort.value,
               options: [
                 { key: 'updated', label: 'updated' },
-                { key: 'score', label: 'score' },
+                { key: 'metric1', label: 'metric1' },
                 { key: 'name', label: 'name' },
               ],
               'onUpdate:modelValue': (next: string) => {

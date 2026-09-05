@@ -13,140 +13,17 @@ import { formatDate, formatMetric } from '../data/format'
  *
  * A table is the {@link ColumnDef}s its entity declares — exactly those, in
  * that order, however many. The shell reads none of a row's fields by a name
- * of its own: which fields a record has is the schema's to say, and a set of
- * columns nobody asked for would be the component deciding what the data is.
+ * of its own, and offers no set of its own to fall back on: which fields a
+ * record has is the schema's to say, and a set of columns nobody asked for
+ * would be the component deciding what the data is.
  *
  * The views that are not tables — a card, a tile, a link row, a preview pane —
  * are an identity, a reference, a number or two and a mark, so they read the
- * columns by {@link ColumnRole} rather than by position. {@link defaultColumns}
- * is here for the schema that wants the familiar set: something to ask for,
- * not something to be given.
+ * columns by {@link ColumnRole} rather than by position.
  */
 
 /** Shown when a column resolves to nothing — absent, rather than empty. */
 export const EMPTY_CELL = '—'
-
-/** Headings for {@link defaultColumns} where the caller names none. */
-export const GENERIC_NAMES = {
-  identity: 'Item',
-  reference: 'Reference',
-  metrics: ['Metric', 'Metric 2'],
-} as const
-
-/** One metric of the default set: what it is called, and what it counts. */
-export interface DefaultMetric {
-  label: string
-  /** The row field it reads. `metric1`, `metric2`, … in order when unsaid. */
-  field?: string
-  /**
-   * The {@link EntitySchema.key} this number counts, where the schema lists
-   * it — what makes the number pressable.
-   */
-  drill?: string
-}
-
-export interface DefaultColumnNames {
-  identity: string
-  reference: string
-  metrics: Array<string | DefaultMetric>
-}
-
-/**
- * The familiar set: an ordinal, the identity pair, the row's type, a metric or
- * two, the date, the state, the score and the tint — reading the fields the
- * shell used to fix on the row itself, so a source that already returns those
- * keeps working by moving them into {@link ShellRow.fields}.
- *
- * Nothing applies this. It is what a schema spreads into its own `columns`
- * when that set is what it wanted, whole or as a starting point:
- *
- * ```ts
- * columns: [
- *   ...defaultColumns({ identity: 'Piece', reference: 'Part no.', metrics: ['Colors'] }),
- *   { key: 'owner', label: 'Owner' },
- * ]
- * ```
- *
- * Called with nothing it is the generic set, for the mixed result where no one
- * type's vocabulary applies.
- */
-export function defaultColumns(names: Partial<DefaultColumnNames> = {}): ColumnDef[] {
-  const identity = names.identity ?? GENERIC_NAMES.identity
-  const reference = names.reference ?? GENERIC_NAMES.reference
-  const metrics = names.metrics ?? [...GENERIC_NAMES.metrics]
-
-  return [
-    { key: 'ordinal', kind: 'ordinal', label: '#', width: '52px' },
-    {
-      key: 'primary',
-      role: 'identity',
-      label: identity,
-      sort: 'name',
-      activate: true,
-      scope: true,
-      truncate: true,
-      class: 'dc-table__primary',
-    },
-    {
-      key: 'secondary',
-      role: 'reference',
-      label: reference,
-      mono: true,
-      muted: true,
-      truncate: true,
-    },
-    {
-      key: 'entityLabel',
-      label: 'Entity',
-      when: 'everything',
-      width: '130px',
-      mono: true,
-      truncate: true,
-      hideBelow: 900,
-      class: 'dc-table__entity',
-    },
-    ...metrics.map((metric, index): ColumnDef => {
-      const spec: DefaultMetric = typeof metric === 'string' ? { label: metric } : metric
-      const field = spec.field ?? `metric${index + 1}`
-      return {
-        key: field,
-        role: 'metric',
-        kind: 'number',
-        label: spec.label,
-        sort: field,
-        width: '110px',
-        hideBelow: 760,
-        ...(spec.drill ? { drill: spec.drill } : {}),
-      }
-    }),
-    {
-      key: 'updatedAt',
-      role: 'updated',
-      kind: 'date',
-      label: 'Updated',
-      sort: 'updated',
-      width: '120px',
-      mono: true,
-      muted: true,
-      hideBelow: 620,
-    },
-    { key: 'status', role: 'state', kind: 'status', label: 'State', width: '110px' },
-    {
-      key: 'score',
-      role: 'score',
-      kind: 'score',
-      /* Named as the sort it offers is named, the two being one thing now: a
-         heading a schema does not like is a heading it can change. */
-      label: 'Score',
-      sort: 'score',
-      width: '72px',
-      hideBelow: 900,
-    },
-    /* A background is not a value, so the table leaves this one out. It is
-       declared so that the schema names every field it has in one place. */
-    { key: 'tint', role: 'tint' },
-  ]
-}
 
 /** The first column playing a part, or undefined where nothing plays it. */
 export function roleColumn(columns: ColumnDef[], role: ColumnRole): ColumnDef | undefined {

@@ -21,8 +21,8 @@ const meta = {
       description: {
         component: [
           'One shell, four vocabularies. Every entity in every schema has the',
-          'same shape — an identity pair, two named metrics, a date, a state',
-          'and a score — so the same header, panel and views serve all of them.',
+          'same shape — an identity pair, two named metrics, a date and a',
+          'state — so the same header, panel and views serve all of them.',
           'Nothing below is a different component; only the schema differs.',
           '',
           'Each opens on its home screen: no entity filter, so every kind of',

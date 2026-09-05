@@ -18,11 +18,11 @@ describe('parseQuery', () => {
   })
 
   it('reads every owned parameter', () => {
-    const query = parseQuery('?e=items&v=table&s=score&d=asc&q=price', iRadarSchema)
+    const query = parseQuery('?e=items&v=table&s=metric1&d=asc&q=price', iRadarSchema)
     expect(query).toMatchObject({
       entity: 'items',
       view: 'table',
-      sort: 'score',
+      sort: 'metric1',
       dir: 'asc',
       expr: 'price',
     })
@@ -210,7 +210,7 @@ describe('round trip', () => {
   const cases: string[] = [
     '',
     '?v=cards',
-    '?e=items&v=table&s=score&d=asc',
+    '?e=items&v=table&s=metric1&d=asc',
     '?e=items&v=list&p=7',
     '?e=items&f_kind=page&p=2',
     '?e=items&f_kind=page,feed&f_rank=10..90&f_seen=1',

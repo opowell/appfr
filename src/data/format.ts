@@ -36,7 +36,3 @@ export function formatDate(iso: string): string {
 export function formatOrdinal(index: number): string {
   return String(index + 1).padStart(2, '0')
 }
-
-export function formatPercent(fraction: number): string {
-  return `${Math.round(Math.min(1, Math.max(0, fraction)) * 100)}%`
-}

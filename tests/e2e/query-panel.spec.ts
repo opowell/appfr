@@ -318,7 +318,6 @@ test.describe('Query panel — view and sort', () => {
       'metric',
       'metric 2',
       'updated',
-      'score',
     ])
 
     await gotoStory(page, ENTITY)
@@ -330,7 +329,6 @@ test.describe('Query panel — view and sort', () => {
       'new',
       'results',
       'updated',
-      'score',
     ])
   })
 })

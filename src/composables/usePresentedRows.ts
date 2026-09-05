@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 import type { ColumnDef, EntitySchema, RecordStatus, ShellRow } from '../types'
-import { formatOrdinal, formatPercent } from '../data/format'
+import { formatOrdinal } from '../data/format'
 import {
   cellText,
   cellTextOf,
@@ -37,9 +37,6 @@ export interface RowParts {
   /** The metric columns, in the order the schema declared them. */
   metrics: RowMetric[]
   state: RecordStatus | null
-  /** 0–1, or null where no column plays the part. */
-  score: number | null
-  percent: string
   /** The date, formatted the way every view formats it. */
   updated: string
   /** A colour for the grid view's tile, where a column names one. */
@@ -78,17 +75,10 @@ export interface PresentedRow {
   pinned: boolean
 }
 
-const asNumber = (value: unknown): number | null => {
-  const numeric = Number(value)
-  return Number.isFinite(numeric) ? numeric : null
-}
-
 /** Resolves the roles a view reads, from the columns of the row's own type. */
 export function presentParts(row: ShellRow, columns: ColumnDef[]): RowParts {
   const state = roleColumn(columns, 'state')
-  const score = roleColumn(columns, 'score')
   const tint = roleColumn(columns, 'tint')
-  const value = score ? asNumber(cellValue(score, row)) : null
 
   return {
     identity: cellTextOf(roleColumn(columns, 'identity'), row),
@@ -99,8 +89,6 @@ export function presentParts(row: ShellRow, columns: ColumnDef[]): RowParts {
       text: cellText(column, row),
     })),
     state: state ? ((cellValue(state, row) as RecordStatus) ?? null) : null,
-    score: value,
-    percent: value === null ? '' : formatPercent(value),
     updated: cellTextOf(roleColumn(columns, 'updated'), row),
     tint: tint ? ((cellValue(tint, row) as string) ?? null) : null,
   }

@@ -262,7 +262,7 @@ app.provide(ROUTE_ADAPTER_KEY, route)
 
 ```
                                      ← home: nothing filtered, so no parameters
-?e=items&v=table&s=score&d=asc&q=price+%3C+40&f_kind=page,pdf&f_rank=20..80&f_seen=1&p=3
+?e=items&v=table&s=metric1&d=asc&q=price+%3C+40&f_kind=page,pdf&f_rank=20..80&f_seen=1&p=3
 ```
 
 | Key | Meaning |
@@ -306,13 +306,16 @@ const schema: DomainSchema = {
       count: '9,988',
       // Views read these instead of hard-coding column names.
       // What this type is: every field the shell shows, and which of them a
-      // card, a tile and a preview pane are made of. `defaultColumns` is the
-      // familiar set — ordinal, identity pair, metrics, date, state, score.
-      columns: defaultColumns({
-        identity: 'Item',
-        reference: 'URL',
-        metrics: [{ label: 'Links', drill: 'links' }, { label: 'Score' }],
-      }),
+      // card, a tile and a preview pane are made of. The shell has no set of
+      // its own — a type that declares none has nothing to draw.
+      columns: [
+        { key: 'ordinal', kind: 'ordinal', label: '#', width: '52px' },
+        { key: 'primary', role: 'identity', label: 'Item', sort: 'name', activate: true, scope: true },
+        { key: 'secondary', role: 'reference', label: 'URL', mono: true, muted: true },
+        { key: 'metric1', role: 'metric', kind: 'number', label: 'Links', sort: 'metric1', drill: 'links' },
+        { key: 'updatedAt', role: 'updated', kind: 'date', label: 'Updated', sort: 'updated' },
+        { key: 'status', role: 'state', kind: 'status', label: 'State', width: '110px' },
+      ],
       facets: [
         { kind: 'chips', key: 'kind', label: 'Kind', options: ['page', 'pdf', 'feed'] },
         { kind: 'range', key: 'rank', label: 'Rank', min: 0, max: 100 },
@@ -338,9 +341,9 @@ different types share a result set.
 Four worked examples ship in `header-content-layout/fixtures`: `iRadarSchema`,
 `legoSchema`, `commerceSchema`, `battleSimSchema`. Each also gets `logsEntity`
 and `settingsEntity`, which are exported on their own and are entities like any
-other — no special casing anywhere in the shell. Each entity asks for its
-table by name: all but one spread `defaultColumns`, and `legoSchema`'s pieces
-are the worked set of twelve.
+other — no special casing anywhere in the shell. Each entity writes out its
+own table: all but one take the familiar nine those fixtures build for
+themselves, and `legoSchema`'s pieces are the worked set of twelve.
 
 ### Columns of your own
 
@@ -369,29 +372,19 @@ for `create` or for a drill.
     { key: 'colors', role: 'metric', kind: 'number', label: 'Colors', sort: 'colors', drill: 'colors' },
     { key: 'cg', label: 'Weight', format: grams, align: 'right' },
     { key: 'state', role: 'state', kind: 'status', label: 'State', width: '104px' },
-    { key: 'match', role: 'score', kind: 'score', label: 'Match', sort: 'match' },
     // A background is not a value, so the table leaves this one out.
     { key: 'colour', role: 'tint' },
   ],
 }
 ```
 
-The familiar set — ordinal, identity pair, type, metrics, date, state, score
-and tint — is exported as `defaultColumns(names)`, for the schema that wants it
-after all. Nothing applies it: spreading it is how a schema *asks*, which is
-also how it takes that set and adds to it.
-
-```ts
-import { defaultColumns } from 'header-content-layout'
-
-columns: defaultColumns({ identity: 'Item', reference: 'URL', metrics: ['Links'] })
-columns: [...defaultColumns({ identity: 'Item', reference: 'URL' }), { key: 'owner', label: 'Owner' }]
-```
-
-It reads the fields the row shape used to fix — `primary`, `secondary`,
-`metric1`, `updatedAt`, `status`, `score`, `tint` — so a source that already
-returns those moves over by putting them in `fields`. The four shipped fixtures
-all ask for it; `legoSchema`'s pieces are the one entity with a set of its own.
+There is no set to fall back on. The library ships no `defaultColumns`, and a
+type that leaves `columns` out gets an empty results area saying so rather than
+a table of headings it never asked for. The four shipped fixtures show the
+familiar shape — ordinal, identity pair, type, two metrics, date, state and
+tint, over the fields `primary`, `secondary`, `metric1`, `metric2`,
+`updatedAt`, `status` and `tint` — as a helper of their own in
+`src/fixtures/schemas.ts`, which is a set to copy rather than one to import.
 
 **Where a value comes from**, in order: the column's own `value(row)` if it has
 one; otherwise the field it names — `field`, or its `key` — read off
@@ -416,19 +409,18 @@ mark — never a list of columns — so they ask for those parts by name:
 | `reference` | the line under it in the list, cards, links, grid and preview |
 | `metric` | the numbers on a list row (first two), a card (first two), a home-screen preview row (first one), and every one of them in the preview pane |
 | `state` | the pill |
-| `score` | the meter in the list, the chip on a tile |
 | `updated` | the date on a card, a home-screen row and the preview pane |
 | `tint` | the grid tile's background and the preview pane's banner — never drawn as a cell, so the table leaves it out |
 
 A column with no role is a column and nothing else: it is in the table and
 nowhere else, which is what most columns are. A role nothing plays is a part
-those views leave out — no score column, no meter.
+those views leave out — no state column, no pill.
 
 | | |
 | --- | --- |
 | `key` | identifies the column, and is the field read when nothing else says |
 | `label` | the header. A column whose content says what it is leaves it out |
-| `kind` | `text` (the default), `number`, `date`, `status`, `score`, `image`, `ordinal`, `component` |
+| `kind` | `text` (the default), `number`, `date`, `status`, `image`, `ordinal`, `component` |
 | `field` / `value` / `format` | where the value comes from and how it reads |
 | `width` / `height` / `align` / `mono` / `muted` / `truncate` | how it is drawn |
 | `sort` | the `SortDef` key this header sorts by |
@@ -553,15 +545,13 @@ a category's pieces each name the category. Two fields say so:
   key: 'tenants',
   // The field every other record carries this one's id in.
   scope: 'host',
-  columns: defaultColumns({
-    identity: 'Domain',
-    reference: 'Crawled as',
+  columns: [
+    { key: 'primary', role: 'identity', label: 'Domain', sort: 'name', activate: true, scope: true },
+    { key: 'secondary', role: 'reference', label: 'Crawled as', mono: true, muted: true },
     // What each number counts, as the key of the entity counted.
-    metrics: [
-      { label: 'Tests', drill: 'tests' },
-      { label: 'URLs', drill: 'urls' },
-    ],
-  }),
+    { key: 'metric1', role: 'metric', kind: 'number', label: 'Tests', sort: 'metric1', drill: 'tests' },
+    { key: 'metric2', role: 'metric', kind: 'number', label: 'URLs', sort: 'metric2', drill: 'urls' },
+  ],
 }
 ```
 
@@ -615,8 +605,8 @@ drillExpression(schema, query, row)    // the expression with that term added
 
 A scope key beats a column heading of the same name in the expression field: an
 entity heading its identity column *Category* and carrying a `category` join
-key means the key. The generic names — `name`, `ref`, `status`, `score`,
-`updated`, `metric1`… — are a fallback rather than a reservation, so a schema
+key means the key. The generic names — `name`, `ref`, `status`, `updated`,
+`metric1`… — are a fallback rather than a reservation, so a schema
 with a field of that name means its own; only `entity` stays the shell's, so
 that any corpus can be narrowed by kind.
 
@@ -660,8 +650,8 @@ Whitespace means AND (the keyword is accepted too); `OR` splits alternatives; a
 bare word matches the identity and reference columns; `*` is a wildcard.
 `field:value` and `field<op>number` resolve in this order: `entity`, then a
 field the row actually carries, then a column by key or heading, then a facet
-by heading, then the generic role names (`name`, `ref`, `status`, `score`,
-`updated`, `metric1`…). So a declared field is never shadowed by a heading or a
+by heading, then the generic role names (`name`, `ref`, `status`, `updated`,
+`metric1`…). So a declared field is never shadowed by a heading or a
 convention that happens to read the same. An unrecognised field is ignored
 rather than treated as a mismatch, so a half-typed expression keeps showing
 results.
@@ -841,7 +831,7 @@ shell.hrefFor({ page: 4 })     // a link, without navigating
 The table view lays out fixed: every column that names a `width` keeps it, and
 the ones that name none share whatever is left. So it is exactly as wide as the
 shell however long a value is, and what does not fit is truncated with the
-whole of it on hover. (In `defaultColumns` that means the metrics, the date,
+whole of it on hover. (In the fixtures' set that means the metrics, the date,
 the kind and the state are fixed, and the name and the secondary share the
 rest.)
 

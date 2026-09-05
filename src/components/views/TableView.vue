@@ -13,8 +13,8 @@ const shell = useShellContext()
 const rows = usePresentedRows()
 /**
  * What the table shows, as data: the columns this scope declared, in order,
- * and nothing else. A scope that declared none has no table — the shell reads
- * one out of nothing, which is what `defaultColumns` is exported for.
+ * and nothing else. A scope that declared none has no table, since the shell
+ * reads one out of nothing and keeps no set of its own to fall back on.
  */
 const columns = useColumns()
 
@@ -87,7 +87,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
     <span class="dc-table__headline">No columns declared</span>
     <span class="dc-table__detail">
       {{ scopeName }} has no <code>columns</code> in the schema, so there is no
-      table to draw. <code>defaultColumns()</code> is the familiar eight.
+      table to draw.
     </span>
   </p>
 

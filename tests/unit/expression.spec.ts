@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   formatExpression,
   formatTerm,
+  joinExpression,
   matchesExpression,
   parseExpression,
+  splitExpression,
   withoutTerm,
 } from '../../src/data/expression'
 import { generateRows } from '../../src/data/mock'
@@ -251,5 +253,59 @@ describe('taking one part out', () => {
   it('drops an alternative once its last part goes', () => {
     expect(without('release OR recall', 0, 0)).toBe('recall')
     expect(without('release', 0, 0)).toBe('')
+  })
+})
+
+describe('the two halves the panel edits', () => {
+  const split = (expr: string) => {
+    const { parts, text } = splitExpression(expr)
+    return { parts: parts.map(formatTerm), text }
+  }
+
+  it('takes the field terms out and leaves the words behind', () => {
+    expect(split('set:"sets_10007" brick')).toEqual({
+      parts: ['set:sets_10007'],
+      text: 'brick',
+    })
+  })
+
+  it('normalizes both halves as it splits them', () => {
+    // The same rewriting lifting a part does: the parse keeps neither the case
+    // nor the spacing, and a phrase keeps the quotes it needs.
+    expect(split('Theme:space AND price < 40 AND "a phrase"')).toEqual({
+      parts: ['theme:space', 'price<40'],
+      text: '"a phrase"',
+    })
+  })
+
+  it('has nothing in either half of an empty expression', () => {
+    expect(split('   ')).toEqual({ parts: [], text: '' })
+  })
+
+  /* An alternative is not a part: `set:x cve OR advisory` with `set:x` pulled
+     out and ANDed back on to the whole would narrow the second alternative
+     too, which is a different query. */
+  it('leaves an expression with alternatives whole, in the text', () => {
+    expect(split('set:"sets_10007" cve OR advisory')).toEqual({
+      parts: [],
+      text: 'set:"sets_10007" cve OR advisory',
+    })
+  })
+
+  it('writes the halves back with the parts in front', () => {
+    const { parts } = splitExpression('theme:space year>=1988')
+    expect(joinExpression(parts, ' brick ')).toBe('theme:space year>=1988 brick')
+  })
+
+  it('drops whichever half is empty', () => {
+    const { parts } = splitExpression('theme:space')
+    expect(joinExpression(parts, '')).toBe('theme:space')
+    expect(joinExpression([], 'brick')).toBe('brick')
+    expect(joinExpression([], '  ')).toBe('')
+  })
+
+  it('re-reads what it wrote as the same two halves', () => {
+    const halves = splitExpression('theme:space year>=1988 brick')
+    expect(splitExpression(joinExpression(halves.parts, halves.text))).toEqual(halves)
   })
 })

@@ -19,6 +19,15 @@ export interface SummaryTerm {
    */
   group?: number
   index?: number
+  /**
+   * For an expression term written as `field:value`, the two halves of it.
+   *
+   * The label is what the term *says*; these are what it names, which is what
+   * reading a term back needs — a value that is a record's id says nothing on
+   * its own, and only the field it sits under says which type it belongs to.
+   */
+  field?: string
+  value?: string
 }
 
 /** The term id the entity filter uses, so it can be lifted like any other. */
@@ -78,6 +87,7 @@ export function summaryTerms(query: ShellQuery, entity: EntitySchema | null): Su
         facetKey: EXPRESSION_TERM,
         group: at,
         index,
+        ...(term.kind === 'field' ? { field: term.field, value: term.value } : {}),
       })
     })
   })
@@ -85,9 +95,13 @@ export function summaryTerms(query: ShellQuery, entity: EntitySchema | null): Su
 }
 
 /**
- * The one-line summary shown in the header bar. An untouched query states what
- * it is showing and how, so the header is never blank and never implies a
- * filter that is not there.
+ * The query as one line of prose. An untouched query still states what it is
+ * showing and how, so nothing that says this is ever blank and none of it
+ * implies a filter that is not there.
+ *
+ * The header says the scope with a control of its own now, so the bar shows
+ * the tail of this beside it and keeps the whole sentence as its title. Said
+ * in full where there is room for a sentence: under an empty result.
  */
 export function summarizeQuery(
   query: ShellQuery,

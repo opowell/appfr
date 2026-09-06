@@ -263,6 +263,21 @@ describe('useQueryState — reading and writing the URL', () => {
     ])
   })
 
+  /*
+   * The label is what a part says; the field and the value are what it names.
+   * Reading a term back needs both halves — a value that is a record's id says
+   * nothing on its own, and only the field says which type it belongs to.
+   */
+  it('carries the two halves of a field term beside its label', () => {
+    const { state } = setup('?e=items&q=theme:space+year>=1988+recall')
+    expect(state.terms.value.map((t) => [t.field, t.value])).toEqual([
+      [undefined, undefined], // the entity filter, which is not an expression term
+      ['theme', 'space'],
+      ['year', '1988'],
+      [undefined, undefined], // a bare word, which names no field
+    ])
+  })
+
   it('lifting one part leaves the rest of the expression running', () => {
     const { state, adapter } = setup('?e=items&q=theme:space+year>=1988')
     state.removeTerm(state.terms.value[1]!)

@@ -237,7 +237,7 @@ function closePanel() {
   // keyboard users at the top of the document.
   void nextTick(() => {
     const root = headerRef.value?.$el as HTMLElement | undefined
-    root?.querySelector<HTMLElement>('.dc-header__trigger')?.focus()
+    root?.querySelector<HTMLElement>('.dc-header__toggle')?.focus()
   })
 }
 

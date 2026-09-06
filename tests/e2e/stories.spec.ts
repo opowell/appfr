@@ -94,9 +94,10 @@ test('every story renders without logging an error', async ({ page }) => {
 
 test('every schema story renders rows with its own vocabulary', async ({ page }) => {
   const cases: Array<[string, string[]]> = [
-    // Unscoped stories say "Everything"; the rest name the entity filtered to.
-    ['schemas-same-shell--i-radar', ['iRadar', 'Everything']],
-    ['schemas-same-shell--everything-across-kinds', ['Commerce', 'Everything']],
+    // Unscoped stories are listing the whole corpus; the rest name the entity
+    // filtered to. Either way the header says which, as the choice it is.
+    ['schemas-same-shell--i-radar', ['iRadar', 'Everything · ']],
+    ['schemas-same-shell--everything-across-kinds', ['Commerce', 'Everything · ']],
     ['schemas-same-shell--lego', ['LEGO', 'Sets']],
     ['schemas-same-shell--commerce', ['Commerce', 'Test results']],
     ['schemas-same-shell--battle-sim', ['Battle-sim', 'Runs']],
@@ -143,11 +144,11 @@ test.describe('narrow viewport', () => {
 
   test('the header stays usable and the panel still opens', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-as-list')
+    // The query survives the narrow layout even though the domain name does not.
     await expect(page.locator('.dc-header__summary')).toBeVisible()
-    // The scope survives the narrow layout even though the domain name does not.
-    await expect(page.locator('.dc-header__crumb-root')).toBeVisible()
+    await expect(page.locator('.dc-header__domain')).toBeHidden()
 
-    await page.locator('.dc-header__trigger').click()
+    await page.locator('.dc-header__toggle').click()
     await expect(page.locator('.dc-panel')).toBeVisible()
 
     const overflows = await page.evaluate(

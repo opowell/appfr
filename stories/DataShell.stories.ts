@@ -177,10 +177,26 @@ export const DrillableTable = story({
 /**
  * Where a drill lands: the pieces of one set, reached by pressing that set's
  * *Parts*. Nothing here was typed — the expression is what the press wrote.
+ *
+ * The query holds a join key, `set:"sets_10007"`, and the header reads it back
+ * as the record it names: **set:Yellow Castle (sets_10007)**. The id stays,
+ * because it is what the expression field holds and what a shared URL carries.
  */
 export const DrilledIntoPieces = story({
   schema: legoSchema,
   search: '?e=pieces&v=table&q=set%3A%22sets_10007%22',
+})
+
+/**
+ * The same drill with the panel open, which is where that term is edited: it
+ * is a part of the expression field rather than text in it, and the box beside
+ * it is where the next one is written — a word to search for, or a term of its
+ * own.
+ */
+export const DrilledPanelOpen = story({
+  schema: legoSchema,
+  search: '?e=pieces&v=table&q=set%3A%22sets_10007%22',
+  open: true,
 })
 
 /**

@@ -24,9 +24,17 @@ import type { Term } from '../data/expression'
  * it — and the tokenizer strips the quotes before the term is read.
  */
 export function scopeTerm(entity: EntitySchema | null | undefined, row: ShellRow): string | null {
+  return recordTerm(entity, row.id)
+}
+
+/**
+ * The same term for a record named by its id alone — what reading one back
+ * *out* of a query has, where a drill had the whole row in hand.
+ */
+export function recordTerm(entity: EntitySchema | null | undefined, id: string): string | null {
   const field = entity?.scope
   if (!field) return null
-  return `${field}:"${row.id.replace(/"/g, '')}"`
+  return `${field}:"${id.replace(/"/g, '')}"`
 }
 
 /** The same, resolving the row's entity out of the schema first. */
@@ -90,4 +98,18 @@ export function addTerm(expr: string, term: string | null): string {
  */
 export function drillExpression(schema: DomainSchema, query: { expr: string }, row: ShellRow): string {
   return addTerm(query.expr, scopeTermFor(schema, row))
+}
+
+/**
+ * The entity whose records a field names — the inverse of {@link scopeTerm}.
+ *
+ * `set` is the field every other record carries a set's id in, so
+ * `set:"sets_10007"` is a term about a record of `sets`, and this is what says
+ * which type that is. Null where nothing declares the field: an ordinary
+ * constraint on a value rather than a reference to a record.
+ */
+export function scopedEntity(schema: DomainSchema, field: string): EntitySchema | null {
+  // The parse lowercases a field it read; a schema declares one as it likes.
+  const wanted = field.toLowerCase()
+  return schema.entities.find((entity) => entity.scope?.toLowerCase() === wanted) ?? null
 }

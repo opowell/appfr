@@ -10,6 +10,7 @@ import {
   summary,
   terms,
   trigger,
+  viewSelect,
 } from './story'
 
 /**
@@ -25,7 +26,7 @@ test.describe('URL — the query is the route', () => {
   test('the home screen has no parameters of its own', async ({ page }) => {
     await gotoStory(page, LIVE)
     expect(shellParams(page.url())).toEqual({})
-    await expect(summary(page)).toHaveText('everything · cards · updated')
+    await expect(summary(page)).toHaveText('cards · updated')
   })
 
   test('a view change appears in the URL', async ({ page }) => {
@@ -41,11 +42,11 @@ test.describe('URL — the query is the route', () => {
     await openPanel(page)
 
     await pickEntity(page, 'Scrapers')
-    await expect(terms(page)).toHaveText(['entity:scrapers'])
+    await expect(viewSelect(page)).toHaveValue('scrapers')
     expect(shellParams(page.url())).toEqual({ e: 'scrapers' })
 
     await page.locator('.dc-entity--all').click()
-    await expect(summary(page)).toHaveText('everything · cards · updated')
+    await expect(summary(page)).toHaveText('cards · updated')
     expect(shellParams(page.url())).toEqual({})
   })
 
@@ -55,7 +56,7 @@ test.describe('URL — the query is the route', () => {
 
     await pickEntity(page, 'Settings')
     expect(shellParams(page.url())).toEqual({ e: 'settings' })
-    await expect(terms(page)).toHaveText(['entity:settings'])
+    await expect(viewSelect(page)).toHaveValue('settings')
   })
 
   test('facets appear in the URL, with readable separators', async ({ page }) => {
@@ -63,7 +64,8 @@ test.describe('URL — the query is the route', () => {
     await pickEntity(page, 'Searches')
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
     await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
-    await expect(terms(page)).toHaveText(['entity:searches', 'state:running', 'state:paused'])
+    await expect(viewSelect(page)).toHaveValue('searches')
+    await expect(terms(page)).toHaveText(['state:running', 'state:paused'])
 
     expect(shellParams(page.url())).toEqual({ e: 'searches', f_state: 'running,paused' })
     // The comma is left literal rather than percent-encoded.
@@ -112,13 +114,15 @@ test.describe('URL — reload and history', () => {
 
     expect(page.url()).toBe(before)
     await expect(page.locator('.dc-table')).toBeVisible()
-    await expect(terms(page)).toHaveText(['entity:searches', 'state:running'])
+    await expect(viewSelect(page)).toHaveValue('searches')
+    await expect(terms(page)).toHaveText(['state:running'])
   })
 
   test('a pasted URL renders that query without any interaction', async ({ page }) => {
     await gotoStory(page, LIVE, '&e=items&v=grid&f_kind=pdf&s=metric1')
     await expect(page.locator('.dc-grid')).toBeVisible()
-    await expect(terms(page)).toHaveText(['entity:items', 'kind:pdf'])
+    await expect(viewSelect(page)).toHaveValue('items')
+    await expect(terms(page)).toHaveText(['kind:pdf'])
   })
 
   test('Back returns to the previous query', async ({ page }) => {
@@ -145,10 +149,10 @@ test.describe('URL — reload and history', () => {
 
     await openPanel(page)
     await pickEntity(page, 'Logs')
-    await expect(terms(page)).toHaveText(['entity:logs'])
+    await expect(viewSelect(page)).toHaveValue('logs')
 
     await page.goBack()
-    await expect(summary(page)).toHaveText('everything · list · updated')
+    await expect(summary(page)).toHaveText('list · updated')
     await expect(listRows(page)).toHaveCount(everything)
   })
 
@@ -157,13 +161,12 @@ test.describe('URL — reload and history', () => {
     await openPanel(page)
     // One pushed entry for the entity, then three facet edits that replace.
     await pickEntity(page, 'Searches')
-    await expect(terms(page)).toHaveText(['entity:searches'])
+    await expect(viewSelect(page)).toHaveValue('searches')
 
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
     await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
     await page.locator('.dc-chip', { hasText: 'hourly' }).first().click()
     await expect(terms(page)).toHaveText([
-      'entity:searches',
       'state:running',
       'state:paused',
       'schedule:hourly',
@@ -171,7 +174,7 @@ test.describe('URL — reload and history', () => {
 
     // A single Back should land before the facets, not step through them.
     await page.goBack()
-    await expect(summary(page)).toHaveText('everything · cards · updated')
+    await expect(summary(page)).toHaveText('cards · updated')
     expect(shellParams(page.url())).toEqual({})
   })
 })
@@ -239,12 +242,12 @@ test.describe('URL — what stays out of it', () => {
 test.describe('URL — landing on an entity instead of home', () => {
   test('opens on that entity with a clean URL, and can still widen out', async ({ page }) => {
     await gotoStory(page, 'routing-url-bound--live-url-lands-on-entity')
-    await expect(page.locator('.dc-header__crumb-root')).toHaveText('Searches')
+    await expect(viewSelect(page)).toHaveValue('searches')
     expect(shellParams(page.url())).toEqual({})
 
     await openPanel(page)
     await page.locator('.dc-entity--all').click()
-    await expect(page.locator('.dc-header__crumb-root')).toHaveText('Everything')
+    await expect(viewSelect(page)).toHaveValue('')
     // The whole corpus has to be spelled out when an entity is the default.
     expect(shellParams(page.url())).toEqual({ e: '*' })
   })

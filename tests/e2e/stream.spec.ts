@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { gotoStory, listRows, openPanel, pageReadout, termBar } from './story'
+import { gotoStory, listRows, openPanel, pageReadout, termBar, viewLabel } from './story'
 
 /**
  * Results that arrive over time.
@@ -18,8 +18,6 @@ const HOME = 'shell-data-shell--streamed-home'
 
 const results = (page: Page) => page.locator('.dc-results')
 const tableRows = (page: Page) => page.locator('.dc-table__row')
-const count = (page: Page) => page.locator('.dc-header__count')
-
 /** The rows on screen right now, however many that happens to be. */
 const rowCount = (page: Page) => tableRows(page).count()
 
@@ -110,8 +108,9 @@ test.describe('A stream and a change of query', () => {
     expect(await rowCount(page)).toBeLessThan(48)
 
     // A narrowed query reports what matched rather than what the schema
-    // publishes, so the count is the stream's own running one.
-    await expect(count(page)).toHaveText(String(await rowCount(page)))
+    // publishes, so the count the type in force carries is the stream's own
+    // running one.
+    await expect.poll(() => viewLabel(page)).toBe(`Searches · ${await rowCount(page)}`)
   })
 })
 

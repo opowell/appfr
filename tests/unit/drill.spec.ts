@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { addTerm, drillExpression, scopeTerm, scopeTermFor } from '../../src/query/drill'
+import {
+  addTerm,
+  drillExpression,
+  recordTerm,
+  scopedEntity,
+  scopeTerm,
+  scopeTermFor,
+} from '../../src/query/drill'
 import { createMockDataSource, generateRows } from '../../src/data/mock'
 import { formatExpression, parseExpression } from '../../src/data/expression'
 import { defaultQuery, findEntity } from '../../src/query/schema'
@@ -15,6 +22,35 @@ const row = (overrides: Partial<ShellRow> = {}): ShellRow => ({
   entityLabel: 'Categories',
   fields: { primary: 'Bricks', secondary: 'bricks' },
   ...overrides,
+})
+
+describe('scopedEntity', () => {
+  it('names the type a scope field points at — the inverse of scopeTerm', () => {
+    expect(scopedEntity(legoSchema, 'category')?.key).toBe('categories')
+    expect(scopedEntity(legoSchema, 'set')?.key).toBe('sets')
+  })
+
+  it('reads a field as the parse left it, which is lowercased', () => {
+    expect(scopedEntity(legoSchema, 'Set')?.key).toBe('sets')
+  })
+
+  it('is null for a field no type claims — a value, not a reference', () => {
+    // `theme` is a facet of sets: an ordinary constraint on a field, and
+    // nothing anyone can look up a record by.
+    expect(scopedEntity(legoSchema, 'theme')).toBeNull()
+    expect(scopedEntity(legoSchema, 'inventory')).toBeNull()
+  })
+})
+
+describe('recordTerm', () => {
+  it('is scopeTerm for a record named by its id alone', () => {
+    expect(recordTerm(categories, 'categories_10007')).toBe('category:"categories_10007"')
+    expect(recordTerm(categories, 'categories_10007')).toBe(scopeTerm(categories, row()))
+  })
+
+  it('is null where the entity declares no scope', () => {
+    expect(recordTerm(inventories, 'inventories_10007')).toBeNull()
+  })
 })
 
 describe('scopeTerm', () => {

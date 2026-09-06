@@ -20,7 +20,7 @@ over the top of it.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ ◆ iRadar │ Searches 38 │ QUERY entity:searches · state:running ▼│  ← header
+│ ◆ iRadar │ View:[Searches · 38] [state:running]               ▼│  ← header
 ├──────────────────────────────────────────────────────────────┤
 │ 01  Competitor pricing pages      909  104  ▬▬▬▬   running   │
 │ 02  Firmware release notes        737  288  ▬▬     ok        │  ← content
@@ -56,9 +56,10 @@ crowded out of a global top-N.
 
 Entity is a filter, not a mode. There is no separate logs screen and no
 separate settings screen: those are records with the same shape as any other,
-in the same result set, until a filter excludes them. That filter is a term in
-the header summary (`entity:logs`) you can lift like any other, and choosing
-one is what reveals that entity's own facets.
+in the same result set, until a filter excludes them. That filter is the first
+part of the query in the header — `View: Logs · 184k`, a choice among the
+schema's types with `Everything` among them — and choosing one is what reveals
+that entity's own facets.
 
 ```
 Home            →  everything · cards · updated     a card per type
@@ -597,10 +598,11 @@ Two helpers are exported for a host building its own context or its own
 results area, and they are the whole of what applying a drill takes:
 
 ```ts
-import { drillExpression, scopeTermFor } from 'header-content-layout'
+import { drillExpression, scopedEntity, scopeTermFor } from 'header-content-layout'
 
 scopeTermFor(schema, row)              // 'host:"www.example.com"', or null
 drillExpression(schema, query, row)    // the expression with that term added
+scopedEntity(schema, 'host')           // the entity `host` points at — the inverse
 ```
 
 A scope key beats a column heading of the same name in the expression field: an
@@ -665,18 +667,57 @@ numeric comparison against one constrains nothing.
 
 ### The parts of a query
 
-The header shows a narrowed query as the parts it is made of — the entity
-filter, each active facet, and each term of the expression — every one of them
-a button. Press one and that part comes out; the rest goes on running. The
-one-line summary is what the bar says while there is nothing there to lift.
+The header shows a query as the parts it is made of — the entity filter, each
+active facet, and each term of the expression. Press one and that part comes
+out; the rest goes on running. While there is nothing there to lift, the line
+beside the entity says how the results are drawn and what they are ordered by.
 
 ```
-[entity:items] [year>=1988] [release] or [recall]
-                ^ press: that constraint is gone
+View: [Items · 412 ▾] [year>=1988] [release] or [recall]
+                       ^ press: that constraint is gone
 ```
+
+The entity is the one part that is a choice rather than a pill, because the
+useful move from one type is almost always another type. It lists every entity
+the schema declares with `Everything` at the top, so widening back out is still
+one press — it is simply not the only thing on offer. And it is in the bar
+whether or not anything is filtered: a query is about something even when that
+something is everything, so the whole corpus is a scope like any other rather
+than the absence of one.
+
+It says how many, too, because what is being listed and how much of it there is
+are one question. Each type carries the population the schema publishes —
+`Items · 9,988` — and the type in force says what actually matched the moment a
+facet or an expression narrows it, since the population is then no longer what
+is on screen. `Everything` carries a count only while it is what is being
+listed: the corpus population is the one number no schema publishes, so what
+stands there is the size of the result the shell asked for.
+
+The whole bar is the panel's toggle, query and all: press it anywhere and the
+panel opens, except on a part — a part is a control of its own and pressing it
+lifts that constraint. The chevron at the end is what carries this for anyone
+not using a pointer, because a surface is nothing a keyboard can reach.
 
 `OR` groups are alternatives rather than requirements, so the bar says `or`
 between them, and lifting the last term of one drops that alternative with it.
+
+A part whose field is some entity's `scope` names a *record* rather than a
+value, and an id is a join key rather than something anyone recognises. So the
+header looks that record up and says which one it is, keeping the id it was
+written with:
+
+```
+set:"sets_10007"      as written by a drill, and as it stays in the URL
+set:Yellow Castle (sets_10007)      as the header reads it back
+```
+
+The lookup is the drill's own term run back against the type it points at —
+one record, one query, cached for as long as the shell is up — so a source
+that already answers `set:"sets_10007"` needs nothing new to be readable. One
+that has no such record, or a type that gives no column the `identity` role,
+leaves the id showing, which is what it showed before. `useRecordNames` is
+exported for a host reading terms out somewhere else, and `scopedEntity(schema,
+field)` is the half of it that says which type a field points at.
 
 Lifting a part writes the expression back out from what it parsed to, so
 `Theme:space AND price < 40` returns as `theme:space price<40` — the parse
@@ -695,6 +736,31 @@ in `data-dc-more` (`start`, `end`, `both`, or empty). It is measured from the
 rendered row rather than driven by a scroll timeline: a timeline leaves its end
 state applied once the row stops overflowing, which is what lifting a part
 does, and the fade would then sit over the label for good.
+
+### The field it is edited in
+
+The panel edits that same expression as a field of parts. A `field:value` term
+is a whole constraint on its own — and most of them were written by a drill
+rather than typed — so each one stands in the field as a part that comes out
+when it is pressed, while the box beside them is left for what a person writes:
+the words to look for, or the next term to add.
+
+```
+Expression   [set:sets_10007] [year>=1988] | brick                  |
+                    ^ press: that part is gone
+```
+
+Committing is what turns a typed term into a part: `set:sets_10007 brick` comes
+back as one part and one word, because that is what it is made of. The parts
+commit as they are pressed and the box is a draft until Run or Enter — so
+lifting a part beside half-typed text leaves that text where it is, still
+waiting. Backspace in an empty box lifts the part in front of it.
+
+An expression with `OR` in it is the exception and stays in the box whole: its
+terms depend on one another, and one of them lifted out of an alternative and
+ANDed back on to the query is a different query. The header is where those come
+out one at a time. `splitExpression` and `joinExpression` are exported for a
+host writing a field of its own.
 
 ## Component API
 
@@ -755,19 +821,19 @@ always the same width. Which of them gives way is `matchWidth`:
 
 ```
 match-width="grow" — the panel widens to the bar
-┌──────────────────────────────────────────────────┐
-│ ◆ iRadar │ Everything 240 │ QUERY everything    ▲ │
-├──────────────────────────────────────────────────┤
-│ Query · View · Entities                          │
-└──────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ ◆ iRadar │ View:[Everything · 240] cards · updated  ▲ │
+├──────────────────────────────────────────────────────┤
+│ Query · View · Entities                              │
+└──────────────────────────────────────────────────────┘
   01  Competitor pricing pages          909  running
 
 match-width="shrink" — the bar comes in to the panel
-        ┌──────────────────────────────────┐
-        │ ◆ iRadar │ Everything 240      ▲ │
-        ├──────────────────────────────────┤
-        │ Query · View · Entities          │
-        └──────────────────────────────────┘
+        ┌──────────────────────────────────────┐
+        │ ◆ iRadar │ View:[Everything · 240] ▲ │
+        ├──────────────────────────────────────┤
+        │ Query · View · Entities              │
+        └──────────────────────────────────────┘
   01  Competitor pricing pages          909  running
 ```
 
@@ -789,7 +855,7 @@ header gains a step either side of where it is, and the page is in the URL as
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ ◆ iRadar │ Searches 38 │ QUERY entity:searches  ▼ │ ‹ 3 / 4 › │
+│ ◆ iRadar │ View:[Searches · 38]                 ▼ │ ‹ 3 / 4 › │
 └──────────────────────────────────────────────────────────────┘
   25  Security advisories             716    5  ▬▬▬▬   ok
   26  Security advisories · rev 4     556  260  ▬▬▬    ok
@@ -879,7 +945,8 @@ state.hrefFor({ view: 'grid' })   // build a link without navigating
 Also exported: `useResults` — which is what drives a source, streaming or not,
 and hands back `rows`, `total`, `pageCount`, `pending`, `error` and `refresh` —
 plus `useColumns` for the scope's column set, `usePresentedRows` for rows with
-every role already resolved into `parts`, and `useShellContext`.
+every role already resolved into `parts`, `useRecordNames` for the names behind
+the ids a query narrows by, and `useShellContext`.
 
 ## Windows
 

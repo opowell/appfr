@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import type { FacetValue, ViewKind } from '../types'
 import { VIEW_KINDS } from '../types'
 import { useShellContext } from '../composables/context'
+import { formatTerm, joinExpression, splitExpression } from '../data/expression'
 import FacetControl from './FacetControl.vue'
 import SegmentedControl from './SegmentedControl.vue'
 
@@ -42,23 +43,58 @@ const sortOptions = computed(() =>
   shell.sorts.value.map((sort) => ({ key: sort.key, label: sort.label })),
 )
 
-/* The expression is edited as a draft. Committing on every keystroke would put
-   a history entry behind each character; it commits on Run or Enter. */
-const draft = ref(shell.query.value.expr)
+/*
+ * The expression, in the two halves this panel edits it as: the constraints it
+ * already names, and the text beside them. A `field:value` term is a whole
+ * constraint on its own — most of them were written by a drill rather than
+ * typed — so each is shown as a part that comes out when it is pressed, and
+ * the box is left for what a person writes: the words to look for, or the next
+ * part to add.
+ */
+const expression = computed(() => splitExpression(shell.query.value.expr))
+
+/** Each part, as the source it parses back to — which is what its button says. */
+const parts = computed(() => expression.value.parts.map(formatTerm))
+
+/* The text is edited as a draft. Committing on every keystroke would put a
+   history entry behind each character; it commits on Run or Enter. The parts
+   are not typed, so they commit as they are pressed. */
+const draft = ref(expression.value.text)
 const expressionField = ref<HTMLInputElement | null>(null)
 
+/* The text half rather than the whole expression: taking a part out changes
+   only the other half, and what someone is halfway through typing beside the
+   parts should live through that. */
 watch(
-  () => shell.query.value.expr,
-  (expr) => {
-    draft.value = expr
+  () => expression.value.text,
+  (text) => {
+    draft.value = text
   },
 )
 
-const dirty = computed(() => draft.value !== shell.query.value.expr)
+const dirty = computed(() => draft.value !== expression.value.text)
 
 function run() {
-  shell.setExpression(draft.value)
+  // The parts are committed as they are pressed, so the text is the only thing
+  // ever pending here — and rewriting an expression nobody has touched would
+  // push a history entry for a query that has not changed.
+  if (dirty.value) shell.setExpression(joinExpression(expression.value.parts, draft.value))
   emit('close')
+}
+
+/** Lifts one part, leaving the text beside it — draft and all — as it stands. */
+function removePart(at: number) {
+  const { parts: current, text } = expression.value
+  shell.setExpression(joinExpression(current.filter((_, index) => index !== at), text))
+}
+
+/* An empty box backspaces into the parts in front of it, as a field made of
+   parts is expected to. */
+function backspace(event: KeyboardEvent) {
+  const { parts: current } = expression.value
+  if (draft.value || !current.length) return
+  event.preventDefault()
+  removePart(current.length - 1)
 }
 
 function reset() {
@@ -89,17 +125,39 @@ void nextTick(() => expressionField.value?.focus())
           class="dc-panel__field-label"
           :for="`${panelId}-expr`"
         >Expression</label>
-        <input
-          :id="`${panelId}-expr`"
-          ref="expressionField"
-          v-model="draft"
-          class="dc-expression dc-mono"
-          type="text"
-          autocomplete="off"
-          spellcheck="false"
-          :placeholder="shell.schema.value.placeholder"
-          @keydown.enter.prevent="run"
+
+        <!-- The parts and the box are one field: what the query already names
+             stands in front, each part a button that takes itself out, and the
+             box is where the next one is written. -->
+        <div
+          class="dc-field"
+          @mousedown.self.prevent="expressionField?.focus()"
         >
+          <button
+            v-for="(part, at) in parts"
+            :key="`${at}:${part}`"
+            type="button"
+            class="dc-part dc-mono"
+            :title="`Remove ${part}`"
+            :aria-label="`Remove ${part}`"
+            @click="removePart(at)"
+          >
+            {{ part }}
+          </button>
+
+          <input
+            :id="`${panelId}-expr`"
+            ref="expressionField"
+            v-model="draft"
+            class="dc-expression dc-mono"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            :placeholder="parts.length ? '' : shell.schema.value.placeholder"
+            @keydown.enter.prevent="run"
+            @keydown.backspace="backspace"
+          >
+        </div>
       </div>
 
       <!-- Each facet is a row of its own, so its title lines up under the
@@ -113,13 +171,6 @@ void nextTick(() => expressionField.value?.focus())
           @update="onFacetUpdate(facet.key, $event)"
         />
       </template>
-      <p
-        v-else
-        class="dc-panel__hint"
-      >
-        Results span every entity — logs and settings included. Pick one below
-        to narrow to it and to get its own filters.
-      </p>
 
       <!-- The entity picker is part of the query, not a topic beside it:
            narrowing to an entity is what gives the facets above something to
@@ -287,21 +338,64 @@ void nextTick(() => expressionField.value?.focus())
   white-space: nowrap;
 }
 
-.dc-expression {
-  width: 100%;
+/* The field the expression is written in, parts and box together inside one
+   border — so a constraint that is already there reads as being in the field
+   rather than as a label above it. Wrapping, because a query can name more
+   parts than a line holds. */
+.dc-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
   min-width: 0;
-  padding: 9px 11px;
+  padding: 5px 6px;
   background: var(--dc-bg-0);
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius);
+  /* Bare field between the parts is still field: pressing it starts typing. */
+  cursor: text;
+}
+
+.dc-field:focus-within {
+  border-color: var(--dc-accent-dim);
+}
+
+/* Takes what the parts leave of the line, and keeps a usable box when they
+   have taken most of it — below that it wraps to a line of its own. */
+.dc-expression {
+  flex: 1 1 18ch;
+  min-width: 0;
+  padding: 4px 5px;
+  background: none;
+  border: none;
   color: var(--dc-fg-0);
   font-size: var(--dc-text-input);
   line-height: var(--dc-leading-input);
   outline: none;
 }
 
-.dc-expression:focus {
-  border-color: var(--dc-accent-dim);
+/*
+ * A part of the query, and pressing it takes that part out — the same pill the
+ * header lifts terms with, in the field the query is written in. The
+ * strikethrough on hover is the promise: this is the term, and this is it gone.
+ */
+.dc-part {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  background: var(--dc-accent-bg);
+  border: 1px solid var(--dc-accent-dim);
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-accent);
+  font-size: var(--dc-text-code);
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dc-part:hover,
+.dc-part:focus-visible {
+  opacity: 0.5;
+  text-decoration: line-through;
 }
 
 /* Run and Reset start where the controls above them start: they answer the
@@ -311,15 +405,6 @@ void nextTick(() => expressionField.value?.focus())
   grid-column: 2;
   gap: 8px;
   margin-top: 5px;
-}
-
-.dc-panel__hint {
-  grid-column: 2;
-  max-width: 46ch;
-  margin: 0;
-  color: var(--dc-fg-3);
-  font-size: var(--dc-text-meta);
-  line-height: var(--dc-leading-prose);
 }
 
 .dc-entity--all .dc-entity__label {
@@ -426,8 +511,7 @@ void nextTick(() => expressionField.value?.focus())
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .dc-panel__actions,
-  .dc-panel__hint {
+  .dc-panel__actions {
     grid-column: 1 / -1;
   }
 }

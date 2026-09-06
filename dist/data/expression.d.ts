@@ -52,3 +52,28 @@ export declare function formatExpression(expression: Expression): string;
  * means when the parts are what is on screen.
  */
 export declare function withoutTerm(expression: Expression, group: number, index: number): Expression;
+/**
+ * An expression in the two halves the query panel edits it as: the
+ * `field:value` constraints it names, and the words left over.
+ *
+ * A field term is a whole constraint on its own — `set:"sets_10007"`, written
+ * by a drill rather than typed — so the panel shows each of those as a part
+ * and leaves the box for what a person writes into it: the text to look for,
+ * or the next part to add.
+ *
+ * Alternatives are the exception. `OR` makes the terms of an expression
+ * depend on one another — a term lifted out of one alternative and ANDed back
+ * on to the whole is a different query — so an expression with more than one
+ * of them is not split at all. It stays in the box as it was written, and the
+ * header is where its parts come out one at a time.
+ */
+export interface ExpressionSplit {
+    parts: FieldTerm[];
+    text: string;
+}
+export declare function splitExpression(input: string): ExpressionSplit;
+/**
+ * The two halves written back as one expression, the parts first — the field
+ * read left to right, since that is the order it shows them in.
+ */
+export declare function joinExpression(parts: FieldTerm[], text: string): string;

@@ -5,20 +5,6 @@ import type { FacetDef, FacetValue } from '../types'
 const props = defineProps<{ facet: FacetDef; value: FacetValue }>()
 const emit = defineEmits<{ update: [value: FacetValue] }>()
 
-/** Short state readout beside the facet label. */
-const hint = computed(() => {
-  const { facet, value } = props
-  if (facet.kind === 'chips' && value.kind === 'chips') {
-    return value.selected.length ? `${value.selected.length} of ${facet.options.length}` : 'any'
-  }
-  if (facet.kind === 'range' && value.kind === 'range') {
-    if (value.min === null && value.max === null) return `${facet.min}–${facet.max}`
-    return `${value.min ?? facet.min}–${value.max ?? facet.max}`
-  }
-  if (value.kind === 'toggle') return value.on ? 'on' : 'off'
-  return ''
-})
-
 const selected = computed(() =>
   props.value.kind === 'chips' ? new Set(props.value.selected) : new Set<string>(),
 )
@@ -152,8 +138,6 @@ function flip() {
           <span class="dc-switch__knob" />
         </span>
       </button>
-
-      <span class="dc-facet__hint dc-mono">{{ hint }}</span>
     </div>
   </div>
 </template>
@@ -170,20 +154,14 @@ function flip() {
   row-gap: 7px;
 }
 
-/* The readout keeps to the far edge of the row, where the readouts of the
-   rows above and below it line up with it. */
+/* A facet's controls sit in one row that wraps, so a long set of chips runs
+   on to a second line rather than widening the panel. */
 .dc-facet__body {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px 14px;
   min-width: 0;
-}
-
-.dc-facet__hint {
-  margin-left: auto;
-  font-size: var(--dc-text-eyebrow);
-  color: var(--dc-fg-3);
 }
 
 .dc-facet__label {

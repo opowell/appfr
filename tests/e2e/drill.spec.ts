@@ -1,6 +1,14 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { gotoStory, openPanel, termBar, terms } from './story'
+import {
+  expressionBox,
+  gotoStory,
+  openPanel,
+  parts,
+  termBar,
+  terms,
+  viewSelect,
+} from './story'
 
 /**
  * Narrowing to one record.
@@ -38,7 +46,7 @@ test.describe('A metric that counts something listable', () => {
     await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click()
     expect(queryOf(page)).toMatch(/^set:"sets_\d+"$/)
     expect(entityOf(page)).toBe('pieces')
-    await expect(termBar(page)).toContainText('pieces')
+    await expect(viewSelect(page)).toHaveValue('pieces')
   })
 
   test('leaves fewer rows than the type has in total', async ({ page }) => {
@@ -87,9 +95,12 @@ test.describe('A narrowed query', () => {
     await card(page, 'Sets').locator('.dc-scope').first().click()
     const term = queryOf(page)!
     await expect(termBar(page)).toContainText('set:')
+
+    // Nobody typed it, so the panel does not offer it back as text: it is a
+    // part of the query there, the same pill the header lifts it with.
     await openPanel(page)
-    await expect(page.locator('.dc-panel input[type="search"], .dc-panel input[type="text"]').first())
-      .toHaveValue(term)
+    await expect(parts(page)).toHaveText([term.replace(/"/g, '')])
+    await expect(expressionBox(page)).toHaveValue('')
   })
 
   test('does not carry the same term twice', async ({ page }) => {

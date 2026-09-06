@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useShellContext } from '../composables/context'
-import { isTypeCardsQuery } from '../query/schema'
+import { useRecordNames } from '../composables/useRecordNames'
+import { findSort, isTypeCardsQuery } from '../query/schema'
+import { ENTITY_TERM } from '../query/summary'
+import type { SummaryTerm } from '../query/summary'
+import type { EntitySchema } from '../types'
 
 const props = defineProps<{
   expanded: boolean
   /** Id of the panel this bar controls, for `aria-controls`. */
   panelId: string
-  /** Hide the breadcrumb's record count, e.g. while a detail view is open. */
+  /**
+   * Leave the live match count off the type in force, e.g. while a detail view
+   * is open: the list of types then says what each of them holds, rather than
+   * what the query behind the detail matched.
+   */
   hideCount?: boolean
 }>()
 
@@ -17,35 +25,71 @@ const shell = useShellContext()
 
 const domain = computed(() => shell.schema.value)
 
-/**
- * What the results are scoped to. With no entity filter this is the whole
- * corpus — logs and settings included — so it says so rather than naming one
- * kind of record.
- */
-const scope = computed(() => shell.entity.value?.label ?? 'Everything')
+/* ------------------------------------------------------- how many there are */
+
+/** Whether the query says more than which type: a facet, or an expression. */
+const narrowed = computed(() => shell.hasFacets.value || Boolean(shell.query.value.expr.trim()))
 
 /**
- * The count beside the breadcrumb. A narrowed query reports how many rows
- * matched; an unfiltered entity reports the population the schema publishes,
- * which is the real total rather than a page size.
+ * How many records a type holds, said beside its name in the list of them.
+ *
+ * The population is what the schema publishes, and it is what makes that list
+ * a chooser rather than a row of names: how many of each of these there are.
+ * The type in force says something else as soon as the query narrows it — how
+ * many rows matched — because that is the count that is true of what is on
+ * screen, and the whole result is no longer what is being listed.
  */
-const count = computed(() => {
-  if (props.hideCount) return ''
-  const entity = shell.entity.value
-  if (entity && !shell.hasFacets.value && !shell.query.value.expr.trim()) return entity.count
-  return String(shell.total.value)
+function countOf(entity: EntitySchema): string {
+  const chosen = entity.key === shell.query.value.entity
+  if (chosen && narrowed.value && !props.hideCount) return String(shell.total.value)
+  return entity.count
+}
+
+/** A type as the list offers it: what it is called, and how many there are. */
+function optionLabel(entity: EntitySchema): string {
+  return `${entity.label} · ${countOf(entity)}`
+}
+
+/**
+ * `Everything`, and how much of it there is while it is what is being listed.
+ *
+ * The corpus population is the one count no schema publishes, so the number
+ * here is the only one the shell has: the size of the result it asked for.
+ * Listing a type instead leaves this a plain name — how big the whole corpus
+ * is is then a question nobody has put to the source.
+ */
+const everythingLabel = computed(() => {
+  if (shell.query.value.entity !== null || props.hideCount) return 'Everything'
+  return `Everything · ${shell.total.value}`
 })
 
 /**
- * The parts of the query, each one liftable on its own — the entity filter,
- * every active facet, and every term of the expression.
+ * How the results are drawn and what they are ordered by — `cards · updated`.
+ *
+ * This is the tail of the shell's one-line summary. The head of it is the
+ * scope, and the control beside this says that already: a bar reading
+ * `Everything` and then `everything` would only be repeating itself. What is
+ * left is the part of the query no pill stands for, and the whole sentence is
+ * still there as the title.
+ */
+const drawn = computed(() => {
+  const query = shell.query.value
+  const sort = findSort(shell.entity.value, query.sort, shell.schema.value)
+  return `${query.view} · ${sort.label}`
+})
+
+/**
+ * The parts of the query the bar offers as pills — every active facet and
+ * every term of the expression. The entity filter is not among them: it is a
+ * choice rather than a thing to take off, and it has the control at the head
+ * of the row to itself.
  *
  * `or` marks a term that starts a new alternative. An expression's `OR` groups
  * are alternatives, and a plain row of pills would otherwise read them as one
  * list of things that all have to hold.
  */
 const terms = computed(() =>
-  shell.terms.value.map((term, at, all) => {
+  shell.terms.value.filter((term) => term.facetKey !== ENTITY_TERM).map((term, at, all) => {
     const before = all[at - 1]
     return {
       term,
@@ -53,6 +97,60 @@ const terms = computed(() =>
     }
   }),
 )
+
+/* ------------------------------------------------------ what a part reads as */
+
+/**
+ * The record each `field:value` part of the query narrows to, where it narrows
+ * to one — see {@link useRecordNames}.
+ */
+const records = useRecordNames({
+  source: shell.source,
+  schema: shell.schema,
+  query: shell.query,
+  terms: shell.terms,
+})
+
+/**
+ * What a part says. `set:"sets_10007"` is what the query *is*, and a join key
+ * is not something anyone recognises — so where the id turns out to name a
+ * record, the part says which record: `set:Yellow Castle (sets_10007)`. The id
+ * stays, because it is what the expression field holds and what a shared URL
+ * carries; the name is what makes it readable.
+ */
+function labelOf(term: SummaryTerm): string {
+  const name = records.nameOf(term)
+  return name ? `${term.field}:${name} (${term.value})` : term.label
+}
+
+/* ---------------------------------------------------------- what is listed */
+
+/**
+ * Which type the results are, as the choice it is rather than as a part to
+ * take off: the useful move from one entity is almost always another entity,
+ * and lifting the filter altogether is one option among them rather than the
+ * only one on offer.
+ */
+function chooseEntity(event: Event): void {
+  const key = (event.target as HTMLSelectElement).value
+  shell.setEntity(key || null)
+}
+
+/* ------------------------------------------------------------ pressing the bar */
+
+/**
+ * A press on the bar opens the query panel.
+ *
+ * The bar is the toggle's *surface* rather than the toggle itself, because the
+ * query now sits on it and each part of a query is a control of its own — a
+ * button cannot hold another. So a press that landed on one of them belongs to
+ * it and stops there, and the chevron at the end is a real button carrying
+ * what the surface does for anyone not using a pointer.
+ */
+function pressBar(event: MouseEvent): void {
+  if ((event.target as HTMLElement | null)?.closest('button, select, label')) return
+  emit('toggle')
+}
 
 /* --------------------------------------------------------- parts off the end */
 
@@ -143,12 +241,11 @@ const position = computed(() => {
     class="dc-header"
     :data-dc-expanded="expanded ? 'true' : 'false'"
   >
-    <button
-      type="button"
+    <!-- The whole of this is the toggle: the domain it opens on, the query as
+         it stands, and the chevron that says which way it goes. -->
+    <div
       class="dc-header__trigger"
-      :aria-expanded="expanded"
-      :aria-controls="panelId"
-      @click="emit('toggle')"
+      @click="pressBar"
     >
       <span
         class="dc-header__badge"
@@ -156,66 +253,89 @@ const position = computed(() => {
       >◆</span>
       <span class="dc-header__domain">{{ domain.label }}</span>
 
-      <span class="dc-header__crumb">
-        <span class="dc-header__crumb-root">{{ scope }}</span>
-        <span
-          v-if="count"
-          class="dc-header__count dc-mono"
-        >{{ count }}</span>
-      </span>
-
-      <span
-        v-if="!terms.length"
-        class="dc-header__query"
+      <!-- The query: what is being listed, and everything narrowing it. -->
+      <div
+        ref="termBar"
+        class="dc-header__query dc-header__terms"
+        :data-dc-more="more"
+        @scroll="measureTerms"
       >
+        <!-- Which type, always — a query is about something even when nothing
+             is filtered, and the whole corpus is a scope like any other. It is
+             the one part of a query that is a choice rather than a thing to
+             take off, so `Everything` is in the list beside the types and
+             widening back out stays one press. -->
+        <label class="dc-header__view">
+          <span class="dc-header__view-label">View:</span>
+          <span class="dc-header__view-box">
+            <select
+              class="dc-header__view-select"
+              :value="shell.query.value.entity ?? ''"
+              @change="chooseEntity"
+            >
+              <option value="">{{ everythingLabel }}</option>
+              <option
+                v-for="option in shell.entities.value"
+                :key="option.key"
+                :value="option.key"
+              >{{ optionLabel(option) }}</option>
+            </select>
+            <span
+              class="dc-header__view-mark"
+              aria-hidden="true"
+            >▾</span>
+          </span>
+        </label>
+
+        <!-- What the query says besides its scope, while there is nothing in
+             it to lift. It gives way to the parts as soon as there is one. -->
         <span
+          v-if="shell.isPristine.value"
           class="dc-header__summary dc-mono dc-truncate"
-          :data-dc-active="shell.isPristine.value ? 'false' : 'true'"
           :title="shell.summary.value"
-        >{{ shell.summary.value }}</span>
-      </span>
+        >{{ drawn }}</span>
 
-      <span
-        class="dc-header__chevron"
-        aria-hidden="true"
-      >{{ expanded ? '▲' : '▼' }}</span>
-      <span class="dc-header__sr">{{ expanded ? 'Hide query panel' : 'Edit query' }}</span>
-    </button>
+        <template
+          v-for="entry in terms"
+          :key="entry.term.id"
+        >
+          <span
+            v-if="entry.or"
+            class="dc-header__or dc-mono"
+            aria-hidden="true"
+          >or</span>
 
-    <!-- Outside the trigger for the same reason the pager is: each part of the
-         query is a button of its own, and a button cannot hold another. The
-         summary above says the same thing in one line, and gives way to these
-         as soon as there is a part to lift. -->
-    <div
-      v-if="terms.length"
-      ref="termBar"
-      class="dc-header__query dc-header__terms"
-      :data-dc-more="more"
-      @scroll="measureTerms"
-    >
-      <template
-        v-for="entry in terms"
-        :key="entry.term.id"
+          <button
+            type="button"
+            class="dc-term dc-mono"
+            :title="`Remove ${labelOf(entry.term)}`"
+            :aria-label="`Remove ${labelOf(entry.term)}`"
+            @click="shell.removeTerm(entry.term)"
+          >
+            {{ labelOf(entry.term) }}
+          </button>
+        </template>
+      </div>
+
+      <!-- What the surface does, for anyone not using a pointer: a surface is
+           nothing a keyboard can reach, so the press itself is a button. -->
+      <button
+        type="button"
+        class="dc-header__toggle"
+        :aria-expanded="expanded"
+        :aria-controls="panelId"
+        @click="emit('toggle')"
       >
         <span
-          v-if="entry.or"
-          class="dc-header__or dc-mono"
+          class="dc-header__chevron"
           aria-hidden="true"
-        >or</span>
-        <button
-          type="button"
-          class="dc-term dc-mono"
-          :title="`Remove ${entry.term.label}`"
-          :aria-label="`Remove ${entry.term.label}`"
-          @click="shell.removeTerm(entry.term)"
-        >
-          {{ entry.term.label }}
-        </button>
-      </template>
+        >{{ expanded ? '▲' : '▼' }}</span>
+        <span class="dc-header__sr">{{ expanded ? 'Hide query panel' : 'Edit query' }}</span>
+      </button>
     </div>
 
-    <!-- Outside the trigger, which is itself a button: these are controls of
-         their own, and a button cannot hold another. -->
+    <!-- Off the trigger's surface, because stepping through pages is not part
+         of the query and pressing here should not open the panel. -->
     <nav
       v-if="paged"
       class="dc-header__pages"
@@ -288,18 +408,21 @@ const position = computed(() => {
   min-width: 0;
   margin-left: -8px;
   padding: 6px 8px;
-  border: none;
   border-radius: var(--dc-radius);
-  background: transparent;
-  text-align: left;
   cursor: pointer;
 }
 
-.dc-header__trigger:hover {
+/*
+ * The whole surface lights up, because the whole surface opens the panel —
+ * except while the pointer is over a part of the query, which is a control of
+ * its own and does something else entirely when it is pressed.
+ */
+.dc-header__trigger:hover:not(:has(.dc-term:hover, .dc-header__view:hover)) {
   background: var(--dc-bg-1);
 }
 
-.dc-header[data-dc-expanded='true'] .dc-header__trigger:hover {
+.dc-header[data-dc-expanded='true']
+  .dc-header__trigger:hover:not(:has(.dc-term:hover, .dc-header__view:hover)) {
   background: var(--dc-bg-2);
 }
 
@@ -323,27 +446,6 @@ const position = computed(() => {
   color: var(--dc-fg-1);
 }
 
-.dc-header__crumb {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-  padding-left: 12px;
-  border-left: 1px solid var(--dc-line);
-  font-size: var(--dc-text-body);
-  white-space: nowrap;
-}
-
-.dc-header__crumb-root {
-  color: var(--dc-fg-0);
-  font-weight: var(--dc-weight-semibold);
-}
-
-.dc-header__count {
-  font-size: var(--dc-text-micro);
-  color: var(--dc-fg-3);
-}
-
 .dc-header__query {
   display: inline-flex;
   align-items: center;
@@ -355,8 +457,8 @@ const position = computed(() => {
 }
 
 /*
- * The parts take the space the summary had, since they are what replaced it:
- * the trigger keeps the domain and the scope and no longer stretches.
+ * The parts take the rest of the bar: what the query is is the longest thing
+ * on it, and the chevron is held to the end by the toggle beside them.
  */
 .dc-header__terms {
   /* How much of the edge the cue below softens — a good part of a pill, so
@@ -400,10 +502,6 @@ const position = computed(() => {
   mask-composite: intersect;
 }
 
-.dc-header:has(.dc-header__terms) .dc-header__trigger {
-  flex: 0 1 auto;
-}
-
 /*
  * A part of the query, and pressing it takes that part out. The strikethrough
  * on hover is the promise: this is the term, and this is it gone.
@@ -426,6 +524,65 @@ const position = computed(() => {
   text-decoration: line-through;
 }
 
+/*
+ * The entity filter as a control. It sits in the row of parts because that is
+ * what it is — the first term of the query — and reads as one, so the bar is
+ * still one line of the same thing rather than a widget with pills after it.
+ */
+.dc-header__view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  font-size: var(--dc-text-code);
+  cursor: pointer;
+}
+
+.dc-header__view-label {
+  color: var(--dc-fg-3);
+}
+
+.dc-header__view-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/*
+ * Drawn as the shell draws the rest of its controls rather than as the
+ * operating system draws a select, so that the pills beside it and the box
+ * around it are recognisably one row of the same instrument.
+ */
+.dc-header__view-select {
+  appearance: none;
+  max-width: 24ch;
+  padding: 3px 20px 3px 8px;
+  background: var(--dc-accent-bg);
+  border: 1px solid var(--dc-accent-dim);
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-accent);
+  font-family: inherit;
+  font-size: var(--dc-text-code);
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.dc-header__view-select:hover {
+  border-color: var(--dc-accent);
+}
+
+/* The mark the appearance above took away. It belongs to the select, so it
+   never takes the press that should open it. */
+.dc-header__view-mark {
+  position: absolute;
+  right: 7px;
+  color: var(--dc-accent);
+  font-size: var(--dc-text-eyebrow);
+  line-height: 1;
+  pointer-events: none;
+}
+
 /* The one thing here that is not a term: what separates two alternatives. */
 .dc-header__or {
   flex: 0 0 auto;
@@ -438,14 +595,27 @@ const position = computed(() => {
   color: var(--dc-fg-3);
 }
 
-.dc-header__summary[data-dc-active='true'] {
-  color: var(--dc-accent);
+/*
+ * The press itself. It carries what the bar does — `aria-expanded`, the panel
+ * it controls, and a name saying which way it goes — and is drawn as nothing
+ * but the chevron, because the surface around it is the button as far as a
+ * pointer is concerned.
+ */
+.dc-header__toggle {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 4px;
+  border: none;
+  border-radius: var(--dc-radius-sm);
+  background: transparent;
+  cursor: pointer;
 }
 
 .dc-header__chevron {
-  flex: 0 0 auto;
-  margin-left: auto;
   font-size: var(--dc-text-eyebrow);
+  line-height: 1;
   color: var(--dc-fg-3);
 }
 
@@ -470,8 +640,8 @@ const position = computed(() => {
 }
 
 /*
- * The same divider the crumb and the query take, so the bar reads as one row
- * of instruments rather than a summary with something stuck on the end.
+ * The same divider the query takes, so the bar reads as one row of instruments
+ * rather than a summary with something stuck on the end.
  */
 .dc-header__pages {
   display: inline-flex;
@@ -522,16 +692,16 @@ const position = computed(() => {
 }
 
 /*
- * Narrow: drop the domain name, keep the entity. The entity is what the reader
- * needs — a narrowed query's summary is its terms, so it no longer says what
- * is being listed.
+ * Narrow: drop the domain name, keep the query. What is being listed is in the
+ * query itself — the type, its count, and whatever narrows it — so the name of
+ * the domain is the one thing here that can go.
  */
 @container (max-width: 720px) {
   .dc-header__domain {
     display: none;
   }
 
-  .dc-header__crumb {
+  .dc-header__query {
     padding-left: 0;
     border-left: none;
   }

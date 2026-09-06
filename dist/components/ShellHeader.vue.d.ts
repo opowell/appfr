@@ -2,7 +2,11 @@ type __VLS_Props = {
     expanded: boolean;
     /** Id of the panel this bar controls, for `aria-controls`. */
     panelId: string;
-    /** Hide the breadcrumb's record count, e.g. while a detail view is open. */
+    /**
+     * Leave the live match count off the type in force, e.g. while a detail view
+     * is open: the list of types then says what each of them holds, rather than
+     * what the query behind the detail matched.
+     */
     hideCount?: boolean;
 };
 declare var __VLS_1: {};

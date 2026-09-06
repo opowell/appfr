@@ -49,6 +49,8 @@ export { presentParts, presentRow, usePresentedRows } from './composables/usePre
 export type { PresentedRow, RowMetric, RowParts } from './composables/usePresentedRows'
 export { useColumns } from './composables/useColumns'
 export { useEntityPreviews } from './composables/useEntityPreviews'
+export { useRecordNames } from './composables/useRecordNames'
+export type { RecordNamesState, UseRecordNamesOptions } from './composables/useRecordNames'
 export type {
   EntityPreview,
   EntityPreviewsState,
@@ -227,7 +229,14 @@ export {
   roleColumns,
   rowKey,
 } from './query/columns'
-export { addTerm, drillExpression, scopeTerm, scopeTermFor } from './query/drill'
+export {
+  addTerm,
+  drillExpression,
+  recordTerm,
+  scopedEntity,
+  scopeTerm,
+  scopeTermFor,
+} from './query/drill'
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary'
 export type { SummaryTerm } from './query/summary'
 
@@ -246,11 +255,20 @@ export type { MockSourceOptions } from './data/mock'
 export {
   formatExpression,
   formatTerm,
+  joinExpression,
   matchesExpression,
   parseExpression,
+  splitExpression,
   withoutTerm,
 } from './data/expression'
-export type { Comparator, Expression, FieldTerm, Term, TextTerm } from './data/expression'
+export type {
+  Comparator,
+  Expression,
+  ExpressionSplit,
+  FieldTerm,
+  Term,
+  TextTerm,
+} from './data/expression'
 export { fnv1a, formatDate, formatMetric, formatOrdinal } from './data/format'
 
 /* Types */

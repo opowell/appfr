@@ -207,9 +207,11 @@
           file: './App.vue',
           mounted() {
             const domain = document.querySelector('.dc-header__domain')?.textContent?.trim()
-            const count = document.querySelector('.dc-header__count')?.textContent?.trim()
-            if (!count) throw new Error('the header states no result count, so nothing matched')
-            return `${domain}: ${count} records on screen`
+            const rows = document.querySelectorAll(
+              '.dc-results :is(.dc-type__row, .dc-list__row, .dc-card, .dc-tile, .dc-table__row)',
+            ).length
+            if (!rows) throw new Error('the shell rendered no rows, so nothing matched')
+            return `${domain}: ${rows} records on screen`
           },
         },
         window: {

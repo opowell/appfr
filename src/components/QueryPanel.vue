@@ -83,51 +83,48 @@ void nextTick(() => expressionField.value?.focus())
     aria-label="Query"
     @keydown.esc.stop="emit('close')"
   >
-    <section class="dc-panel__section">
-      <div class="dc-panel__query">
-        <div class="dc-panel__expression">
-          <label
-            class="dc-panel__field-label"
-            :for="`${panelId}-expr`"
-          >Expression</label>
-          <input
-            :id="`${panelId}-expr`"
-            ref="expressionField"
-            v-model="draft"
-            class="dc-expression dc-mono"
-            type="text"
-            autocomplete="off"
-            spellcheck="false"
-            :placeholder="shell.schema.value.placeholder"
-            @keydown.enter.prevent="run"
-          >
-        </div>
-
-        <div
-          v-if="shell.entity.value"
-          class="dc-panel__facets"
+    <section class="dc-panel__section dc-panel__rows">
+      <div class="dc-panel__row">
+        <label
+          class="dc-panel__field-label"
+          :for="`${panelId}-expr`"
+        >Expression</label>
+        <input
+          :id="`${panelId}-expr`"
+          ref="expressionField"
+          v-model="draft"
+          class="dc-expression dc-mono"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          :placeholder="shell.schema.value.placeholder"
+          @keydown.enter.prevent="run"
         >
-          <FacetControl
-            v-for="facet in shell.entity.value.facets"
-            :key="facet.key"
-            :facet="facet"
-            :value="shell.query.value.facets[facet.key]!"
-            @update="onFacetUpdate(facet.key, $event)"
-          />
-        </div>
-        <p
-          v-else
-          class="dc-panel__hint"
-        >
-          Results span every entity — logs and settings included. Pick one below
-          to narrow to it and to get its own filters.
-        </p>
       </div>
+
+      <!-- Each facet is a row of its own, so its title lines up under the
+           expression's and its control starts where the expression does. -->
+      <template v-if="shell.entity.value">
+        <FacetControl
+          v-for="facet in shell.entity.value.facets"
+          :key="facet.key"
+          :facet="facet"
+          :value="shell.query.value.facets[facet.key]!"
+          @update="onFacetUpdate(facet.key, $event)"
+        />
+      </template>
+      <p
+        v-else
+        class="dc-panel__hint"
+      >
+        Results span every entity — logs and settings included. Pick one below
+        to narrow to it and to get its own filters.
+      </p>
 
       <!-- The entity picker is part of the query, not a topic beside it:
            narrowing to an entity is what gives the facets above something to
            filter, so the two are read as one. -->
-      <div class="dc-panel__scope">
+      <div class="dc-panel__row">
         <span
           :id="`${panelId}-entities`"
           class="dc-panel__field-label"
@@ -185,35 +182,39 @@ void nextTick(() => expressionField.value?.focus())
       </div>
     </section>
 
-    <section class="dc-panel__section dc-panel__section--row">
-      <div class="dc-panel__control">
-        <span class="dc-eyebrow">View</span>
-        <SegmentedControl
-          label="Result view"
-          :model-value="shell.query.value.view"
-          :options="viewOptions"
-          @update:model-value="shell.setView($event as ViewKind)"
-        />
+    <section class="dc-panel__section dc-panel__rows">
+      <div class="dc-panel__row">
+        <span class="dc-panel__field-label">View</span>
+        <div class="dc-panel__control">
+          <SegmentedControl
+            label="Result view"
+            :model-value="shell.query.value.view"
+            :options="viewOptions"
+            @update:model-value="shell.setView($event as ViewKind)"
+          />
+        </div>
       </div>
 
-      <div class="dc-panel__control">
-        <span class="dc-eyebrow">Sort</span>
-        <SegmentedControl
-          mono
-          label="Sort field"
-          :model-value="shell.query.value.sort"
-          :options="sortOptions"
-          @update:model-value="shell.setSort($event)"
-        />
-        <button
-          type="button"
-          class="dc-button dc-button--icon dc-mono"
-          :title="shell.query.value.dir === 'desc' ? 'Descending — click to reverse' : 'Ascending — click to reverse'"
-          :aria-label="`Sort direction: ${shell.query.value.dir === 'desc' ? 'descending' : 'ascending'}`"
-          @click="shell.toggleDirection()"
-        >
-          {{ shell.query.value.dir === 'desc' ? '↓' : '↑' }}
-        </button>
+      <div class="dc-panel__row">
+        <span class="dc-panel__field-label">Sort</span>
+        <div class="dc-panel__control">
+          <SegmentedControl
+            mono
+            label="Sort field"
+            :model-value="shell.query.value.sort"
+            :options="sortOptions"
+            @update:model-value="shell.setSort($event)"
+          />
+          <button
+            type="button"
+            class="dc-button dc-button--icon dc-mono"
+            :title="shell.query.value.dir === 'desc' ? 'Descending — click to reverse' : 'Ascending — click to reverse'"
+            :aria-label="`Sort direction: ${shell.query.value.dir === 'desc' ? 'descending' : 'ascending'}`"
+            @click="shell.toggleDirection()"
+          >
+            {{ shell.query.value.dir === 'desc' ? '↓' : '↑' }}
+          </button>
+        </div>
       </div>
     </section>
 
@@ -242,9 +243,19 @@ void nextTick(() => expressionField.value?.focus())
   box-shadow: var(--dc-shadow);
   overflow: hidden auto;
   animation: dc-pop-in 0.14s ease-out;
+
+  /* Two columns for the whole panel: what a control is called, then the
+     control. The tracks are owned here rather than by each section so that
+     every title down the panel starts at the same place and every control
+     starts at the same place — across the section borders as well as within
+     one. The sections carry the same side padding for that reason. */
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 16px;
 }
 
 .dc-panel__section {
+  grid-column: 1 / -1;
   padding: 14px 18px 16px;
   border-bottom: 1px solid var(--dc-line);
 }
@@ -253,40 +264,26 @@ void nextTick(() => expressionField.value?.focus())
   border-bottom: none;
 }
 
-.dc-panel__section--row {
-  display: flex;
-  align-items: center;
-  gap: 26px;
-  flex-wrap: wrap;
-  padding: 12px 18px 14px;
+/* A section of label/control rows takes the panel's tracks rather than tracks
+   of its own; a host's section is left alone as the block it was. */
+.dc-panel__rows {
+  display: grid;
+  grid-template-columns: subgrid;
+  row-gap: 13px;
 }
 
-.dc-panel__query {
+.dc-panel__row {
   display: grid;
-  grid-template-columns: minmax(280px, 1.1fr) 2fr;
-  gap: 18px;
-  align-items: start;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  row-gap: 6px;
 }
 
 .dc-panel__field-label {
-  display: block;
-  margin-bottom: 6px;
   font-size: var(--dc-text-micro);
   font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-1);
-}
-
-/* Whitespace alone divides the query from the entities under it — a rule here
-   would put back the section border the merge took out. */
-.dc-panel__scope {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.dc-panel__scope .dc-panel__field-label {
-  margin-bottom: 0;
   white-space: nowrap;
 }
 
@@ -307,20 +304,17 @@ void nextTick(() => expressionField.value?.focus())
   border-color: var(--dc-accent-dim);
 }
 
+/* Run and Reset start where the controls above them start: they answer the
+   column of controls, not the panel. */
 .dc-panel__actions {
   display: flex;
-  justify-content: center;
+  grid-column: 2;
   gap: 8px;
-  margin-top: 18px;
-}
-
-.dc-panel__facets {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 16px;
+  margin-top: 5px;
 }
 
 .dc-panel__hint {
+  grid-column: 2;
   max-width: 46ch;
   margin: 0;
   color: var(--dc-fg-3);
@@ -383,7 +377,6 @@ void nextTick(() => expressionField.value?.focus())
    filter, and a filter is a control the width of its own name. */
 .dc-panel__entities {
   display: flex;
-  flex: 1;
   min-width: 0;
   flex-wrap: wrap;
   gap: 8px;
@@ -426,9 +419,16 @@ void nextTick(() => expressionField.value?.focus())
   color: var(--dc-fg-3);
 }
 
-@container (max-width: 760px) {
-  .dc-panel__query {
-    grid-template-columns: 1fr;
+/* Too narrow for a title beside its control: the panel drops to one track, and
+   every row — being a subgrid of it — stacks its title over its control. */
+@container (max-width: 620px) {
+  .dc-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dc-panel__actions,
+  .dc-panel__hint {
+    grid-column: 1 / -1;
   }
 }
 </style>

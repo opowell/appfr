@@ -1,5 +1,5 @@
 import '../style/tokens.css';
-import type { DataSource, DomainSchema, EntitySchema, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewKind } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, Selection, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewKind } from '../types';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
 type __VLS_Props = {
@@ -67,6 +67,13 @@ type __VLS_Props = {
     headAlign?: ShellAlign;
     /** Offers the star affordance on rows. */
     pinnable?: boolean;
+    /**
+     * Offers the tick on rows whether or not the type being listed names an
+     * operation for a selection. A type that names `duplicate` or `delete`
+     * offers ticks anyway — this is for a host whose bulk action is its own,
+     * reading `v-model:selected` and doing the rest itself.
+     */
+    selectable?: boolean;
     navigationMode?: NavigationMode;
     facetNavigationMode?: NavigationMode;
 };
@@ -95,35 +102,43 @@ type __VLS_Slots = {
 declare function closePanel(): void;
 type __VLS_PublicProps = __VLS_Props & {
     /**
-     * Both of these are optionally controlled: bind `v-model:open` or
-     * `v-model:pinned` to own the state, or leave them alone and the shell keeps
-     * it internally. `defineModel` distinguishes the two by whether the prop was
-     * actually passed, which a plain boolean prop cannot do — Vue casts an absent
-     * boolean to `false`.
+     * Each of these is optionally controlled: bind `v-model:open`,
+     * `v-model:pinned` or `v-model:selected` to own the state, or leave them alone
+     * and the shell keeps it internally. `defineModel` distinguishes the two by
+     * whether the prop was actually passed, which a plain boolean prop cannot do —
+     * Vue casts an absent boolean to `false`.
      */
     'open'?: boolean;
     'pinned'?: string[];
+    /** Which records are ticked, by id — see the `Selection` an operation carries. */
+    'selected'?: string[];
 };
 declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, {
     query: import("vue").ComputedRef<ShellQuery>;
     openPanel: () => void;
     closePanel: typeof closePanel;
 }, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
+    create: (entity: EntitySchema) => any;
+    duplicate: (selection: Selection) => any;
+    delete: (selection: Selection) => any;
     drill: (row: ShellRow, entity: EntitySchema | null) => any;
     activate: (row: ShellRow) => any;
-    create: (entity: EntitySchema) => any;
     "query-change": (query: ShellQuery) => any;
     "toggle-pin": (row: ShellRow) => any;
     "update:open": (value: boolean) => any;
     "update:pinned": (value: string[]) => any;
+    "update:selected": (value: string[]) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_PublicProps> & Readonly<{
+    onCreate?: ((entity: EntitySchema) => any) | undefined;
+    onDuplicate?: ((selection: Selection) => any) | undefined;
+    onDelete?: ((selection: Selection) => any) | undefined;
     onDrill?: ((row: ShellRow, entity: EntitySchema | null) => any) | undefined;
     onActivate?: ((row: ShellRow) => any) | undefined;
-    onCreate?: ((entity: EntitySchema) => any) | undefined;
     "onQuery-change"?: ((query: ShellQuery) => any) | undefined;
     "onToggle-pin"?: ((row: ShellRow) => any) | undefined;
     "onUpdate:open"?: ((value: boolean) => any) | undefined;
     "onUpdate:pinned"?: ((value: string[]) => any) | undefined;
+    "onUpdate:selected"?: ((value: string[]) => any) | undefined;
 }>, {
     limit: number;
     previewsPerType: number;

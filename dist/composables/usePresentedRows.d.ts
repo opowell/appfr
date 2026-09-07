@@ -59,6 +59,8 @@ export interface PresentedRow {
     ordinal: string;
     parts: RowParts;
     pinned: boolean;
+    /** Whether this record is ticked — see {@link ShellContext.selection}. */
+    selected: boolean;
 }
 /** Resolves the roles a view reads, from the columns of the row's own type. */
 export declare function presentParts(row: ShellRow, columns: ColumnDef[]): RowParts;
@@ -66,5 +68,5 @@ export declare function presentParts(row: ShellRow, columns: ColumnDef[]): RowPa
  * Resolves one row's display strings. Pure, so the per-type cards on the home
  * screen format their rows exactly as the record views do.
  */
-export declare function presentRow(row: ShellRow, index: number, entity: EntitySchema | null, pinned: boolean): PresentedRow;
+export declare function presentRow(row: ShellRow, index: number, entity: EntitySchema | null, pinned: boolean, selected?: boolean): PresentedRow;
 export declare function usePresentedRows(): ComputedRef<PresentedRow[]>;

@@ -1,6 +1,7 @@
 export { default as DataShell } from './components/DataShell.vue';
 export { default as ShellHeader } from './components/ShellHeader.vue';
 export { default as QueryPanel } from './components/QueryPanel.vue';
+export { default as RecordActions } from './components/RecordActions.vue';
 export { default as ResultsArea } from './components/ResultsArea.vue';
 export { default as FacetControl } from './components/FacetControl.vue';
 export { default as SegmentedControl } from './components/SegmentedControl.vue';
@@ -18,6 +19,7 @@ export { default as TableView } from './components/views/TableView.vue';
 export { default as LinksView } from './components/views/LinksView.vue';
 export { default as PreviewView } from './components/views/PreviewView.vue';
 export { default as PinStar } from './components/views/PinStar.vue';
+export { default as SelectTick } from './components/views/SelectTick.vue';
 export { default as ScopeMark } from './components/views/ScopeMark.vue';
 export { default as MetricDrill } from './components/views/MetricDrill.vue';
 export { default as ColumnCell } from './components/views/ColumnCell.vue';
@@ -61,5 +63,5 @@ export { formatExpression, formatTerm, joinExpression, matchesExpression, parseE
 export type { Comparator, Expression, ExpressionSplit, FieldTerm, Term, TextTerm, } from './data/expression';
 export { fnv1a, formatCount, formatDate, formatMetric, formatOrdinal } from './data/format';
 export { COLUMN_BREAKPOINTS, COLUMN_ROLES, RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS, } from './types';
-export type { ChipsFacet, ColumnAlign, ColumnBreakpoint, ColumnDef, ColumnKind, ColumnRole, DataSource, DomainSchema, EntitySchema, FacetDef, FacetState, FacetValue, QueryRequest, QueryResult, QuerySink, QueryUpdate, RangeFacet, RecordStatus, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, SortDef, SortDirection, StreamingDataSource, SyncDataSource, ToggleFacet, ViewKind, } from './types';
+export type { ChipsFacet, ColumnAlign, ColumnBreakpoint, ColumnDef, ColumnKind, ColumnRole, DataSource, DomainSchema, EntitySchema, FacetDef, FacetState, FacetValue, QueryRequest, QueryResult, QuerySink, QueryUpdate, RangeFacet, RecordStatus, Selection, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, SortDef, SortDirection, StreamingDataSource, SyncDataSource, ToggleFacet, ViewKind, } from './types';
 export { default as HeaderContentLayoutPlugin } from './plugin';

@@ -224,7 +224,7 @@ test.describe('Content — states other than a full result set', () => {
 
     await page.locator('.dc-results__clear').click()
     // Back to the whole corpus, which the header's scope control says it is.
-    await expect(page.locator('.dc-header__view-select')).toHaveValue('')
+    await expect(page.locator('.dc-header__scope-select')).toHaveValue('')
     await expect(listRows(page).first()).toBeVisible()
   })
 

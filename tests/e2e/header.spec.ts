@@ -1,24 +1,24 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import {
-  chooseView,
+  chooseScope,
   clickOutsidePanel,
   gotoStory,
   header,
   listRows,
   openPanel,
+  pager,
   pageReadout,
   pageStep,
-  pager,
   panel,
   pickEntity,
   rowOrdinals,
+  scopeLabel,
+  scopeSelect,
   stepPage,
-  summary,
   termBar,
   terms,
   trigger,
-  viewLabel,
   viewSelect,
 } from './story'
 
@@ -26,41 +26,41 @@ const HOME = 'shell-data-shell--home'
 const HOME_OPEN = 'shell-data-shell--home-panel-open'
 const ENTITY = 'shell-data-shell--entity-list'
 
-test.describe('Header — summary of the current query', () => {
+test.describe('Header — the query as it stands', () => {
   test('names the domain, and says the whole corpus is what is listed', async ({ page }) => {
     await gotoStory(page, HOME)
     await expect(header(page)).toContainText('iRadar')
     // Nothing is filtered, so the scope is the whole corpus — and the control
     // that says so says how much of it there is. Five entities of forty-eight
     // generated rows each.
-    await expect(viewSelect(page)).toHaveValue('')
-    expect(await viewLabel(page)).toBe('Everything · 240')
+    await expect(scopeSelect(page)).toHaveValue('')
+    expect(await scopeLabel(page)).toBe('Everything · 240')
   })
 
   test('describes the home screen by what it is showing', async ({ page }) => {
     await gotoStory(page, HOME)
-    // How they are drawn and what they are ordered by: the rest of the query,
-    // after the scope the control beside it already says.
-    await expect(summary(page)).toHaveText('cards · updated')
-    await expect(summary(page)).toHaveAttribute('title', 'everything · cards · updated')
+    // How they are drawn is the second of the two choosers, beside the scope.
+    await expect(viewSelect(page)).toHaveValue('cards')
+    // The whole sentence — the ordering included — is still the row's title.
+    await expect(termBar(page)).toHaveAttribute('title', 'everything · cards · updated')
   })
 
   test('names the entity once one is filtered to', async ({ page }) => {
     await gotoStory(page, ENTITY)
     // A query with something in it is shown as the parts it is made of, and
-    // the one-line summary gives way to them.
-    await expect(summary(page)).toHaveCount(0)
+    // the choosers stay on the bar beside them.
+    await expect(viewSelect(page)).toHaveValue('list')
     // The entity is the first of those parts, and the only one that is a
     // choice rather than a pill. It is also what says which type is listed,
     // and how many of them there are.
-    await expect(viewSelect(page)).toHaveValue('searches')
-    expect(await viewLabel(page)).toBe('Searches · 38')
+    await expect(scopeSelect(page)).toHaveValue('searches')
+    expect(await scopeLabel(page)).toBe('Searches · 38')
     await expect(terms(page)).toHaveCount(0)
   })
 
   test('describes a narrowed query by its terms', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
-    await expect(viewSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveValue('searches')
     await expect(terms(page)).toHaveText(['state:running', 'schedule:daily'])
   })
 
@@ -75,12 +75,12 @@ test.describe('Header — summary of the current query', () => {
     // Nothing but the type is asked for, so the count is the population the
     // schema publishes.
     await gotoStory(page, ENTITY)
-    expect(await viewLabel(page)).toBe('Searches · 38')
+    expect(await scopeLabel(page)).toBe('Searches · 38')
 
     // A facet narrows it, and the count is what actually matched — the whole
     // population is no longer what is being listed.
     await gotoStory(page, 'shell-data-shell--filtered-query')
-    const matched = Number((await viewLabel(page)).split(' · ')[1])
+    const matched = Number((await scopeLabel(page)).split(' · ')[1])
     expect(matched).toBeGreaterThan(0)
     expect(matched).toBeLessThan(48)
   })
@@ -89,17 +89,17 @@ test.describe('Header — summary of the current query', () => {
     await gotoStory(page, HOME)
     await openPanel(page)
     await pickEntity(page, 'Items')
-    await expect(viewSelect(page)).toHaveValue('items')
-    await expect.poll(() => viewLabel(page)).toBe('Items · 9,988')
+    await expect(scopeSelect(page)).toHaveValue('items')
+    await expect.poll(() => scopeLabel(page)).toBe('Items · 9,988')
   })
 
   test('widens back to everything when the scope is lifted', async ({ page }) => {
     await gotoStory(page, ENTITY)
     await openPanel(page)
     await page.locator('.dc-entity--all').click()
-    await expect(viewSelect(page)).toHaveValue('')
-    expect(await viewLabel(page)).toBe('Everything · 240')
-    await expect(summary(page)).toHaveText('list · updated')
+    await expect(scopeSelect(page)).toHaveValue('')
+    expect(await scopeLabel(page)).toBe('Everything · 240')
+    await expect(viewSelect(page)).toHaveValue('list')
   })
 })
 
@@ -121,15 +121,15 @@ test.describe('Header — lifting a part of the query', () => {
     await terms(page).filter({ hasText: 'release' }).click()
     await terms(page).filter({ hasText: 'recall' }).click()
     await expect(terms(page)).toHaveCount(0)
-    await expect(viewSelect(page)).toHaveValue('items')
+    await expect(scopeSelect(page)).toHaveValue('items')
   })
 
-  test('choosing Everything widens back out, and the summary returns', async ({ page }) => {
+  test('choosing Everything widens back out, and how it is drawn stands', async ({ page }) => {
     await gotoStory(page, ENTITY)
-    await viewSelect(page).selectOption('')
+    await scopeSelect(page).selectOption('')
     await expect(terms(page)).toHaveCount(0)
-    await expect(viewSelect(page)).toHaveValue('')
-    await expect(summary(page)).toHaveText('list · updated')
+    await expect(scopeSelect(page)).toHaveValue('')
+    await expect(viewSelect(page)).toHaveValue('list')
   })
 
   test('offers every type the schema declares, and Everything among them', async ({ page }) => {
@@ -138,7 +138,7 @@ test.describe('Header — lifting a part of the query', () => {
     // chooser rather than a row of names. `Everything` is the one option with
     // no count to give: how big the corpus is is not something the schema
     // publishes, and the shell knows a result's size only once it asks.
-    await expect(viewSelect(page).locator('option')).toHaveText([
+    await expect(scopeSelect(page).locator('option')).toHaveText([
       'Everything',
       'Searches · 38',
       'Items · 9,988',
@@ -146,16 +146,17 @@ test.describe('Header — lifting a part of the query', () => {
       'Logs · 184k',
       'Settings · 20',
     ])
-    // The visible label is the control's name, so it is one thing rather than
-    // a word beside a widget.
-    await expect(page.getByRole('combobox', { name: 'View:' })).toBeVisible()
+    // Neither chooser spends a word of the bar saying what it is: what they
+    // hold says that already. The name is there for anyone who cannot see it.
+    await expect(page.getByRole('combobox', { name: 'Type' })).toBeVisible()
+    await expect(page.getByRole('combobox', { name: 'View' })).toBeVisible()
   })
 
   test('choosing another type lists that one instead', async ({ page }) => {
     await gotoStory(page, ENTITY)
-    await chooseView(page, 'Items')
-    await expect(viewSelect(page)).toHaveValue('items')
-    await expect.poll(() => viewLabel(page)).toBe('Items · 9,988')
+    await chooseScope(page, 'Items')
+    await expect(scopeSelect(page)).toHaveValue('items')
+    await expect.poll(() => scopeLabel(page)).toBe('Items · 9,988')
     // The entity's own facets went with it: they belong to the type that had
     // them, and this is a different type.
     await expect(terms(page)).toHaveCount(0)
@@ -193,7 +194,7 @@ test.describe('Header — a part that names a record', () => {
 
     await part.click()
     await expect(terms(page)).toHaveCount(0)
-    await expect(viewSelect(page)).toHaveValue('pieces')
+    await expect(scopeSelect(page)).toHaveValue('pieces')
   })
 
   test('leaves a part that constrains a value rather than naming a record', async ({ page }) => {
@@ -306,7 +307,7 @@ test.describe('Header — opening the expanded query view', () => {
 
   test('a press on the view control opens its own list, not the panel', async ({ page }) => {
     await gotoStory(page, ENTITY)
-    await viewSelect(page).click()
+    await scopeSelect(page).click()
     await expect(panel(page)).toHaveCount(0)
   })
 
@@ -343,7 +344,10 @@ test.describe('Header — opening the expanded query view', () => {
   test('the header is reachable and operable from the keyboard alone', async ({ page }) => {
     await gotoStory(page, HOME)
     // The query comes first, since it is what the bar is mostly made of: which
-    // type is listed, and then the button that opens the rest of the query.
+    // type is listed, how it is drawn, and then the button that opens the rest
+    // of the query.
+    await page.keyboard.press('Tab')
+    await expect(scopeSelect(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(viewSelect(page)).toBeFocused()
     await page.keyboard.press('Tab')

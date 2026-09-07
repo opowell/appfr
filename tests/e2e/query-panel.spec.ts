@@ -7,7 +7,7 @@ import {
   panel,
   parts,
   pickEntity,
-  summary,
+  scopeSelect,
   termBar,
   terms,
   viewSelect,
@@ -64,7 +64,7 @@ test.describe('Query panel — scope', () => {
     await expect(page.locator('.dc-facet__label')).toHaveText(['State', 'Schedule', 'Results'])
     const after = await listRows(page).count()
     expect(after).toBeLessThan(before)
-    await expect(viewSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveValue('searches')
   })
 
   test('Everything puts every kind back in the results', async ({ page }) => {
@@ -76,7 +76,7 @@ test.describe('Query panel — scope', () => {
 
     await expect(page.locator('.dc-facet__label')).toHaveCount(0)
     expect(await listRows(page).count()).toBeGreaterThan(scoped)
-    await expect(summary(page)).toHaveText('list · updated')
+    await expect(viewSelect(page)).toHaveValue('list')
   })
 
   test('re-shapes its facets when the entity changes', async ({ page }) => {
@@ -254,11 +254,11 @@ test.describe('Query panel — narrowing the result set', () => {
 
   test('Reset lifts the entity, the facets and the expression at once', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--facets-and-expression')
-    await expect(viewSelect(page)).toHaveValue('items')
+    await expect(scopeSelect(page)).toHaveValue('items')
 
     await openPanel(page)
     await page.locator('.dc-panel__actions button', { hasText: 'Reset' }).click()
-    await expect(summary(page)).toHaveText('list · updated')
+    await expect(viewSelect(page)).toHaveValue('list')
   })
 
   test('Reset is unavailable at home, where there is nothing to reset', async ({ page }) => {
@@ -432,7 +432,7 @@ test.describe('Query panel — view and sort', () => {
 
     const names = await page.locator('.dc-table__open').allInnerTexts()
     expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a)))
-    await expect(viewSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveValue('searches')
   })
 
   test('the direction button reverses the order', async ({ page }) => {

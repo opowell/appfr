@@ -328,6 +328,7 @@ defineExpose({
         ref="headerRef"
         :expanded="panelOpen"
         :panel-id="panelId"
+        :views="views"
         @toggle="panelOpen = !panelOpen"
       >
         <template

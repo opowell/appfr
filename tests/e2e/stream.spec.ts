@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { gotoStory, listRows, openPanel, pageReadout, termBar, viewLabel } from './story'
+import { gotoStory, listRows, openPanel, pageReadout, termBar, scopeLabel } from './story'
 
 /**
  * Results that arrive over time.
@@ -110,7 +110,7 @@ test.describe('A stream and a change of query', () => {
     // A narrowed query reports what matched rather than what the schema
     // publishes, so the count the type in force carries is the stream's own
     // running one.
-    await expect.poll(() => viewLabel(page)).toBe(`Searches · ${await rowCount(page)}`)
+    await expect.poll(() => scopeLabel(page)).toBe(`Searches · ${await rowCount(page)}`)
   })
 })
 

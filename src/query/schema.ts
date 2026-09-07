@@ -24,6 +24,32 @@ export function isViewKind(value: unknown): value is ViewKind {
   return typeof value === 'string' && (VIEW_KINDS as readonly string[]).includes(value)
 }
 
+/**
+ * What each view is called wherever one is offered as a choice — the header's
+ * chooser and the query panel's row of them are naming the same six things,
+ * and a view called `Cards` in one place and `cards` in the other would read
+ * as two settings rather than one.
+ */
+export const VIEW_LABELS: Record<ViewKind, string> = {
+  list: 'List',
+  cards: 'Cards',
+  grid: 'Grid',
+  table: 'Table',
+  links: 'Links',
+  preview: 'Preview',
+}
+
+/**
+ * The view actually drawn, given what the query asks for and what the host
+ * offers. A URL naming a view a host has withheld falls back to the first on
+ * offer, so a link into a restricted shell still lands somewhere it can draw.
+ */
+export function resolveView(asked: ViewKind, offered: ViewKind[] | undefined): ViewKind {
+  const [fallback] = offered ?? []
+  if (fallback === undefined) return asked
+  return offered?.includes(asked) ? asked : fallback
+}
+
 /** The entity a key names, or `null` when it names none. */
 export function findEntity(schema: DomainSchema, key: string | null | undefined): EntitySchema | null {
   if (!key) return null

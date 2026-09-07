@@ -20,7 +20,7 @@ over the top of it.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ ◆ iRadar │ View:[Searches · 38] [state:running]               ▼│  ← header
+│ ◆ iRadar │ [Searches · 38 ▾] [List ▾] [state:running]          ▼│  ← header
 ├──────────────────────────────────────────────────────────────┤
 │ 01  Competitor pricing pages      909  104  ▬▬▬▬   running   │
 │ 02  Firmware release notes        737  288  ▬▬     ok        │  ← content
@@ -57,9 +57,9 @@ crowded out of a global top-N.
 Entity is a filter, not a mode. There is no separate logs screen and no
 separate settings screen: those are records with the same shape as any other,
 in the same result set, until a filter excludes them. That filter is the first
-part of the query in the header — `View: Logs · 184k`, a choice among the
-schema's types with `Everything` among them — and choosing one is what reveals
-that entity's own facets.
+part of the query in the header — `Logs · 184k`, a choice among the schema's
+types with `Everything` among them — and choosing one is what reveals that
+entity's own facets.
 
 ```
 Home            →  everything · cards · updated     a card per type
@@ -667,23 +667,29 @@ numeric comparison against one constrains nothing.
 
 ### The parts of a query
 
-The header shows a query as the parts it is made of — the entity filter, each
-active facet, and each term of the expression. Press one and that part comes
-out; the rest goes on running. While there is nothing there to lift, the line
-beside the entity says how the results are drawn and what they are ordered by.
+The header shows a query as the parts it is made of — the entity filter, how
+the results are drawn, each active facet, and each term of the expression.
+Press a pill and that part comes out; the rest goes on running.
 
 ```
-View: [Items · 412 ▾] [year>=1988] [release] or [recall]
-                       ^ press: that constraint is gone
+[Items · 412 ▾] [List ▾] [year>=1988] [release] or [recall]
+                          ^ press: that constraint is gone
 ```
 
-The entity is the one part that is a choice rather than a pill, because the
-useful move from one type is almost always another type. It lists every entity
-the schema declares with `Everything` at the top, so widening back out is still
-one press — it is simply not the only thing on offer. And it is in the bar
-whether or not anything is filtered: a query is about something even when that
-something is everything, so the whole corpus is a scope like any other rather
-than the absence of one.
+Two of those parts are choices rather than pills, and neither spends a word of
+the bar saying what it is — what each of them holds says that already. The
+entity is the first, because the useful move from one type is almost always
+another type. It lists every entity the schema declares with `Everything` at
+the top, so widening back out is still one press — it is simply not the only
+thing on offer. And it is in the bar whether or not anything is filtered: a
+query is about something even when that something is everything, so the whole
+corpus is a scope like any other rather than the absence of one.
+
+The view is the second, and it is on the bar for the same reason: how the
+results are drawn is a part of the query, in the URL with the rest of it, so it
+is a choice you make where the query is rather than one you go into the panel
+for. The ordering stays in the panel — it is the one part of a query that
+already has a control on the results themselves, in the table's own headings.
 
 It says how many, too, because what is being listed and how much of it there is
 are one question. Each type carries the population the schema publishes —
@@ -822,7 +828,7 @@ always the same width. Which of them gives way is `matchWidth`:
 ```
 match-width="grow" — the panel widens to the bar
 ┌──────────────────────────────────────────────────────┐
-│ ◆ iRadar │ View:[Everything · 240] cards · updated  ▲ │
+│ ◆ iRadar │ [Everything · 240 ▾] [Cards ▾]           ▲ │
 ├──────────────────────────────────────────────────────┤
 │ Query · View · Entities                              │
 └──────────────────────────────────────────────────────┘
@@ -830,7 +836,7 @@ match-width="grow" — the panel widens to the bar
 
 match-width="shrink" — the bar comes in to the panel
         ┌──────────────────────────────────────┐
-        │ ◆ iRadar │ View:[Everything · 240] ▲ │
+        │ ◆ iRadar │ [Everything · 240 ▾] ▲ │
         ├──────────────────────────────────────┤
         │ Query · View · Entities              │
         └──────────────────────────────────────┘
@@ -855,7 +861,7 @@ header gains a step either side of where it is, and the page is in the URL as
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ ◆ iRadar │ View:[Searches · 38]                 ▼ │ ‹ 3 / 4 › │
+│ ◆ iRadar │ [Searches · 38 ▾] [List ▾]           ▼ │ ‹ 3 / 4 › │
 └──────────────────────────────────────────────────────────────┘
   25  Security advisories             716    5  ▬▬▬▬   ok
   26  Security advisories · rev 4     556  260  ▬▬▬    ok

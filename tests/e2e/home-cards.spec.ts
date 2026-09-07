@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { gotoStory, listRows, openPanel, summary, terms, viewSelect } from './story'
+import { gotoStory, listRows, openPanel, scopeSelect, terms, viewSelect } from './story'
 import { iRadarSchema } from '../../src/fixtures/schemas'
 
 /**
@@ -19,7 +19,7 @@ test.describe('Home — a card per item type', () => {
   test('is what the default view shows', async ({ page }) => {
     await gotoStory(page, HOME)
     await expect(page.locator('.dc-types')).toBeVisible()
-    await expect(summary(page)).toHaveText('cards · updated')
+    await expect(viewSelect(page)).toHaveValue('cards')
   })
 
   test('has one card for every type the schema declares, in schema order', async ({ page }) => {
@@ -88,7 +88,7 @@ test.describe('Home — the cards are navigation', () => {
     await gotoStory(page, HOME)
     await card(page, 'Scrapers').locator('.dc-type__head').click()
 
-    await expect(viewSelect(page)).toHaveValue('scrapers')
+    await expect(scopeSelect(page)).toHaveValue('scrapers')
     // Scoped to one type, cards mean one card per record again.
     await expect(page.locator('.dc-types')).toHaveCount(0)
     await expect(page.locator('.dc-cards')).toBeVisible()
@@ -137,7 +137,7 @@ test.describe('Home — making a new one', () => {
     await expect(asked(page)).toHaveText('asked for a new Searches')
 
     // Still home: the button neither filtered to the type nor opened anything.
-    await expect(summary(page)).toHaveText('cards · updated')
+    await expect(viewSelect(page)).toHaveValue('cards')
     await expect(page.locator('.dc-types')).toBeVisible()
   })
 

@@ -2,10 +2,11 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useShellContext } from '../composables/context'
 import { useRecordNames } from '../composables/useRecordNames'
-import { findSort, isTypeCardsQuery } from '../query/schema'
+import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
 import { ENTITY_TERM } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
-import type { EntitySchema } from '../types'
+import type { EntitySchema, ViewKind } from '../types'
+import { VIEW_KINDS } from '../types'
 
 const props = defineProps<{
   expanded: boolean
@@ -17,6 +18,8 @@ const props = defineProps<{
    * what the query behind the detail matched.
    */
   hideCount?: boolean
+  /** Views to offer, when the host restricts them. Defaults to all six. */
+  views?: ViewKind[]
 }>()
 
 const emit = defineEmits<{ toggle: [] }>()
@@ -63,20 +66,31 @@ const everythingLabel = computed(() => {
   return `Everything · ${shell.total.value}`
 })
 
+/* ------------------------------------------------------- how they are drawn */
+
 /**
- * How the results are drawn and what they are ordered by — `cards · updated`.
+ * The views on offer, as the chooser beside the type lists them.
  *
- * This is the tail of the shell's one-line summary. The head of it is the
- * scope, and the control beside this says that already: a bar reading
- * `Everything` and then `everything` would only be repeating itself. What is
- * left is the part of the query no pill stands for, and the whole sentence is
- * still there as the title.
+ * How the results are drawn used to be said here rather than chosen — the tail
+ * of the one-line summary, and then only on a query with nothing in it to
+ * lift. It is a part of the query like the type is, so it is a control like
+ * the type is, and it stays on the bar however narrow the query gets. The
+ * whole sentence is still there as the row's title.
  */
-const drawn = computed(() => {
-  const query = shell.query.value
-  const sort = findSort(shell.entity.value, query.sort, shell.schema.value)
-  return `${query.view} · ${sort.label}`
-})
+const viewOptions = computed<{ key: ViewKind; label: string }[]>(() =>
+  (props.views ?? [...VIEW_KINDS]).map((key) => ({ key, label: VIEW_LABELS[key] })),
+)
+
+/**
+ * Which of them is in force. A URL naming a view the host withheld draws as
+ * the first on offer — {@link resolveView}, the same reading the results area
+ * takes — so the chooser says what is on screen rather than sitting blank.
+ */
+const view = computed(() => resolveView(shell.query.value.view, props.views))
+
+function chooseView(event: Event): void {
+  shell.setView((event.target as HTMLSelectElement).value as ViewKind)
+}
 
 /**
  * The parts of the query the bar offers as pills — every active facet and
@@ -258,6 +272,7 @@ const position = computed(() => {
         ref="termBar"
         class="dc-header__query dc-header__terms"
         :data-dc-more="more"
+        :title="shell.summary.value"
         @scroll="measureTerms"
       >
         <!-- Which type, always — a query is about something even when nothing
@@ -265,11 +280,11 @@ const position = computed(() => {
              the one part of a query that is a choice rather than a thing to
              take off, so `Everything` is in the list beside the types and
              widening back out stays one press. -->
-        <label class="dc-header__view">
-          <span class="dc-header__view-label">View:</span>
-          <span class="dc-header__view-box">
+        <label class="dc-header__pick">
+          <span class="dc-header__sr">Type</span>
+          <span class="dc-header__pick-box">
             <select
-              class="dc-header__view-select"
+              class="dc-header__pick-select dc-header__scope-select"
               :value="shell.query.value.entity ?? ''"
               @change="chooseEntity"
             >
@@ -281,19 +296,34 @@ const position = computed(() => {
               >{{ optionLabel(option) }}</option>
             </select>
             <span
-              class="dc-header__view-mark"
+              class="dc-header__pick-mark"
               aria-hidden="true"
             >▾</span>
           </span>
         </label>
 
-        <!-- What the query says besides its scope, while there is nothing in
-             it to lift. It gives way to the parts as soon as there is one. -->
-        <span
-          v-if="shell.isPristine.value"
-          class="dc-header__summary dc-mono dc-truncate"
-          :title="shell.summary.value"
-        >{{ drawn }}</span>
+        <!-- And how they are drawn, always as well, for the same reason: it is
+             a part of the query, so it is on the bar whatever else is. -->
+        <label class="dc-header__pick">
+          <span class="dc-header__sr">View</span>
+          <span class="dc-header__pick-box">
+            <select
+              class="dc-header__pick-select dc-header__view-select"
+              :value="view"
+              @change="chooseView"
+            >
+              <option
+                v-for="option in viewOptions"
+                :key="option.key"
+                :value="option.key"
+              >{{ option.label }}</option>
+            </select>
+            <span
+              class="dc-header__pick-mark"
+              aria-hidden="true"
+            >▾</span>
+          </span>
+        </label>
 
         <template
           v-for="entry in terms"
@@ -417,12 +447,12 @@ const position = computed(() => {
  * except while the pointer is over a part of the query, which is a control of
  * its own and does something else entirely when it is pressed.
  */
-.dc-header__trigger:hover:not(:has(.dc-term:hover, .dc-header__view:hover)) {
+.dc-header__trigger:hover:not(:has(.dc-term:hover, .dc-header__pick:hover)) {
   background: var(--dc-bg-1);
 }
 
 .dc-header[data-dc-expanded='true']
-  .dc-header__trigger:hover:not(:has(.dc-term:hover, .dc-header__view:hover)) {
+  .dc-header__trigger:hover:not(:has(.dc-term:hover, .dc-header__pick:hover)) {
   background: var(--dc-bg-2);
 }
 
@@ -525,24 +555,20 @@ const position = computed(() => {
 }
 
 /*
- * The entity filter as a control. It sits in the row of parts because that is
- * what it is — the first term of the query — and reads as one, so the bar is
- * still one line of the same thing rather than a widget with pills after it.
+ * The two parts of the query that are chosen rather than lifted: which type is
+ * being listed, and how it is drawn. They sit in the row of parts because that
+ * is what they are — terms of the query — and read as ones, so the bar is
+ * still one line of the same thing rather than widgets with pills after them.
  */
-.dc-header__view {
+.dc-header__pick {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   flex: 0 0 auto;
   font-size: var(--dc-text-code);
   cursor: pointer;
 }
 
-.dc-header__view-label {
-  color: var(--dc-fg-3);
-}
-
-.dc-header__view-box {
+.dc-header__pick-box {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -553,7 +579,7 @@ const position = computed(() => {
  * operating system draws a select, so that the pills beside it and the box
  * around it are recognisably one row of the same instrument.
  */
-.dc-header__view-select {
+.dc-header__pick-select {
   appearance: none;
   max-width: 24ch;
   padding: 3px 20px 3px 8px;
@@ -568,13 +594,13 @@ const position = computed(() => {
   cursor: pointer;
 }
 
-.dc-header__view-select:hover {
+.dc-header__pick-select:hover {
   border-color: var(--dc-accent);
 }
 
 /* The mark the appearance above took away. It belongs to the select, so it
    never takes the press that should open it. */
-.dc-header__view-mark {
+.dc-header__pick-mark {
   position: absolute;
   right: 7px;
   color: var(--dc-accent);
@@ -587,11 +613,6 @@ const position = computed(() => {
 .dc-header__or {
   flex: 0 0 auto;
   font-size: var(--dc-text-micro);
-  color: var(--dc-fg-3);
-}
-
-.dc-header__summary {
-  font-size: var(--dc-text-code);
   color: var(--dc-fg-3);
 }
 

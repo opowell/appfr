@@ -210,8 +210,10 @@ export {
   isTypeCardsQuery,
   isViewKind,
   reconcileFacets,
+  resolveView,
   RESULT_FIELDS,
   sortsFor,
+  VIEW_LABELS,
 } from './query/schema'
 export {
   cellFull,

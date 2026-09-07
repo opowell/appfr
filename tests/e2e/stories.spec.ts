@@ -145,7 +145,7 @@ test.describe('narrow viewport', () => {
   test('the header stays usable and the panel still opens', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-as-list')
     // The query survives the narrow layout even though the domain name does not.
-    await expect(page.locator('.dc-header__summary')).toBeVisible()
+    await expect(page.locator('.dc-header__view-select')).toBeVisible()
     await expect(page.locator('.dc-header__domain')).toBeHidden()
 
     await page.locator('.dc-header__toggle').click()

@@ -5,9 +5,9 @@ import {
   gotoStory,
   openPanel,
   parts,
+  scopeSelect,
   termBar,
   terms,
-  viewSelect,
 } from './story'
 
 /**
@@ -46,7 +46,7 @@ test.describe('A metric that counts something listable', () => {
     await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click()
     expect(queryOf(page)).toMatch(/^set:"sets_\d+"$/)
     expect(entityOf(page)).toBe('pieces')
-    await expect(viewSelect(page)).toHaveValue('pieces')
+    await expect(scopeSelect(page)).toHaveValue('pieces')
   })
 
   test('leaves fewer rows than the type has in total', async ({ page }) => {

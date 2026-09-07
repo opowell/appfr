@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Locator, Page } from '@playwright/test'
-import { gotoStory, openPanel, termBar, viewSelect } from './story'
+import { gotoStory, openPanel, termBar, scopeSelect } from './story'
 
 /**
  * The table against a corpus whose names are sentences and whose secondaries
@@ -180,7 +180,7 @@ test.describe('Columns — as many as the schema declares', () => {
     await colors.locator('button.dc-drill').click()
     // This story holds its query in memory rather than the address bar, so the
     // header's account of it is where the narrowing shows.
-    await expect(viewSelect(page)).toHaveValue('colors')
+    await expect(scopeSelect(page)).toHaveValue('colors')
     await expect(termBar(page)).toContainText('piece:')
   })
 

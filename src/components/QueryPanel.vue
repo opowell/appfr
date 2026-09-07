@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import type { FacetValue, ViewKind } from '../types'
 import { VIEW_KINDS } from '../types'
 import { useShellContext } from '../composables/context'
+import { VIEW_LABELS } from '../query/schema'
 import { formatTerm, joinExpression, splitExpression } from '../data/expression'
 import FacetControl from './FacetControl.vue'
 import SegmentedControl from './SegmentedControl.vue'
@@ -25,15 +26,6 @@ const slots = defineSlots<{
 }>()
 
 const shell = useShellContext()
-
-const VIEW_LABELS: Record<ViewKind, string> = {
-  list: 'List',
-  cards: 'Cards',
-  grid: 'Grid',
-  table: 'Table',
-  links: 'Links',
-  preview: 'Preview',
-}
 
 const viewOptions = computed(() =>
   (props.views ?? [...VIEW_KINDS]).map((key) => ({ key, label: VIEW_LABELS[key] })),

@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { Component } from 'vue'
 import type { ViewKind } from '../types'
 import { useShellContext } from '../composables/context'
-import { isTypeCardsQuery } from '../query/schema'
+import { isTypeCardsQuery, resolveView } from '../query/schema'
 import CardsView from './views/CardsView.vue'
 import GridView from './views/GridView.vue'
 import LinksView from './views/LinksView.vue'
@@ -39,12 +39,7 @@ const VIEWS: Record<ViewKind, Component> = {
  */
 const isTypeCards = computed(() => isTypeCardsQuery(shell.query.value))
 
-const kind = computed<ViewKind>(() => {
-  const asked = shell.query.value.view
-  const offered = props.views ?? []
-  const [fallback] = offered
-  return fallback === undefined || offered.includes(asked) ? asked : fallback
-})
+const kind = computed<ViewKind>(() => resolveView(shell.query.value.view, props.views))
 
 const view = computed(() => VIEWS[kind.value] ?? ListView)
 const hasRows = computed(() => shell.rows.value.length > 0)

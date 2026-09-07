@@ -35,6 +35,35 @@ export interface RecordNamesState {
 }
 
 /**
+ * How many rows a lookup asks for.
+ *
+ * One would do if a term named exactly what it matches, and it does not: this
+ * language matches on substrings, so `test:"ticket-3.0/x.spec.ts"` is also
+ * true of `pre-ticket-3.0/x.spec.ts` — and the first row back under the
+ * query's own sort is then a different record with a name of its own. So the
+ * lookup takes a window and picks the record out of it. A window because an id
+ * that is a substring of a great many others is not worth a scan of the type
+ * to name: past this many the header keeps showing the id, which is what it
+ * showed before.
+ */
+const LOOKUP_WINDOW = 25
+
+/** Ids compare as they match: case is not a constraint in this language. */
+const sameId = (one: string, other: string) => one.toLowerCase() === other.toLowerCase()
+
+/**
+ * The record a reference points at, out of what matched the term.
+ *
+ * By its id, and by nothing else. A term written by a drill holds the row's
+ * own id — that is what {@link recordTerm} is — so the record is the row that
+ * has it, and any other row the substring reached is a different record whose
+ * name would be a lie about what the query narrowed to.
+ */
+function recordIn(rows: readonly ShellRow[], id: string): ShellRow | undefined {
+  return rows.find((row) => sameId(row.id, id))
+}
+
+/**
  * Puts names to the ids a query narrows by.
  *
  * A drill writes `set:"sets_10007"`, which is exactly right as a query and
@@ -46,9 +75,11 @@ export interface RecordNamesState {
  * The lookup is the drill's own term run back against the type it points at,
  * which is the same fact from the other end: {@link recordTerm} declares that
  * every record of a type carries its own id in that field, so the term that
- * narrows *to* a record is also the term that finds it. A source that does not
- * hold to that returns nothing and the header shows the id, which is what it
- * showed before.
+ * narrows *to* a record is also the term that finds it. It does not only find
+ * it, though — the term matches on a substring like every other, so what comes
+ * back is whatever the id is part of and the record is the row that *has* that
+ * id. A source that does not hold to any of it returns nothing and the header
+ * shows the id, which is what it showed before.
  *
  * Names are kept for as long as the shell is up. An id's name does not change
  * under a query, so a lookup that lands late is still the right answer, and one
@@ -63,7 +94,7 @@ export function useRecordNames(options: UseRecordNamesOptions): RecordNamesState
     return entity ? { entity, id: term.value, key: `${entity.key}:${term.value}` } : null
   }
 
-  /** The one row of one type that a reference points at. */
+  /** The rows of one type that a reference could be pointing at. */
   const lookup = (reference: Reference): QueryResult | Promise<QueryResult> => {
     const { entity, id } = reference
     const query = options.query.value
@@ -80,7 +111,7 @@ export function useRecordNames(options: UseRecordNamesOptions): RecordNamesState
       },
       schema: options.schema.value,
       entity,
-      limit: 1,
+      limit: LOOKUP_WINDOW,
       offset: 0,
     })
   }
@@ -91,7 +122,12 @@ export function useRecordNames(options: UseRecordNamesOptions): RecordNamesState
     // A type that gave the role to nobody, or a record whose name is missing:
     // the dash a cell would draw in its place is not a name, and the id the
     // header already shows says more than it does.
-    return name === EMPTY_CELL ? '' : name
+    if (name === EMPTY_CELL) return ''
+    // Nor is the id a name. Plenty of types are called what they are keyed by
+    // — a tenant by its host, a profile by its directory — and there the
+    // lookup has nothing to add: `host:www.example.com (www.example.com)` is
+    // one fact said twice, and the plain term says it once.
+    return sameId(name, row.id) ? '' : name
   }
 
   const run = () => {
@@ -116,7 +152,7 @@ export function useRecordNames(options: UseRecordNamesOptions): RecordNamesState
       const next = new Map(names.value)
       results.forEach((result, at) => {
         const { reference } = asked[at] as { reference: Reference }
-        const row = result.rows[0]
+        const row = recordIn(result.rows, reference.id)
         next.set(reference.key, row ? identityOf(reference.entity, row) : '')
       })
       names.value = next

@@ -697,7 +697,10 @@ are one question. Each type carries the population the schema publishes —
 facet or an expression narrows it, since the population is then no longer what
 is on screen. `Everything` carries a count only while it is what is being
 listed: the corpus population is the one number no schema publishes, so what
-stands there is the size of the result the shell asked for.
+stands there is the size of the result the shell asked for. Both halves of that
+label are counts in one control, so the live ones are formatted the way a
+schema is expected to publish `count` — `formatCount`, exported, so a host has
+the same one rather than a near miss.
 
 The whole bar is the panel's toggle, query and all: press it anywhere and the
 panel opens, except on a part — a part is a control of its own and pressing it
@@ -718,12 +721,23 @@ set:Yellow Castle (sets_10007)      as the header reads it back
 ```
 
 The lookup is the drill's own term run back against the type it points at —
-one record, one query, cached for as long as the shell is up — so a source
-that already answers `set:"sets_10007"` needs nothing new to be readable. One
-that has no such record, or a type that gives no column the `identity` role,
-leaves the id showing, which is what it showed before. `useRecordNames` is
-exported for a host reading terms out somewhere else, and `scopedEntity(schema,
-field)` is the half of it that says which type a field points at.
+one query, cached for as long as the shell is up — so a source that already
+answers `set:"sets_10007"` needs nothing new to be readable. It does not name
+what that query *returns*, though: nothing in this language matches exactly, so
+`set:"sets_1000"` is true of `sets_10007` as well, and the record is the row
+that **has** the id rather than the first row back. A window of rows is what
+the lookup asks for and the record is picked out of it; an id that is part of
+more ids than that keeps showing as an id, and so does one no row carries.
+
+A name that is the id is not a name either. Plenty of types are called what
+they are keyed by — a tenant by its host, a profile by its directory — and
+`host:www.example.com (www.example.com)` is one fact said twice, so the part
+stays the plain term it was. A type that gives no column the `identity` role
+leaves the id showing for the same reason.
+
+`useRecordNames` is exported for a host reading terms out somewhere else, and
+`scopedEntity(schema, field)` is the half of it that says which type a field
+points at.
 
 Lifting a part writes the expression back out from what it parsed to, so
 `Theme:space AND price < 40` returns as `theme:space price<40` — the parse

@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useShellContext } from '../composables/context'
 import { useRecordNames } from '../composables/useRecordNames'
 import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
+import { formatCount } from '../data/format'
 import { ENTITY_TERM } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
 import type { EntitySchema, ViewKind } from '../types'
@@ -44,7 +45,7 @@ const narrowed = computed(() => shell.hasFacets.value || Boolean(shell.query.val
  */
 function countOf(entity: EntitySchema): string {
   const chosen = entity.key === shell.query.value.entity
-  if (chosen && narrowed.value && !props.hideCount) return String(shell.total.value)
+  if (chosen && narrowed.value && !props.hideCount) return formatCount(shell.total.value)
   return entity.count
 }
 
@@ -63,7 +64,7 @@ function optionLabel(entity: EntitySchema): string {
  */
 const everythingLabel = computed(() => {
   if (shell.query.value.entity !== null || props.hideCount) return 'Everything'
-  return `Everything · ${shell.total.value}`
+  return `Everything · ${formatCount(shell.total.value)}`
 })
 
 /* ------------------------------------------------------- how they are drawn */

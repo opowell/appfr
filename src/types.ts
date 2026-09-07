@@ -303,7 +303,11 @@ export interface SortDef {
 export interface EntitySchema {
   key: string
   label: string
-  /** Total population, pre-formatted for display (e.g. `'9,988'`). */
+  /**
+   * Total population, pre-formatted for display (e.g. `'9,988'`) — the shell's
+   * own `formatCount` is what it uses for the live counts beside these, so a
+   * host with nothing else in mind should format with that.
+   */
   count: string
   facets: FacetDef[]
   /** Detail tabs offered when a record is opened. */

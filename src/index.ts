@@ -271,7 +271,7 @@ export type {
   Term,
   TextTerm,
 } from './data/expression'
-export { fnv1a, formatDate, formatMetric, formatOrdinal } from './data/format'
+export { fnv1a, formatCount, formatDate, formatMetric, formatOrdinal } from './data/format'
 
 /* Types */
 export {

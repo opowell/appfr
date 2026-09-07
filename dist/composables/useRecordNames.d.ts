@@ -30,9 +30,11 @@ export interface RecordNamesState {
  * The lookup is the drill's own term run back against the type it points at,
  * which is the same fact from the other end: {@link recordTerm} declares that
  * every record of a type carries its own id in that field, so the term that
- * narrows *to* a record is also the term that finds it. A source that does not
- * hold to that returns nothing and the header shows the id, which is what it
- * showed before.
+ * narrows *to* a record is also the term that finds it. It does not only find
+ * it, though — the term matches on a substring like every other, so what comes
+ * back is whatever the id is part of and the record is the row that *has* that
+ * id. A source that does not hold to any of it returns nothing and the header
+ * shows the id, which is what it showed before.
  *
  * Names are kept for as long as the shell is up. An id's name does not change
  * under a query, so a lookup that lands late is still the right answer, and one

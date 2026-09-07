@@ -7,7 +7,7 @@ import { parseQuery } from '../../src/query/codec'
 import { findEntity } from '../../src/query/schema'
 import { summaryTerms } from '../../src/query/summary'
 import { legoSchema } from '../../src/fixtures/schemas'
-import type { DataSource, QueryRequest, QueryResult, ShellQuery } from '../../src/types'
+import type { DataSource, QueryRequest, QueryResult, ShellQuery, ShellRow } from '../../src/types'
 
 /**
  * `sets_10007` is the second set the mock generates, which its samples name
@@ -38,6 +38,16 @@ function setup(search: string, source?: DataSource) {
     })
 
   return { state, query, labels, scope }
+}
+
+/** A row of the sets type, as a source hands one over. */
+function set(id: string, name: string): ShellRow {
+  return { id, entityKey: 'sets', entityLabel: 'Sets', fields: { primary: name } }
+}
+
+/** A source that answers every lookup with the same rows, in this order. */
+function serving(rows: ShellRow[]): DataSource {
+  return { query: () => ({ rows, total: rows.length, unfiltered: false }) }
 }
 
 describe('useRecordNames', () => {
@@ -96,7 +106,9 @@ describe('useRecordNames', () => {
     const request = asked.mock.calls[0]![0]
     expect(request.entity?.key).toBe('sets')
     expect(request.query.expr).toBe('set:"sets_10007"')
-    expect(request.limit).toBe(1)
+    // A window rather than one row: the term matches on a substring, so the
+    // first row back is not necessarily the record it names.
+    expect(request.limit).toBeGreaterThan(1)
     // The facets of the type on screen have nothing to say about this one.
     expect(request.query.facets).toEqual({
       theme: { kind: 'chips', selected: [] },
@@ -130,6 +142,35 @@ describe('useRecordNames', () => {
     query.value = { ...query.value, page: 3 }
     await nextTick()
     expect(asked).toHaveBeenCalledTimes(1)
+  })
+
+  it('names the record the term is of, not one the term is only part of', () => {
+    // Nothing in this language matches exactly, so `set:"sets_1000"` is true
+    // of `sets_10007` as well — and under the query's own sort that one can
+    // come back first. Naming it would label the query with a record it is not
+    // filtered by, which is worse than the id it replaced.
+    const source = serving([set('sets_10007', 'Yellow Castle'), set('sets_1000', 'Metroliner')])
+    const { labels } = setup('?e=pieces&q=set%3A%22sets_1000%22', source)
+    expect(labels()).toEqual(['entity:pieces', 'set:Metroliner (sets_1000)'])
+  })
+
+  it('keeps showing the id where the window held no record with it', () => {
+    const source = serving([set('sets_10007', 'Yellow Castle')])
+    const { labels } = setup('?e=pieces&q=set%3A%22sets_1000%22', source)
+    expect(labels()).toEqual(['entity:pieces', 'set:sets_1000'])
+  })
+
+  it('leaves a record called what it is keyed by as the one term it already was', () => {
+    // A type keyed by its own name — a tenant by its host, a profile by its
+    // directory — has nothing for the lookup to add, and
+    // `set:sets_1000 (sets_1000)` is one fact said twice.
+    const { labels } = setup('?e=pieces&q=set%3A%22sets_1000%22', serving([set('sets_1000', 'sets_1000')]))
+    expect(labels()).toEqual(['entity:pieces', 'set:sets_1000'])
+  })
+
+  it('matches the id however it was cased, the way the query does', () => {
+    const { labels } = setup('?e=pieces&q=set%3A%22SETS_1000%22', serving([set('sets_1000', 'Metroliner')]))
+    expect(labels()).toEqual(['entity:pieces', 'set:Metroliner (SETS_1000)'])
   })
 
   it('survives a source that throws, and says what the query says', () => {

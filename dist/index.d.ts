@@ -59,7 +59,7 @@ export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS } from '.
 export type { MockSourceOptions } from './data/mock';
 export { formatExpression, formatTerm, joinExpression, matchesExpression, parseExpression, splitExpression, withoutTerm, } from './data/expression';
 export type { Comparator, Expression, ExpressionSplit, FieldTerm, Term, TextTerm, } from './data/expression';
-export { fnv1a, formatDate, formatMetric, formatOrdinal } from './data/format';
+export { fnv1a, formatCount, formatDate, formatMetric, formatOrdinal } from './data/format';
 export { COLUMN_BREAKPOINTS, COLUMN_ROLES, RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS, } from './types';
 export type { ChipsFacet, ColumnAlign, ColumnBreakpoint, ColumnDef, ColumnKind, ColumnRole, DataSource, DomainSchema, EntitySchema, FacetDef, FacetState, FacetValue, QueryRequest, QueryResult, QuerySink, QueryUpdate, RangeFacet, RecordStatus, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, SortDef, SortDirection, StreamingDataSource, SyncDataSource, ToggleFacet, ViewKind, } from './types';
 export { default as HeaderContentLayoutPlugin } from './plugin';

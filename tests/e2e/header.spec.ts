@@ -80,7 +80,9 @@ test.describe('Header — the query as it stands', () => {
     // A facet narrows it, and the count is what actually matched — the whole
     // population is no longer what is being listed.
     await gotoStory(page, 'shell-data-shell--filtered-query')
-    const matched = Number((await scopeLabel(page)).split(' · ')[1])
+    // Both halves of that label are formatted counts, so the digits are what
+    // there is to read: a live count past a thousand comes out grouped.
+    const matched = Number((await scopeLabel(page)).split(' · ')[1]?.replace(/,/g, ''))
     expect(matched).toBeGreaterThan(0)
     expect(matched).toBeLessThan(48)
   })

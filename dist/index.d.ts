@@ -43,7 +43,7 @@ export type { DropTarget, MoveDirection, WindowContext } from './composables/win
 export { PANE_CONTEXT_KEY, providePaneContext, usePaneContext, usePaneMenu, } from './composables/paneMenu';
 export type { PaneContext } from './composables/paneMenu';
 export { ENTITY_ALL, FACET_PREFIX, PARAM_DIR, PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_SORT, PARAM_VIEW, parseQuery, serializeQuery, } from './query/codec';
-export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, defaultQuery, emptyFacetState, emptyFacetValue, findEntity, findSort, focusEntity, hasActiveFacets, isEntityScoped, isFacetActive, isPristineQuery, isTypeCardsQuery, isViewKind, reconcileFacets, RESULT_FIELDS, sortsFor, } from './query/schema';
+export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, defaultQuery, emptyFacetState, emptyFacetValue, findEntity, findSort, focusEntity, hasActiveFacets, isEntityScoped, isFacetActive, isPristineQuery, isTypeCardsQuery, isViewKind, reconcileFacets, resolveView, RESULT_FIELDS, sortsFor, VIEW_LABELS, } from './query/schema';
 export { cellFull, cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, EMPTY_CELL, roleColumn, roleColumns, rowKey, } from './query/columns';
 export { addTerm, drillExpression, recordTerm, scopedEntity, scopeTerm, scopeTermFor, } from './query/drill';
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary';

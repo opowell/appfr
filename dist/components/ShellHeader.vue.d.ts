@@ -1,3 +1,4 @@
+import type { ViewKind } from '../types';
 type __VLS_Props = {
     expanded: boolean;
     /** Id of the panel this bar controls, for `aria-controls`. */
@@ -8,6 +9,8 @@ type __VLS_Props = {
      * what the query behind the detail matched.
      */
     hideCount?: boolean;
+    /** Views to offer, when the host restricts them. Defaults to all six. */
+    views?: ViewKind[];
 };
 declare var __VLS_1: {};
 type __VLS_Slots = {} & {

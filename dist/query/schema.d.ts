@@ -7,6 +7,19 @@ import type { ColumnDef, DomainSchema, EntitySchema, FacetDef, FacetState, Facet
 export declare const DEFAULT_VIEW: ViewKind;
 export declare const DEFAULT_SORT = "updated";
 export declare function isViewKind(value: unknown): value is ViewKind;
+/**
+ * What each view is called wherever one is offered as a choice — the header's
+ * chooser and the query panel's row of them are naming the same six things,
+ * and a view called `Cards` in one place and `cards` in the other would read
+ * as two settings rather than one.
+ */
+export declare const VIEW_LABELS: Record<ViewKind, string>;
+/**
+ * The view actually drawn, given what the query asks for and what the host
+ * offers. A URL naming a view a host has withheld falls back to the first on
+ * offer, so a link into a restricted shell still lands somewhere it can draw.
+ */
+export declare function resolveView(asked: ViewKind, offered: ViewKind[] | undefined): ViewKind;
 /** The entity a key names, or `null` when it names none. */
 export declare function findEntity(schema: DomainSchema, key: string | null | undefined): EntitySchema | null;
 /**

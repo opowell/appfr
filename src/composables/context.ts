@@ -1,6 +1,6 @@
 import { inject, provide } from 'vue'
 import type { ComputedRef, InjectionKey, Ref, ShallowRef } from 'vue'
-import type { DataSource, DomainSchema, EntitySchema, ShellRow } from '../types'
+import type { DataSource, DomainSchema, EntitySchema, Selection, ShellRow } from '../types'
 import type { QueryState } from './useQueryState'
 
 /**
@@ -36,6 +36,22 @@ export interface ShellContext extends QueryState {
   isPinned(row: ShellRow): boolean
   isPinnedId(id: string): boolean
   togglePin(row: ShellRow): void
+  /**
+   * Whether records may be ticked — the type in force naming an operation to
+   * do to a selection, or the host asking for ticks outright.
+   */
+  selectable: ComputedRef<boolean>
+  /** What is ticked: see {@link Selection}. */
+  selection: ComputedRef<Selection>
+  isSelected(row: ShellRow): boolean
+  toggleSelect(row: ShellRow): void
+  /**
+   * Ticks or unticks every row on the page — the whole of it, since a page is
+   * all the shell has in hand. Ticks made on other pages are left alone.
+   */
+  selectPage(on: boolean): void
+  /** Unticks everything, on this page and every other. */
+  clearSelection(): void
   /** Opening a row — the shell reports it, the host decides what it means. */
   activate(row: ShellRow): void
   /**
@@ -44,6 +60,15 @@ export interface ShellContext extends QueryState {
    * one is the host's, not the shell's.
    */
   create(entity: EntitySchema): void
+  /**
+   * Copying the ticked records, and deleting them — the two operations
+   * {@link EntitySchema.duplicate} and {@link EntitySchema.delete} name. Both
+   * are reported with the {@link Selection} they are for and nothing else
+   * happens, `create` being the pattern: the shell has no idea what a copy of
+   * one of these is, and no way to unmake one.
+   */
+  duplicate(): void
+  delete(): void
   /**
    * Narrowing to one record — from the affordance {@link EntitySchema.scope}
    * offers on its rows, or from a metric {@link EntitySchema.drills} named an

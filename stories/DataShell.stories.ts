@@ -147,6 +147,95 @@ export const HomeCreatable = creatable({})
  */
 export const HomeCreatableEmpty = creatable({ search: '?q=recall' })
 
+/* ------------------------------------------- what can be done with the records */
+
+/**
+ * iRadar with one type that says what can be done with it: made, copied and
+ * deleted. The other creatable type names making one only, which is what makes
+ * the bar over its list one button long.
+ */
+const manageableSchema: DomainSchema = {
+  ...iRadarSchema,
+  entities: iRadarSchema.entities.map((entity) => {
+    if (entity.key === 'searches') {
+      return { ...entity, create: 'Start new…', duplicate: 'Duplicate', delete: 'Delete' }
+    }
+    if (entity.key === 'scrapers') return { ...entity, create: 'Add a scraper' }
+    return entity
+  }),
+}
+
+/** What the host was last asked to do — this story's whole answer to the bar. */
+const acted = ref('nothing asked for yet')
+
+const managed = (args: ShellStoryArgs): Story =>
+  story({
+    ...args,
+    schema: args.schema ?? manageableSchema,
+    onCreate: (entity) => {
+      acted.value = `asked for a new ${entity.label}`
+    },
+    onDuplicate: (selection) => {
+      acted.value = `asked to duplicate ${selection.ids.length}`
+    },
+    onDelete: (selection) => {
+      acted.value = `asked to delete ${selection.ids.length}`
+    },
+    slots: {
+      actions: () => h('span', { class: 'sb-asked dc-mono' }, acted.value),
+    },
+  })
+
+/**
+ * The bar over a type's own list: make one, tick some, and copy or delete what
+ * is ticked.
+ *
+ * Every control on it is named by the entity — `create`, `duplicate`,
+ * `delete` — so a type that says nothing about deleting is not deleted from
+ * here, and a type that says nothing at all has no bar. Naming an operation on
+ * a selection is also what offers the ticks: a tick with nothing to do to what
+ * it ticks would lead nowhere.
+ *
+ * The shell carries none of them out. Each is reported with the selection it
+ * is for — the ids, and the rows of them the page still holds — exactly as an
+ * opened row and a new record are.
+ */
+export const EntityActions = managed({ search: '?e=searches&v=list' })
+
+/** The same bar over the same records as a table, where the tick leads. */
+export const EntityActionsTable = managed({ search: '?e=searches&v=table' })
+
+/**
+ * And over tiles, where a tick sits in the corner of the picture. Ticks are of
+ * records rather than of what is on screen, so they survive the change of view
+ * that got here — and the sort, and the page.
+ */
+export const EntityActionsGrid = managed({ search: '?e=searches&v=grid' })
+
+/**
+ * A short page, so that a selection can be watched surviving a step through
+ * the pages: a tick is of a record, and a record is not where it happens to be
+ * in the results.
+ */
+export const EntityActionsPaged = managed({ search: '?e=searches&v=list', limit: 12 })
+
+/**
+ * A type that names making one and nothing else: one button, no ticks. This is
+ * the same request the type's card on the home screen makes, offered from the
+ * type's own list as well — which is where you are when you find there is
+ * nothing here yet.
+ */
+export const EntityActionsCreateOnly = managed({ search: '?e=scrapers&v=list' })
+
+/**
+ * Ticks a host asked for outright, on a schema that names no operation at all.
+ *
+ * `selectable` offers them without the two buttons, for an application whose
+ * bulk action is its own: it binds `v-model:selected` and does the rest. The
+ * bar is then the count and a way to clear it.
+ */
+export const SelectableRows = story({ search: '?e=items&v=list', selectable: true })
+
 /* ---------------------------------------------------- narrowing to a record */
 
 /**

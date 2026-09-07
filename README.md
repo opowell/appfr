@@ -515,7 +515,9 @@ role already resolved.
 ### A type you can make more of
 
 `create` on an entity names what making a new one of it is called, and puts
-that button at the foot of its card on the home screen:
+that button at the foot of its card on the home screen — and on the bar over
+that type's own list, which is the other place you find there is nothing here
+yet:
 
 ```ts
 { key: 'crawls', label: 'Crawls', create: 'Start new…', /* … */ }
@@ -534,6 +536,109 @@ usually a form on a route of its own.
 It sits under the records rather than beside the count, which is also what
 makes it worth having on a type with none: a card that would otherwise be a
 dead end says what to do about it.
+
+### Records you can copy and delete
+
+Two more labels, read the same way: an entity that names an operation offers
+it, and one that says nothing is not that kind of type.
+
+```ts
+{
+  key: 'searches',
+  label: 'Searches',
+  create: 'Start new…',
+  duplicate: 'Duplicate',
+  delete: 'Delete',
+  /* … */
+}
+```
+
+That puts a bar over the records themselves, under the query that found them:
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ ◆ iRadar │ [Searches · 38 ▾] [List ▾]                          ▼ │
+├──────────────────────────────────────────────────────────────────┤
+│ ▣ 2 selected  Clear        + Start new…   Duplicate 2   Delete 2 │
+├──────────────────────────────────────────────────────────────────┤
+│ ☑ 01  Security advisories · rev 8        807  308   ok           │
+│ ☐ 02  Job postings — platform · rev 6    664  223   review       │
+│ ☑ 03  Competitor pricing pages · rev 2    12  511   ok           │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Naming an operation on a selection is what offers the ticks.** A tick with
+nothing to do to what it ticks is a control that leads nowhere, so a type that
+names neither `duplicate` nor `delete` has no ticks — and a type that names
+`create` alone has the bar with one button on it and nothing to select.
+
+| | |
+| --- | --- |
+| the **tick on a row** | puts that record in the selection. It stops there: the row underneath still opens on any other press |
+| the **tick on the bar** | takes the whole page, and gives it back. Part of a page ticked shows as neither on nor off, which is what that third state is for |
+| **Duplicate** / **Delete** | report the selection they are for, and say how many that is. With nothing ticked there is nothing for them to be for, and they say so |
+| **Clear** | unticks everything, including what was ticked on a page you have since left |
+
+Ticks appear in every view that draws records — the list, the cards, the tiles,
+the links, the one record a preview is showing, and a leading cell of the
+table's own, ahead of the columns the schema declared. The home screen has
+none: its cards are types rather than records.
+
+The shell carries none of the three out. Each is reported with the selection it
+is for, exactly as an opened row and a new record are:
+
+```vue
+<DataShell
+  :schema="schema"
+  @create="entity => router.push(`/${entity.key}/new`)"
+  @duplicate="({ ids }) => api.copy(ids)"
+  @delete="({ ids, rows, entity }) => confirmThenDelete(entity, ids)"
+/>
+```
+
+A selection is **of records**, so it is held as ids:
+
+```ts
+interface Selection {
+  ids: string[]              // every ticked id, across every page one was made on
+  rows: ShellRow[]           // the ticked rows this page still holds
+  entity: EntitySchema | null
+}
+```
+
+Which is to say it survives the sort, the page and the view — none of those
+change which records they are — and `rows` is the part of it the shell has in
+hand rather than the whole of it. A host that needs the rest reads them back by
+id, being the only side that can.
+
+The one thing that does empty it is **listing another type**: the operations
+are the entity's own words, so a selection of searches must never be offered to
+the scrapers' *Delete*. Narrowing and widening leave it alone.
+
+Nothing else empties it either — including the delete you just carried out,
+which the shell has no way to know has gone through. Hold the ticks yourself
+where that matters:
+
+```vue
+<DataShell v-model:selected="selected" @delete="remove" />
+```
+
+```ts
+const selected = ref<string[]>([])
+
+async function remove({ ids }: Selection) {
+  await api.delete(ids)
+  selected.value = []
+}
+```
+
+The rows themselves go when the source stops returning them, which is the same
+thing that happens to a record deleted from anywhere else.
+
+`selectable` offers the ticks where the schema names no operation at all — for
+an application whose bulk action is its own, which then reads
+`v-model:selected` and does the rest. The bar is the count and a way to clear
+it.
 
 ### Narrowing to one record
 
@@ -801,15 +906,19 @@ host writing a field of its own.
 | `matchWidth` | `'grow' \| 'shrink'` | `'grow'` | How the header bar and the query panel are brought to one width: `grow` widens the panel to the bar, `shrink` narrows the bar to the panel. |
 | `headAlign` | `'left' \| 'center' \| 'right'` | `'center'` | Where the narrowed pair sits across the shell. `shrink` only. |
 | `pinnable` | `boolean` | `false` | Offers the star affordance on rows. |
+| `selectable` | `boolean` | `false` | Offers the tick on rows even where the type names no operation for a selection. A type naming `duplicate` or `delete` offers them anyway. |
 | `open` | `boolean` | — | `v-model:open` to control the panel; omit and the shell holds it. |
 | `pinned` | `string[]` | — | `v-model:pinned` to control pinning; omit and the shell holds it. |
+| `selected` | `string[]` | — | `v-model:selected` to control which records are ticked; omit and the shell holds it. |
 | `navigationMode` | `'push' \| 'replace'` | `'push'` | For entity, view, sort and expression. |
 | `facetNavigationMode` | `'push' \| 'replace'` | `'replace'` | For individual facet edits. |
 
 **Events** — `activate(row)` when a row is opened, `create(entity)` when a
-card's create button is pressed, `drill(row, entity)` when a row is narrowed to
-(already applied), `query-change(query)` after the URL has been
-updated, `toggle-pin(row)`, plus `update:open` and `update:pinned`.
+create button is pressed, `duplicate(selection)` and `delete(selection)` when
+the ticked records are to be copied or deleted, `drill(row, entity)` when a row
+is narrowed to (already applied), `query-change(query)` after the URL has been
+updated, `toggle-pin(row)`, plus `update:open`, `update:pinned` and
+`update:selected`.
 
 **Slots** — `actions` for extra controls at the right of the header bar,
 `panel-section` for a section of your own at the end of the query panel, and
@@ -967,6 +1076,12 @@ and hands back `rows`, `total`, `pageCount`, `pending`, `error` and `refresh` �
 plus `useColumns` for the scope's column set, `usePresentedRows` for rows with
 every role already resolved into `parts`, `useRecordNames` for the names behind
 the ids a query narrows by, and `useShellContext`.
+
+The context carries the selection as well — `selectable`, `selection`,
+`isSelected`, `toggleSelect`, `selectPage` and `clearSelection`, plus `create`,
+`duplicate` and `delete` — so a view of your own can offer the ticks the
+shipped six do, and `<RecordActions>` is exported for a host laying the parts
+out itself.
 
 ## Windows
 

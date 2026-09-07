@@ -7,6 +7,7 @@ import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
 import ScopeMark from './ScopeMark.vue'
+import SelectTick from './SelectTick.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -101,6 +102,14 @@ const step = (delta: number) => {
       <div class="dc-preview__body">
         <div class="dc-preview__top">
           <span class="dc-preview__badges">
+            <!-- One record at a time here, so the tick is for the one on
+                 screen; the count on the bar above is of all of them. -->
+            <SelectTick
+              v-if="shell.selectable.value"
+              :row="current.row"
+              :selected="current.selected"
+              :name="current.parts.identity"
+            />
             <StatusPill
               v-if="current.parts.state"
               :status="current.parts.state"

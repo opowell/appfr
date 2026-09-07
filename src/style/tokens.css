@@ -637,6 +637,21 @@
   text-overflow: ellipsis;
 }
 
+/*
+ * The tick that chooses a record, on a row and at the head of the bar that
+ * acts on what is ticked. The browser's own box, painted in the shell's accent
+ * — a checkbox is the one control every reader already knows, and drawing a
+ * second one out of a span would only make it less recognisable.
+ */
+.dc-tick {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--dc-accent);
+  cursor: pointer;
+}
+
 /* -------------------------------------------------------- window controls */
 
 /*

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useShellContext } from '../../composables/context'
 import { usePresentedRows } from '../../composables/usePresentedRows'
+import SelectTick from './SelectTick.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -8,16 +9,28 @@ const rows = usePresentedRows()
 
 <template>
   <div class="dc-links">
-    <button
+    <!-- A link is one button, so the tick goes in front of it rather than in
+         it, and the pair wraps as one. -->
+    <span
       v-for="entry in rows"
       :key="entry.key"
-      type="button"
-      class="dc-link"
-      @click="shell.activate(entry.row)"
+      class="dc-links__item"
     >
-      <span class="dc-link__primary dc-truncate">{{ entry.parts.identity }}</span>
-      <span class="dc-link__secondary dc-mono dc-truncate">{{ entry.parts.reference }}</span>
-    </button>
+      <SelectTick
+        v-if="shell.selectable.value"
+        :row="entry.row"
+        :selected="entry.selected"
+        :name="entry.parts.identity"
+      />
+      <button
+        type="button"
+        class="dc-link"
+        @click="shell.activate(entry.row)"
+      >
+        <span class="dc-link__primary dc-truncate">{{ entry.parts.identity }}</span>
+        <span class="dc-link__secondary dc-mono dc-truncate">{{ entry.parts.reference }}</span>
+      </button>
+    </span>
   </div>
 </template>
 
@@ -28,6 +41,20 @@ const rows = usePresentedRows()
   align-items: baseline;
   gap: 6px 10px;
   padding: 16px;
+}
+
+.dc-links__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+}
+
+/* A tick belongs to the chip after it, so the gap between two of these pairs
+   has to be plainly wider than the gap inside one — otherwise a wrapped row
+   reads as chips with loose boxes between them. */
+.dc-links:has(.dc-tick) {
+  column-gap: 18px;
 }
 
 .dc-link {

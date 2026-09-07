@@ -8,6 +8,7 @@ import type { PresentedRow } from '../../composables/usePresentedRows'
 import { cellFull, columnAlign, columnClass, columnKey, columnTruncates } from '../../query/columns'
 import ColumnCell from './ColumnCell.vue'
 import ScopeMark from './ScopeMark.vue'
+import SelectTick from './SelectTick.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -97,6 +98,18 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
   >
     <thead>
       <tr>
+        <!-- Not a column: the shell declares none, and this is an affordance
+             rather than a field of the record — the same tick the other views
+             put on a row, in the place a table has for it. The heading is for
+             a screen reader, the control that ticks the page being on the bar
+             above with the operations it is for. -->
+        <th
+          v-if="shell.selectable.value"
+          class="dc-table__pick"
+          scope="col"
+        >
+          <span class="dc-table__sr">Select</span>
+        </th>
         <th
           v-for="(column, index) in columns"
           :key="columnKey(column, index)"
@@ -128,6 +141,16 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
         class="dc-table__row"
         @click="shell.activate(entry.row)"
       >
+        <td
+          v-if="shell.selectable.value"
+          class="dc-table__pick"
+        >
+          <SelectTick
+            :row="entry.row"
+            :selected="entry.selected"
+            :name="entry.parts.identity"
+          />
+        </td>
         <td
           v-for="(column, index) in columns"
           :key="columnKey(column, index)"
@@ -223,6 +246,25 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
 
 .dc-table__row {
   cursor: pointer;
+}
+
+/* Held to the tick's own width, since `table-layout: fixed` shares out only
+   what the columns did not claim. */
+.dc-table th.dc-table__pick,
+.dc-table td.dc-table__pick {
+  width: 36px;
+  padding-right: 0;
+}
+
+.dc-table__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .dc-table__row:hover {

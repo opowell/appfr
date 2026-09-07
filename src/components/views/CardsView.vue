@@ -6,6 +6,7 @@ import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
 import ScopeMark from './ScopeMark.vue'
+import SelectTick from './SelectTick.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -20,7 +21,14 @@ const showEntity = computed(() => shell.isEverything.value)
       class="dc-card"
     >
       <div class="dc-card__top dc-mono">
-        <span>
+        <span class="dc-card__lead">
+          <!-- Beside the ordinal, which is where the card starts being read. -->
+          <SelectTick
+            v-if="shell.selectable.value"
+            :row="entry.row"
+            :selected="entry.selected"
+            :name="entry.parts.identity"
+          />
           {{ entry.ordinal }}
           <span
             v-if="showEntity"
@@ -100,6 +108,7 @@ const showEntity = computed(() => shell.isEverything.value)
   color: var(--dc-fg-3);
 }
 
+.dc-card__lead,
 .dc-card__top-right {
   display: inline-flex;
   align-items: center;

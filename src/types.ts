@@ -323,6 +323,22 @@ export interface EntitySchema {
    */
   create?: string
   /**
+   * What copying the ticked records is called — `'Duplicate'`. Naming it puts
+   * that button on the bar over this type's list, and with it the ticks that
+   * say which records it is for: an operation on a selection is what makes a
+   * selection worth having.
+   *
+   * Reported, not carried out — `duplicate(selection)`. The shell copies
+   * nothing, for the same reason it makes nothing.
+   */
+  duplicate?: string
+  /**
+   * And what deleting them is called — `'Delete'`. It offers the ticks the
+   * same way, and is reported the same way: the rows go when the source stops
+   * returning them, which is the host's doing rather than the shell's.
+   */
+  delete?: string
+  /**
    * The field every other record carries this one's id in — `'host'` for a
    * tenant whose specs, profiles and runs each name the host they belong to.
    *
@@ -444,6 +460,27 @@ export interface ShellRow {
    * own.
    */
   fields: Record<string, unknown>
+}
+
+/**
+ * The records an operation on a selection is asked of.
+ *
+ * A tick is held as an id, so a selection outlives the page it was made on —
+ * and outlives the sort, the view and the query that found the record. The ids
+ * are therefore all of it, and `rows` is the part the shell still has in hand:
+ * the ticked rows of the page on screen. A host that needs the rest reads them
+ * back by id, being the only side that can.
+ */
+export interface Selection {
+  /** Every ticked id, across every page a tick was made on. */
+  ids: string[]
+  /** The ticked rows the current page holds — never more of them than `ids`. */
+  rows: ShellRow[]
+  /**
+   * The type being listed, whose own labels named the operation. Null only
+   * where a host offered ticks across the whole corpus, which names none.
+   */
+  entity: EntitySchema | null
 }
 
 export interface QueryRequest {

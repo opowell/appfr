@@ -73,6 +73,8 @@ export interface PresentedRow {
   ordinal: string
   parts: RowParts
   pinned: boolean
+  /** Whether this record is ticked — see {@link ShellContext.selection}. */
+  selected: boolean
 }
 
 /** Resolves the roles a view reads, from the columns of the row's own type. */
@@ -103,6 +105,7 @@ export function presentRow(
   index: number,
   entity: EntitySchema | null,
   pinned: boolean,
+  selected = false,
 ): PresentedRow {
   const columns = entity?.columns ?? []
   return {
@@ -114,6 +117,7 @@ export function presentRow(
     ordinal: formatOrdinal(index),
     parts: presentParts(row, columns),
     pinned,
+    selected,
   }
 }
 
@@ -131,6 +135,7 @@ export function usePresentedRows(): ComputedRef<PresentedRow[]> {
         shell.offset.value + index,
         byKey.value.get(row.entityKey) ?? null,
         shell.isPinned(row),
+        shell.isSelected(row),
       ),
     ),
   )

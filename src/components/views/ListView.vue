@@ -6,6 +6,7 @@ import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
 import ScopeMark from './ScopeMark.vue'
+import SelectTick from './SelectTick.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -24,6 +25,16 @@ const showEntity = computed(() => shell.isEverything.value)
       class="dc-list__row"
       role="listitem"
     >
+      <!-- In front of the ordinal, where a row is picked up rather than read:
+           the first thing on the row, for the one thing done to it before
+           anything is done with it. -->
+      <SelectTick
+        v-if="shell.selectable.value"
+        class="dc-list__tick"
+        :row="entry.row"
+        :selected="entry.selected"
+        :name="entry.parts.identity"
+      />
       <!-- The name opens the record and the metrics narrow to it, so the two
            are siblings rather than one button around everything: a count that
            leads somewhere of its own cannot be nested inside the row's. -->
@@ -81,6 +92,16 @@ const showEntity = computed(() => shell.isEverything.value)
 
 .dc-list__row:hover {
   background: var(--dc-bg-1);
+}
+
+/* The tick takes the row's leading gutter, and the button beside it gives up
+   the padding it was holding that gutter with. */
+.dc-list__tick {
+  margin-left: 16px;
+}
+
+.dc-list__row:has(.dc-list__tick) .dc-list__open {
+  padding-left: 10px;
 }
 
 .dc-list__entity {

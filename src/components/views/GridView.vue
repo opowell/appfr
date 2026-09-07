@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useShellContext } from '../../composables/context'
 import { usePresentedRows } from '../../composables/usePresentedRows'
+import SelectTick from './SelectTick.vue'
 
 const shell = useShellContext()
 const rows = usePresentedRows()
@@ -8,24 +9,38 @@ const rows = usePresentedRows()
 
 <template>
   <div class="dc-grid">
-    <button
+    <!-- The tile is one button, so the tick cannot be inside it: it sits over
+         the tile instead, in the corner the caption does not use. -->
+    <div
       v-for="entry in rows"
       :key="entry.key"
-      type="button"
-      class="dc-tile"
-      :style="{ '--dc-tile-tint': entry.parts.tint ?? undefined }"
-      @click="shell.activate(entry.row)"
+      class="dc-grid__cell"
     >
-      <span class="dc-tile__scrim">
-        <span class="dc-tile__top dc-mono">
-          <span class="dc-tile__chip">{{ entry.ordinal }}</span>
+      <button
+        type="button"
+        class="dc-tile"
+        :style="{ '--dc-tile-tint': entry.parts.tint ?? undefined }"
+        @click="shell.activate(entry.row)"
+      >
+        <span class="dc-tile__scrim">
+          <span class="dc-tile__top dc-mono">
+            <span class="dc-tile__chip">{{ entry.ordinal }}</span>
+          </span>
+          <span class="dc-tile__caption">
+            <span class="dc-tile__secondary dc-truncate">{{ entry.parts.reference }}</span>
+            <span class="dc-tile__primary">{{ entry.parts.identity }}</span>
+          </span>
         </span>
-        <span class="dc-tile__caption">
-          <span class="dc-tile__secondary dc-truncate">{{ entry.parts.reference }}</span>
-          <span class="dc-tile__primary">{{ entry.parts.identity }}</span>
-        </span>
-      </span>
-    </button>
+      </button>
+
+      <SelectTick
+        v-if="shell.selectable.value"
+        class="dc-grid__tick"
+        :row="entry.row"
+        :selected="entry.selected"
+        :name="entry.parts.identity"
+      />
+    </div>
   </div>
 </template>
 
@@ -37,8 +52,23 @@ const rows = usePresentedRows()
   padding: 16px;
 }
 
+/* What the grid lays out, now that a tile may have something over it. */
+.dc-grid__cell {
+  position: relative;
+  min-width: 0;
+}
+
+/* Opposite the ordinal, and over the scrim's own darkening so that a box in
+   the shell's accent stays visible on a tile of any colour. */
+.dc-grid__tick {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
 .dc-tile {
   position: relative;
+  width: 100%;
   aspect-ratio: 1 / 1;
   padding: 0;
   border: 1px solid var(--dc-line);

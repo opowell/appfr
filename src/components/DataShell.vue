@@ -12,6 +12,7 @@ import type {
   DataSource,
   DomainSchema,
   EntitySchema,
+  Selection,
   ShellAlign,
   ShellQuery,
   ShellQueryDefaults,
@@ -31,6 +32,7 @@ import type { NavigationMode } from '../composables/useQueryState'
 import { useResults } from '../composables/useResults'
 import ShellHeader from './ShellHeader.vue'
 import QueryPanel from './QueryPanel.vue'
+import RecordActions from './RecordActions.vue'
 import ResultsArea from './ResultsArea.vue'
 
 const props = withDefaults(
@@ -99,6 +101,13 @@ const props = withDefaults(
     headAlign?: ShellAlign
     /** Offers the star affordance on rows. */
     pinnable?: boolean
+    /**
+     * Offers the tick on rows whether or not the type being listed names an
+     * operation for a selection. A type that names `duplicate` or `delete`
+     * offers ticks anyway — this is for a host whose bulk action is its own,
+     * reading `v-model:selected` and doing the rest itself.
+     */
+    selectable?: boolean
     navigationMode?: NavigationMode
     facetNavigationMode?: NavigationMode
   }>(),
@@ -123,6 +132,13 @@ const emit = defineEmits<{
    */
   create: [entity: EntitySchema]
   /**
+   * The ticked records were to be copied, or deleted — the two operations the
+   * entity's own `duplicate` and `delete` labels named. Nothing has been
+   * copied and nothing has been deleted: this is the request, as `create` is.
+   */
+  duplicate: [selection: Selection]
+  delete: [selection: Selection]
+  /**
    * Narrowing to one record was asked for: from the affordance an entity's
    * `scope` puts on its rows, or from a metric its `drills` named an entity
    * for. `entity` is what to list afterwards, null when the row itself was
@@ -135,14 +151,16 @@ const emit = defineEmits<{
 }>()
 
 /**
- * Both of these are optionally controlled: bind `v-model:open` or
- * `v-model:pinned` to own the state, or leave them alone and the shell keeps
- * it internally. `defineModel` distinguishes the two by whether the prop was
- * actually passed, which a plain boolean prop cannot do — Vue casts an absent
- * boolean to `false`.
+ * Each of these is optionally controlled: bind `v-model:open`,
+ * `v-model:pinned` or `v-model:selected` to own the state, or leave them alone
+ * and the shell keeps it internally. `defineModel` distinguishes the two by
+ * whether the prop was actually passed, which a plain boolean prop cannot do —
+ * Vue casts an absent boolean to `false`.
  */
 const panelOpen = defineModel<boolean>('open', { default: false })
 const pinned = defineModel<string[]>('pinned', { default: () => [] })
+/** Which records are ticked, by id — see the `Selection` an operation carries. */
+const selected = defineModel<string[]>('selected', { default: () => [] })
 
 const slots = defineSlots<{
   /** Extra controls at the right end of the header bar. */
@@ -253,6 +271,65 @@ function togglePin(row: ShellRow) {
   emit('toggle-pin', row)
 }
 
+/* --------------------------------------------------------------- selecting */
+
+/**
+ * Whether records may be ticked. The type in force naming something to do to a
+ * selection is what usually says so — a tick with nothing to do to what it
+ * ticks is a control that leads nowhere — and the prop offers them anyway, for
+ * a host whose bulk action is its own.
+ */
+const selectable = computed(() => {
+  if (props.selectable === true) return true
+  const entity = query.entity.value
+  return Boolean(entity?.duplicate || entity?.delete)
+})
+
+const selectedIds = computed(() => new Set(selected.value))
+
+function toggleSelect(row: ShellRow) {
+  const next = new Set(selectedIds.value)
+  if (next.has(row.id)) next.delete(row.id)
+  else next.add(row.id)
+  selected.value = [...next]
+}
+
+function selectPage(on: boolean) {
+  const next = new Set(selectedIds.value)
+  for (const row of results.rows.value) {
+    if (on) next.add(row.id)
+    else next.delete(row.id)
+  }
+  selected.value = [...next]
+}
+
+function clearSelection() {
+  if (selected.value.length) selected.value = []
+}
+
+/**
+ * What an operation is asked of. The ids are the whole of it — a tick outlives
+ * the page, the sort and the view it was made on — and the rows are the ticked
+ * ones the current page happens to hold, handed over because a host that has
+ * them need not fetch them again.
+ */
+const selection = computed<Selection>(() => ({
+  ids: [...selected.value],
+  rows: results.rows.value.filter((row) => selectedIds.value.has(row.id)),
+  entity: query.entity.value,
+}))
+
+/*
+ * Listing another type empties the selection.
+ *
+ * Ticks survive a sort, a page and a change of view, because none of those
+ * changes which records they are. A change of type does: the operations are
+ * named by the entity, so a selection of searches would be offered to the
+ * scrapers' *Delete* — which is the one mistake here that cannot be taken
+ * back. Narrowing and widening leave it alone; only the type does this.
+ */
+watch(() => query.query.value.entity, clearSelection)
+
 /* ---------------------------------------------------------------- drilling */
 
 /**
@@ -290,8 +367,16 @@ const shell = provideShellContext({
   isPinned: (row) => pinnedIds.value.has(row.id),
   isPinnedId: (id) => pinnedIds.value.has(id),
   togglePin,
+  selectable,
+  selection,
+  isSelected: (row) => selectedIds.value.has(row.id),
+  toggleSelect,
+  selectPage,
+  clearSelection,
   activate: (row) => emit('activate', row),
   create: (entity) => emit('create', entity),
+  duplicate: () => emit('duplicate', selection.value),
+  delete: () => emit('delete', selection.value),
   drill,
 })
 
@@ -362,6 +447,12 @@ defineExpose({
         </div>
       </template>
     </div>
+
+    <!-- What can be done with the records of the type being listed, over the
+         records themselves and under the query that found them. It renders
+         nothing where the type offers nothing, and stays put while the results
+         scroll. -->
+    <RecordActions />
 
     <slot
       name="results"

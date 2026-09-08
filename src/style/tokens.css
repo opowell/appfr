@@ -145,6 +145,10 @@
   --dc-radius: 0;
   --dc-radius-lg: 0;
   --dc-header-height: 48px;
+  /* How many lines a table cell may wrap to before it is cut short with an
+     ellipsis — and only in a table whose rows are already tall, which is the
+     one place the depth is going spare. See `data-dc-wrap` in TableView. */
+  --dc-table-lines: 3;
   /* How wide the header bar and the query panel are when the shell is asked to
      bring the bar in to the panel rather than grow the panel to the bar. Wide
      enough for the panel's own two columns; ignored while the panel grows. */
@@ -652,6 +656,39 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/*
+ * And the same cell in a table whose rows are already tall — a table with a
+ * picture in it, which TableView marks with `data-dc-wrap`. The depth is paid
+ * for by the picture whether the words use it or not, so a value runs on to
+ * `--dc-table-lines` lines there before it is cut short.
+ *
+ * Three rules because three things have to give. The `td` stops holding its
+ * contents to one line, but cannot be the box that counts them — an element
+ * that is not `display: table-cell` is not a cell, and the column would come
+ * apart. So the box is whichever of the two things a value can be inside it,
+ * and each has to give up the `nowrap` it wears as a `.dc-truncate` of its
+ * own. The ellipsis then comes from the clamp rather than from
+ * `text-overflow`, which is why it lands after a whole word rather than
+ * part-way through one.
+ *
+ * These live here rather than in TableView because the elements they reach
+ * are ColumnCell's, and a scoped rule would be looking for another
+ * component's mark on them.
+ */
+.dc-table[data-dc-wrap] td.dc-truncate {
+  white-space: normal;
+}
+
+.dc-table[data-dc-wrap] td.dc-truncate > .dc-table__open,
+.dc-table[data-dc-wrap] td.dc-truncate > .dc-cell__text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--dc-table-lines);
+  line-clamp: var(--dc-table-lines);
+  white-space: normal;
+  overflow: hidden;
 }
 
 /*

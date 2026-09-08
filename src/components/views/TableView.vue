@@ -20,6 +20,22 @@ const rows = usePresentedRows()
 const columns = useColumns()
 
 /**
+ * Whether a text cell may wrap, which is to say whether this table's rows are
+ * already taller than a line of text: a column drawing a picture, or any
+ * column that states a height, which is the same thing said in CSS. That
+ * depth is paid for whether the words use it or not, so in such a table a
+ * long value runs on to `--dc-table-lines` lines before it is cut short
+ * rather than stopping at the end of the first.
+ *
+ * Every other table keeps the single line it always had. Wrapping there would
+ * buy nothing and cost the one thing a table of one-line rows is for: rows
+ * that are all the same depth, so the eye can run down a column.
+ */
+const wraps = computed(() =>
+  columns.value.some((column) => column.kind === 'image' || column.height !== undefined),
+)
+
+/**
  * Clicking a header cell sorts by it, and clicking the active one reverses —
  * the same two operations the query panel offers, at the point of use.
  */
@@ -95,6 +111,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
   <table
     v-else
     class="dc-table"
+    :data-dc-wrap="wraps ? '' : undefined"
   >
     <thead>
       <tr>

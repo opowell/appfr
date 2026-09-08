@@ -100,9 +100,13 @@ function press(event: MouseEvent) {
     {{ text }}
   </button>
 
-  <template v-else>
-    {{ text }}
-  </template>
+  <!-- A span rather than the bare text a cell needs no more of, because a
+       cell that wraps is cut short at a line count, and a line count needs a
+       box to count lines in. -->
+  <span
+    v-else
+    class="dc-cell__text"
+  >{{ text }}</span>
 </template>
 
 <style scoped>

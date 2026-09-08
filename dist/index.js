@@ -2647,16 +2647,12 @@ const Hi = ["data-dc-pending"], ji = {
   props: {
     title: {},
     count: {},
-    span: { default: 1 },
+    span: {},
     flush: { type: Boolean },
     muted: { type: Boolean }
   },
   setup(e) {
-    const t = e, n = v(() => {
-      if (t.span === "all") return { gridColumn: "1 / -1" };
-      const d = Math.max(1, Math.floor(Number(t.span) || 1));
-      return d > 1 ? { gridColumn: `span ${d}` } : void 0;
-    }), s = Ot();
+    const t = e, n = v(() => t.span === "all" ? { gridColumn: "1 / -1" } : void 0), s = Ot();
     function a(d) {
       return l(d?.() ?? []);
     }
@@ -2690,7 +2686,7 @@ const Hi = ["data-dc-pending"], ji = {
       ])) : T("", !0)
     ], 12, xc));
   }
-}), bd = /* @__PURE__ */ de(zc, [["__scopeId", "data-v-cae1b92d"]]), Rc = ["aria-label"], Tc = ["aria-checked", "data-dc-active", "tabindex", "onClick", "onKeydown"], Lc = /* @__PURE__ */ ue({
+}), bd = /* @__PURE__ */ de(zc, [["__scopeId", "data-v-75f2ef0b"]]), Rc = ["aria-label"], Tc = ["aria-checked", "data-dc-active", "tabindex", "onClick", "onKeydown"], Lc = /* @__PURE__ */ ue({
   __name: "SegmentedControl",
   props: {
     modelValue: {},

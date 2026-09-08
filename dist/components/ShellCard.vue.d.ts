@@ -7,11 +7,17 @@ type __VLS_Props = {
      */
     count?: string | number;
     /**
-     * How many columns of the card grid this takes. `'all'` is the width of
-     * the grid — for the cards a row of them would cut short: a record's own
-     * heading, a block of source, a wide table.
+     * Takes the whole width of the card grid, however many columns that is —
+     * for the cards a share of a row would cut short: a record's own heading,
+     * a block of source, a wide table.
+     *
+     * `'all'` is the only value, and deliberately: a card asking for *two* of
+     * however many columns there are forces a second column into existence
+     * when the grid has room for one, so a phone got two tracks of which the
+     * second was 56px wide. `1 / -1` spans whatever is there and can never
+     * add to it.
      */
-    span?: number | 'all';
+    span?: 'all';
     /**
      * Drops the body's padding, for content that draws its own edges — a
      * table, a `<pre>`, a log pane.
@@ -33,9 +39,7 @@ type __VLS_Slots = {
     /** A row under the content, drawn as the type card's own button is. */
     foot?: () => unknown;
 };
-declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
-    span: number | "all";
-}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: __VLS_WithSlots<typeof __VLS_component, __VLS_Slots>;
 export default _default;
 type __VLS_WithSlots<T, S> = T & {

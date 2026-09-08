@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useShellContext } from '../../composables/context'
 import { usePresentedRows } from '../../composables/usePresentedRows'
+import RowPicture from './RowPicture.vue'
 import SelectTick from './SelectTick.vue'
 
 const shell = useShellContext()
@@ -22,6 +23,14 @@ const rows = usePresentedRows()
         :style="{ '--dc-tile-tint': entry.parts.tint ?? undefined }"
         @click="shell.activate(entry.row)"
       >
+        <!-- Under the scrim, which is what keeps the caption readable over a
+             picture the shell knows nothing about. A tile with no picture is
+             the tint it always was, showing through. -->
+        <RowPicture
+          v-if="entry.parts.image"
+          class="dc-tile__image"
+          :src="entry.parts.image"
+        />
         <span class="dc-tile__scrim">
           <span class="dc-tile__top dc-mono">
             <span class="dc-tile__chip">{{ entry.ordinal }}</span>
@@ -80,6 +89,18 @@ const rows = usePresentedRows()
 
 .dc-tile:hover {
   border-color: var(--dc-line-2);
+}
+
+/*
+ * The whole tile, whole: the caption is over the picture rather than beside
+ * it, so the picture is the tile and the tint is what is left where its shape
+ * does not fill one.
+ */
+.dc-tile__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .dc-tile__scrim {

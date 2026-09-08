@@ -5,6 +5,7 @@ import { usePresentedRows } from '../../composables/usePresentedRows'
 import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
+import RowPicture from './RowPicture.vue'
 import ScopeMark from './ScopeMark.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -49,13 +50,24 @@ const showEntity = computed(() => shell.isEverything.value)
           />
         </span>
       </div>
+      <!-- The picture opens the record, as the name it stands beside does: a
+           card is one press however much of it a reader aims at. Cards of a
+           type with no `image` column are the same card without the picture,
+           laid out by the class rather than by an empty box. -->
       <button
         type="button"
         class="dc-card__open"
         @click="shell.activate(entry.row)"
       >
-        <span class="dc-card__primary">{{ entry.parts.identity }}</span>
-        <span class="dc-card__secondary dc-mono">{{ entry.parts.reference }}</span>
+        <RowPicture
+          v-if="entry.parts.image"
+          class="dc-card__image"
+          :src="entry.parts.image"
+        />
+        <span class="dc-card__names">
+          <span class="dc-card__primary">{{ entry.parts.identity }}</span>
+          <span class="dc-card__secondary dc-mono">{{ entry.parts.reference }}</span>
+        </span>
       </button>
       <!-- Each number under its own heading: a card has the room a table row
            does not, and `1.2k` on its own says nothing. -->
@@ -125,13 +137,33 @@ const showEntity = computed(() => shell.isEverything.value)
 
 .dc-card__open {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  gap: 12px;
   padding: 0;
   border: none;
   background: transparent;
   text-align: left;
   cursor: pointer;
+}
+
+/* The names stack whether or not there is a picture to their left. */
+.dc-card__names {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/*
+ * Square, so that a wall of cards has one edge down the left of it however
+ * different the pictures behind them are. Its own faint ground because a part
+ * photographed on white and one cut out to nothing are the same picture here.
+ */
+.dc-card__image {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--dc-radius-sm);
+  background: var(--dc-bg-2);
 }
 
 .dc-card__primary {

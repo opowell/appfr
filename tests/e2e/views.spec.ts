@@ -48,3 +48,36 @@ test.describe('Views — every one of them, when the host says nothing', () => {
     ])
   })
 })
+
+test.describe('Views — the picture a type has, where it has one', () => {
+  test('every card of a pictured type carries its picture', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--pictured-cards')
+    const cards = page.locator('.dc-card')
+    expect(await cards.count()).toBeGreaterThan(0)
+    await expect(cards.locator('.dc-card__image')).toHaveCount(await cards.count())
+    // Beside the name rather than instead of it: a card still reads as a card.
+    await expect(cards.first().locator('.dc-card__primary')).not.toBeEmpty()
+  })
+
+  test('a type with no picture is the same card without one', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--cards-view')
+    expect(await page.locator('.dc-card').count()).toBeGreaterThan(0)
+    await expect(page.locator('.dc-card__image')).toHaveCount(0)
+  })
+
+  test('a tile is the picture, with its caption over it', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--pictured-grid')
+    const tiles = page.locator('.dc-tile')
+    expect(await tiles.count()).toBeGreaterThan(0)
+    await expect(tiles.locator('.dc-tile__image')).toHaveCount(await tiles.count())
+    await expect(tiles.first().locator('.dc-tile__primary')).not.toBeEmpty()
+  })
+
+  test('the picture is inside the press that opens the record', async ({ page }) => {
+    // The shell only reports an activation, so what is assertable here is the
+    // structure that makes the press one: the picture is in the button, not
+    // beside it.
+    await gotoStory(page, 'shell-data-shell--pictured-cards')
+    await expect(page.locator('.dc-card__open .dc-card__image').first()).toBeVisible()
+  })
+})

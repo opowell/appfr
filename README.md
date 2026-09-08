@@ -363,8 +363,9 @@ for `create` or for a drill.
   key: 'pieces',
   columns: [
     { key: 'ordinal', kind: 'ordinal', label: '#', width: '48px' },
-    // No label: a column of pictures says what it is.
-    { key: 'image', kind: 'image', width: '56px', height: '28px' },
+    // No label: a column of pictures says what it is. The role carries it out
+    // of the table too — onto the card and the tile.
+    { key: 'image', role: 'image', kind: 'image', width: '56px', height: '28px' },
     { key: 'name', role: 'identity', label: 'Piece', sort: 'name', activate: true, scope: true },
     { key: 'partNo', role: 'reference', label: 'Part no.', width: '104px', mono: true },
     { key: 'shape', label: 'Shape', width: '92px', hideBelow: 620 },
@@ -411,6 +412,7 @@ mark — never a list of columns — so they ask for those parts by name:
 | `metric` | the numbers on a list row (first two), a card (first two), a home-screen preview row (first one), and every one of them in the preview pane |
 | `state` | the pill |
 | `updated` | the date on a card, a home-screen row and the preview pane |
+| `image` | the picture beside the name on a card and behind the caption on a grid tile — a value like any other, so the column is still a cell in the table |
 | `tint` | the grid tile's background and the preview pane's banner — never drawn as a cell, so the table leaves it out |
 
 A column with no role is a column and nothing else: it is in the table and

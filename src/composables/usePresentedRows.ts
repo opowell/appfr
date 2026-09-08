@@ -39,6 +39,13 @@ export interface RowParts {
   state: RecordStatus | null
   /** The date, formatted the way every view formats it. */
   updated: string
+  /**
+   * The record's picture, as the `src` a view can draw — null where the type
+   * declares no `image` column, and null where it declares one that this row
+   * has nothing under. A view asks whether there is a picture, never whether
+   * the string is empty.
+   */
+  image: string | null
   /** A colour for the grid view's tile, where a column names one. */
   tint: string | null
 }
@@ -77,6 +84,20 @@ export interface PresentedRow {
   selected: boolean
 }
 
+/**
+ * The `src` behind a picture, where the row actually holds one.
+ *
+ * The raw value rather than the cell's text: a picture is addressed, not
+ * formatted, and a column whose `format` says `—` for an empty one would put
+ * that in an `<img>`. Strings only, and only ones with something in them —
+ * anything else is a row without a picture, which is a card drawn without one.
+ */
+function pictureSrc(column: ColumnDef | undefined, row: ShellRow): string | null {
+  if (!column) return null
+  const value = cellValue(column, row)
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
 /** Resolves the roles a view reads, from the columns of the row's own type. */
 export function presentParts(row: ShellRow, columns: ColumnDef[]): RowParts {
   const state = roleColumn(columns, 'state')
@@ -92,6 +113,7 @@ export function presentParts(row: ShellRow, columns: ColumnDef[]): RowParts {
     })),
     state: state ? ((cellValue(state, row) as RecordStatus) ?? null) : null,
     updated: cellTextOf(roleColumn(columns, 'updated'), row),
+    image: pictureSrc(roleColumn(columns, 'image'), row),
     tint: tint ? ((cellValue(tint, row) as string) ?? null) : null,
   }
 }

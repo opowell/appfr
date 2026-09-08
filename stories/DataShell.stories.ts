@@ -358,6 +358,26 @@ export const LongQuery = story({
 
 export const CardsView = story({ search: '?e=searches&v=cards' })
 export const GridView = story({ search: '?e=items&v=grid' })
+
+/**
+ * The same two views of a type that has pictures.
+ *
+ * A card and a tile are an identity, a reference and a number or two, and a
+ * catalogue's records are none of those first: what a piece is, is what it
+ * looks like. The `image` role is how a schema says which column holds that —
+ * beside the name on a card, and the whole of a tile with the caption over it.
+ * LEGO's pieces name theirs; iRadar's searches have none, and their cards and
+ * tiles above are the same views without a picture in them.
+ */
+export const PicturedCards = story({
+  schema: legoSchema,
+  search: '?e=pieces&v=cards',
+})
+
+export const PicturedGrid = story({
+  schema: legoSchema,
+  search: '?e=pieces&v=grid',
+})
 export const TableView = story({ search: '?e=searches&v=table' })
 export const LinksView = story({ search: '?e=items&v=links' })
 export const PreviewView = story({ search: '?e=items&v=preview' })

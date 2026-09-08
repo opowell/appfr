@@ -8,8 +8,8 @@ type __VLS_Props = {
     count?: string | number;
     /**
      * How many columns of the card grid this takes. `'all'` is the width of
-     * the grid — for the cards a row of them would cut short: source, a log, a
-     * wide table. Ignored outside a grid.
+     * the grid — for the cards a row of them would cut short: a record's own
+     * heading, a block of source, a wide table.
      */
     span?: number | 'all';
     /**

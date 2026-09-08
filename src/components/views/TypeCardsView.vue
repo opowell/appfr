@@ -13,8 +13,21 @@ import ScopeMark from './ScopeMark.vue'
  * record and its metric narrows to what the number counts; and a type the
  * schema gave a `create` label to ends with the button that asks for a new
  * one.
+ *
+ * The two slots are for the cards no type holds. A shell read inside one
+ * record has a card's worth to say about the record itself — its name, what
+ * can be done with it, its metadata, its source — and those sit in the same
+ * grid as the types, before them and after them, so one screen comes out of
+ * it rather than a header, a panel and then some cards.
  */
 const shell = useShellContext()
+
+defineSlots<{
+  /** Cards of the host's own, above the types. */
+  before?: () => unknown
+  /** And below them. */
+  after?: () => unknown
+}>()
 
 const { previews, pending, error } = useEntityPreviews({
   source: shell.source,
@@ -22,37 +35,46 @@ const { previews, pending, error } = useEntityPreviews({
   query: shell.query,
   entities: shell.entities,
   limit: shell.previewsPerType,
+  within: shell.within,
   isPinned: (id) => shell.isPinnedId(id),
 })
 
-/** With a query running, say which types it excluded rather than showing gaps. */
-const narrowed = computed(() => !shell.isPristine.value)
+/**
+ * With a query running, say which types it excluded rather than showing gaps.
+ * A scope the shell is read inside counts: the URL may hold no query at all,
+ * and a type with nothing in it still has nothing that *matched*.
+ */
+const narrowed = computed(() => !shell.isPristine.value || Boolean(shell.within.value))
 </script>
 
 <template>
-  <!-- Before the first response there are no cards to dim, so say what is
-       happening rather than showing an empty screen. -->
-  <p
-    v-if="error"
-    class="dc-types__state"
-    role="alert"
-  >
-    Could not load results: {{ error instanceof Error ? error.message : 'the data source failed.' }}
-  </p>
-
-  <p
-    v-else-if="!previews.length && pending"
-    class="dc-types__state"
-    aria-live="polite"
-  >
-    Running query…
-  </p>
-
+  <!--
+    The grid is always here, because the cards in the two slots are the host's
+    and are not waiting on anything: a per-type query that has not answered or
+    has failed says what it has to say among them rather than in place of them.
+  -->
   <div
-    v-else
     class="dc-types"
     :data-dc-pending="pending ? 'true' : 'false'"
   >
+    <slot name="before" />
+
+    <p
+      v-if="error"
+      class="dc-types__state"
+      role="alert"
+    >
+      Could not load results: {{ error instanceof Error ? error.message : 'the data source failed.' }}
+    </p>
+
+    <p
+      v-else-if="!previews.length && pending"
+      class="dc-types__state"
+      aria-live="polite"
+    >
+      Running query…
+    </p>
+
     <section
       v-for="preview in previews"
       :key="preview.entity.key"
@@ -135,6 +157,8 @@ const narrowed = computed(() => !shell.isPristine.value)
         {{ preview.entity.create }}
       </button>
     </section>
+
+    <slot name="after" />
   </div>
 </template>
 
@@ -154,7 +178,10 @@ const narrowed = computed(() => !shell.isPristine.value)
   opacity: 0.6;
 }
 
+/* Across the grid rather than in one of its columns: this is a sentence about
+   the whole result, not a card. */
 .dc-types__state {
+  grid-column: 1 / -1;
   margin: 0;
   padding: 40px 24px;
   color: var(--dc-fg-3);

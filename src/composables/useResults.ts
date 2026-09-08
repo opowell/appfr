@@ -12,6 +12,7 @@ import type {
   ShellRow,
 } from '../types'
 import { countPages, RESULT_FIELDS } from '../query/schema'
+import { andExpression } from '../data/expression'
 
 export interface UseResultsOptions {
   source: ComputedRef<DataSource>
@@ -21,6 +22,13 @@ export interface UseResultsOptions {
   entity: ComputedRef<EntitySchema | null>
   /** Rows per page — the most the source is asked for at once. */
   limit: ComputedRef<number>
+  /**
+   * An expression the query is read *inside* — the shell's own scope, which
+   * the host holds rather than the URL. It is ANDed on to whatever the query
+   * asks, so the source is handed one expression and never needs to know that
+   * part of it was not typed.
+   */
+  within?: ComputedRef<string>
 }
 
 export interface ResultsState {
@@ -60,6 +68,18 @@ export function useResults(options: UseResultsOptions): ResultsState {
 
   const offset = computed(() => (options.query.value.page - 1) * options.limit.value)
   const pageCount = computed(() => countPages(total.value, options.limit.value))
+
+  /**
+   * The query as the source is asked it: the one in the URL, narrowed by the
+   * scope the shell is read inside. Everything else — the header, the panel,
+   * the pager — reads the query itself, so the fixed part is never something
+   * a reader can lift.
+   */
+  const asks = (): ShellQuery => {
+    const query = options.query.value
+    const within = options.within?.value.trim()
+    return within ? { ...query, expr: andExpression(within, query.expr) } : query
+  }
 
   const apply = (result: QueryResult) => {
     rows.value = result.rows
@@ -153,7 +173,7 @@ export function useResults(options: UseResultsOptions): ResultsState {
     teardown()
 
     const request: QueryRequest = {
-      query: options.query.value,
+      query: asks(),
       schema: options.schema.value,
       entity: options.entity.value,
       limit: options.limit.value,
@@ -213,10 +233,10 @@ export function useResults(options: UseResultsOptions): ResultsState {
    * source that streams, re-running would mean restarting a crawl to change
    * how its results are drawn.
    */
-  const asked = computed(
-    () =>
-      `${JSON.stringify(RESULT_FIELDS.map((field) => options.query.value[field]))}|${options.query.value.page}`,
-  )
+  const asked = computed(() => {
+    const query = asks()
+    return `${JSON.stringify(RESULT_FIELDS.map((field) => query[field]))}|${query.page}`
+  })
 
   watch([options.source, asked, options.schema, options.entity, options.limit], run, {
     immediate: true,

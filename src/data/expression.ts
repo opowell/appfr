@@ -344,3 +344,56 @@ export function splitExpression(input: string): ExpressionSplit {
 export function joinExpression(parts: FieldTerm[], text: string): string {
   return [...parts.map(formatTerm), text.trim()].filter(Boolean).join(' ')
 }
+
+/** Values compare as they match: case is not a constraint in this language. */
+const sameValue = (one: string, other: string) => one.toLowerCase() === other.toLowerCase()
+
+/**
+ * Whether two terms say the same thing.
+ *
+ * By what they parse to rather than by how they were written, because the same
+ * constraint has more than one spelling: a term written by a drill is always
+ * quoted, while lifting any part of a query writes the rest back out through
+ * {@link formatExpression}, which quotes only where it has to. `host:"a.example"`
+ * and `host:a.example` are one term, and a comparison of text would call them
+ * two and let a second copy in.
+ */
+export function sameTerm(one: Term, other: Term): boolean {
+  if (one.kind === 'field') {
+    return (
+      other.kind === 'field' &&
+      one.field === other.field &&
+      one.comparator === other.comparator &&
+      sameValue(one.value, other.value)
+    )
+  }
+  return other.kind === 'text' && sameValue(one.value, other.value)
+}
+
+/** The group with any term it already says taken out of what is being added. */
+function withoutRepeats(group: Term[], added: Term[]): Term[] {
+  return added.filter((term) => !group.some((existing) => sameTerm(existing, term)))
+}
+
+/**
+ * Two expressions as one that means both — `(a OR b)` and `c` giving
+ * `a c OR b c`.
+ *
+ * Not a concatenation, because this language is a disjunction of conjunctions
+ * and has no brackets: appending `c` to `a OR b` would read as `a OR (b c)`,
+ * which is a weaker query than was asked for. So the alternatives are
+ * multiplied out, one group per pair, and a constraint already present in a
+ * group is not repeated in it.
+ *
+ * Either side may be empty, in which case the other is the whole of it: an
+ * expression with no terms narrows nothing, so ANDing one on changes nothing.
+ */
+export function andExpression(one: string, other: string): string {
+  const left = parseExpression(one)
+  const right = parseExpression(other)
+  if (!left.length) return formatExpression(right)
+  if (!right.length) return formatExpression(left)
+  return formatExpression(
+    left.flatMap((group) => right.map((added) => [...group, ...withoutRepeats(group, added)])),
+  )
+}

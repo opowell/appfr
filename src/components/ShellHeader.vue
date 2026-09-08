@@ -4,7 +4,7 @@ import { useShellContext } from '../composables/context'
 import { useRecordNames } from '../composables/useRecordNames'
 import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
 import { formatCount } from '../data/format'
-import { ENTITY_TERM } from '../query/summary'
+import { ENTITY_TERM, summaryTerms } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
 import type { EntitySchema, ViewKind } from '../types'
 import { VIEW_KINDS } from '../types'
@@ -31,8 +31,17 @@ const domain = computed(() => shell.schema.value)
 
 /* ------------------------------------------------------- how many there are */
 
-/** Whether the query says more than which type: a facet, or an expression. */
-const narrowed = computed(() => shell.hasFacets.value || Boolean(shell.query.value.expr.trim()))
+/**
+ * Whether the results are narrower than the type in force: a facet, an
+ * expression, or the scope the whole shell is read inside — which the reader
+ * did not ask for and cannot lift, but which is no less a narrowing.
+ */
+const narrowed = computed(
+  () =>
+    shell.hasFacets.value ||
+    Boolean(shell.query.value.expr.trim()) ||
+    Boolean(shell.within.value),
+)
 
 /**
  * How a count is written here: the host's hand where the schema names one, and
@@ -75,6 +84,24 @@ function optionLabel(entity: EntitySchema): string {
 const everythingLabel = computed(() => {
   if (shell.query.value.entity !== null || props.hideCount) return 'Everything'
   return `Everything · ${writeCount.value(shell.total.value)}`
+})
+
+/* --------------------------------------------------------- what this is about */
+
+/**
+ * The scope the shell is read inside, as the parts it is written with.
+ *
+ * Read through the same machinery as the query's own terms — an expression
+ * broken into parts, each looked up where it names a record — so a scope that
+ * is a join key comes out as the record it points at rather than as an id.
+ * What it is *not* is a term to lift: it did not come from the URL and there
+ * is nothing behind it to go back to, so it sits at the head of the bar as the
+ * thing the page is about and the query goes on beside it.
+ */
+const scopeTerms = computed<SummaryTerm[]>(() => {
+  const within = shell.within.value.trim()
+  if (!within) return []
+  return summaryTerms({ ...shell.query.value, expr: within, facets: {} }, null)
 })
 
 /* ------------------------------------------------------- how they are drawn */
@@ -152,7 +179,9 @@ const records = useRecordNames({
   source: shell.source,
   schema: shell.schema,
   query: shell.query,
-  terms: shell.terms,
+  // The scope's parts as well as the query's: it names a record more often
+  // than a typed term does, being what a record's own page is built on.
+  terms: computed(() => [...scopeTerms.value, ...shell.terms.value]),
 })
 
 /**
@@ -296,6 +325,22 @@ const position = computed(() => {
         aria-hidden="true"
       >◆</span>
       <span class="dc-header__domain">{{ domain.label }}</span>
+
+      <!-- What the shell is read inside, where it is read inside anything: not
+           a part of the query and not something to take off, so it sits before
+           the query rather than in the row of parts that scrolls. -->
+      <span
+        v-if="scopeTerms.length"
+        class="dc-header__within"
+      >
+        <span class="dc-header__sr">Within</span>
+        <span
+          v-for="term in scopeTerms"
+          :key="`scope:${term.id}`"
+          class="dc-within dc-mono dc-truncate"
+          :title="labelOf(term)"
+        >{{ labelOf(term) }}</span>
+      </span>
 
       <!-- The query: what is being listed, and everything narrowing it. -->
       <div
@@ -702,6 +747,33 @@ const position = computed(() => {
   border-color: var(--dc-accent);
 }
 
+/*
+ * What the shell is read inside. Drawn as a part of the query is drawn, since
+ * it constrains the results exactly as one does — but filled rather than
+ * outlined, and with no press on it: there is nothing to lift, because it did
+ * not come from the query and the page would not be this page without it.
+ */
+.dc-header__within {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding-left: 12px;
+  border-left: 1px solid var(--dc-line);
+}
+
+.dc-within {
+  max-width: 34ch;
+  padding: 3px 8px;
+  background: var(--dc-accent);
+  border: 1px solid var(--dc-accent);
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-bg-0);
+  font-size: var(--dc-text-code);
+  line-height: 1.5;
+}
+
 /* The one thing here that is not a term: what separates two alternatives. */
 .dc-header__or {
   flex: 0 0 auto;
@@ -815,9 +887,22 @@ const position = computed(() => {
     display: none;
   }
 
+  /* With the domain gone, whatever is first on the bar has nothing to its
+     left to be divided from — and the scope, where there is one, is what the
+     query is then divided from instead. */
+  .dc-header__within,
   .dc-header__query {
     padding-left: 0;
     border-left: none;
+  }
+
+  .dc-header__within + .dc-header__query {
+    padding-left: 12px;
+    border-left: 1px solid var(--dc-line);
+  }
+
+  .dc-within {
+    max-width: 20ch;
   }
 }
 </style>

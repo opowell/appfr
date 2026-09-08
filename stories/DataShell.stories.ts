@@ -1,6 +1,7 @@
-import { h, ref } from 'vue'
+import { Comment, h, ref } from 'vue'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import DataShell from '../src/components/DataShell.vue'
+import ShellCard from '../src/components/ShellCard.vue'
 import { iRadarSchema, legoSchema } from '../src/fixtures/schemas'
 import type { DomainSchema } from '../src/types'
 import {
@@ -709,3 +710,131 @@ export const LandsOnAnEntity = story({
  * queries respond to that box, not the viewport.
  */
 export const Embedded = story({ search: '?v=list', inset: true, limit: 12 })
+
+
+/* --------------------------------------------- a shell about one record */
+
+/**
+ * `within` is an expression the whole shell is read inside, held by the host
+ * rather than by the URL. It is ANDed on to every query the shell runs — the
+ * result set, the per-type cards, and the count beside each type — so
+ * `Everything` here is everything *about this set*, and the bar says which set
+ * that is at its head rather than as a term someone could lift.
+ *
+ * With `Cards` drawn and `Everything` chosen, that makes a record's page: one
+ * card per type of everything that names the record. Which is most of a detail
+ * view already — what is missing is the record itself, and that is what the
+ * two card slots are for.
+ */
+const YELLOW_CASTLE = 'set:"sets_10007"'
+
+/** The cards a host adds: the record itself, then what it is made of. */
+function recordCards(): Record<string, () => unknown> {
+  return {
+    'cards-before': () => [
+      h(
+        ShellCard,
+        { span: 'all' },
+        {
+          head: () => [
+            h('h2', { class: 'sb-record__name' }, 'Yellow Castle'),
+            h('span', { class: 'sb-record__ref dc-mono' }, '375-2'),
+          ],
+          aside: () => [
+            h('button', { type: 'button' }, 'Duplicate'),
+            h('button', { type: 'button' }, 'Delete'),
+          ],
+          default: () =>
+            h(
+              'p',
+              { class: 'sb-record__note' },
+              'The cards below are this shell\u2019s own results, narrowed to this set.',
+            ),
+        },
+      ),
+      h(ShellCard, { title: 'Build' }, {
+        default: () => h('p', null, 'Whatever the host does with the record goes here.'),
+        foot: () => h('button', { type: 'button' }, 'Start a build'),
+      }),
+    ],
+    'cards-after': () => [
+      h(ShellCard, { title: 'Metadata', count: '6 fields' }, {
+        default: () => h('p', { class: 'dc-mono' }, 'theme:castle \u00b7 year:1978 \u00b7 parts:767'),
+      }),
+      h(ShellCard, { title: 'Source', span: 'all', flush: true }, {
+        default: () =>
+          h('pre', { class: 'sb-record__source' }, '{\n  "set": "375-2",\n  "parts": 767\n}'),
+      }),
+    ],
+  }
+}
+
+/**
+ * A record's page: the scope at the head of the bar, one card per type of what
+ * matched inside it, and the host's own cards above and below them.
+ */
+export const RecordPage = story({
+  schema: legoSchema,
+  within: YELLOW_CASTLE,
+  previewsPerType: 5,
+  slots: recordCards(),
+})
+
+/**
+ * The same page with a query of its own running inside the scope. The scope is
+ * still at the head of the bar and still not a pill: `year:1978` is the part
+ * that came off the query and can go back on it.
+ */
+export const RecordPageNarrowed = story({
+  schema: legoSchema,
+  within: YELLOW_CASTLE,
+  search: '?q=1978',
+  previewsPerType: 5,
+  slots: recordCards(),
+})
+
+/**
+ * Choosing a type inside the scope. The cards go — one type's records are a
+ * list, not a card per type — and the count on the bar is how many of that
+ * type are in *this* set rather than how many there are.
+ */
+export const RecordPageEntity = story({
+  schema: legoSchema,
+  within: YELLOW_CASTLE,
+  search: '?e=pieces&v=list',
+  slots: recordCards(),
+})
+
+/**
+ * A scope that matches nothing of most types. The empty cards are the answer
+ * rather than a gap: this set has no variants and no logs, and a card that
+ * says *No matches* says so.
+ */
+export const RecordPageMostlyEmpty = story({
+  schema: legoSchema,
+  within: 'set:"sets_10404"',
+  previewsPerType: 5,
+})
+
+/**
+ * A card whose slots render nothing draws no strips for them. A body that is a
+ * `v-if` over a warning usually has no warning, and an aside that is a row of
+ * controls has none until the record has loaded — drawn either way, each is an
+ * empty band with a hairline over it.
+ */
+export const RecordPageEmptySlots = story({
+  schema: legoSchema,
+  within: YELLOW_CASTLE,
+  previewsPerType: 3,
+  slots: {
+    'cards-before': () => [
+      h(ShellCard, { title: 'Nothing in it', span: 'all' }, {
+        // What a `v-if` that did not fire leaves behind, and what the
+        // template's own indentation leaves with it.
+        default: () => [h(Comment), '  \n  '],
+        aside: () => [h(Comment)],
+        foot: () => [],
+      }),
+    ],
+  },
+})

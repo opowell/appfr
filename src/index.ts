@@ -10,6 +10,7 @@ export { default as DataShell } from './components/DataShell.vue'
 export { default as ShellHeader } from './components/ShellHeader.vue'
 export { default as QueryPanel } from './components/QueryPanel.vue'
 export { default as RecordActions } from './components/RecordActions.vue'
+export { default as ShellCard } from './components/ShellCard.vue'
 export { default as ResultsArea } from './components/ResultsArea.vue'
 export { default as FacetControl } from './components/FacetControl.vue'
 export { default as SegmentedControl } from './components/SegmentedControl.vue'
@@ -257,11 +258,13 @@ export type { RouterLike } from './routing/vueRouter'
 export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS } from './data/mock'
 export type { MockSourceOptions } from './data/mock'
 export {
+  andExpression,
   formatExpression,
   formatTerm,
   joinExpression,
   matchesExpression,
   parseExpression,
+  sameTerm,
   splitExpression,
   withoutTerm,
 } from './data/expression'

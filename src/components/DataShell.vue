@@ -53,6 +53,24 @@ const props = withDefaults(
     /** Query fields to fall back to when the URL omits them. */
     defaults?: ShellQueryDefaults
     /**
+     * An expression the whole shell is read *inside* — its scope, held here
+     * rather than in the URL.
+     *
+     * It is ANDed on to every query the shell runs: the result set, the
+     * per-type cards on the home screen, and the counts beside each type. So
+     * the header says what matched *within* it, and no part of the bar lifts
+     * it, because it is not something the reader asked for — it is what this
+     * shell is about. A page for one record is the case it exists for:
+     * `within="test:&quot;x.spec.ts&quot;"` and the home screen becomes a card
+     * per type of everything that names that record.
+     *
+     * The query the reader does own goes on working as it always did, inside
+     * this. Nothing here reaches the URL, so the same URL under a different
+     * scope is a different set of rows — which is right for a scope that comes
+     * from the route rather than from the query.
+     */
+    within?: string
+    /**
      * Rows per page: the most the source is asked for at once. The header
      * offers the pages this divides the results into, and the page itself is
      * in the URL.
@@ -171,6 +189,18 @@ const slots = defineSlots<{
    * bar would otherwise have to carry beside the summary it is there to show.
    */
   'panel-section'?: () => unknown
+  /**
+   * Cards of the host's own, above and below the card-per-type screen — the
+   * things a shell read inside one record has to say that no type of record
+   * holds. They are grid cells of the same grid, so `<ShellCard>` is what
+   * makes one look like the cards it sits among, and `span` is how one takes
+   * more of the row than a type card does.
+   *
+   * Only the per-type screen has them, that being the only view made of cards
+   * rather than of records: `Everything` chosen, `Cards` drawn.
+   */
+  'cards-before'?: () => unknown
+  'cards-after'?: () => unknown
   /** Replaces the entire results area. */
   results?: (props: {
     /** The current page of rows, not the whole result. */
@@ -210,12 +240,16 @@ const query = useQueryState({
   facetNavigationMode: () => props.facetNavigationMode,
 })
 
+/** Trimmed once: an empty scope and no scope at all are the same shell. */
+const within = computed(() => props.within?.trim() ?? '')
+
 const results = useResults({
   source,
   query: query.query,
   schema: computed(() => props.schema),
   entity: query.entity,
   limit: computed(() => props.limit),
+  within,
 })
 
 watch(query.query, (value) => emit('query-change', value))
@@ -363,6 +397,7 @@ const shell = provideShellContext({
   error: results.error,
   source,
   previewsPerType: computed(() => props.previewsPerType),
+  within,
   pinnable: computed(() => props.pinnable === true),
   isPinned: (row) => pinnedIds.value.has(row.id),
   isPinnedId: (id) => pinnedIds.value.has(id),
@@ -462,7 +497,20 @@ defineExpose({
       :query="shell.query.value"
       :pending="shell.pending.value"
     >
-      <ResultsArea :views="views" />
+      <ResultsArea :views="views">
+        <template
+          v-if="slots['cards-before']"
+          #cards-before
+        >
+          <slot name="cards-before" />
+        </template>
+        <template
+          v-if="slots['cards-after']"
+          #cards-after
+        >
+          <slot name="cards-after" />
+        </template>
+      </ResultsArea>
     </slot>
   </div>
 </template>

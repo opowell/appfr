@@ -8,6 +8,7 @@ import type {
   ShellQuery,
 } from '../types'
 import { emptyFacetState, isPristineQuery } from '../query/schema'
+import { andExpression } from '../data/expression'
 import type { PresentedRow } from './usePresentedRows'
 import { presentRow } from './usePresentedRows'
 
@@ -32,6 +33,12 @@ export interface UseEntityPreviewsOptions {
   entities: ComputedRef<EntitySchema[]>
   /** Rows to show inside each type's card. */
   limit: ComputedRef<number>
+  /**
+   * An expression every card is read inside — see {@link UseResultsOptions.within}.
+   * A card's count is then how many of its type are in *that* scope, which is
+   * why a scoped shell never reports the population the schema publishes.
+   */
+  within?: ComputedRef<string>
   isPinned: (id: string) => boolean
 }
 
@@ -71,7 +78,14 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
     const schema = options.schema.value
     const entities = options.entities.value
     const limit = options.limit.value
-    const pristine = isPristineQuery(query)
+    const within = options.within?.value.trim() ?? ''
+    /*
+     * A scope is a narrowing like any other, whatever the URL says: the query
+     * may be untouched, but the cards are not showing the whole of each type,
+     * so the count each of them reports has to be what matched.
+     */
+    const pristine = isPristineQuery(query) && !within
+    const expr = within ? andExpression(within, query.expr) : query.expr
 
     const requests = entities.map((entity) => ({
       entity,
@@ -80,7 +94,7 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
       outcome: options.source.value.query({
         // Each card is the top few of its type, wherever the shell's own
         // result set has been paged to — so this asks for the first page.
-        query: { ...query, entity: entity.key, facets: emptyFacetState(entity), page: 1 },
+        query: { ...query, entity: entity.key, expr, facets: emptyFacetState(entity), page: 1 },
         schema,
         entity,
         limit,
@@ -127,7 +141,14 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
   }
 
   watch(
-    [options.source, options.schema, options.query, options.entities, options.limit],
+    [
+      options.source,
+      options.schema,
+      options.query,
+      options.entities,
+      options.limit,
+      () => options.within?.value,
+    ],
     guarded,
     { immediate: true },
   )

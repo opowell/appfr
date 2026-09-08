@@ -1,6 +1,5 @@
 import type { DomainSchema, EntitySchema, ShellRow } from '../types'
-import { parseExpression } from '../data/expression'
-import type { Term } from '../data/expression'
+import { parseExpression, sameTerm } from '../data/expression'
 
 /**
  * Turning a `drill` into an expression.
@@ -43,31 +42,6 @@ export function scopeTermFor(schema: DomainSchema, row: ShellRow): string | null
     schema.entities.find((entity) => entity.key === row.entityKey),
     row,
   )
-}
-
-/** Values compare as they match: case is not a constraint in this language. */
-const sameValue = (one: string, other: string) => one.toLowerCase() === other.toLowerCase()
-
-/**
- * Whether two terms say the same thing.
- *
- * By what they parse to rather than by how they were written, because the same
- * constraint has more than one spelling: `scopeTerm` always quotes, while
- * lifting any part of a query writes the rest back out through
- * `formatExpression`, which quotes only where it has to. `host:"a.example"`
- * and `host:a.example` are one term, and a comparison of text would call them
- * two and let a second copy in.
- */
-function sameTerm(one: Term, other: Term): boolean {
-  if (one.kind === 'field') {
-    return (
-      other.kind === 'field' &&
-      one.field === other.field &&
-      one.comparator === other.comparator &&
-      sameValue(one.value, other.value)
-    )
-  }
-  return other.kind === 'text' && sameValue(one.value, other.value)
 }
 
 /**

@@ -412,7 +412,7 @@ mark — never a list of columns — so they ask for those parts by name:
 | `metric` | the numbers on a list row (first two), a card (first two), a home-screen preview row (first one), and every one of them in the preview pane |
 | `state` | the pill |
 | `updated` | the date on a card, a home-screen row and the preview pane |
-| `image` | the picture beside the name on a card and behind the caption on a grid tile — a value like any other, so the column is still a cell in the table |
+| `image` | the picture beside the name on a card and behind the caption on a grid tile — a value like any other, so the column is still a cell in the table. A row holding none is each of those drawn without one, and so is a source that fails to load: a catalogue addresses pictures it does not host |
 | `tint` | the grid tile's background and the preview pane's banner — never drawn as a cell, so the table leaves it out |
 
 A column with no role is a column and nothing else: it is in the table and
@@ -719,6 +719,98 @@ key means the key. The generic names — `name`, `ref`, `status`, `updated`,
 with a field of that name means its own; only `entity` stays the shell's, so
 that any corpus can be narrowed by kind.
 
+### A shell about one record
+
+Narrowing puts a record's id in the query, which is right when someone reached
+it by pressing a number. A record's own *page* is the other way round: the
+record is what the page is, it came from the route rather than from the query,
+and there is nothing behind it to widen back out to. `within` is that — an
+expression the whole shell is read inside, held by the host:
+
+```vue
+<DataShell
+  :schema="schema"
+  :source="source"
+  :within="`test:&quot;${route.params.id}&quot;`"
+/>
+```
+
+It is ANDed on to every query the shell runs — the result set, the per-type
+cards, and the count beside each type — so `Everything` means everything *about
+this record*, and each type reports how many of it are in scope rather than the
+population the schema publishes. Nothing of it reaches the URL: the query the
+reader owns goes on working exactly as it did, inside this.
+
+```
+◆ LEGO │ set:Yellow Castle (sets_10007) │ [Everything · 41 ▾] [Cards ▾]  [1978]
+         ^ the scope: not a pill, because there is nothing to lift it to        ^ the query
+```
+
+The bar states it at its head, before the query and outside the row of parts
+that scrolls, and reads it the way it reads a narrowing term: where the scope
+names a record, it says which record. An `OR` in the query is multiplied out
+rather than appended to — this language has no brackets, so `a OR b` inside
+`set:x` is asked as `a set:x OR b set:x`. `andExpression(one, other)` is that
+rule, exported.
+
+With `Cards` drawn and `Everything` chosen, what comes out is a card per type
+of everything that names the record — which is most of a detail view already.
+
+#### Cards of your own
+
+What is missing from it is the record itself, and the two slots are for that:
+
+```vue
+<DataShell :schema="schema" :within="scope">
+  <template #cards-before>
+    <ShellCard span="all">
+      <template #head><h2>{{ record.title }}</h2></template>
+      <template #aside><button @click="duplicate">Duplicate</button></template>
+    </ShellCard>
+    <ShellCard title="Run">…the form that acts on it…</ShellCard>
+  </template>
+
+  <template #cards-after>
+    <ShellCard title="Metadata" :count="`${fields.length} fields`">…</ShellCard>
+    <ShellCard title="Source" span="all" flush><pre>{{ record.source }}</pre></ShellCard>
+  </template>
+</DataShell>
+```
+
+```
+┌── Yellow Castle · 375-2 ───────────────────── [Duplicate] [Delete] ──┐  cards-before
+├──────────────────────────────────────────────────────────────────────┤
+┌── Build ─────────────┐ ┌── Sets       1 ──────┐ ┌── Pieces     41 ──┐
+│ …                    │ │ Yellow Castle        │ │ Brick 2x4         │  the types
+└──────────────────────┘ └──────────────────────┘ └───────────────────┘
+┌── Metadata  6 fields ┐
+│ theme:castle …       │                                                  cards-after
+└──────────────────────┘
+┌── Source ────────────────────────────────────────────────────────────┐
+│ { "set": "375-2", … }                                                │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+They are cells of the same grid as the type cards, so `<ShellCard>` is what
+makes one look like the cards it sits among — the shell's own card chrome is
+scoped CSS a host cannot reach. Its props are `title`, `count`, `span` (a
+number of columns, or `'all'` for the width of the grid), `flush` for content
+that draws its own edges, and `muted`; its slots are `head`, `aside`, the
+default body and `foot`. Nothing in it reads the shell's context, so it works
+anywhere inside a `.dc-shell` element — including a page of your own with no
+query at all:
+
+```vue
+<div class="dc-shell" data-dc-theme="dark">
+  <ShellCard title="New run">…</ShellCard>
+</div>
+```
+
+Only the per-type screen draws the slots, that being the only view made of
+cards rather than of records: choose a type, or another view, and the cards go
+and the records are what is on screen. A view of your own reads
+`useShellContext().within` for the scope, which is not part of `query`.
+
 ### A facet a row holds several of
 
 A chips facet is one value per row by default. Mark it `multiple` and a row may
@@ -903,6 +995,7 @@ host writing a field of its own.
 | `source` | `DataSource` | mock over the schema | Where rows come from. |
 | `route` | `RouteAdapter` | injected, else History API | How the query reaches the URL. |
 | `defaults` | `ShellQueryDefaults` | home, `cards`, `updated`, `desc` | Fallbacks when the URL omits a field. `landing: 'entity'` opens on one entity's list instead of home. |
+| `within` | `string` | — | An expression the whole shell is read inside — its scope, held here rather than in the URL. See [a shell about one record](#a-shell-about-one-record). |
 | `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
 | `views` | `ViewKind[]` | all six | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. |
@@ -927,9 +1020,11 @@ updated, `toggle-pin(row)`, plus `update:open`, `update:pinned` and
 `update:selected`.
 
 **Slots** — `actions` for extra controls at the right of the header bar,
-`panel-section` for a section of your own at the end of the query panel, and
-`results` to replace the content area entirely (receives `rows` — the current
-page of them — plus `total`, `offset`, `pageCount`, `query` and `pending`).
+`panel-section` for a section of your own at the end of the query panel,
+`cards-before` and `cards-after` for [cards of your own](#cards-of-your-own)
+above and below the card-per-type screen, and `results` to replace the content
+area entirely (receives `rows` — the current page of them — plus `total`,
+`offset`, `pageCount`, `query` and `pending`).
 
 `panel-section` is where an application's own commands go when they are not
 about the query — the header bar's width belongs to the summary it exists to
@@ -1052,6 +1147,14 @@ puts the date and the state off the right-hand edge — the two columns a row is
 scanned for — and a wrapped path makes one row four lines deep and the row
 under it one.
 
+**Except where the depth is already paid for.** A table with a picture in it —
+a column of `kind: 'image'`, or any column stating a `height` — has rows taller
+than a line whether the words beside them use it or not, so there a long value
+runs on to `--dc-table-lines` lines (3) before it is cut short. The name is
+included, mark and all: the column whose values are longest is the one this is
+for. Every other table keeps its single line, because rows that are all one
+depth is what a table of them is for.
+
 Below the widths it needs, columns stand down rather than crowd — each at the
 container width its [`hideBelow`](#columns-of-your-own) names. In the default
 set that is the metrics first, at the size the list view drops them too, then
@@ -1087,7 +1190,10 @@ The context carries the selection as well — `selectable`, `selection`,
 `isSelected`, `toggleSelect`, `selectPage` and `clearSelection`, plus `create`,
 `duplicate` and `delete` — so a view of your own can offer the ticks the
 shipped six do, and `<RecordActions>` is exported for a host laying the parts
-out itself.
+out itself. `within` is on it too, for a view that says what narrowed the
+results: it is the shell's scope rather than part of its query, so it is not on
+`query`. `useResults` and `useEntityPreviews` each take it as an option, which
+is how a host wiring its own results area keeps them inside the same scope.
 
 ## Windows
 
@@ -2172,6 +2278,7 @@ are a whole theme:
 | `--dc-tint` | how much colour those tints carry (`10%` minimal, `24%` dark, `14%` light, `16%` inherit and `mono-size`) |
 | `--dc-sans`, `--dc-mono`, `--dc-font-size` | typography |
 | `--dc-radius-sm`, `--dc-radius`, `--dc-radius-lg` | corners |
+| `--dc-table-lines` | how many lines a cell may wrap to, in a table whose rows are already tall |
 | `--dc-shadow`, `--dc-header-height` | — |
 | `--dc-header-width` | how wide the bar and panel are under `matchWidth="shrink"` |
 

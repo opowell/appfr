@@ -31,6 +31,13 @@ export interface ShellContext extends QueryState {
   source: ComputedRef<DataSource>
   /** Rows shown inside each type's card on the home screen. */
   previewsPerType: ComputedRef<number>
+  /**
+   * The expression the whole shell is read inside, or `''` where it is read
+   * inside nothing. It is not part of the query — the URL never carries it and
+   * no term on the bar lifts it — so a view that says what narrowed the
+   * results has to ask for it separately.
+   */
+  within: ComputedRef<string>
   /** Whether the star affordance is offered on rows. */
   pinnable: ComputedRef<boolean>
   isPinned(row: ShellRow): boolean

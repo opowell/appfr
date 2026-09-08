@@ -23,6 +23,16 @@ const props = defineProps<{
 
 const shell = useShellContext()
 
+/**
+ * Passed straight through to the per-type cards, which is the one view they
+ * mean anything in: a card of the host's own belongs in a grid of cards, and
+ * the other five views are rows and tiles of records.
+ */
+const slots = defineSlots<{
+  'cards-before'?: () => unknown
+  'cards-after'?: () => unknown
+}>()
+
 const VIEWS: Record<ViewKind, Component> = {
   list: ListView,
   cards: CardsView,
@@ -51,8 +61,26 @@ const failed = computed(() => shell.error.value !== null)
     class="dc-results"
     :data-dc-pending="shell.pending.value ? 'true' : 'false'"
   >
+    <!-- First, because the per-type cards do not read the shell's own result
+         set at all: each runs its own query and reports its own failure, and
+         the cards a host put among them are not waiting on either. -->
+    <TypeCardsView v-if="isTypeCards">
+      <template
+        v-if="slots['cards-before']"
+        #before
+      >
+        <slot name="cards-before" />
+      </template>
+      <template
+        v-if="slots['cards-after']"
+        #after
+      >
+        <slot name="cards-after" />
+      </template>
+    </TypeCardsView>
+
     <p
-      v-if="failed"
+      v-else-if="failed"
       class="dc-results__state"
       role="alert"
     >
@@ -61,10 +89,6 @@ const failed = computed(() => shell.error.value !== null)
         {{ shell.error.value instanceof Error ? shell.error.value.message : 'The data source failed.' }}
       </span>
     </p>
-
-    <!-- The per-type cards run their own per-entity queries, so they render
-         whatever the shell's single mixed query happened to return. -->
-    <TypeCardsView v-else-if="isTypeCards" />
 
     <p
       v-else-if="!hasRows && shell.pending.value"

@@ -103,8 +103,10 @@ function p(e) {
 }
 const y = [
   { key: "ordinal", kind: "ordinal", label: "#", width: "48px" },
-  // No label: a column of pictures says what it is.
-  { key: "thumb", kind: "image", width: "56px", height: "28px", value: u },
+  // No label: a column of pictures says what it is. The role is what carries
+  // it out of the table — onto the card and the tile, which are a picture and
+  // a name where a piece has one.
+  { key: "thumb", role: "image", kind: "image", width: "56px", height: "28px", value: u },
   {
     key: "primary",
     role: "identity",

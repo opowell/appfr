@@ -115,12 +115,22 @@ export type ColumnRole =
 /** When the record last changed, as an ISO-8601 date. */
  | 'updated'
 /**
+ * The record's picture. Its value is the `src` — a URL or a data URI — and
+ * a row holding none is a record those views draw without one rather than a
+ * broken image.
+ *
+ * Unlike `tint` this is a value like any other, so a column that plays it is
+ * still a column: an `image` cell in the table, and the picture on the card
+ * and the tile both.
+ */
+ | 'image'
+/**
  * A colour for the grid view's tile. Declared as a column so the schema
  * names its fields in one place, but never drawn as a cell — a background
  * is not a value — so the table leaves it out.
  */
  | 'tint';
-export declare const COLUMN_ROLES: readonly ["identity", "reference", "metric", "state", "updated", "tint"];
+export declare const COLUMN_ROLES: readonly ["identity", "reference", "metric", "state", "updated", "image", "tint"];
 /**
  * The container widths a column may stand down at, narrowest first. A fixed
  * ladder rather than a free number because the rule is a container query in a

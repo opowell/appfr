@@ -26,6 +26,13 @@ export interface RowParts {
     state: RecordStatus | null;
     /** The date, formatted the way every view formats it. */
     updated: string;
+    /**
+     * The record's picture, as the `src` a view can draw — null where the type
+     * declares no `image` column, and null where it declares one that this row
+     * has nothing under. A view asks whether there is a picture, never whether
+     * the string is empty.
+     */
+    image: string | null;
     /** A colour for the grid view's tile, where a column names one. */
     tint: string | null;
 }

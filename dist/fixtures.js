@@ -94,7 +94,7 @@ const t = (e, i, n, o = !1) => ({
   secondary: "Reference",
   metric1: "Metric",
   metric2: "Metric 2"
-}), u = (e) => "data:image/svg+xml," + encodeURIComponent(
+}), u = (e) => e.fields.rarity === !0 ? "" : "data:image/svg+xml," + encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28"><rect width="56" height="28" rx="3" fill="${String(e.fields.tint)}"/></svg>`
 );
 function p(e) {

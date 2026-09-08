@@ -8,6 +8,13 @@ export interface UseResultsOptions {
     entity: ComputedRef<EntitySchema | null>;
     /** Rows per page — the most the source is asked for at once. */
     limit: ComputedRef<number>;
+    /**
+     * An expression the query is read *inside* — the shell's own scope, which
+     * the host holds rather than the URL. It is ANDed on to whatever the query
+     * asks, so the source is handed one expression and never needs to know that
+     * part of it was not typed.
+     */
+    within?: ComputedRef<string>;
 }
 export interface ResultsState {
     rows: ShallowRef<ShellRow[]>;

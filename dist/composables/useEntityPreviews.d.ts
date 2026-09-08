@@ -21,6 +21,12 @@ export interface UseEntityPreviewsOptions {
     entities: ComputedRef<EntitySchema[]>;
     /** Rows to show inside each type's card. */
     limit: ComputedRef<number>;
+    /**
+     * An expression every card is read inside — see {@link UseResultsOptions.within}.
+     * A card's count is then how many of its type are in *that* scope, which is
+     * why a scoped shell never reports the population the schema publishes.
+     */
+    within?: ComputedRef<string>;
     isPinned: (id: string) => boolean;
 }
 export interface EntityPreviewsState {

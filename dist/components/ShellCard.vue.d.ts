@@ -1,0 +1,45 @@
+type __VLS_Props = {
+    /** The card's heading. Left out where the `head` slot says it instead. */
+    title?: string;
+    /**
+     * The number beside the heading, as a type card carries its population.
+     * A string, so it is formatted the way the host formats its own counts.
+     */
+    count?: string | number;
+    /**
+     * How many columns of the card grid this takes. `'all'` is the width of
+     * the grid — for the cards a row of them would cut short: source, a log, a
+     * wide table. Ignored outside a grid.
+     */
+    span?: number | 'all';
+    /**
+     * Drops the body's padding, for content that draws its own edges — a
+     * table, a `<pre>`, a log pane.
+     */
+    flush?: boolean;
+    /**
+     * Draws the card as the shell draws a type with nothing in it: present,
+     * and quieter than the cards that hold something.
+     */
+    muted?: boolean;
+};
+type __VLS_Slots = {
+    /** The whole head, replacing the title and count. */
+    head?: () => unknown;
+    /** The right end of the head — a link, a badge, a button. */
+    aside?: () => unknown;
+    /** The card's content. */
+    default?: () => unknown;
+    /** A row under the content, drawn as the type card's own button is. */
+    foot?: () => unknown;
+};
+declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {
+    span: number | "all";
+}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+declare const _default: __VLS_WithSlots<typeof __VLS_component, __VLS_Slots>;
+export default _default;
+type __VLS_WithSlots<T, S> = T & {
+    new (): {
+        $slots: S;
+    };
+};

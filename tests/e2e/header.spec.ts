@@ -2,6 +2,9 @@ import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import {
   chooseScope,
+  chooseSort,
+  chooseView,
+  clearScope,
   clickOutsidePanel,
   gotoStory,
   header,
@@ -15,6 +18,8 @@ import {
   rowOrdinals,
   scopeLabel,
   scopeSelect,
+  sortDirection,
+  sortSelect,
   stepPage,
   termBar,
   terms,
@@ -97,11 +102,75 @@ test.describe('Header — the query as it stands', () => {
 
   test('widens back to everything when the scope is lifted', async ({ page }) => {
     await gotoStory(page, ENTITY)
-    await openPanel(page)
-    await page.locator('.dc-entity--all').click()
+    await clearScope(page)
     await expect(scopeSelect(page)).toHaveValue('')
     expect(await scopeLabel(page)).toBe('Everything · 240')
     await expect(viewSelect(page)).toHaveValue('list')
+  })
+})
+
+/*
+ * How the results are drawn and what they are ordered by. Both are parts of
+ * the query rather than settings beside it, so both are chosen on the bar
+ * where the rest of the query is — the panel that used to hold them is for
+ * what narrows a type.
+ */
+test.describe('Header — how the results are drawn and ordered', () => {
+  test('the view chooser swaps the renderer', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    await expect(page.locator('.dc-list')).toBeVisible()
+
+    await chooseView(page, 'table')
+
+    await expect(page.locator('.dc-table')).toBeVisible()
+    await expect(page.locator('.dc-list')).toHaveCount(0)
+  })
+
+  test('the sort chooser reorders the content', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--table-view')
+    // A sort is named as the column offering it is named, and `searches` heads
+    // its identity column "Search".
+    await chooseSort(page, 'search')
+
+    const names = await page.locator('.dc-table__open').allInnerTexts()
+    expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a)))
+    await expect(scopeSelect(page)).toHaveValue('searches')
+  })
+
+  test('the direction button reverses the order', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+
+    const first = await page.locator('.dc-list__primary').first().innerText()
+    await expect(sortDirection(page)).toHaveText('↓')
+
+    await sortDirection(page).click()
+    await expect(sortDirection(page)).toHaveText('↑')
+    expect(await page.locator('.dc-list__primary').first().innerText()).not.toBe(first)
+  })
+
+  /*
+   * The sorts are the columns that offer one, named as those columns are named
+   * and in the order the schema declared them — so the bar and the table
+   * headings are offering one list rather than two.
+   */
+  test('the sorts are the columns offering them, in the schema’s own words', async ({ page }) => {
+    await gotoStory(page, HOME)
+    // Across every entity the columns are the schema's generic set.
+    await expect(sortSelect(page).locator('option')).toHaveText([
+      'item',
+      'metric',
+      'metric 2',
+      'updated',
+    ])
+
+    await gotoStory(page, ENTITY)
+    // iRadar heads `searches` "Search" and names its metrics "New" and "Results".
+    await expect(sortSelect(page).locator('option')).toHaveText([
+      'search',
+      'new',
+      'results',
+      'updated',
+    ])
   })
 })
 
@@ -152,6 +221,7 @@ test.describe('Header — lifting a part of the query', () => {
     // hold says that already. The name is there for anyone who cannot see it.
     await expect(page.getByRole('combobox', { name: 'Type' })).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'View' })).toBeVisible()
+    await expect(page.getByRole('combobox', { name: 'Sort' })).toBeVisible()
   })
 
   test('choosing another type lists that one instead', async ({ page }) => {
@@ -346,12 +416,16 @@ test.describe('Header — opening the expanded query view', () => {
   test('the header is reachable and operable from the keyboard alone', async ({ page }) => {
     await gotoStory(page, HOME)
     // The query comes first, since it is what the bar is mostly made of: which
-    // type is listed, how it is drawn, and then the button that opens the rest
-    // of the query.
+    // type is listed, how it is drawn, what it is ordered by and which way
+    // round — and then the button that opens the rest of the query.
     await page.keyboard.press('Tab')
     await expect(scopeSelect(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(viewSelect(page)).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(sortSelect(page)).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(sortDirection(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(trigger(page)).toBeFocused()
     await page.keyboard.press('Enter')

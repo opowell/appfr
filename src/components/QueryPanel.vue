@@ -1,17 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import type { FacetValue, ViewKind } from '../types'
-import { VIEW_KINDS } from '../types'
+import type { FacetValue } from '../types'
 import { useShellContext } from '../composables/context'
-import { VIEW_LABELS } from '../query/schema'
 import { formatTerm, joinExpression, splitExpression } from '../data/expression'
 import FacetControl from './FacetControl.vue'
-import SegmentedControl from './SegmentedControl.vue'
 
-const props = defineProps<{
+defineProps<{
   panelId: string
-  /** Views to offer. Defaults to all six. */
-  views?: ViewKind[]
 }>()
 
 const emit = defineEmits<{ close: [] }>()
@@ -26,14 +21,6 @@ const slots = defineSlots<{
 }>()
 
 const shell = useShellContext()
-
-const viewOptions = computed(() =>
-  (props.views ?? [...VIEW_KINDS]).map((key) => ({ key, label: VIEW_LABELS[key] })),
-)
-
-const sortOptions = computed(() =>
-  shell.sorts.value.map((sort) => ({ key: sort.key, label: sort.label })),
-)
 
 /*
  * The expression, in the two halves this panel edits it as: the constraints it
@@ -164,48 +151,6 @@ void nextTick(() => expressionField.value?.focus())
         />
       </template>
 
-      <!-- The entity picker is part of the query, not a topic beside it:
-           narrowing to an entity is what gives the facets above something to
-           filter, so the two are read as one. -->
-      <div class="dc-panel__row">
-        <span
-          :id="`${panelId}-entities`"
-          class="dc-panel__field-label"
-        >Entities</span>
-
-        <div
-          class="dc-panel__entities"
-          role="group"
-          :aria-labelledby="`${panelId}-entities`"
-        >
-          <!-- Lifting the entity filter is an option beside the entities, not a
-               separate control: "everything" is just no filter. -->
-          <button
-            type="button"
-            class="dc-entity dc-entity--all"
-            :data-dc-active="shell.isEverything.value ? 'true' : 'false'"
-            :aria-current="shell.isEverything.value ? 'true' : undefined"
-            @click="shell.clearEntity()"
-          >
-            <span class="dc-entity__label">Everything</span>
-            <span class="dc-entity__count dc-mono">{{ shell.entities.value.length }} kinds</span>
-          </button>
-
-          <button
-            v-for="candidate in shell.entities.value"
-            :key="candidate.key"
-            type="button"
-            class="dc-entity"
-            :data-dc-active="candidate.key === shell.entity.value?.key ? 'true' : 'false'"
-            :aria-current="candidate.key === shell.entity.value?.key ? 'true' : undefined"
-            @click="shell.setEntity(candidate.key)"
-          >
-            <span class="dc-entity__label">{{ candidate.label }}</span>
-            <span class="dc-entity__count dc-mono">{{ candidate.count }}</span>
-          </button>
-        </div>
-      </div>
-
       <div class="dc-panel__actions">
         <button
           type="button"
@@ -222,42 +167,6 @@ void nextTick(() => expressionField.value?.focus())
         >
           Reset
         </button>
-      </div>
-    </section>
-
-    <section class="dc-panel__section dc-panel__rows">
-      <div class="dc-panel__row">
-        <span class="dc-panel__field-label">View</span>
-        <div class="dc-panel__control">
-          <SegmentedControl
-            label="Result view"
-            :model-value="shell.query.value.view"
-            :options="viewOptions"
-            @update:model-value="shell.setView($event as ViewKind)"
-          />
-        </div>
-      </div>
-
-      <div class="dc-panel__row">
-        <span class="dc-panel__field-label">Sort</span>
-        <div class="dc-panel__control">
-          <SegmentedControl
-            mono
-            label="Sort field"
-            :model-value="shell.query.value.sort"
-            :options="sortOptions"
-            @update:model-value="shell.setSort($event)"
-          />
-          <button
-            type="button"
-            class="dc-button dc-button--icon dc-mono"
-            :title="shell.query.value.dir === 'desc' ? 'Descending — click to reverse' : 'Ascending — click to reverse'"
-            :aria-label="`Sort direction: ${shell.query.value.dir === 'desc' ? 'descending' : 'ascending'}`"
-            @click="shell.toggleDirection()"
-          >
-            {{ shell.query.value.dir === 'desc' ? '↓' : '↑' }}
-          </button>
-        </div>
       </div>
     </section>
 
@@ -399,20 +308,6 @@ void nextTick(() => expressionField.value?.focus())
   margin-top: 5px;
 }
 
-.dc-entity--all .dc-entity__label {
-  color: var(--dc-fg-0);
-}
-
-.dc-entity--all[data-dc-active='true'] .dc-entity__label {
-  color: var(--dc-accent);
-}
-
-.dc-panel__control {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .dc-button {
   padding: 8px 12px;
   background: var(--dc-bg-2);
@@ -442,58 +337,6 @@ void nextTick(() => expressionField.value?.focus())
 .dc-button--primary:hover:not(:disabled) {
   background: var(--dc-accent);
   filter: brightness(1.08);
-}
-
-.dc-button--icon {
-  padding: 5px 10px;
-  background: var(--dc-bg-0);
-  font-size: var(--dc-text-meta);
-}
-
-/* A row of buttons rather than a grid of cards: picking an entity is a
-   filter, and a filter is a control the width of its own name. */
-.dc-panel__entities {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.dc-entity {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 7px 11px;
-  background: var(--dc-bg-0);
-  border: 1px solid var(--dc-line);
-  border-radius: var(--dc-radius);
-  text-align: left;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.dc-entity:hover {
-  border-color: var(--dc-line-2);
-}
-
-.dc-entity[data-dc-active='true'] {
-  background: var(--dc-accent-bg);
-  border-color: var(--dc-accent-dim);
-}
-
-.dc-entity__label {
-  font-size: var(--dc-text-body);
-  font-weight: var(--dc-weight-semibold);
-  letter-spacing: var(--dc-tracking-tight);
-}
-
-.dc-entity[data-dc-active='true'] .dc-entity__label {
-  color: var(--dc-accent);
-}
-
-.dc-entity__count {
-  font-size: var(--dc-text-micro);
-  color: var(--dc-fg-3);
 }
 
 /* Too narrow for a title beside its control: the panel drops to one track, and

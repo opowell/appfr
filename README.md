@@ -442,7 +442,7 @@ know.
 **Sorting** is offered where the column names a sort the entity actually
 declares, so a set written for several types cannot offer an ordering the query
 has no way to hold. Everything else about it is unchanged: the header is the
-same button the query panel's control is, and the sort is in the URL.
+same button the bar's own sort chooser is, and the sort is in the URL.
 
 **Standing down.** `hideBelow` names the container width a column leaves at,
 from the ladder `480 | 620 | 760 | 900 | 1100` — a ladder rather than a free
@@ -777,12 +777,12 @@ the results are drawn, each active facet, and each term of the expression.
 Press a pill and that part comes out; the rest goes on running.
 
 ```
-[Items · 412 ▾] [List ▾] [year>=1988] [release] or [recall]
-                          ^ press: that constraint is gone
+[Items · 412 ▾] [List ▾] [updated ▾] [↓] [year>=1988] [release] or [recall]
+                                          ^ press: that constraint is gone
 ```
 
-Two of those parts are choices rather than pills, and neither spends a word of
-the bar saying what it is — what each of them holds says that already. The
+Three of those parts are choices rather than pills, and none of them spends a
+word of the bar saying what it is — what each of them holds says that already. The
 entity is the first, because the useful move from one type is almost always
 another type. It lists every entity the schema declares with `Everything` at
 the top, so widening back out is still one press — it is simply not the only
@@ -790,11 +790,15 @@ thing on offer. And it is in the bar whether or not anything is filtered: a
 query is about something even when that something is everything, so the whole
 corpus is a scope like any other rather than the absence of one.
 
-The view is the second, and it is on the bar for the same reason: how the
-results are drawn is a part of the query, in the URL with the rest of it, so it
-is a choice you make where the query is rather than one you go into the panel
-for. The ordering stays in the panel — it is the one part of a query that
-already has a control on the results themselves, in the table's own headings.
+The view is the second, and the ordering is the third, and both are on the bar
+for the same reason: how the results are drawn and what they are ordered by are
+parts of the query, in the URL with the rest of it, so they are choices you
+make where the query is rather than ones you go into the panel for. The sort
+lists the columns that offer an ordering, named as those columns are named, so
+the bar and the table's own headings offer one list rather than two; the arrow
+beside it is that same ordering the other way about, which is a press rather
+than another entry in the list. What is left in the panel is what narrows a
+type: its facets, and the expression.
 
 It says how many, too, because what is being listed and how much of it there is
 are one question. Each type carries the population the schema publishes —
@@ -928,9 +932,9 @@ page of them — plus `total`, `offset`, `pageCount`, `query` and `pending`).
 `panel-section` is where an application's own commands go when they are not
 about the query — the header bar's width belongs to the summary it exists to
 show, and it is trimmed before its actions are. The shell renders the section
-element, so it sits flush with Query, View and Entities above it and takes the
-divider between them; the content is yours, and `dc-eyebrow` is there for a
-heading that matches theirs:
+element, so it sits flush with the query above it and takes the divider
+between them; the content is yours, and `dc-eyebrow` is there for a heading
+that matches its own:
 
 ```vue
 <DataShell :schema="schema">
@@ -953,7 +957,7 @@ match-width="grow" — the panel widens to the bar
 ┌──────────────────────────────────────────────────────┐
 │ ◆ iRadar │ [Everything · 240 ▾] [Cards ▾]           ▲ │
 ├──────────────────────────────────────────────────────┤
-│ Query · View · Entities                              │
+│ Query                                                │
 └──────────────────────────────────────────────────────┘
   01  Competitor pricing pages          909  running
 
@@ -961,7 +965,7 @@ match-width="shrink" — the bar comes in to the panel
         ┌──────────────────────────────────────┐
         │ ◆ iRadar │ [Everything · 240 ▾] ▲ │
         ├──────────────────────────────────────┤
-        │ Query · View · Entities              │
+        │ Query                                │
         └──────────────────────────────────────┘
   01  Competitor pricing pages          909  running
 ```

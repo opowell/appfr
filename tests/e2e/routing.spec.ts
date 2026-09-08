@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test'
 import {
+  chooseSort,
+  chooseView,
+  clearScope,
   gotoStory,
   listRows,
   openPanel,
@@ -7,6 +10,7 @@ import {
   pickEntity,
   scopeSelect,
   shellParams,
+  sortDirection,
   stepPage,
   terms,
   trigger,
@@ -31,8 +35,7 @@ test.describe('URL — the query is the route', () => {
 
   test('a view change appears in the URL', async ({ page }) => {
     await gotoStory(page, LIVE)
-    await openPanel(page)
-    await page.getByRole('radio', { name: 'Table', exact: true }).click()
+    await chooseView(page, 'table')
     await expect(page.locator('.dc-table')).toBeVisible()
     expect(shellParams(page.url())).toEqual({ v: 'table' })
   })
@@ -45,7 +48,7 @@ test.describe('URL — the query is the route', () => {
     await expect(scopeSelect(page)).toHaveValue('scrapers')
     expect(shellParams(page.url())).toEqual({ e: 'scrapers' })
 
-    await page.locator('.dc-entity--all').click()
+    await clearScope(page)
     await expect(viewSelect(page)).toHaveValue('cards')
     expect(shellParams(page.url())).toEqual({})
   })
@@ -83,16 +86,15 @@ test.describe('URL — the query is the route', () => {
 
   test('sort field and direction appear in the URL', async ({ page }) => {
     await gotoStory(page, LIVE_OPEN)
-    await page.getByRole('radio', { name: 'metric', exact: true }).click()
-    await page.locator('.dc-button--icon').click()
+    await chooseSort(page, 'metric')
+    await sortDirection(page).click()
     expect(shellParams(page.url())).toEqual({ s: 'metric1', d: 'asc' })
   })
 
   test('leaves the parameters it does not own alone', async ({ page }) => {
     // Storybook's own `id` and `viewMode` live in the same query string.
     await gotoStory(page, LIVE)
-    await openPanel(page)
-    await page.getByRole('radio', { name: 'Table', exact: true }).click()
+    await chooseView(page, 'table')
 
     const params = new URL(page.url()).searchParams
     expect(params.get('id')).toBe(LIVE)
@@ -106,7 +108,7 @@ test.describe('URL — reload and history', () => {
     await gotoStory(page, LIVE_OPEN)
     await pickEntity(page, 'Searches')
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
-    await page.getByRole('radio', { name: 'Table', exact: true }).click()
+    await chooseView(page, 'table')
     const before = page.url()
 
     await page.reload()
@@ -127,12 +129,11 @@ test.describe('URL — reload and history', () => {
 
   test('Back returns to the previous query', async ({ page }) => {
     await gotoStory(page, LIVE)
-    await openPanel(page)
 
-    await page.getByRole('radio', { name: 'List', exact: true }).click()
+    await chooseView(page, 'list')
     await expect(page.locator('.dc-list')).toBeVisible()
 
-    await page.getByRole('radio', { name: 'Table', exact: true }).click()
+    await chooseView(page, 'table')
     await expect(page.locator('.dc-table')).toBeVisible()
 
     await page.goBack()
@@ -245,8 +246,7 @@ test.describe('URL — landing on an entity instead of home', () => {
     await expect(scopeSelect(page)).toHaveValue('searches')
     expect(shellParams(page.url())).toEqual({})
 
-    await openPanel(page)
-    await page.locator('.dc-entity--all').click()
+    await clearScope(page)
     await expect(scopeSelect(page)).toHaveValue('')
     // The whole corpus has to be spelled out when an entity is the default.
     expect(shellParams(page.url())).toEqual({ e: '*' })

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { gotoStory, listRows, openPanel, scopeSelect, terms, viewSelect } from './story'
+import { chooseView, clearScope, gotoStory, listRows, scopeSelect, terms, viewSelect } from './story'
 import { iRadarSchema } from '../../src/fixtures/schemas'
 
 /**
@@ -180,9 +180,8 @@ test.describe('Home — cards under a query', () => {
 
   test('cards are still cards once the query is lifted', async ({ page }) => {
     await gotoStory(page, ENTITY)
-    await openPanel(page)
-    await page.locator('.dc-entity--all').click()
-    await page.getByRole('radio', { name: 'Cards', exact: true }).click()
+    await clearScope(page)
+    await chooseView(page, 'cards')
     await expect(page.locator('.dc-types')).toBeVisible()
   })
 })

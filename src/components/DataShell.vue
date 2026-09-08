@@ -434,7 +434,6 @@ defineExpose({
         <div class="dc-shell__panel">
           <QueryPanel
             :panel-id="panelId"
-            :views="views"
             @close="closePanel"
           >
             <template

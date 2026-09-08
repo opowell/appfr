@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Locator, Page } from '@playwright/test'
-import { gotoStory, openPanel, termBar, scopeSelect } from './story'
+import { chooseView, gotoStory, termBar, scopeSelect } from './story'
 
 /**
  * The table against a corpus whose names are sentences and whose secondaries
@@ -244,11 +244,7 @@ test.describe('Columns — as many as the schema declares', () => {
     await gotoStory(page, NONE)
     await expect(page.locator('.dc-table__none')).toBeVisible()
 
-    await openPanel(page)
-    await page
-      .locator('.dc-panel [aria-label="Result view"]')
-      .getByRole('radio', { name: 'List' })
-      .click()
+    await chooseView(page, 'list')
     await expect(page.locator('.dc-list__row').first()).toBeVisible()
   })
 

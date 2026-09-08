@@ -84,7 +84,7 @@ export function columnsForSort(
  * The sorts on offer: one per column that names a {@link ColumnDef.sort},
  * labelled with that column's own heading, in the order the schema declared
  * them. A column is what knows both what it holds and what ordering it means,
- * so the panel and the table headers are offering one list rather than two.
+ * so the bar and the table headings are offering one list rather than two.
  *
  * An entity may state its own set instead, for an ordering no column shows.
  */

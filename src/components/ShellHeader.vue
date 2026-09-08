@@ -94,6 +94,25 @@ function chooseView(event: Event): void {
 }
 
 /**
+ * What the results are ordered by, as the columns that offer an order — the
+ * same list the table headings sort on, named as the schema names them.
+ *
+ * On the bar for the reason the view is on the bar: it is a part of the query,
+ * and every part of a query is said where the query is. Which way round it
+ * goes is the press beside it rather than another entry in the list, because
+ * reversing an order is not choosing a different one.
+ */
+const sortOptions = computed(() =>
+  shell.sorts.value.map((sort) => ({ key: sort.key, label: sort.label })),
+)
+
+function chooseSort(event: Event): void {
+  shell.setSort((event.target as HTMLSelectElement).value)
+}
+
+const descending = computed(() => shell.query.value.dir === 'desc')
+
+/**
  * The parts of the query the bar offers as pills — every active facet and
  * every term of the expression. The entity filter is not among them: it is a
  * choice rather than a thing to take off, and it has the control at the head
@@ -326,6 +345,43 @@ const position = computed(() => {
           </span>
         </label>
 
+        <!-- And what they are ordered by, the third of the choices a query
+             is made of. The arrow beside it is the same order the other way
+             about. Offered where the type offers an ordering at all: a type
+             with no sortable column has nothing to put in the list. -->
+        <template v-if="sortOptions.length">
+          <label class="dc-header__pick">
+            <span class="dc-header__sr">Sort</span>
+            <span class="dc-header__pick-box">
+              <select
+                class="dc-header__pick-select dc-header__sort-select dc-mono"
+                :value="shell.sort.value.key"
+                @change="chooseSort"
+              >
+                <option
+                  v-for="option in sortOptions"
+                  :key="option.key"
+                  :value="option.key"
+                >{{ option.label }}</option>
+              </select>
+              <span
+                class="dc-header__pick-mark"
+                aria-hidden="true"
+              >▾</span>
+            </span>
+          </label>
+
+          <button
+            type="button"
+            class="dc-header__dir dc-mono"
+            :title="descending ? 'Descending — click to reverse' : 'Ascending — click to reverse'"
+            :aria-label="`Sort direction: ${descending ? 'descending' : 'ascending'}`"
+            @click="shell.toggleDirection()"
+          >
+            {{ descending ? '↓' : '↑' }}
+          </button>
+        </template>
+
         <template
           v-for="entry in terms"
           :key="entry.term.id"
@@ -448,12 +504,16 @@ const position = computed(() => {
  * except while the pointer is over a part of the query, which is a control of
  * its own and does something else entirely when it is pressed.
  */
-.dc-header__trigger:hover:not(:has(.dc-term:hover, .dc-header__pick:hover)) {
+.dc-header__trigger:hover:not(
+    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__dir:hover)
+  ) {
   background: var(--dc-bg-1);
 }
 
 .dc-header[data-dc-expanded='true']
-  .dc-header__trigger:hover:not(:has(.dc-term:hover, .dc-header__pick:hover)) {
+  .dc-header__trigger:hover:not(
+    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__dir:hover)
+  ) {
   background: var(--dc-bg-2);
 }
 
@@ -556,10 +616,11 @@ const position = computed(() => {
 }
 
 /*
- * The two parts of the query that are chosen rather than lifted: which type is
- * being listed, and how it is drawn. They sit in the row of parts because that
- * is what they are — terms of the query — and read as ones, so the bar is
- * still one line of the same thing rather than widgets with pills after them.
+ * The three parts of the query that are chosen rather than lifted: which type
+ * is being listed, how it is drawn, and what it is ordered by. They sit in the
+ * row of parts because that is what they are — terms of the query — and read
+ * as ones, so the bar is still one line of the same thing rather than widgets
+ * with pills after them.
  */
 .dc-header__pick {
   display: inline-flex;
@@ -608,6 +669,27 @@ const position = computed(() => {
   font-size: var(--dc-text-eyebrow);
   line-height: 1;
   pointer-events: none;
+}
+
+/*
+ * Which way the order runs, drawn as the choosers beside it are drawn: it is
+ * the other half of one control, and the two should read as a pair rather than
+ * as a picker with a button after it.
+ */
+.dc-header__dir {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  background: var(--dc-accent-bg);
+  border: 1px solid var(--dc-accent-dim);
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-accent);
+  font-size: var(--dc-text-code);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.dc-header__dir:hover {
+  border-color: var(--dc-accent);
 }
 
 /* The one thing here that is not a term: what separates two alternatives. */

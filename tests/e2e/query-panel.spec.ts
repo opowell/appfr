@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import {
+  clearScope,
   expressionBox,
   gotoStory,
   listRows,
@@ -12,7 +13,7 @@ import {
   terms,
   viewSelect,
 } from './story'
-import { commerceSchema, iRadarSchema } from '../../src/fixtures/schemas'
+import { commerceSchema } from '../../src/fixtures/schemas'
 import { findEntity } from '../../src/query/schema'
 import type { ChipsFacet } from '../../src/types'
 
@@ -32,21 +33,17 @@ const DRILLED = 'shell-data-shell--drilled-into-pieces'
 /** A term and a row of words together, which is what a real query looks like. */
 const LONG = 'shell-data-shell--long-query'
 
-test.describe('Query panel — scope', () => {
-  test('offers Everything alongside each entity, Everything active at home', async ({ page }) => {
+/*
+ * What is listed, how it is drawn and what it is ordered by are chosen on the
+ * bar — they are the parts of a query that are chosen rather than lifted, and
+ * they are said where the rest of the query is said. What is left here is what
+ * narrows a type: its facets, and the expression.
+ */
+test.describe('Query panel — the facets of the type in force', () => {
+  test('holds the query alone, the choosers being on the bar', async ({ page }) => {
     await gotoStory(page, HOME_OPEN)
-    // One card per entity, plus the Everything card.
-    await expect(page.locator('.dc-entity')).toHaveCount(iRadarSchema.entities.length + 1)
-    await expect(page.locator('.dc-entity--all')).toHaveAttribute('data-dc-active', 'true')
-    await expect(page.locator('.dc-entity[data-dc-active="true"]')).toHaveCount(1)
-  })
-
-  test('lists logs and settings as ordinary entities', async ({ page }) => {
-    await gotoStory(page, HOME_OPEN)
-    await expect(page.locator('.dc-entity__label')).toHaveText([
-      'Everything',
-      ...iRadarSchema.entities.map((entity) => entity.label),
-    ])
+    await expect(panel(page).locator('.dc-entity')).toHaveCount(0)
+    await expect(panel(page).getByRole('radiogroup')).toHaveCount(0)
   })
 
   test('offers no facets until an entity is picked', async ({ page }) => {
@@ -72,7 +69,7 @@ test.describe('Query panel — scope', () => {
     const scoped = await listRows(page).count()
 
     await openPanel(page)
-    await page.locator('.dc-entity--all').click()
+    await clearScope(page)
 
     await expect(page.locator('.dc-facet__label')).toHaveCount(0)
     expect(await listRows(page).count()).toBeGreaterThan(scoped)
@@ -84,13 +81,6 @@ test.describe('Query panel — scope', () => {
     await openPanel(page)
     await pickEntity(page, 'Items')
     await expect(page.locator('.dc-facet__label')).toHaveText(['Kind', 'Rank', 'Seen'])
-  })
-
-  test('marks exactly one scope current at a time', async ({ page }) => {
-    await gotoStory(page, 'schemas-same-shell--lego')
-    await openPanel(page)
-    await expect(page.locator('.dc-entity[data-dc-active="true"]')).toHaveCount(1)
-    await expect(page.locator('.dc-entity[data-dc-active="true"]')).toContainText('Sets')
   })
 
   test('renders each facet kind with its own control', async ({ page }) => {
@@ -314,7 +304,7 @@ test.describe('Query panel — the parts of an expression', () => {
     await expect(parts(page)).toHaveCount(0)
     // Only that part: the pieces are still what is listed, and there are more
     // of them now that they are not one set's.
-    await expect(page.locator('.dc-entity[data-dc-active="true"]')).toContainText('Pieces')
+    await expect(scopeSelect(page)).toHaveValue('pieces')
     expect(await page.locator('.dc-table__row').count()).toBeGreaterThan(scoped)
   })
 
@@ -394,100 +384,17 @@ test.describe('Query panel — the parts of an expression', () => {
   })
 })
 
-test.describe('Query panel — view and sort', () => {
-  test('the view switch swaps the renderer', async ({ page }) => {
-    await gotoStory(page, ENTITY)
-    await expect(page.locator('.dc-list')).toBeVisible()
-
-    await openPanel(page)
-    await page.getByRole('radio', { name: 'Table', exact: true }).click()
-
-    await expect(page.locator('.dc-table')).toBeVisible()
-    await expect(page.locator('.dc-list')).toHaveCount(0)
-  })
-
-  test('the switch is one tab stop and arrow keys move within it', async ({ page }) => {
-    await gotoStory(page, ENTITY)
-    await openPanel(page)
-    const group = page.getByRole('radiogroup', { name: 'Result view' })
-    await expect(group.getByRole('radio')).toHaveCount(6)
-
-    await group.getByRole('radio', { name: 'List', exact: true }).focus()
-    await page.keyboard.press('ArrowRight')
-    await expect(page.locator('.dc-cards')).toBeVisible()
-
-    await page.keyboard.press('ArrowRight')
-    await expect(page.locator('.dc-grid')).toBeVisible()
-
-    await page.keyboard.press('Home')
-    await expect(page.locator('.dc-list')).toBeVisible()
-  })
-
-  test('the sort switch reorders the content', async ({ page }) => {
-    await gotoStory(page, 'shell-data-shell--table-view')
-    await openPanel(page)
-    // A sort is named as the column offering it is named, and `searches` heads
-    // its identity column "Search".
-    await page.getByRole('radio', { name: 'search', exact: true }).click()
-
-    const names = await page.locator('.dc-table__open').allInnerTexts()
-    expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a)))
-    await expect(scopeSelect(page)).toHaveValue('searches')
-  })
-
-  test('the direction button reverses the order', async ({ page }) => {
-    await gotoStory(page, ENTITY)
-    await openPanel(page)
-
-    const first = await page.locator('.dc-list__primary').first().innerText()
-    const direction = page.locator('.dc-button--icon')
-    await expect(direction).toHaveText('↓')
-
-    await direction.click()
-    await expect(direction).toHaveText('↑')
-    expect(await page.locator('.dc-list__primary').first().innerText()).not.toBe(first)
-  })
-
-  /*
-   * The sorts are the columns that offer one, named as those columns are named
-   * and in the order the schema declared them — so the panel and the table
-   * headers are offering one list rather than two.
-   */
-  test('the sorts are the columns offering them, in the schema’s own words', async ({ page }) => {
-    await gotoStory(page, HOME_OPEN)
-    let group = page.getByRole('radiogroup', { name: 'Sort field' })
-    // Across every entity the columns are the schema's generic set.
-    await expect(group.getByRole('radio')).toHaveText([
-      'item',
-      'metric',
-      'metric 2',
-      'updated',
-    ])
-
-    await gotoStory(page, ENTITY)
-    await openPanel(page)
-    group = page.getByRole('radiogroup', { name: 'Sort field' })
-    // iRadar heads `searches` "Search" and names its metrics "New" and "Results".
-    await expect(group.getByRole('radio')).toHaveText([
-      'search',
-      'new',
-      'results',
-      'updated',
-    ])
-  })
-})
-
 test.describe('Query panel — host section', () => {
   test('renders a host section last, inside the panel', async ({ page }) => {
     await gotoStory(page, HOST_SECTION)
     const sections = panel(page).locator('> .dc-panel__section')
-    await expect(sections).toHaveCount(3)
+    await expect(sections).toHaveCount(2)
     await expect(sections.last()).toContainText('App')
     await expect(sections.last().getByRole('button', { name: 'Reload data' })).toBeVisible()
   })
 
   test('adds no section when the host gives none', async ({ page }) => {
     await gotoStory(page, HOME_OPEN)
-    await expect(panel(page).locator('> .dc-panel__section')).toHaveCount(2)
+    await expect(panel(page).locator('> .dc-panel__section')).toHaveCount(1)
   })
 })

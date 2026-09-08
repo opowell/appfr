@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { choosePaneMenu, closeButton, dragPanel, openPanel, pane, pickEntity, storyUrl } from './story'
+import { choosePaneMenu, closeButton, dragPanel, pane, pickEntity, storyUrl } from './story'
 
 /**
  * The static page under test. It is served by Storybook's `staticDirs` exactly
@@ -46,7 +46,6 @@ test.describe('No build — dist on a static page', () => {
     await page.locator('.dc-shell').waitFor({ state: 'visible' })
     await expect(page.locator('.dc-header__domain')).toHaveText('LEGO')
 
-    await openPanel(page)
     await pickEntity(page, 'Sets')
     await expect(page.locator('.dc-list__row').first()).toBeVisible()
 

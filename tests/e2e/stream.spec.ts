@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { gotoStory, listRows, openPanel, pageReadout, termBar, scopeLabel } from './story'
+import { chooseView, gotoStory, listRows, openPanel, pageReadout, termBar, scopeLabel } from './story'
 
 /**
  * Results that arrive over time.
@@ -82,12 +82,7 @@ test.describe('A stream and a change of query', () => {
     // Switch the view while the crawl is still running. The same rows drawn
     // another way are the same rows, so the stream is not asked again — it
     // keeps landing, into the list this time.
-    await openPanel(page)
-    await page
-      .locator('.dc-panel [aria-label="Result view"]')
-      .getByRole('radio', { name: 'List' })
-      .click()
-    await page.keyboard.press('Escape')
+    await chooseView(page, 'list')
 
     await expect(page.locator('.dc-table')).toHaveCount(0)
     await expect(listRows(page).first()).toBeVisible()

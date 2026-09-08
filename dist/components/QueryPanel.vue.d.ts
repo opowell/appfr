@@ -1,8 +1,5 @@
-import type { ViewKind } from '../types';
 type __VLS_Props = {
     panelId: string;
-    /** Views to offer. Defaults to all six. */
-    views?: ViewKind[];
 };
 type __VLS_Slots = {
     /**

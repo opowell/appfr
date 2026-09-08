@@ -42,14 +42,14 @@ type __VLS_Props = {
     /**
      * `minimal`, the default, is paper, ink and hairlines with nothing else
      * on: no hue, no shadow, no rounded corner — the values the layout stops
-     * working without and no more. `mono-size` is that theme with its type
-     * scale collapsed too, so every word — headings, URLs, inputs, tags — is
-     * set at one size and one weight, and colour and opacity are all that
-     * separate them. `auto` follows the system setting. `macos` and `windows`
-     * wear that system's typography, corners and accent, and follow its
-     * scheme too.
+     * working without and no more. `auto` follows the system setting. `macos`
+     * and `windows` wear that system's typography, corners and accent, and
+     * follow its scheme too.
      * `inherit` brings no palette at all: the shell takes the host's
-     * background, text colour and font.
+     * background, text colour and font. `mono-size` is `inherit` with the
+     * type scale given up as well — every word, headings and URLs and inputs
+     * and tags alike, set at the host's one size and one weight — for a host
+     * that has already decided how text looks.
      */
     theme?: ShellTheme;
     /**

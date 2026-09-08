@@ -318,7 +318,9 @@ export interface EntitySchema {
   /**
    * Total population, pre-formatted for display (e.g. `'9,988'`) — the shell's
    * own `formatCount` is what it uses for the live counts beside these, so a
-   * host with nothing else in mind should format with that.
+   * host with nothing else in mind should format with that. A host that writes
+   * its numbers some other way says so once, in
+   * {@link DomainSchema.formatCount}, rather than matching the shell here.
    */
   count: string
   facets: FacetDef[]
@@ -399,6 +401,23 @@ export interface DomainSchema {
    * entity's, the shell invents none.
    */
   columns?: ColumnDef[]
+  /**
+   * How to write a count the shell works out for itself, when the host writes
+   * its own some other way. Defaults to the shell's `formatCount`.
+   *
+   * There is one such count and it is the live one: how many rows matched,
+   * said on the type in force and on `Everything`. Every other number in the
+   * list of types is {@link EntitySchema.count}, which the host has already
+   * formatted. So this is the one place the two hands meet, and until now the
+   * shell's hand won: a host abbreviating its populations got `Items · 199k`
+   * beside `Everything · 198,689` the moment a query narrowed, and no way to
+   * settle it short of writing its own populations the shell's way.
+   *
+   * Stated once for the domain rather than per entity, because what it fixes
+   * is one control reading in two hands — and a list of types that wrote each
+   * line in its own would be the same fault again, spread wider.
+   */
+  formatCount?: (value: number) => string
 }
 
 /* ------------------------------------------------------------------- query */

@@ -4,6 +4,8 @@ import DataShell from '../src/components/DataShell.vue'
 import { iRadarSchema, legoSchema } from '../src/fixtures/schemas'
 import type { DomainSchema } from '../src/types'
 import {
+  abbreviatedCountsSchema,
+  abbreviatedCountsSource,
   delayedSource,
   everythingColumnsSchema,
   failingSource,
@@ -318,6 +320,22 @@ export const SearchEverything = story({ search: '?v=list&q=digest' })
 
 /** Filtering by kind from the expression alone, without leaving home. */
 export const ExcludeByExpression = story({ search: '?v=list&q=entity:logs' })
+
+/**
+ * A host that writes its counts its own way, and the list of types reading in
+ * one hand because of it.
+ *
+ * The populations in that list are the host's, already formatted; the count on
+ * `Everything`, and on the type in force once a query narrows it, is the one
+ * number the shell works out for itself. `formatCount` on the schema is how
+ * the host says which hand to write it in — here `2.0k` rather than `2,000`,
+ * so the two halves of one control cannot disagree about what a number looks
+ * like.
+ */
+export const HostWrittenCounts = story({
+  schema: abbreviatedCountsSchema(),
+  source: abbreviatedCountsSource(),
+})
 
 /* ------------------------------------------------- scoped to one entity */
 

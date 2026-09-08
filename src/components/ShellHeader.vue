@@ -35,6 +35,16 @@ const domain = computed(() => shell.schema.value)
 const narrowed = computed(() => shell.hasFacets.value || Boolean(shell.query.value.expr.trim()))
 
 /**
+ * How a count is written here: the host's hand where the schema names one, and
+ * the shell's otherwise — see {@link DomainSchema.formatCount}.
+ *
+ * It is worth a computed rather than a call at each site because the two
+ * numbers it writes sit in the same control as the host's own populations, and
+ * the whole point of the hook is that all of them read as one list.
+ */
+const writeCount = computed(() => domain.value.formatCount ?? formatCount)
+
+/**
  * How many records a type holds, said beside its name in the list of them.
  *
  * The population is what the schema publishes, and it is what makes that list
@@ -45,7 +55,7 @@ const narrowed = computed(() => shell.hasFacets.value || Boolean(shell.query.val
  */
 function countOf(entity: EntitySchema): string {
   const chosen = entity.key === shell.query.value.entity
-  if (chosen && narrowed.value && !props.hideCount) return formatCount(shell.total.value)
+  if (chosen && narrowed.value && !props.hideCount) return writeCount.value(shell.total.value)
   return entity.count
 }
 
@@ -64,7 +74,7 @@ function optionLabel(entity: EntitySchema): string {
  */
 const everythingLabel = computed(() => {
   if (shell.query.value.entity !== null || props.hideCount) return 'Everything'
-  return `Everything · ${formatCount(shell.total.value)}`
+  return `Everything · ${writeCount.value(shell.total.value)}`
 })
 
 /* ------------------------------------------------------- how they are drawn */

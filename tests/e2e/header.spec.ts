@@ -92,6 +92,21 @@ test.describe('Header — the query as it stands', () => {
     expect(matched).toBeLessThan(48)
   })
 
+  test('writes the live count in the host’s hand where the schema names one', async ({
+    page,
+  }) => {
+    // Five types of four hundred. The shell's own `formatCount` would group
+    // the corpus as `2,000`; this schema abbreviates its populations and names
+    // a `formatCount` that does the same, so the one number the shell works
+    // out for itself is written the way the ones beside it are.
+    await gotoStory(page, 'shell-data-shell--host-written-counts')
+    await expect.poll(() => scopeLabel(page)).toBe('Everything · 2.0k')
+    // The other half of the same control, to show there is nothing to tell
+    // apart: a population the host wrote, in the list the live count is in.
+    await chooseScope(page, 'Items')
+    await expect.poll(() => scopeLabel(page)).toBe('Items · 400')
+  })
+
   test('follows the scope when it changes', async ({ page }) => {
     await gotoStory(page, HOME)
     await openPanel(page)

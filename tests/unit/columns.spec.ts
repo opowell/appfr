@@ -327,7 +327,12 @@ describe('the worked column set on LEGO pieces', () => {
   })
 
   it('gives the picture a source that needs no network', () => {
-    expect(String(cellValue(find('thumb'), row()))).toMatch(/^data:image\/svg\+xml,/)
+    expect(String(cellValue(find('thumb'), row({ rarity: false })))).toMatch(/^data:image\/svg\+xml,/)
+  })
+
+  it('leaves the rare piece nobody photographed without one', () => {
+    // The default row is one of those, which is why the test above says so.
+    expect(cellValue(find('thumb'), row())).toBe('')
   })
 
   it('sends each count to what it counts', () => {

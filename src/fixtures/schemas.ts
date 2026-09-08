@@ -182,13 +182,21 @@ const everythingColumns: ColumnDef[] = familiarColumns({
  * The piece's picture, as a data URI rather than a URL. A fixture that fetched
  * anything would make every story and every test depend on a network and on
  * whoever is hosting the images this week.
+ *
+ * And not every piece has one: the rare parts, in fewer than five sets, are
+ * the ones nobody has photographed. A catalogue is like that, and a fixture
+ * where every record has a picture cannot show the case that follows from it —
+ * a card, a tile and a cell drawn *without* one, rather than drawn around an
+ * empty `src`.
  */
 const swatch = (row: ShellRow): string =>
-  'data:image/svg+xml,' +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28">` +
-      `<rect width="56" height="28" rx="3" fill="${String(row.fields.tint)}"/></svg>`,
-  )
+  row.fields.rarity === true
+    ? ''
+    : 'data:image/svg+xml,' +
+      encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28">` +
+          `<rect width="56" height="28" rx="3" fill="${String(row.fields.tint)}"/></svg>`,
+      )
 
 /**
  * Weight, held in centigrams and read in whatever unit the number is actually

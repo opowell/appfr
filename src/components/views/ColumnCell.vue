@@ -5,6 +5,7 @@ import { useShellContext } from '../../composables/context'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { cellFull, cellText, cellValue, columnTruncates } from '../../query/columns'
 import MetricDrill from './MetricDrill.vue'
+import RowPicture from './RowPicture.vue'
 import StatusPill from '../StatusPill.vue'
 
 /**
@@ -71,15 +72,16 @@ function press(event: MouseEvent) {
     v-else-if="kind === 'status'"
     :status="status"
   />
-  <img
+  <!-- The same picture a card and a tile draw, which is what makes a column of
+       them a column: a row with nothing under it is an empty cell rather than a
+       broken-image mark, and one whose picture has moved is too. -->
+  <RowPicture
     v-else-if="kind === 'image'"
     class="dc-cell__image"
-    :src="String(value ?? '')"
-    :alt="entry.parts.identity"
-    loading="lazy"
+    :src="typeof value === 'string' ? value : ''"
     :style="{ maxHeight: column.height }"
     @click="press"
-  >
+  />
 
   <!-- A value that counts something listable is the way into those rows:
        `12` under Tests means "show me those twelve". -->

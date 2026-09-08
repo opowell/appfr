@@ -37,6 +37,13 @@ describe('the picture a card and a tile draw', () => {
     expect(presentParts(row(), pieces.columns!).image).toMatch(/^data:image\/svg\+xml,/)
   })
 
+  it('is nothing where the column computes its own and this row has none', () => {
+    // LEGO's rare pieces are the unphotographed ones, so `swatch` resolves to
+    // the empty string — which is a row without a picture, not a picture of
+    // nothing.
+    expect(presentParts(row({ rarity: true }), pieces.columns!).image).toBeNull()
+  })
+
   it('is nothing where the type declares no picture at all', () => {
     expect(presentParts(row(), searches.columns!).image).toBeNull()
   })

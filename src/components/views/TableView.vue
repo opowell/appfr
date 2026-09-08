@@ -355,6 +355,16 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
 }
 
 /*
+ * Where the rows are tall enough for the name to wrap, the mark beside it goes
+ * to the first line rather than to the middle of however many there turn out
+ * to be: it points at the record the name starts with, and a reader running
+ * down the column finds both at the same height.
+ */
+.dc-table[data-dc-wrap] .dc-table__name {
+  align-items: baseline;
+}
+
+/*
  * Columns leave in order of what a narrow table can do without, each at the
  * width its `hideBelow` names.
  *

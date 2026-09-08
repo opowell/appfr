@@ -50,13 +50,28 @@ test.describe('Views — every one of them, when the host says nothing', () => {
 })
 
 test.describe('Views — the picture a type has, where it has one', () => {
-  test('every card of a pictured type carries its picture', async ({ page }) => {
+  test('a card of a pictured type carries its picture', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--pictured-cards')
     const cards = page.locator('.dc-card')
+    const pictured = cards.filter({ has: page.locator('.dc-card__image') })
     expect(await cards.count()).toBeGreaterThan(0)
-    await expect(cards.locator('.dc-card__image')).toHaveCount(await cards.count())
+    expect(await pictured.count()).toBeGreaterThan(0)
     // Beside the name rather than instead of it: a card still reads as a card.
-    await expect(cards.first().locator('.dc-card__primary')).not.toBeEmpty()
+    await expect(pictured.first().locator('.dc-card__primary')).not.toBeEmpty()
+  })
+
+  /*
+   * And a record of that same type with nothing under the column is the card
+   * without a picture — the rare pieces are the ones nobody photographed, so
+   * one type shows both. A catalogue addresses pictures it does not hold, and
+   * a record it holds none for is the commonest case there is.
+   */
+  test('a record of a pictured type that has none is the same card without one', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--pictured-cards')
+    const cards = page.locator('.dc-card')
+    const bare = cards.filter({ hasNot: page.locator('.dc-card__image') })
+    expect(await bare.count()).toBeGreaterThan(0)
+    await expect(bare.first().locator('.dc-card__primary')).not.toBeEmpty()
   })
 
   test('a type with no picture is the same card without one', async ({ page }) => {
@@ -68,9 +83,14 @@ test.describe('Views — the picture a type has, where it has one', () => {
   test('a tile is the picture, with its caption over it', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--pictured-grid')
     const tiles = page.locator('.dc-tile')
+    const pictured = tiles.filter({ has: page.locator('.dc-tile__image') })
     expect(await tiles.count()).toBeGreaterThan(0)
-    await expect(tiles.locator('.dc-tile__image')).toHaveCount(await tiles.count())
-    await expect(tiles.first().locator('.dc-tile__primary')).not.toBeEmpty()
+    expect(await pictured.count()).toBeGreaterThan(0)
+    await expect(pictured.first().locator('.dc-tile__primary')).not.toBeEmpty()
+    // And a tile with no picture is the tint it always was, caption and all.
+    const bare = tiles.filter({ hasNot: page.locator('.dc-tile__image') })
+    expect(await bare.count()).toBeGreaterThan(0)
+    await expect(bare.first().locator('.dc-tile__primary')).not.toBeEmpty()
   })
 
   test('the picture is inside the press that opens the record', async ({ page }) => {
@@ -79,5 +99,27 @@ test.describe('Views — the picture a type has, where it has one', () => {
     // beside it.
     await gotoStory(page, 'shell-data-shell--pictured-cards')
     await expect(page.locator('.dc-card__open .dc-card__image').first()).toBeVisible()
+  })
+
+  /*
+   * A source that does not load is the same nothing as a source that was never
+   * there. A catalogue's pictures are somebody else's files, so this is what a
+   * record whose picture has moved looks like — not the browser's broken-image
+   * mark in the middle of a wall of cards.
+   */
+  test('a picture that fails to load leaves the card without one', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--pictured-cards')
+    const cards = page.locator('.dc-card')
+    const pictures = page.locator('.dc-card__image')
+    const drawn = await pictures.count()
+    expect(drawn).toBeGreaterThan(0)
+
+    // The fixture's pictures are data URIs, so failing one means saying what
+    // the browser would have said about a file that had moved.
+    await pictures.first().evaluate((image) => image.dispatchEvent(new Event('error')))
+
+    await expect(pictures).toHaveCount(drawn - 1)
+    // And every card is still a card, the one that lost its picture included.
+    await expect(page.locator('.dc-card__primary')).toHaveCount(await cards.count())
   })
 })

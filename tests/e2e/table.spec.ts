@@ -168,9 +168,16 @@ test.describe('Columns — as many as the schema declares', () => {
 
   test('draws the marks a column asks for — a picture and a pill', async ({ page }) => {
     await gotoStory(page, COLUMNS)
-    const row = page.locator('.dc-table__row').first()
+    // The first row that has a picture, since the rare pieces have none: what
+    // is asserted here is that a picture column draws one, not which records
+    // the fixture photographed.
+    const row = page.locator('.dc-table__row').filter({ has: page.locator('img') }).first()
     await expect(row.locator('img')).toHaveCount(1)
     await expect(row.locator('.dc-pill')).toHaveCount(1)
+    // And the pill is on every row, picture or no.
+    await expect(page.locator('.dc-table__row .dc-pill')).toHaveCount(
+      await page.locator('.dc-table__row').count(),
+    )
   })
 
   test('a column that says what its value counts still leads there', async ({ page }) => {
@@ -246,6 +253,63 @@ test.describe('Columns — as many as the schema declares', () => {
 
     await chooseView(page, 'list')
     await expect(page.locator('.dc-list__row').first()).toBeVisible()
+  })
+
+  /*
+   * The picture column, which is two things at once: a cell like any other
+   * value, and the reason this table's rows are taller than a line of text.
+   * LEGO's rare pieces are the ones nobody photographed, so the same table
+   * holds both cases.
+   */
+  test('draws a picture for the pieces that have one, and an empty cell for the rest', async ({ page }) => {
+    await gotoStory(page, COLUMNS)
+    const rows = await page.locator('.dc-table__row').count()
+    const pictures = await page.locator('.dc-table img').count()
+
+    expect(pictures).toBeGreaterThan(0)
+    expect(pictures).toBeLessThan(rows)
+  })
+
+  test('asks for nothing where the row holds no picture', async ({ page }) => {
+    await gotoStory(page, COLUMNS)
+    // An empty `src` is a second request for the page itself, which loads and
+    // so never fails: a row without a picture has to draw no image at all.
+    const sources = await page
+      .locator('.dc-table img')
+      .evaluateAll((images) => images.map((image) => image.getAttribute('src') ?? ''))
+    expect(sources.length).toBeGreaterThan(0)
+    for (const source of sources) expect(source.trim()).not.toBe('')
+  })
+
+  test('lets a name wrap into the depth the picture paid for', async ({ page }) => {
+    await gotoStory(page, COLUMNS)
+    await expect(table(page)).toHaveAttribute('data-dc-wrap', '')
+
+    // Narrow enough that the names no longer fit their column. The one that
+    // does not fit is the one carrying the narrowing mark beside it, so this
+    // is also the case a rule reaching only the cell's own children misses.
+    await page.setViewportSize({ width: 480, height: 900 })
+    const name = page.locator('.dc-table__name .dc-table__open').first()
+    await expect(name).toBeVisible()
+
+    const lines = await name.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return {
+        drawn: Math.round(element.clientHeight / parseFloat(style.lineHeight)),
+        clamp: Number(style.webkitLineClamp),
+        whole: element.scrollHeight <= element.clientHeight,
+      }
+    })
+    expect(lines.drawn).toBeGreaterThan(1)
+    expect(lines.drawn).toBeLessThanOrEqual(lines.clamp)
+    expect(lines.whole).toBe(true)
+  })
+
+  test('and a table with no picture in it keeps its single line', async ({ page }) => {
+    // The depth a wrap spends is the picture's; a table of one-line rows has
+    // none going spare, and rows all one depth is what it is for.
+    await gotoStory(page, LONG)
+    await expect(table(page)).not.toHaveAttribute('data-dc-wrap', '')
   })
 
   test('the schema’s own set serves the mixed result', async ({ page }) => {

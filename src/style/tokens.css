@@ -673,6 +673,12 @@
  * `text-overflow`, which is why it lands after a whole word rather than
  * part-way through one.
  *
+ * Descended into rather than reached as a child, because the cell that most
+ * needs the room does not hold its value directly: a column that can be
+ * narrowed to puts the mark beside the name, and the two of them in a span. A
+ * cell holds one value however deep it sits, so there is nothing else down
+ * there for this to find.
+ *
  * These live here rather than in TableView because the elements they reach
  * are ColumnCell's, and a scoped rule would be looking for another
  * component's mark on them.
@@ -681,8 +687,8 @@
   white-space: normal;
 }
 
-.dc-table[data-dc-wrap] td.dc-truncate > .dc-table__open,
-.dc-table[data-dc-wrap] td.dc-truncate > .dc-cell__text {
+.dc-table[data-dc-wrap] td.dc-truncate .dc-table__open,
+.dc-table[data-dc-wrap] td.dc-truncate .dc-cell__text {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: var(--dc-table-lines);

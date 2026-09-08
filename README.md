@@ -902,7 +902,7 @@ host writing a field of its own.
 | `views` | `ViewKind[]` | all six | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
-| `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `mono-size` is that theme with its type scale collapsed too, every word at one size and one weight with only colour and opacity varying; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all. |
+| `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all; `mono-size` is `inherit` with the type scale given up too, every word at the host's one size and one weight with only colour and opacity varying. |
 | `matchWidth` | `'grow' \| 'shrink'` | `'grow'` | How the header bar and the query panel are brought to one width: `grow` widens the panel to the bar, `shrink` narrows the bar to the panel. |
 | `headAlign` | `'left' \| 'center' \| 'right'` | `'center'` | Where the narrowed pair sits across the shell. `shrink` only. |
 | `pinnable` | `boolean` | `false` | Offers the star affordance on rows. |
@@ -2057,7 +2057,7 @@ exactly as it would elsewhere.
 
 ### Nothing, and one size
 
-`theme="mono-size"` is the minimal theme with the type scale given up too. Not
+`theme="mono-size"` is `theme="inherit"` with the type scale given up too. Not
 one family with a scale on top of it — one size, one weight, one leading, one
 width. Every role a scale would separate is the same setting: a preview's
 hero line, a column header, the count in a pill, the URL in a links row, a
@@ -2068,14 +2068,32 @@ left telling them apart.
 <DataShell :schema="schema" theme="mono-size" />
 ```
 
+It takes the palette from `inherit` along with the rest: a transparent
+surface, `currentColor` ink and an inherited `color-scheme`, so the shell is
+the colour of the page around it and follows that page into dark mode with no
+second switch to keep in step. This is the theme for a host that has already
+decided how text looks — one that sets a font and a size on its own elements
+and wants the shell to match rather than to bring a scale of its own.
+
 Two things follow from the collapse. The mono slot points at the sans one, so
 `.dc-mono` is left lining up numerals and nothing else. And every rung of the
-scale resolves to `--dc-font-size`, which the px scale of every other theme
-deliberately does not do — so here that one token is *the* size, and moving it
-rescales the whole shell:
+scale resolves to `--dc-font-size`, which `inherit` leaves at `inherit` — so
+left alone the shell is set at whatever size the host sets, and named, that
+one token is *the* size and moving it rescales the whole shell:
 
 ```vue
 <DataShell :schema="schema" theme="mono-size" :tokens="{ '--dc-font-size': '16px' }" />
+```
+
+A host that wants the minimal palette *and* one size — paper and ink, not the
+page's own — says so in the same place:
+
+```vue
+<DataShell
+  :schema="schema"
+  theme="mono-size"
+  :tokens="{ '--dc-surface': '#fff', '--dc-ink': '#101010' }"
+/>
 ```
 
 ### A palette off the shelf
@@ -2145,7 +2163,7 @@ are a whole theme:
 | `--dc-ink` | `--dc-fg-0…3`, and the lift in each surface step |
 | `--dc-accent` | `--dc-accent-dim`, `--dc-accent-bg`, `--dc-accent-contrast` |
 | `--dc-ok`, `--dc-warn`, `--dc-danger` | the matching `-bg` tints |
-| `--dc-tint` | how much colour those tints carry (`10%` minimal and `mono-size`, `24%` dark, `14%` light) |
+| `--dc-tint` | how much colour those tints carry (`10%` minimal, `24%` dark, `14%` light, `16%` inherit and `mono-size`) |
 | `--dc-sans`, `--dc-mono`, `--dc-font-size` | typography |
 | `--dc-radius-sm`, `--dc-radius`, `--dc-radius-lg` | corners |
 | `--dc-shadow`, `--dc-header-height` | — |

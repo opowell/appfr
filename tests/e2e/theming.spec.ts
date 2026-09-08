@@ -149,8 +149,11 @@ test.describe('Theming — the shipped themes', () => {
     await expect(page.locator('.dc-shell')).toHaveAttribute('data-dc-theme', 'mono-size')
     await openPanel(page)
 
+    // The one size is the host's own: the scale is given up and the size with
+    // it, so what the shell sets is whatever it was dropped into rather than a
+    // figure of its own.
     const base = await styleOf(page, '.dc-shell', 'font-size')
-    expect(base).toBe('14px')
+    expect(base).toBe(await styleOf(page, 'body', 'font-size'))
     expect(new Set(await typeOf(page, 'font-size'))).toEqual(new Set([base]))
     expect(new Set(await typeOf(page, 'font-weight'))).toEqual(new Set(['400']))
 

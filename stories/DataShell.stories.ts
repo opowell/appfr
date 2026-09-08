@@ -589,10 +589,11 @@ export const Pinnable = story({ search: '?v=list', pinnable: true })
  * holding the layout together is the borders, the surface steps and the type
  * scale — and a status still says which it is in words.
  *
- * `theme="mono-size"` gives up the last of those too. Every word in the shell
- * is set at one size and one weight, the query field included, so the only
- * things separating a preview's heading from the label under it are colour
- * and opacity.
+ * `theme="mono-size"` gives up the last of those too, and the palette with
+ * it: every word in the shell is set at one size and one weight, the query
+ * field included, so the only things separating a preview's heading from the
+ * label under it are colour and opacity — and the colour is the host's, this
+ * theme taking its surface and ink from the page the way `inherit` does.
  */
 export const MonoSizeTheme = story({ search: '?v=list', theme: 'mono-size' })
 

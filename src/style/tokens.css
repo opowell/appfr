@@ -6,12 +6,10 @@
  *   1. Nothing at all. The shell ships the minimal theme: paper, ink and
  *      hairlines, with no hue, no shadow and no rounded corner — the values
  *      the layout stops working without, at the plainest setting that works,
- *      and nothing else on top. `mono-size` is that same theme with its type
- *      scale collapsed as well, so every word in the shell is set at one size
- *      and one weight and only colour tells them apart. `dark`, `light` and
- *      `auto` are a prop away, and so are `macos` and `windows` — the two that
- *      dress the shell in an operating system's own design language, following
- *      that system's light and dark schemes with it.
+ *      and nothing else on top. `dark`, `light` and `auto` are a prop away,
+ *      and so are `macos` and `windows` — the two that dress the shell in an
+ *      operating system's own design language, following that system's light
+ *      and dark schemes with it.
  *   2. A handful of seeds. `--dc-surface`, `--dc-ink`, `--dc-accent` and the
  *      three status hues generate everything else — surfaces, borders, muted
  *      text, tinted backgrounds. Move one and every value derived from it
@@ -21,7 +19,13 @@
  *   4. No palette whatsoever — `theme="inherit"`. Surface becomes transparent
  *      and ink becomes `currentColor`, so the shell adopts the host's
  *      background, text colour and font, and the same derivations turn into
- *      translucent tints that work over whatever is behind them.
+ *      translucent tints that work over whatever is behind them. Its light
+ *      mode and its dark one are the host's, because they are not the shell's
+ *      to have.
+ *   5. Nor a type scale — `theme="mono-size"`. Everything `inherit` gives up,
+ *      given up along with the scale: one size, one weight, one leading, and
+ *      the host's size at that. The theme for a host that has already decided
+ *      how text looks and wants the shell to stop having an opinion.
  *
  * Nothing is declared on `:root`, so dropping the shell into an existing app
  * cannot recolour anything around it. Declarations sit inside `:where()` and
@@ -51,7 +55,8 @@
  * The type scale stays, because a scale is not decoration: telling the line a
  * preview leads with from the label under it is the shell doing its job, and
  * that is the last distinction left once the hue is gone. `mono-size` is the
- * theme for a shell that gives up that one too.
+ * theme for a shell that gives up that one too — and, having gone that far,
+ * the palette with it.
  */
 
 :where(.dc-shell) {
@@ -202,25 +207,33 @@
 /* ---------------------------------------------------------------- variants */
 
 /*
- * `mono-size` is the minimal theme with its type scale given up as well. Not
- * one family with a scale on top of it: one size, one weight, one leading,
- * one width. Every role a scale would normally separate — the line a preview
- * leads with, a column header, the count in a pill, the URL in a links row,
- * the expression in the query field, a tag — is the same setting here, and
- * colour and opacity are the only things left telling them apart.
+ * `mono-size` is the shell asking the host for everything it can: one size,
+ * one weight, one leading, one width, and not a colour of its own either.
+ * Every role a scale would normally separate — the line a preview leads with,
+ * a column header, the count in a pill, the URL in a links row, the
+ * expression in the query field, a tag — is the same setting here, and colour
+ * and opacity are the only things left telling them apart.
  *
  * Only the rungs need saying. The rest of what this theme promises it already
- * has from the block above, which is the point of building it on the minimal
- * one: tracking is `normal` there, `--dc-caps` is `none` and `--dc-italic` is
- * `normal`, so no word in the shell is set in a second case or a second style
- * either.
+ * has from the base block: tracking is `normal` there, `--dc-caps` is `none`
+ * and `--dc-italic` is `normal`, so no word in the shell is set in a second
+ * case or a second style either.
+ *
+ * The palette it takes from `inherit`, whose selector lists further down it
+ * joins: a transparent surface, `currentColor` ink and an inherited
+ * `color-scheme`, so the shell is whatever colour the page around it is and
+ * follows that page into dark mode without being told twice. That is the pair
+ * this theme is: nothing of its own to say about size, and nothing to say
+ * about colour. A host that wants the minimal palette *and* one size can name
+ * `--dc-surface` and `--dc-ink` back through `tokens`.
  *
  * Two things follow from the collapse. The mono slot points at the sans one,
  * so an expression in the query field is set at the width of the prose beside
  * it and `.dc-mono` is left lining up numerals and nothing else. And with
- * every rung resolving to `--dc-font-size`, that token is *the* size here:
- * move it and the whole shell rescales, which is the one thing the px scale
- * above deliberately will not do.
+ * every rung resolving to `--dc-font-size` — which `inherit` leaves at
+ * `inherit` — that one token is *the* size here: leave it and the shell is
+ * set at the host's own size, move it and the whole shell rescales, which is
+ * the one thing the px scale above deliberately will not do.
  */
 
 :where(.dc-shell[data-dc-theme='mono-size']) {
@@ -249,10 +262,10 @@
 }
 
 /*
- * What every theme with a palette of its own has in common, and neither of
- * the two plain ones above does: because each of them has a shadow or a
- * colour helping a border along, the lighter hairline the plain ones cannot
- * afford. Colours are per theme, below.
+ * What every theme that is not the minimal one has in common: because each of
+ * them has a shadow, a colour or a host's own background helping a border
+ * along, the lighter hairline paper and ink alone cannot afford. Colours are
+ * per theme, below.
  */
 
 :where(
@@ -261,7 +274,8 @@
     .dc-shell[data-dc-theme='auto'],
     .dc-shell[data-dc-theme='macos'],
     .dc-shell[data-dc-theme='windows'],
-    .dc-shell[data-dc-theme='inherit']
+    .dc-shell[data-dc-theme='inherit'],
+    .dc-shell[data-dc-theme='mono-size']
   ) {
   --dc-line: color-mix(in oklab, var(--dc-surface), var(--dc-ink) 16%);
   --dc-line-2: color-mix(in oklab, var(--dc-surface), var(--dc-ink) 27%);
@@ -517,7 +531,10 @@
 }
 
 /*
- * `theme="inherit"`: the shell brings layout and no colours. A transparent
+ * `theme="inherit"` and `theme="mono-size"`: the shell brings layout and no
+ * colours. The two differ only in the type scale — `inherit` keeps it,
+ * `mono-size` gave it up above — and the palette is one block because
+ * adopting the host is the same job either way. A transparent
  * surface lets the host's background through and `currentColor` ink picks up
  * its text colour, so every derivation above turns from an opaque blend into a
  * translucent veil of the host's own ink — which is what you want when you
@@ -533,7 +550,7 @@
  * should anyway.
  */
 
-:where(.dc-shell[data-dc-theme='inherit']) {
+:where(.dc-shell[data-dc-theme='inherit'], .dc-shell[data-dc-theme='mono-size']) {
   --dc-surface: transparent;
   --dc-ink: currentColor;
 
@@ -564,7 +581,7 @@
  * not feed that colour back into the accent it is painted with.
  */
 @supports (color: AccentColor) {
-  :where(.dc-shell[data-dc-theme='inherit']) {
+  :where(.dc-shell[data-dc-theme='inherit'], .dc-shell[data-dc-theme='mono-size']) {
     --dc-accent: color-mix(in oklab, AccentColor 78%, CanvasText);
   }
 }

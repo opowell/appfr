@@ -19,45 +19,40 @@
 import { Comment, Fragment, Text, computed } from 'vue'
 import type { VNode } from 'vue'
 
-const props = withDefaults(
-  defineProps<{
-    /** The card's heading. Left out where the `head` slot says it instead. */
-    title?: string
-    /**
-     * The number beside the heading, as a type card carries its population.
-     * A string, so it is formatted the way the host formats its own counts.
-     */
-    count?: string | number
-    /**
-     * How many columns of the card grid this takes. `'all'` is the width of
-     * the grid — for the cards a row of them would cut short: a record's own
-     * heading, a block of source, a wide table.
-     */
-    span?: number | 'all'
-    /**
-     * Drops the body's padding, for content that draws its own edges — a
-     * table, a `<pre>`, a log pane.
-     */
-    flush?: boolean
-    /**
-     * Draws the card as the shell draws a type with nothing in it: present,
-     * and quieter than the cards that hold something.
-     */
-    muted?: boolean
-  }>(),
-  { span: 1 },
-)
+const props = defineProps<{
+  /** The card's heading. Left out where the `head` slot says it instead. */
+  title?: string
+  /**
+   * The number beside the heading, as a type card carries its population.
+   * A string, so it is formatted the way the host formats its own counts.
+   */
+  count?: string | number
+  /**
+   * Takes the whole width of the card grid, however many columns that is —
+   * for the cards a share of a row would cut short: a record's own heading,
+   * a block of source, a wide table.
+   *
+   * `'all'` is the only value, and deliberately: a card asking for *two* of
+   * however many columns there are forces a second column into existence
+   * when the grid has room for one, so a phone got two tracks of which the
+   * second was 56px wide. `1 / -1` spans whatever is there and can never
+   * add to it.
+   */
+  span?: 'all'
+  /**
+   * Drops the body's padding, for content that draws its own edges — a
+   * table, a `<pre>`, a log pane.
+   */
+  flush?: boolean
+  /**
+   * Draws the card as the shell draws a type with nothing in it: present,
+   * and quieter than the cards that hold something.
+   */
+  muted?: boolean
+}>()
 
-/**
- * `span N` rather than a column count, so a card too wide for what is left
- * wraps to the next row instead of overflowing the grid. `'all'` is stated as
- * a line range, which is the only way to say "however many there are".
- */
-const style = computed(() => {
-  if (props.span === 'all') return { gridColumn: '1 / -1' }
-  const span = Math.max(1, Math.floor(Number(props.span) || 1))
-  return span > 1 ? { gridColumn: `span ${span}` } : undefined
-})
+/** Stated as a line range, the only way to say "however many there are". */
+const style = computed(() => (props.span === 'all' ? { gridColumn: '1 / -1' } : undefined))
 
 const slots = defineSlots<{
   /** The whole head, replacing the title and count. */

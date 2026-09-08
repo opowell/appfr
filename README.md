@@ -796,11 +796,10 @@ They are cells of the same grid as the type cards — as many columns as fit
 comfortably, and every card in a row the height of that row, so a type with ten
 rows beside one with two leaves no card floating over whitespace. `<ShellCard>`
 is what makes one look like the cards it sits among; the shell's own card chrome
-is scoped CSS a host cannot reach. Its props are `title`, `count`, `span` (a
-number of columns, or `'all'` for the width of the grid — for a record's own
-heading, a block of source, a wide table), `flush` for content that draws its
-own edges, and `muted`; its slots are `head`, `aside`, the default body and
-`foot`. Nothing in it reads the shell's context, so it works anywhere inside a
+is scoped CSS a host cannot reach. Its props are `title`, `count`, `span`
+(`'all'`, for a card a share of a row would cut short — a record's own heading,
+a block of source, a wide table), `flush` for content that draws its own edges,
+and `muted`; its slots are `head`, `aside`, the default body and `foot`. Nothing in it reads the shell's context, so it works anywhere inside a
 `.dc-shell` element — including a page of your own with no query at all:
 
 ```vue

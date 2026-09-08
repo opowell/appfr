@@ -186,6 +186,27 @@ test.describe('cards of the host’s own', () => {
     expect(wide?.width).toBeGreaterThan((grid?.width ?? 0) - 40)
   })
 
+  /*
+   * A card asking for two of however many columns there are used to force a
+   * second track into existence when the grid had room for one, so a phone got
+   * two of them and the second was 56px wide.
+   */
+  test('are one column on a narrow screen, and never scroll the page sideways', async ({ page }) => {
+    await page.setViewportSize({ width: 520, height: 1000 })
+    await gotoStory(page, RECORD)
+    await expect(page.locator('.dc-type').first()).toBeVisible()
+
+    const tracks = await page
+      .locator('.dc-types')
+      .evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length)
+    expect(tracks).toBe(1)
+
+    const overflows = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    )
+    expect(overflows).toBe(false)
+  })
+
   /* Sized to their content instead, the short cards floated over whitespace. */
   test('every card in a row is the height of that row', async ({ page }) => {
     await gotoStory(page, RECORD)

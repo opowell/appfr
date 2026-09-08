@@ -126,6 +126,30 @@ const viewOptions = computed<{ key: ViewKind; label: string }[]>(() =>
  */
 const view = computed(() => resolveView(shell.query.value.view, props.views))
 
+/**
+ * Whether the list of types is worth a control of its own.
+ *
+ * Inside a scope, with `Everything` chosen and the types drawn as cards, it is
+ * not: the page is about one record, every type of it is on screen headed by
+ * its own name, and pressing that heading is the same move — so the chooser
+ * would be the choice offered twice and `Everything · 6` a number the cards
+ * already break down.
+ *
+ * Everywhere else it stays, and the three conditions are each load-bearing.
+ * Outside a scope the count beside `Everything` is the only statement of how
+ * big the corpus is. With a type filtered to, the chooser is the way back out
+ * of it. And in the views that draw records rather than types, nothing else on
+ * screen says which types there are at all.
+ */
+const showTypes = computed(
+  () =>
+    !(
+      Boolean(shell.within.value)
+      && shell.query.value.entity === null
+      && view.value === 'cards'
+    ),
+)
+
 function chooseView(event: Event): void {
   shell.setView((event.target as HTMLSelectElement).value as ViewKind)
 }
@@ -142,6 +166,16 @@ function chooseView(event: Event): void {
 const sortOptions = computed(() =>
   shell.sorts.value.map((sort) => ({ key: sort.key, label: sort.label })),
 )
+
+/**
+ * And whether an ordering is worth offering at all.
+ *
+ * Not inside a scope. A shell read inside one record holds a handful of rows
+ * of each type — the cards show all of them — so which end of five results
+ * comes first is a control over nothing, and the bar of a record's page has
+ * better uses for the room.
+ */
+const showSort = computed(() => sortOptions.value.length > 0 && !shell.within.value)
 
 function chooseSort(event: Event): void {
   shell.setSort((event.target as HTMLSelectElement).value)
@@ -320,10 +354,6 @@ const position = computed(() => {
       class="dc-header__trigger"
       @click="pressBar"
     >
-      <span
-        class="dc-header__badge"
-        aria-hidden="true"
-      >◆</span>
       <span class="dc-header__domain">{{ domain.label }}</span>
 
       <!-- What the shell is read inside, where it is read inside anything: not
@@ -355,7 +385,10 @@ const position = computed(() => {
              the one part of a query that is a choice rather than a thing to
              take off, so `Everything` is in the list beside the types and
              widening back out stays one press. -->
-        <label class="dc-header__pick">
+        <label
+          v-if="showTypes"
+          class="dc-header__pick"
+        >
           <span class="dc-header__sr">Type</span>
           <span class="dc-header__pick-box">
             <select
@@ -404,7 +437,7 @@ const position = computed(() => {
              is made of. The arrow beside it is the same order the other way
              about. Offered where the type offers an ordering at all: a type
              with no sortable column has nothing to put in the list. -->
-        <template v-if="sortOptions.length">
+        <template v-if="showSort">
           <label class="dc-header__pick">
             <span class="dc-header__sr">Sort</span>
             <span class="dc-header__pick-box">
@@ -572,19 +605,6 @@ const position = computed(() => {
   background: var(--dc-bg-2);
 }
 
-.dc-header__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--dc-radius-sm);
-  background: var(--dc-accent-bg);
-  color: var(--dc-accent);
-  font-size: var(--dc-text-meta);
-}
-
 .dc-header__domain {
   flex: 0 0 auto;
   font-size: var(--dc-text-body);
@@ -748,10 +768,12 @@ const position = computed(() => {
 }
 
 /*
- * What the shell is read inside. Drawn as a part of the query is drawn, since
- * it constrains the results exactly as one does — but filled rather than
- * outlined, and with no press on it: there is nothing to lift, because it did
- * not come from the query and the page would not be this page without it.
+ * What the shell is read inside — a part of the query, drawn as one.
+ *
+ * It constrains the results exactly as a term does and reads as the same kind
+ * of thing, so it is the same pill. What it has not got is the press: there is
+ * nothing to lift, because it did not come from the query and the page would
+ * not be this page without it.
  */
 .dc-header__within {
   display: inline-flex;
@@ -766,10 +788,10 @@ const position = computed(() => {
 .dc-within {
   max-width: 34ch;
   padding: 3px 8px;
-  background: var(--dc-accent);
-  border: 1px solid var(--dc-accent);
+  background: var(--dc-accent-bg);
+  border: 1px solid var(--dc-accent-dim);
   border-radius: var(--dc-radius-sm);
-  color: var(--dc-bg-0);
+  color: var(--dc-accent);
   font-size: var(--dc-text-code);
   line-height: 1.5;
 }

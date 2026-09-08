@@ -794,6 +794,17 @@ export const RecordPageNarrowed = story({
 })
 
 /**
+ * The same scope with the records drawn rather than the types. The list of
+ * types is back on the bar — nothing else on this screen says what types there
+ * are — and `Everything` there counts what is in the scope.
+ */
+export const RecordPageAsList = story({
+  schema: legoSchema,
+  within: YELLOW_CASTLE,
+  search: '?v=list',
+})
+
+/**
  * Choosing a type inside the scope. The cards go — one type's records are a
  * list, not a card per type — and the count on the bar is how many of that
  * type are in *this* set rather than how many there are.
@@ -806,14 +817,15 @@ export const RecordPageEntity = story({
 })
 
 /**
- * A scope that matches nothing of most types. The empty cards are the answer
- * rather than a gap: this set has no variants and no logs, and a card that
- * says *No matches* says so.
+ * A scope nothing at all is in. Every card holds nothing, so every card goes —
+ * and rather than a screen with the host's cards and a gap where the types
+ * were, the gap says what it is.
  */
-export const RecordPageMostlyEmpty = story({
+export const RecordPageEmpty = story({
   schema: legoSchema,
   within: 'set:"sets_10404"',
   previewsPerType: 5,
+  slots: recordCards(),
 })
 
 /**

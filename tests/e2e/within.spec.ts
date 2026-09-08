@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { gotoStory, listRows, pickEntity, scopeLabel, terms } from './story'
+import { clearScope, gotoStory, listRows, scopeLabel, sortSelect, terms } from './story'
 import { legoSchema } from '../../src/fixtures/schemas'
 
 /**
@@ -58,16 +58,72 @@ test.describe('within — the scope on the bar', () => {
     await gotoStory(page, HOME)
     await expect(scope(page)).toHaveCount(0)
   })
+
+  test('is drawn as the query\u2019s own parts are, but without the press', async ({ page }) => {
+    await gotoStory(page, NARROWED)
+    const term = await terms(page).first().evaluate(node => getComputedStyle(node).backgroundColor)
+    await expect(scope(page)).toHaveCSS('background-color', term)
+  })
+})
+
+/*
+ * A control over nothing is not worth its room, which is the one rule behind
+ * all three of these.
+ */
+test.describe('within — what the bar stops offering', () => {
+  test('no ordering inside a scope: the cards show every row there is', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await expect(sortSelect(page)).toHaveCount(1)
+    await gotoStory(page, RECORD)
+    await expect(sortSelect(page)).toHaveCount(0)
+    await expect(page.locator('.dc-header__dir')).toHaveCount(0)
+  })
+
+  test('no list of types while the record\u2019s own types are the screen', async ({ page }) => {
+    await gotoStory(page, RECORD)
+    await expect(page.locator('.dc-header__scope-select')).toHaveCount(0)
+  })
+
+  test('but it is there wherever it says something the screen does not', async ({ page }) => {
+    // Outside a scope: the count beside `Everything` is the size of the corpus.
+    await gotoStory(page, HOME)
+    await expect(page.locator('.dc-header__scope-select')).toHaveCount(1)
+    // With a type filtered to: it is the way back out.
+    await gotoStory(page, ENTITY)
+    await expect(page.locator('.dc-header__scope-select')).toHaveCount(1)
+    // And in a view of records, nothing else names the types at all.
+    await gotoStory(page, 'shell-data-shell--record-page-as-list')
+    await expect(page.locator('.dc-header__scope-select')).toHaveCount(1)
+  })
+
+  test('a card heading is what picks a type instead, and brings the list back', async ({ page }) => {
+    await gotoStory(page, RECORD)
+    await typeCard(page, 'Pieces').locator('.dc-type__head').click()
+    await expect(page.locator('.dc-header__scope-select')).toHaveCount(1)
+    expect(await scopeLabel(page)).toMatch(/^Pieces/)
+  })
+
+  test('and the bar carries no mark of its own beside the domain', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await expect(page.locator('.dc-header__badge')).toHaveCount(0)
+  })
 })
 
 test.describe('within — what the counts say', () => {
+  /*
+   * Read in a view that draws records, that being where the list of types —
+   * and with it the count of everything — is on the bar at all.
+   */
   test('Everything counts what is in the scope, not the corpus', async ({ page }) => {
-    await gotoStory(page, HOME)
-    const whole = await scopeLabel(page)
-    await gotoStory(page, RECORD)
+    await gotoStory(page, 'shell-data-shell--record-page-as-list')
     const inside = await scopeLabel(page)
     expect(inside).toMatch(/^Everything · [\d,]+$/)
-    expect(inside).not.toBe(whole)
+
+    // One set cannot hold as much as the largest type there is of anything.
+    const biggest = Math.max(
+      ...legoSchema.entities.map((entity) => Number(entity.count.replace(/\D/g, ''))),
+    )
+    expect(Number(inside.replace(/\D/g, ''))).toBeLessThan(biggest)
   })
 
   test('a type card reports its matches rather than its published population', async ({ page }) => {
@@ -77,9 +133,21 @@ test.describe('within — what the counts say', () => {
     expect(shown).not.toEqual(published)
   })
 
-  test('a type with nothing in the scope says so', async ({ page }) => {
-    await gotoStory(page, 'shell-data-shell--record-page-mostly-empty')
-    await expect(page.locator('.dc-type__empty').first()).toHaveText('No matches')
+  /* A heading, a zero and the words "No matches" are one nothing said thrice. */
+  test('a type with nothing in the scope is not drawn', async ({ page }) => {
+    await gotoStory(page, RECORD)
+    await expect(page.locator('.dc-type').first()).toBeVisible()
+    const empty = page.locator('.dc-type[data-dc-empty="true"]')
+    // Every empty card left is one that offers something to do about it.
+    await expect(empty.locator('.dc-type__new')).toHaveCount(await empty.count())
+  })
+
+  test('and a scope nothing is in says so rather than leaving a gap', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--record-page-empty')
+    await expect(page.locator('.dc-type')).toHaveCount(0)
+    await expect(page.locator('.dc-types__state')).toHaveText('Nothing matches this query')
+    // The host's own cards are not waiting on any of that.
+    await expect(hostCards(page)).toHaveCount(4)
   })
 
   test('a type listed inside the scope reports only what is in it', async ({ page }) => {
@@ -118,6 +186,25 @@ test.describe('cards of the host’s own', () => {
     expect(wide?.width).toBeGreaterThan((grid?.width ?? 0) - 40)
   })
 
+  /* Sized to their content instead, the short cards floated over whitespace. */
+  test('every card in a row is the height of that row', async ({ page }) => {
+    await gotoStory(page, RECORD)
+    const rows = await page.locator('.dc-types > *').evaluateAll(nodes =>
+      nodes.map((node) => {
+        const box = node.getBoundingClientRect()
+        return { top: Math.round(box.top), height: Math.round(box.height) }
+      }),
+    )
+    for (const [top, heights] of Object.entries(
+      rows.reduce<Record<number, number[]>>((by, cell) => {
+        (by[cell.top] ??= []).push(cell.height)
+        return by
+      }, {}),
+    )) {
+      expect(new Set(heights).size, `row at ${top}`).toBe(1)
+    }
+  })
+
   /*
    * A body that is a `v-if` over a warning, and an aside that is a row of
    * controls the record has not loaded yet: passed, and rendering nothing.
@@ -138,9 +225,11 @@ test.describe('cards of the host’s own', () => {
 
   test('and come back when Everything is chosen again', async ({ page }) => {
     await gotoStory(page, RECORD)
-    await pickEntity(page, 'Pieces')
+    // A card heading is what picks a type here: the bar offers no list while
+    // the screen is made of them.
+    await typeCard(page, 'Pieces').locator('.dc-type__head').click()
     await expect(hostCards(page)).toHaveCount(0)
-    await page.locator('.dc-header__scope-select').selectOption('')
+    await clearScope(page)
     await expect(typeCard(page, 'Sets')).toBeVisible()
     await expect(hostCards(page)).toHaveCount(4)
   })

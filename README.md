@@ -782,6 +782,7 @@ What is missing from it is the record itself, and the two slots are for that:
 ├──────────────────────────────────────────────────────────────────────┤
 ┌── Build ─────────────┐ ┌── Sets       1 ──────┐ ┌── Pieces     41 ──┐
 │ …                    │ │ Yellow Castle        │ │ Brick 2x4         │  the types
+│                      │ │                      │ │ Plate 1x2         │
 └──────────────────────┘ └──────────────────────┘ └───────────────────┘
 ┌── Metadata  6 fields ┐
 │ theme:castle …       │                                                  cards-after
@@ -791,14 +792,16 @@ What is missing from it is the record itself, and the two slots are for that:
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-They are cells of the same grid as the type cards, so `<ShellCard>` is what
-makes one look like the cards it sits among — the shell's own card chrome is
-scoped CSS a host cannot reach. Its props are `title`, `count`, `span` (a
-number of columns, or `'all'` for the width of the grid), `flush` for content
-that draws its own edges, and `muted`; its slots are `head`, `aside`, the
-default body and `foot`. Nothing in it reads the shell's context, so it works
-anywhere inside a `.dc-shell` element — including a page of your own with no
-query at all:
+They are cells of the same grid as the type cards — as many columns as fit
+comfortably, and every card in a row the height of that row, so a type with ten
+rows beside one with two leaves no card floating over whitespace. `<ShellCard>`
+is what makes one look like the cards it sits among; the shell's own card chrome
+is scoped CSS a host cannot reach. Its props are `title`, `count`, `span` (a
+number of columns, or `'all'` for the width of the grid — for a record's own
+heading, a block of source, a wide table), `flush` for content that draws its
+own edges, and `muted`; its slots are `head`, `aside`, the default body and
+`foot`. Nothing in it reads the shell's context, so it works anywhere inside a
+`.dc-shell` element — including a page of your own with no query at all:
 
 ```vue
 <div class="dc-shell" data-dc-theme="dark">
@@ -810,6 +813,24 @@ Only the per-type screen draws the slots, that being the only view made of
 cards rather than of records: choose a type, or another view, and the cards go
 and the records are what is on screen. A view of your own reads
 `useShellContext().within` for the scope, which is not part of `query`.
+
+Three things the bar does differently once it is read inside something, all of
+them the same rule — a control over nothing is not worth its room:
+
+- **No ordering.** A scope holds a handful of rows of each type and the cards
+  show all of them, so which end comes first decides nothing.
+- **No list of types while `Everything` is chosen and `Cards` drawn.** The page
+  is about one record, every type of it is on screen headed by its own name, and
+  pressing that heading is the same move — so the chooser would be the choice
+  offered twice and its `Everything · 6` a number the cards already break down.
+  It is back the moment a type is filtered to, which is when there is something
+  to widen out of, and it never leaves the views that draw records rather than
+  types. Outside a scope it never leaves at all: there the count beside
+  `Everything` is the only statement of how big the corpus is.
+- **No card for a type that holds nothing**, unless the type names `create` —
+  an empty card is where that button does the most work. A heading, a zero and
+  the words *No matches* are three ways of saying the same nothing, and inside
+  one record most of the types say it.
 
 ### A facet a row holds several of
 

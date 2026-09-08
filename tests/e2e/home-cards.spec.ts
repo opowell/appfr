@@ -147,6 +147,11 @@ test.describe('Home — making a new one', () => {
     await expect(asked(page)).toHaveText('asked for a new Scrapers')
   })
 
+  /*
+   * The exception to hiding a type that holds nothing: an empty card is where
+   * this button does the most work, being the one thing that says what to do
+   * about the emptiness.
+   */
   test('a card with nothing in it still offers it, under the empty line', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-creatable-empty')
     const empty = card(page, 'Searches')
@@ -164,18 +169,22 @@ test.describe('Home — cards under a query', () => {
     await gotoStory(page, 'shell-data-shell--home-search')
     await expect(terms(page)).toHaveText(['recall'])
 
-    // "recall" is an Items sample; nothing in Searches mentions it.
+    // "recall" is an Items sample, so that card counts what matched.
     const items = Number(await card(page, 'Items').locator('.dc-type__count').innerText())
     expect(items).toBeGreaterThan(0)
-    await expect(card(page, 'Searches').locator('.dc-type__count')).toHaveText('0')
   })
 
-  test('a type with no matches says so rather than showing a gap', async ({ page }) => {
+  /*
+   * A heading, a zero and the words "No matches" are three ways of saying the
+   * same nothing. What is left is the breakdown of what did match.
+   */
+  test('a type with no matches is not drawn at all', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-search')
-    const empty = card(page, 'Searches')
-    await expect(empty).toHaveAttribute('data-dc-empty', 'true')
-    await expect(empty.locator('.dc-type__empty')).toHaveText('No matches')
-    await expect(empty.locator('.dc-type__row')).toHaveCount(0)
+    // Nothing in Searches mentions "recall".
+    await expect(card(page, 'Searches')).toHaveCount(0)
+    await expect(page.locator('.dc-type__empty')).toHaveCount(0)
+    // And the types that did match are still there.
+    await expect(card(page, 'Items')).toBeVisible()
   })
 
   test('cards are still cards once the query is lifted', async ({ page }) => {

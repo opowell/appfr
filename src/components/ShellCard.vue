@@ -30,8 +30,8 @@ const props = withDefaults(
     count?: string | number
     /**
      * How many columns of the card grid this takes. `'all'` is the width of
-     * the grid — for the cards a row of them would cut short: source, a log, a
-     * wide table. Ignored outside a grid.
+     * the grid — for the cards a row of them would cut short: a record's own
+     * heading, a block of source, a wide table.
      */
     span?: number | 'all'
     /**
@@ -47,6 +47,17 @@ const props = withDefaults(
   }>(),
   { span: 1 },
 )
+
+/**
+ * `span N` rather than a column count, so a card too wide for what is left
+ * wraps to the next row instead of overflowing the grid. `'all'` is stated as
+ * a line range, which is the only way to say "however many there are".
+ */
+const style = computed(() => {
+  if (props.span === 'all') return { gridColumn: '1 / -1' }
+  const span = Math.max(1, Math.floor(Number(props.span) || 1))
+  return span > 1 ? { gridColumn: `span ${span}` } : undefined
+})
 
 const slots = defineSlots<{
   /** The whole head, replacing the title and count. */
@@ -84,17 +95,6 @@ function drawn(nodes: VNode[]): boolean {
     return true
   })
 }
-
-/**
- * `span N` rather than a column count, so a card too wide for what is left
- * wraps to the next row instead of overflowing the grid. `'all'` is stated as
- * a line range, which is the only way to say "however many there are".
- */
-const style = computed(() => {
-  if (props.span === 'all') return { gridColumn: '1 / -1' }
-  const span = Math.max(1, Math.floor(Number(props.span) || 1))
-  return span > 1 ? { gridColumn: `span ${span}` } : undefined
-})
 
 const hasHead = computed(() => Boolean(props.title) || hasAside.value || filled(slots.head))
 const hasAside = computed(() => filled(slots.aside))

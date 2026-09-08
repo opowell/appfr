@@ -29,7 +29,7 @@ defineSlots<{
   after?: () => unknown
 }>()
 
-const { previews, pending, error } = useEntityPreviews({
+const { previews: found, pending, error } = useEntityPreviews({
   source: shell.source,
   schema: shell.schema,
   query: shell.query,
@@ -45,6 +45,21 @@ const { previews, pending, error } = useEntityPreviews({
  * and a type with nothing in it still has nothing that *matched*.
  */
 const narrowed = computed(() => !shell.isPristine.value || Boolean(shell.within.value))
+
+/**
+ * The cards worth drawing: the types that hold something, and the types that
+ * offer something to do about holding nothing.
+ *
+ * A card with no records and no button is a heading, a count of zero and the
+ * words *No matches* — three ways of saying the same nothing, and on a screen
+ * read inside one record most of the types say it. So those go, and what is
+ * left is what the record actually has. A type whose schema names `create`
+ * stays either way: an empty card is where that button does the most work,
+ * being the one place that says what to do about the emptiness.
+ */
+const previews = computed(() =>
+  found.value.filter((preview) => preview.rows.length > 0 || preview.entity.create),
+)
 </script>
 
 <template>
@@ -73,6 +88,16 @@ const narrowed = computed(() => !shell.isPristine.value || Boolean(shell.within.
       aria-live="polite"
     >
       Running query…
+    </p>
+
+    <!-- Every type held nothing, so every card went. Said rather than left
+         blank: a screen with the host's cards and no types on it otherwise
+         reads as a screen that failed to load its own. -->
+    <p
+      v-else-if="!previews.length"
+      class="dc-types__state"
+    >
+      {{ narrowed ? 'Nothing matches this query' : 'Nothing here yet' }}
     </p>
 
     <section
@@ -165,13 +190,28 @@ const narrowed = computed(() => !shell.isPristine.value || Boolean(shell.within.
 <style scoped>
 .dc-types {
   display: grid;
-  /* Cards size to their content and sit at the top of their row, so a type
-     with three items does not stretch to match one with ten. */
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  align-items: start;
+  /*
+   * As many columns as fit comfortably and no more: three or so on a laptop,
+   * one on a phone, six on a very wide screen. A narrower track would fit
+   * more of them and cut every card's rows to a few words.
+   */
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
   gap: 12px;
   padding: 16px;
   transition: opacity 0.12s ease-out;
+}
+
+/*
+ * Every card in a row is the height of that row.
+ *
+ * Sized to their content instead — `align-items: start`, which this had — a
+ * type with ten rows beside one with none left the short cards floating over
+ * a column of whitespace, and the screen read as a ragged wall rather than a
+ * grid. The cards are flex columns, so the room a stretched one gains goes
+ * under its last child.
+ */
+.dc-types > * {
+  align-self: stretch;
 }
 
 .dc-types[data-dc-pending='true'] {

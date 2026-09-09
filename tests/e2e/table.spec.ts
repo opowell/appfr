@@ -166,6 +166,17 @@ test.describe('Columns — as many as the schema declares', () => {
     await expect((await column(page, 'Colors')).first()).toHaveText(/^\d+(\.\d)?[km]?$/)
   })
 
+  test('answers a hover on the header with what the label left out', async ({ page }) => {
+    await gotoStory(page, COLUMNS)
+    const labels = (await headings(page).allInnerTexts()).map((text) => text.trim())
+    const weight = headings(page).nth(labels.indexOf('Weight'))
+
+    await expect(weight).toHaveAttribute('title', 'Grams, from the centigrams the catalogue keeps')
+    // And a header with nothing more to say says nothing: a tooltip repeating
+    // the label costs a hover and adds no word.
+    await expect(headings(page).nth(labels.indexOf('Shape'))).not.toHaveAttribute('title', /.*/)
+  })
+
   test('draws the marks a column asks for — a picture and a pill', async ({ page }) => {
     await gotoStory(page, COLUMNS)
     // The first row that has a picture, since the rare pieces have none: what

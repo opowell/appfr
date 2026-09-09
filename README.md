@@ -423,6 +423,7 @@ those views leave out — no state column, no pill.
 | --- | --- |
 | `key` | identifies the column, and is the field read when nothing else says |
 | `label` | the header. A column whose content says what it is leaves it out |
+| `hint` | what the header says on hover — the sentence the label had no room for, such as the currency a column of prices is in |
 | `kind` | `text` (the default), `number`, `date`, `status`, `image`, `ordinal`, `component` |
 | `field` / `value` / `format` | where the value comes from and how it reads |
 | `width` / `height` / `align` / `mono` / `muted` / `truncate` | how it is drawn |

@@ -213,6 +213,19 @@ export interface ColumnDef {
   key?: string
   /** The header. A column whose content says what it is can leave it out. */
   label?: string
+  /**
+   * What the header says on hover — the sentence the label had no room for.
+   *
+   * A header is one or two words wide, and a column often turns on something
+   * those words leave out: which currency the figures are in, what a count is
+   * counting, whose feedback a score is. The reader who wonders can ask the
+   * header itself rather than guessing from the rows, and the reader who does
+   * not is never shown it.
+   *
+   * So: what the label leaves unsaid, and nothing that repeats it — a hint
+   * that is the label again is a tooltip that costs a hover and says nothing.
+   */
+  hint?: string
   kind?: ColumnKind
   /**
    * What this column is to the views that are not tables — see

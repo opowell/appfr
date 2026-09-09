@@ -127,6 +127,8 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
         >
           <span class="dc-table__sr">Select</span>
         </th>
+        <!-- The hint sits on the cell rather than on the button inside it, so
+             a sortable header and a plain one answer a hover the same way. -->
         <th
           v-for="(column, index) in columns"
           :key="columnKey(column, index)"
@@ -136,6 +138,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
           :data-dc-align="columnAlign(column)"
           :data-dc-hide="column.hideBelow"
           :aria-sort="ariaSort(column)"
+          :title="column.hint"
         >
           <button
             v-if="isSortable(column)"

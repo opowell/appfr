@@ -267,6 +267,9 @@ const pieceColumns: ColumnDef[] = [
   {
     key: 'weight',
     label: 'Weight',
+    // The one thing 'Weight' cannot say in the room a header has: which unit
+    // the figures under it are in.
+    hint: 'Grams, from the centigrams the catalogue keeps',
     width: '88px',
     align: 'right',
     mono: true,

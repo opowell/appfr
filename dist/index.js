@@ -2092,7 +2092,7 @@ const zi = ["title"], Ri = {
   key: 0,
   class: "dc-table__pick",
   scope: "col"
-}, Ii = ["data-dc-align", "data-dc-hide", "aria-sort"], Oi = ["onClick"], Bi = ["onClick"], Ki = {
+}, Ii = ["data-dc-align", "data-dc-hide", "aria-sort", "title"], Oi = ["onClick"], Bi = ["onClick"], Ki = {
   key: 0,
   class: "dc-table__pick"
 }, Vi = ["data-dc-align", "data-dc-hide", "title"], qi = {
@@ -2140,7 +2140,8 @@ const zi = ["title"], Ri = {
             style: Re({ width: b.width }),
             "data-dc-align": P(ys)(b),
             "data-dc-hide": b.hideBelow,
-            "aria-sort": u(b)
+            "aria-sort": u(b),
+            title: b.hint
           }, [
             i(b) ? (f(), h("button", {
               key: 0,
@@ -2196,7 +2197,7 @@ const zi = ["title"], Ri = {
       ])
     ]));
   }
-}), ya = /* @__PURE__ */ de(Wi, [["__scopeId", "data-v-66b32c45"]]);
+}), ya = /* @__PURE__ */ de(Wi, [["__scopeId", "data-v-cb4433f9"]]);
 function Ui(e) {
   const t = Ft([]), n = U(!1), s = Ft(null);
   let a = 0;

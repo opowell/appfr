@@ -92,6 +92,22 @@ type __VLS_Props = {
      * reading `v-model:selected` and doing the rest itself.
      */
     selectable?: boolean;
+    /**
+     * What pressing a row means.
+     *
+     * `narrow`, the default, adds that record to the query: everything about
+     * it, of every type, and the record's own name in the bar saying so. It is
+     * the move the `→` used to be on its own — so where a press narrows, the
+     * rows carry no `→`, the row being it.
+     *
+     * `open` reports the press as {@link activate} and applies nothing, for a
+     * host that routes to a page of its own instead.
+     *
+     * A row whose type declares no {@link EntitySchema.scope} cannot be
+     * narrowed to at all — nothing carries its id — so those are reported
+     * either way, and a host that only handles those need do nothing else.
+     */
+    rowPress?: 'open' | 'narrow';
     navigationMode?: NavigationMode;
     facetNavigationMode?: NavigationMode;
 };
@@ -175,6 +191,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     theme: ShellTheme;
     matchWidth: ShellWidthMatch;
     headAlign: ShellAlign;
+    rowPress: "open" | "narrow";
     navigationMode: NavigationMode;
     facetNavigationMode: NavigationMode;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;

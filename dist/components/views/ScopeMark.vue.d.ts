@@ -7,6 +7,10 @@ import type { PresentedRow } from '../../composables/usePresentedRows';
  * to a type, so the gesture reads the same at both scales: there it is "only
  * tenants", here it is "only this tenant". Opening the record is still the
  * name beside it — this is the other half of a row, not a second way in.
+ *
+ * Which is why it is not there at all where a press on the row *is* the
+ * narrowing (`rowPress: 'narrow'`, the default): the row and the arrow would
+ * be two controls for one move, and the smaller of them the harder to hit.
  */
 type __VLS_Props = {
     entry: PresentedRow;

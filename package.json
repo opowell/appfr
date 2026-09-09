@@ -1,6 +1,6 @@
 {
   "name": "header-content-layout",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "description": "Schema-driven data shell: a query header over a switchable results area, with the query held in the URL.",
   "license": "MIT",
   "type": "module",

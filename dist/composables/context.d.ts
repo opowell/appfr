@@ -57,7 +57,22 @@ export interface ShellContext extends QueryState {
     selectPage(on: boolean): void;
     /** Unticks everything, on this page and every other. */
     clearSelection(): void;
-    /** Opening a row — the shell reports it, the host decides what it means. */
+    /**
+     * Whether pressing a row narrows the whole result set to that record rather
+     * than reporting it as {@link ShellContext.activate}. True by default — see
+     * `rowPress` on `DataShell`.
+     *
+     * A view reads it to leave the `→` off its rows: with the row itself doing
+     * the narrowing, a second control for the same move is a second control for
+     * the same move.
+     */
+    narrowsOnPress: ComputedRef<boolean>;
+    /**
+     * A row was pressed. Narrows to the record where that is what a press means
+     * and the record's type can be narrowed to; reported to the host otherwise —
+     * which is every row of a type that declares no `scope`, and every row at
+     * all under `rowPress: 'open'`.
+     */
     activate(row: ShellRow): void;
     /**
      * Asking for a new record of a type, from the button {@link EntitySchema.create}

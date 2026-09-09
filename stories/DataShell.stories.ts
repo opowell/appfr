@@ -259,6 +259,26 @@ export const SelectableRows = story({ search: '?e=items&v=list', selectable: tru
  */
 export const HomeDrillable = story({ schema: legoSchema, liveUrl: true })
 
+/** What the host was last told a press meant — this story's whole answer. */
+const opened = ref('nothing opened yet')
+
+/**
+ * The same schema under `rowPress: 'open'`: a press is reported and the shell
+ * applies nothing, for a host that routes to a page of its own. The `→` comes
+ * back with it, that being the only way to narrow to a record left.
+ */
+export const HomeDrillableOpens = story({
+  schema: legoSchema,
+  liveUrl: true,
+  rowPress: 'open',
+  onActivate: (row) => {
+    opened.value = `opened ${row.id}`
+  },
+  slots: {
+    actions: () => h('span', { class: 'sb-asked dc-mono' }, opened.value),
+  },
+})
+
 /** The same rows as a table, where both metric columns are pressable. */
 export const DrillableTable = story({
   schema: legoSchema,

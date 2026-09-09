@@ -25,7 +25,7 @@ import type { RouteAdapter } from '../routing/adapter'
 import { ROUTE_ADAPTER_KEY } from '../routing/adapter'
 import { createHistoryAdapter } from '../routing/history'
 import { createMockDataSource } from '../data/mock'
-import { drillExpression } from '../query/drill'
+import { drillExpression, scopeTermFor } from '../query/drill'
 import { provideShellContext } from '../composables/context'
 import { useQueryState } from '../composables/useQueryState'
 import type { NavigationMode } from '../composables/useQueryState'
@@ -126,10 +126,27 @@ const props = withDefaults(
      * reading `v-model:selected` and doing the rest itself.
      */
     selectable?: boolean
+    /**
+     * What pressing a row means.
+     *
+     * `narrow`, the default, adds that record to the query: everything about
+     * it, of every type, and the record's own name in the bar saying so. It is
+     * the move the `→` used to be on its own — so where a press narrows, the
+     * rows carry no `→`, the row being it.
+     *
+     * `open` reports the press as {@link activate} and applies nothing, for a
+     * host that routes to a page of its own instead.
+     *
+     * A row whose type declares no {@link EntitySchema.scope} cannot be
+     * narrowed to at all — nothing carries its id — so those are reported
+     * either way, and a host that only handles those need do nothing else.
+     */
+    rowPress?: 'open' | 'narrow'
     navigationMode?: NavigationMode
     facetNavigationMode?: NavigationMode
   }>(),
   {
+    rowPress: 'narrow',
     limit: 50,
     previewsPerType: 3,
     theme: 'minimal',
@@ -408,7 +425,18 @@ const shell = provideShellContext({
   toggleSelect,
   selectPage,
   clearSelection,
-  activate: (row) => emit('activate', row),
+  narrowsOnPress: computed(() => props.rowPress === 'narrow'),
+  /*
+   * The one place a press is read, so every view gets the same answer without
+   * knowing which of the two it is: they all call this.
+   */
+  activate: (row) => {
+    if (props.rowPress === 'narrow' && scopeTermFor(props.schema, row)) {
+      drill(row, null)
+      return
+    }
+    emit('activate', row)
+  },
   create: (entity) => emit('create', entity),
   duplicate: () => emit('duplicate', selection.value),
   delete: () => emit('delete', selection.value),

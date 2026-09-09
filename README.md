@@ -667,16 +667,31 @@ That makes a row two things rather than one:
 
 | | |
 | --- | --- |
-| its **name** | opens the record — `activate(row)`, as everywhere else |
+| its **name** | narrows to the record itself without picking a type, so every card reports what it holds of it |
 | its **metric** | narrows to what its column's `drill` counts: `12` under *Tests* means "show me those twelve" |
-| the **→** beside it | narrows to the record itself without picking a type, so every card reports what it holds of it |
 
-Unlike `activate` and `create`, the shell **applies** this one. Those two are
+Unlike `activate` and `create`, the shell **applies** both. Those two are
 reported and left because the shell has no router and makes nothing; narrowing
 is a query change, and the query is the shell's own. The term lands in the
 expression field as an ordinary one — visible in the summary, editable, in the
 URL, and back-buttonable. A `drill(row, entity)` event still goes out for a
-host that wants to follow it; `entity` is null when the → was pressed.
+host that wants to follow it; `entity` is null when the row itself was pressed.
+
+**A press means the other thing under `rowPress: 'open'`**, for a host that
+routes to a page of its own: the press is reported as `activate(row)`, the shell
+applies nothing, and a **→** appears beside every name that can be narrowed to,
+so both moves are still on the row. That was the only arrangement before
+v0.21.0, and it is one prop away.
+
+```vue
+<DataShell :schema="schema" row-press="open" @activate="row => router.push(pageFor(row))" />
+```
+
+A row whose type declares no `scope` cannot be narrowed to whatever the prop
+says — nothing carries its id — so those presses are reported either way. A
+host whose leaves are the only records with somewhere to go (a URL opens in a
+new tab; a file opens in an editor) can leave `rowPress` alone and handle
+`activate` for exactly those.
 
 A host applying one itself wants `narrow(expr, entityKey)` from `useQueryState`, not
 `setExpression` followed by `setEntity`: each of those serialises from the query the URL
@@ -1024,6 +1039,7 @@ host writing a field of its own.
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all; `mono-size` is `inherit` with the type scale given up too, every word at the host's one size and one weight with only colour and opacity varying. |
 | `matchWidth` | `'grow' \| 'shrink'` | `'grow'` | How the header bar and the query panel are brought to one width: `grow` widens the panel to the bar, `shrink` narrows the bar to the panel. |
 | `headAlign` | `'left' \| 'center' \| 'right'` | `'center'` | Where the narrowed pair sits across the shell. `shrink` only. |
+| `rowPress` | `'open' \| 'narrow'` | `'narrow'` | What pressing a row means: add that record to the query, or report it as `activate` and apply nothing. See [narrowing to one record](#narrowing-to-one-record). |
 | `pinnable` | `boolean` | `false` | Offers the star affordance on rows. |
 | `selectable` | `boolean` | `false` | Offers the tick on rows even where the type names no operation for a selection. A type naming `duplicate` or `delete` offers them anyway. |
 | `open` | `boolean` | — | `v-model:open` to control the panel; omit and the shell holds it. |

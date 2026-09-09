@@ -12,13 +12,19 @@ import type { PresentedRow } from '../../composables/usePresentedRows'
  * to a type, so the gesture reads the same at both scales: there it is "only
  * tenants", here it is "only this tenant". Opening the record is still the
  * name beside it — this is the other half of a row, not a second way in.
+ *
+ * Which is why it is not there at all where a press on the row *is* the
+ * narrowing (`rowPress: 'narrow'`, the default): the row and the arrow would
+ * be two controls for one move, and the smaller of them the harder to hit.
  */
 const props = defineProps<{ entry: PresentedRow }>()
 
 const shell = useShellContext()
 
 /** The field the other records carry this one's id in — null when unscopable. */
-const scope = computed<string | null>(() => props.entry.entity?.scope ?? null)
+const scope = computed<string | null>(() =>
+  shell.narrowsOnPress.value ? null : (props.entry.entity?.scope ?? null),
+)
 
 /** Stops the click reaching the row, which would open the record instead. */
 function narrow(event: MouseEvent) {

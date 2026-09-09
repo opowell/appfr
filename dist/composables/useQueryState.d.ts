@@ -51,15 +51,16 @@ export interface QueryState {
     toggleDirection(): void;
     setExpression(expr: string): void;
     /**
-     * The expression *and* the entity to list, in one navigation.
+     * The expression, the entity to list and — where it matters — how to draw
+     * them, in one navigation.
      *
      * Calling {@link QueryState.setExpression} and {@link QueryState.setEntity}
      * in turn would not do it: each serialises from the query the URL currently
      * holds, and a route change is not synchronous — so the second would write
      * over the first before it had arrived. This is what narrowing to a record
-     * needs, since that is both at once.
+     * needs, since that is two or three things at once.
      */
-    narrow(expr: string, entityKey: string | null): void;
+    narrow(expr: string, entityKey: string | null, view?: ViewKind): void;
     /**
      * Moves to a page of the current results, 1-based and clamped there. What
      * the last page is depends on a count this composable has no sight of — the

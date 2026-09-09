@@ -806,8 +806,8 @@ function sl(e) {
     setExpression(g) {
       k({ expr: g }, d());
     },
-    narrow(g, $) {
-      k({ expr: g, ...b($) }, d());
+    narrow(g, $, F) {
+      k({ expr: g, ...b($), ...F ? { view: F } : {} }, d());
     },
     setPage(g, $) {
       k({ page: Math.max(1, Math.floor(g)) }, $ ?? d());
@@ -2517,7 +2517,11 @@ const Hi = ["data-dc-pending"], ji = {
     }));
     we(() => b.query.value.entity, te);
     function X(C, x) {
-      b.narrow(Hr(s.schema, b.query.value, C), x?.key ?? null), a("drill", C, x);
+      b.narrow(
+        Hr(s.schema, b.query.value, C),
+        x?.key ?? null,
+        x ? void 0 : "cards"
+      ), a("drill", C, x);
     }
     const pe = Xr({
       ...b,
@@ -2644,7 +2648,7 @@ const Hi = ["data-dc-pending"], ji = {
       ], !0)
     ], 12, yc));
   }
-}), $c = /* @__PURE__ */ de(bc, [["__scopeId", "data-v-0a8981e6"]]), xc = ["data-dc-muted"], Cc = {
+}), $c = /* @__PURE__ */ de(bc, [["__scopeId", "data-v-3a5bd8fe"]]), xc = ["data-dc-muted"], Cc = {
   key: 0,
   class: "dc-shell-card__head"
 }, Mc = { class: "dc-shell-card__title" }, Sc = {

@@ -667,8 +667,8 @@ That makes a row two things rather than one:
 
 | | |
 | --- | --- |
-| its **name** | narrows to the record itself without picking a type, so every card reports what it holds of it |
-| its **metric** | narrows to what its column's `drill` counts: `12` under *Tests* means "show me those twelve" |
+| its **name** | narrows to the record itself without picking a type, and draws the results as cards, so every card reports what it holds of it |
+| its **metric** | narrows to what its column's `drill` counts: `12` under *Tests* means "show me those twelve", in the view it was pressed in |
 
 Unlike `activate` and `create`, the shell **applies** both. Those two are
 reported and left because the shell has no router and makes nothing; narrowing
@@ -676,6 +676,13 @@ is a query change, and the query is the shell's own. The term lands in the
 expression field as an ordinary one — visible in the summary, editable, in the
 URL, and back-buttonable. A `drill(row, entity)` event still goes out for a
 host that wants to follow it; `entity` is null when the row itself was pressed.
+
+Narrowing to a record **takes the view with it**, which is the difference
+between the two rows above. In a list, one record is a one-row list of the row
+just pressed — the press going nowhere — and the screen narrowing to a record is
+worth making is the card per type, where every card says what it holds of it. A
+metric names the type it is going to a list *of*, so that one keeps the view it
+was pressed in.
 
 **A press means the other thing under `rowPress: 'open'`**, for a host that
 routes to a page of its own: the press is reported as `activate(row)`, the shell

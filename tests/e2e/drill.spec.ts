@@ -8,6 +8,7 @@ import {
   scopeSelect,
   termBar,
   terms,
+  viewSelect,
 } from './story'
 
 /**
@@ -56,6 +57,8 @@ test.describe('A metric that counts something listable', () => {
     expect(queryOf(page)).toMatch(/^set:"sets_\d+"$/)
     expect(entityOf(page)).toBe('pieces')
     await expect(scopeSelect(page)).toHaveValue('pieces')
+    // A metric names the type it is going to a list of, so it keeps the view it was drawn in.
+    await expect(page.locator('.dc-table')).toBeVisible()
   })
 
   test('leaves fewer rows than the type has in total', async ({ page }) => {
@@ -76,6 +79,28 @@ test.describe('A metric that counts something listable', () => {
 })
 
 test.describe('Pressing a row', () => {
+  /*
+   * In a list, one record is a one-row list of the row just pressed — the press going nowhere.
+   * The screen narrowing to a record is worth making is the card per type.
+   */
+  test('brings the cards with it from a view of records', async ({ page }) => {
+    await gotoStory(page, HOME, '&e=sets&v=list')
+    await page.locator('.dc-list__open').first().click()
+    await expect(page.locator('.dc-types')).toBeVisible()
+    // `cards` is the default view, so the URL says it by leaving it out.
+    await expect(viewSelect(page)).toHaveValue('cards')
+    // And the type goes with it: a record is not of one type, it is what every type holds of it.
+    expect(entityOf(page)).toBeNull()
+  })
+
+  /* A type that declares no scope has nothing to narrow to, so its rows are reported instead. */
+  test('is reported, not applied, on a type nothing carries the id of', async ({ page }) => {
+    await gotoStory(page, OPENS, '&e=inventories&v=list')
+    await page.locator('.dc-list__open').first().click()
+    expect(queryOf(page)).toBeNull()
+    await expect(page.locator('.sb-asked')).toContainText('opened')
+  })
+
   test('narrows every card at once, without picking a type', async ({ page }) => {
     await gotoStory(page, HOME)
     await press(page, 'Sets')

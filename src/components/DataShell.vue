@@ -393,9 +393,21 @@ watch(() => query.query.value.entity, clearSelection)
  * event still goes out, so a host can follow it; it does not have to.
  */
 function drill(row: ShellRow, entity: EntitySchema | null) {
-  // One navigation, not two: a route change is not synchronous, so setting the expression and
-  // then the entity would serialise the second from the query the first had not yet written.
-  query.narrow(drillExpression(props.schema, query.query.value, row), entity?.key ?? null)
+  /*
+   * One navigation, not two: a route change is not synchronous, so setting the expression and
+   * then the entity would serialise the second from the query the first had not yet written.
+   *
+   * Narrowing to a record *without* pivoting to a type takes the view with it, which is the
+   * third thing in that one navigation. In a list, one record is a one-row list of the row just
+   * pressed — the press going nowhere — and the screen narrowing to a record is worth making is
+   * the card per type, where every card reports what it holds of it. A metric drill names a type
+   * and is going to a list of it, so that one keeps the view it was drawn in.
+   */
+  query.narrow(
+    drillExpression(props.schema, query.query.value, row),
+    entity?.key ?? null,
+    entity ? undefined : 'cards',
+  )
   emit('drill', row, entity)
 }
 

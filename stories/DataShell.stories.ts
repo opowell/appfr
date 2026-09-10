@@ -313,8 +313,14 @@ export const DrilledPanelOpen = story({
 
 /**
  * The other half: narrowed to one set without pivoting to a type, which is
- * what the → on a row does. Every card is now that set's — its pieces, its
- * colors, its inventories — and the set itself is still among them.
+ * what pressing a row does. Every card is now that set's — its pieces, its
+ * colors, its inventories.
+ *
+ * There is no **Sets** card among them, and that is the point: it would be a
+ * heading, a count of one and the row the header is already naming. A card is
+ * a look inside a type, and the type the query has picked the one record of
+ * has nothing left inside it to look at. The set itself is still in the
+ * results — choose Sets and there it is, on its own.
  */
 export const DrilledEverything = story({
   schema: legoSchema,

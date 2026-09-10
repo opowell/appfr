@@ -1,8 +1,11 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import {
+  chooseScope,
+  chooseView,
   expressionBox,
   gotoStory,
+  listRows,
   openPanel,
   parts,
   scopeSelect,
@@ -27,6 +30,7 @@ import {
 const HOME = 'shell-data-shell--home-drillable'
 const OPENS = 'shell-data-shell--home-drillable-opens'
 const TABLE = 'shell-data-shell--drillable-table'
+const NAMED = 'shell-data-shell--drilled-everything'
 
 const card = (page: Page, label: string) =>
   page.locator('.dc-type').filter({
@@ -36,6 +40,19 @@ const card = (page: Page, label: string) =>
 /** Presses the first row of one type's card, which narrows to that record. */
 const press = (page: Page, label: string) =>
   card(page, label).locator('.dc-type__open').first().click()
+
+/**
+ * Presses the record the query already names, a second time.
+ *
+ * Its own type's card comes off the screen the moment the query names it, so
+ * there is nowhere on the home screen left to press — the record is still
+ * there, in that type's own list, which is a scope and a view away.
+ */
+async function pressAgain(page: Page, label: string): Promise<void> {
+  await chooseScope(page, label)
+  await chooseView(page, 'list')
+  await page.locator('.dc-list__open').first().click()
+}
 
 /** The shell writes its query into the story frame's own search string. */
 const queryOf = (page: Page) => new URL(page.url()).searchParams.get('q')
@@ -109,11 +126,40 @@ test.describe('Pressing a row', () => {
     await expect(page.locator('.dc-types')).toBeVisible()
   })
 
-  test('leaves the record itself among the results', async ({ page }) => {
+  /*
+   * The card of the type just pressed would be a heading, a count of one and
+   * the row that was pressed — the header's own term, drawn again a little
+   * lower down. What is worth seeing is every *other* type's cards, which is
+   * what the press was for.
+   */
+  test('takes that type’s own card off the screen, having named its one record', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await press(page, 'Sets')
+    await expect(card(page, 'Sets')).toHaveCount(0)
+    await expect(termBar(page)).toContainText('set:')
+  })
+
+  test('leaves the record itself among the results, a scope away', async ({ page }) => {
     await gotoStory(page, HOME)
     const name = await card(page, 'Sets').locator('.dc-type__primary').first().innerText()
     await press(page, 'Sets')
-    await expect(card(page, 'Sets').locator('.dc-type__primary').first()).toHaveText(name)
+    // The card went; the record did not. Its type still lists it, and lists
+    // nothing else — which is the very thing that made the card redundant.
+    await chooseScope(page, 'Sets')
+    await chooseView(page, 'list')
+    await expect(page.locator('.dc-list__primary')).toHaveText([name])
+  })
+
+  /*
+   * Only the type the query named. Everything else holds rows it did not name,
+   * and those cards are the whole of what the screen is read for.
+   */
+  test('leaves every other type’s card where it was', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await press(page, 'Sets')
+    for (const label of ['Pieces', 'Colors', 'Inventories', 'Categories']) {
+      await expect(card(page, label), label).toHaveCount(1)
+    }
   })
 
   /*
@@ -123,6 +169,34 @@ test.describe('Pressing a row', () => {
   test('leaves no → on the row, the row being it', async ({ page }) => {
     await gotoStory(page, HOME)
     await expect(page.locator('.dc-scope')).toHaveCount(0)
+  })
+})
+
+/*
+ * The same rule arrived at rather than pressed into. A URL naming a record is
+ * what a shared link is, and a host reading its shell inside one — a record's
+ * own page — writes the term itself; neither goes through a press, and the
+ * screen has to come out the same.
+ */
+test.describe('A home screen that arrives already naming a record', () => {
+  test('does not draw the card of the type it names', async ({ page }) => {
+    await gotoStory(page, NAMED)
+    await expect(page.locator('.dc-types')).toBeVisible()
+    await expect(card(page, 'Sets')).toHaveCount(0)
+  })
+
+  test('draws every other type, which is what it is read for', async ({ page }) => {
+    await gotoStory(page, NAMED)
+    await expect(card(page, 'Pieces')).toHaveCount(1)
+    await expect(card(page, 'Colors')).toHaveCount(1)
+    await expect(card(page, 'Inventories')).toHaveCount(1)
+  })
+
+  test('still holds the record, which the type’s own list shows', async ({ page }) => {
+    await gotoStory(page, NAMED)
+    await chooseScope(page, 'Sets')
+    await chooseView(page, 'list')
+    await expect(listRows(page)).toHaveCount(1)
   })
 })
 
@@ -144,7 +218,7 @@ test.describe('A narrowed query', () => {
     await gotoStory(page, HOME)
     await press(page, 'Sets')
     const once = queryOf(page)
-    await press(page, 'Sets')
+    await pressAgain(page, 'Sets')
     expect(queryOf(page)).toBe(once)
   })
 
@@ -167,7 +241,7 @@ test.describe('A narrowed query', () => {
     expect(lifted).not.toBe(scoped)
     expect(lifted).toMatch(/^set:sets_\d+$/)
 
-    await press(page, 'Sets')
+    await pressAgain(page, 'Sets')
     expect(queryOf(page)).toBe(lifted)
     await expect(terms(page)).toHaveCount(1)
   })

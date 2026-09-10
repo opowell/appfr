@@ -78,6 +78,11 @@ every card at once and turns each card's count into how many of that type
 matched — so the home screen doubles as a breakdown by kind. `entity:logs`
 narrows by kind without leaving home.
 
+One type can drop off that wall: the one whose single remaining record is the
+one the expression **named**, which is what pressing a row writes. Its card
+would be the term in the header drawn a second time a little lower down — see
+[the rule in full](#a-shell-about-one-record).
+
 A host that would rather open on one entity's list can say so:
 
 ```vue
@@ -668,7 +673,7 @@ That makes a row two things rather than one:
 
 | | |
 | --- | --- |
-| its **name** | narrows to the record itself without picking a type, and draws the results as cards, so every card reports what it holds of it |
+| its **name** | narrows to the record itself without picking a type, and draws the results as cards, so every card reports what it holds of it — every card but its own type's, which would report the record just pressed |
 | its **metric** | narrows to what its column's `drill` counts: `12` under *Tests* means "show me those twelve", in the view it was pressed in |
 
 Unlike `activate` and `create`, the shell **applies** both. Those two are
@@ -803,9 +808,9 @@ What is missing from it is the record itself, and the two slots are for that:
 ```
 ┌── Yellow Castle · 375-2 ───────────────────── [Duplicate] [Delete] ──┐  cards-before
 ├──────────────────────────────────────────────────────────────────────┤
-┌── Build ─────────────┐ ┌── Sets       1 ──────┐ ┌── Pieces     41 ──┐
-│ …                    │ │ Yellow Castle        │ │ Brick 2x4         │  the types
-│                      │ │                      │ │ Plate 1x2         │
+┌── Build ─────────────┐ ┌── Pieces     41 ─────┐ ┌── Colors     12 ──┐
+│ …                    │ │ Brick 2x4            │ │ Yellow            │  the types
+│                      │ │ Plate 1x2            │ │ Red               │
 └──────────────────────┘ └──────────────────────┘ └───────────────────┘
 ┌── Metadata  6 fields ┐
 │ theme:castle …       │                                                  cards-after
@@ -853,6 +858,24 @@ them the same rule — a control over nothing is not worth its room:
   an empty card is where that button does the most work. A heading, a zero and
   the words *No matches* are three ways of saying the same nothing, and inside
   one record most of the types say it.
+- **No card for the type the query has named the one record of**, which is why
+  there is no `Sets` card above. It would be a heading, a count of one and the
+  row the header is already naming, drawn again a little lower down — a card is
+  a look inside a type, and the type the reader has picked the one record of
+  has nothing left inside it. Unlike the rule before it, this one takes the
+  card away even where the type names `create`: that button is on the type's
+  own list, a press away, and the card is not empty but redundant. The record
+  is still in the results — choose that type and there it is, on its own.
+
+  Both halves of *named* are load-bearing. One match is not enough on its own:
+  a query can land on a single record by **asking** something — `name:"Brick"`
+  leaving one category — and that row is the answer rather than a restatement
+  of the question, which is the whole of what a card is for. So what is asked
+  is whether the row is the one the query **named**: the term a press on it
+  would add, already written. That test is `addTerm`, the same one a press goes
+  through, so the two agree about `set:sets_1` and `set:"sets_1"` being one
+  term. It reads the scope and the query as one expression, so a record's own
+  page drops the card on the same terms as a query narrowed to it by hand.
 
 ### A facet a row holds several of
 

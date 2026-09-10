@@ -251,7 +251,24 @@ test.describe('cards of the host’s own', () => {
     await typeCard(page, 'Pieces').locator('.dc-type__head').click()
     await expect(hostCards(page)).toHaveCount(0)
     await clearScope(page)
-    await expect(typeCard(page, 'Sets')).toBeVisible()
+    // Any type but the scope's own, which this screen never draws — see below.
+    await expect(typeCard(page, 'Pieces')).toBeVisible()
     await expect(hostCards(page)).toHaveCount(4)
+  })
+
+  /*
+   * The scope names one set, so the Sets card would be a heading, a count of
+   * one and the row the bar already states at its head — the same restatement
+   * a query narrowed to a record by hand produces, arrived at from the other
+   * direction. This is the shape a host's record page has: the term is held
+   * outside the query, and the URL never carries it.
+   */
+  test('leave no card for the type the scope itself names', async ({ page }) => {
+    await gotoStory(page, RECORD)
+    await expect(page.locator('.dc-types')).toBeVisible()
+    await expect(typeCard(page, 'Sets')).toHaveCount(0)
+    // What the record is made of is the whole point of the screen, and stays.
+    await expect(typeCard(page, 'Pieces')).toBeVisible()
+    await expect(typeCard(page, 'Colors')).toBeVisible()
   })
 })

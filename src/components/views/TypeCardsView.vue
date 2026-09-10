@@ -56,9 +56,22 @@ const narrowed = computed(() => !shell.isPristine.value || Boolean(shell.within.
  * left is what the record actually has. A type whose schema names `create`
  * stays either way: an empty card is where that button does the most work,
  * being the one place that says what to do about the emptiness.
+ *
+ * And the type at the other end of that screen goes too: the one whose single
+ * row is the record the query named, which since a press narrows is the type
+ * the reader just pressed in. A card restating the header is the same nothing
+ * as a card with no rows in it — see the preview's `pinned`.
+ *
+ * That one goes even where the type names `create`, which is the one place
+ * this rule and the rule above it disagree. An empty card is kept *for* that
+ * button, being the only thing on screen that says what to do about the
+ * emptiness; a pinned card has a record in it and nothing to say about, and
+ * `RecordActions` offers the same button on the type's own list a press away.
  */
 const previews = computed(() =>
-  found.value.filter((preview) => preview.rows.length > 0 || preview.entity.create),
+  found.value.filter(
+    (preview) => !preview.pinned && (preview.rows.length > 0 || preview.entity.create),
+  ),
 )
 </script>
 

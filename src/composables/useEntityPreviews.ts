@@ -8,6 +8,7 @@ import type {
   ShellQuery,
 } from '../types'
 import { emptyFacetState, isPristineQuery } from '../query/schema'
+import { addTerm, scopeTermFor } from '../query/drill'
 import { andExpression } from '../data/expression'
 import type { PresentedRow } from './usePresentedRows'
 import { presentRow } from './usePresentedRows'
@@ -24,6 +25,12 @@ export interface EntityPreview {
    * publishes; a narrowed one reports how many actually matched.
    */
   count: string
+  /**
+   * Whether the whole of what this type matched is the one record the query
+   * already names — see {@link namesItsOnlyRow}. Such a card says nothing the
+   * header has not said, so the home screen leaves it off.
+   */
+  pinned: boolean
 }
 
 export interface UseEntityPreviewsOptions {
@@ -63,13 +70,20 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
   const error = shallowRef<unknown>(null)
   let token = 0
 
-  const buildPreview = (entity: EntitySchema, result: QueryResult, pristine: boolean): EntityPreview => ({
+  const buildPreview = (
+    entity: EntitySchema,
+    result: QueryResult,
+    pristine: boolean,
+    schema: DomainSchema,
+    expr: string,
+  ): EntityPreview => ({
     entity,
     rows: result.rows.map((row, index) =>
       presentRow(row, index, entity, options.isPinned(row.id)),
     ),
     total: result.total,
     count: pristine ? entity.count : String(result.total),
+    pinned: namesItsOnlyRow(schema, result, expr),
   })
 
   const run = () => {
@@ -104,7 +118,7 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
 
     if (requests.every(({ outcome }) => !(outcome instanceof Promise))) {
       previews.value = requests.map(({ entity, outcome }) =>
-        buildPreview(entity, outcome as QueryResult, pristine),
+        buildPreview(entity, outcome as QueryResult, pristine, schema, expr),
       )
       error.value = null
       pending.value = false
@@ -116,7 +130,7 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
       .then((results) => {
         if (current !== token) return
         previews.value = results.map((result, index) =>
-          buildPreview(requests[index]!.entity, result, pristine),
+          buildPreview(requests[index]!.entity, result, pristine, schema, expr),
         )
         error.value = null
       })
@@ -154,4 +168,37 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
   )
 
   return { previews, pending, error, refresh: guarded }
+}
+
+/**
+ * Whether a type's card would say nothing but what the query already says.
+ *
+ * Narrow to one record and that record's own type comes back holding it and
+ * nothing else: a heading, a count of one, and the row the header is already
+ * naming, drawn again a little lower down. A card is a look inside a type, and
+ * a type the reader has picked the one record of has nothing left inside it.
+ *
+ * Both halves are needed, and the second is the one that is easy to miss. One
+ * match is not enough on its own — a query can land on a single record by
+ * *asking* something, and that row is then the answer rather than a
+ * restatement of the question, which is the whole of what the card is for. So
+ * what is asked here is whether the row is the one the query *named*: the term
+ * a press on it would add, already written. {@link addTerm} is what decides
+ * that, and it is the same `addTerm` the press goes through, so the two agree
+ * about `category:5` and `category:"5"` being one term.
+ *
+ * The expression is the scope and the query joined, so a shell read inside a
+ * record drops the card on the same terms as one narrowed to it by hand.
+ */
+function namesItsOnlyRow(schema: DomainSchema, result: QueryResult, expr: string): boolean {
+  const only = result.rows[0]
+  if (result.total !== 1 || result.rows.length !== 1 || !only) {
+    return false
+  }
+  const written = expr.trim()
+  if (!written) {
+    return false
+  }
+  const term = scopeTermFor(schema, only)
+  return Boolean(term) && addTerm(written, term) === written
 }

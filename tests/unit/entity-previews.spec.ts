@@ -4,7 +4,8 @@ import { useEntityPreviews } from '../../src/composables/useEntityPreviews'
 import type { EntityPreviewsState } from '../../src/composables/useEntityPreviews'
 import { createMockDataSource } from '../../src/data/mock'
 import { parseQuery } from '../../src/query/codec'
-import { iRadarSchema } from '../../src/fixtures/schemas'
+import { scopeTermFor } from '../../src/query/drill'
+import { iRadarSchema, legoSchema } from '../../src/fixtures/schemas'
 import type { DataSource, QueryRequest, QueryResult, ShellQuery } from '../../src/types'
 
 function setup(search = '', overrides: { source?: DataSource; limit?: number } = {}) {
@@ -178,5 +179,99 @@ describe('useEntityPreviews', () => {
     resolveFirst({ rows: [], total: 999, unfiltered: false })
     await vi.waitFor(() => expect(state.pending.value).toBe(false))
     expect(state.previews.value.some((p) => p.count === '999')).toBe(false)
+  })
+})
+
+
+/* ------------------------------------------------- the type the query named */
+
+/**
+ * The LEGO fixture rather than iRadar's, because this rule needs a type with a
+ * `scope`: a type nothing carries the id of cannot be narrowed to, so there is
+ * no term for a card to be a restatement of.
+ */
+function lego(search = '', within = '') {
+  const query = ref<ShellQuery>(parseQuery(search, legoSchema))
+  const scope = effectScope()
+  const state = scope.run(() =>
+    useEntityPreviews({
+      source: computed(() => createMockDataSource({ seed: 'LEGO' })),
+      schema: computed(() => legoSchema),
+      query: computed(() => query.value),
+      entities: computed(() => legoSchema.entities),
+      limit: computed(() => 3),
+      within: computed(() => within),
+      isPinned: () => false,
+    }),
+  ) as EntityPreviewsState
+  return { state, query, scope }
+}
+
+/** What `sets` came back as, which is the type these all narrow to. */
+function setsPreview(state: EntityPreviewsState) {
+  return state.previews.value.find((preview) => preview.entity.key === 'sets')!
+}
+
+/** The term a press on the first set would add — how these queries are built. */
+function firstSetTerm(): string {
+  return scopeTermFor(legoSchema, setsPreview(lego().state).rows[0]!.row)!
+}
+
+describe('a type the query has already named', () => {
+  it('is pinned when its one row is the record the query named', () => {
+    const { state } = lego(`?q=${encodeURIComponent(firstSetTerm())}`)
+    const sets = setsPreview(state)
+    expect(sets.total).toBe(1)
+    expect(sets.pinned).toBe(true)
+  })
+
+  it('stays where its one row is the answer rather than the question', () => {
+    // One set again, and this time nobody has named it — the card is what says
+    // which one the query found, which is the whole of what a card is for.
+    const only = setsPreview(lego().state).rows[0]!.row
+    const { state } = lego(`?q=${encodeURIComponent(`secondary:"${only.fields.secondary}"`)}`)
+    const sets = setsPreview(state)
+    expect(sets.total).toBe(1)
+    expect(sets.pinned).toBe(false)
+  })
+
+  it('reads the naming term however it was spelled', () => {
+    // A term is quoted where it has to be and bare where it does not, and the
+    // same narrowing is written both ways — so what decides this is the parsed
+    // term, not its text.
+    const bare = firstSetTerm().replace(/"/g, '')
+    expect(setsPreview(lego(`?q=${encodeURIComponent(bare)}`).state).pinned).toBe(true)
+  })
+
+  it('is pinned by a scope the shell is read inside, which the URL never carries', () => {
+    // A record's own page holds the term outside the query, so a card would
+    // otherwise restate the header on exactly the screen built to show it.
+    expect(setsPreview(lego('', firstSetTerm()).state).pinned).toBe(true)
+  })
+
+  it('leaves the types the query only narrowed alone', () => {
+    // Everything else under that term holds rows it did not name, and those
+    // are what the screen is read for.
+    const { state } = lego(`?q=${encodeURIComponent(firstSetTerm())}`)
+    for (const preview of state.previews.value) {
+      if (preview.entity.key === 'sets') continue
+      expect(preview.pinned, preview.entity.key).toBe(false)
+    }
+  })
+
+  it('is not pinned by a term that leaves the type holding more than one', () => {
+    // Two sets named at once is a card listing both, which is a comparison
+    // rather than a restatement — and nothing else on the screen shows it.
+    const rows = lego().state.previews.value.find((p) => p.entity.key === 'sets')!.rows
+    const both = `${scopeTermFor(legoSchema, rows[0]!.row)} OR ${scopeTermFor(legoSchema, rows[1]!.row)}`
+    const sets = setsPreview(lego(`?q=${encodeURIComponent(both)}`).state)
+    expect(sets.total).toBe(2)
+    expect(sets.pinned).toBe(false)
+  })
+
+  it('says nothing is pinned while the query is untouched', () => {
+    for (const preview of lego().state.previews.value) {
+      expect(preview.pinned, preview.entity.key).toBe(false)
+    }
   })
 })

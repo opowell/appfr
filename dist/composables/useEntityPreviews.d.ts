@@ -13,6 +13,12 @@ export interface EntityPreview {
      * publishes; a narrowed one reports how many actually matched.
      */
     count: string;
+    /**
+     * Whether the whole of what this type matched is the one record the query
+     * already names — see {@link namesItsOnlyRow}. Such a card says nothing the
+     * header has not said, so the home screen leaves it off.
+     */
+    pinned: boolean;
 }
 export interface UseEntityPreviewsOptions {
     source: ComputedRef<DataSource>;

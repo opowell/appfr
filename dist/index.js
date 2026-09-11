@@ -1060,7 +1060,9 @@ const il = ["data-dc-expanded"], cl = { class: "dc-header__domain" }, ul = {
     }
     const g = v(
       () => a.sorts.value.map((x) => ({ key: x.key, label: x.label }))
-    ), $ = v(() => g.value.length > 0 && !a.within.value);
+    ), $ = v(
+      () => g.value.length > 0 && a.query.value.entity !== null && !a.within.value
+    );
     function F(x) {
       a.setSort(x.target.value);
     }
@@ -1269,7 +1271,7 @@ const il = ["data-dc-expanded"], cl = { class: "dc-header__domain" }, ul = {
   for (const [s, a] of t)
     n[s] = a;
   return n;
-}, da = /* @__PURE__ */ de(Nl, [["__scopeId", "data-v-30ca3969"]]), Ol = { class: "dc-facet" }, Bl = ["id"], Kl = { class: "dc-facet__body" }, Vl = ["aria-labelledby"], ql = ["aria-pressed", "data-dc-active", "onClick"], Wl = ["aria-labelledby"], Ul = ["aria-label", "placeholder", "onKeydown"], Hl = ["aria-label", "placeholder", "onKeydown"], jl = ["aria-checked"], Xl = { class: "dc-switch__text" }, Gl = ["data-dc-active"], Yl = /* @__PURE__ */ ue({
+}, da = /* @__PURE__ */ de(Nl, [["__scopeId", "data-v-e6fa64ff"]]), Ol = { class: "dc-facet" }, Bl = ["id"], Kl = { class: "dc-facet__body" }, Vl = ["aria-labelledby"], ql = ["aria-pressed", "data-dc-active", "onClick"], Wl = ["aria-labelledby"], Ul = ["aria-label", "placeholder", "onKeydown"], Hl = ["aria-label", "placeholder", "onKeydown"], jl = ["aria-checked"], Xl = { class: "dc-switch__text" }, Gl = ["data-dc-active"], Yl = /* @__PURE__ */ ue({
   __name: "FacetControl",
   props: {
     facet: {},

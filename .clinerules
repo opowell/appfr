@@ -1,0 +1,37 @@
+# Project rules
+
+A Vue 3 component library — a schema-driven data shell. Published to npm; it has
+no runtime dependencies, only peers (vue ^3.4, vue-router, optionally @nuxt/kit).
+
+## Stack
+
+- Vue 3 Composition API, `<script setup lang="ts">` only. Never the Options API.
+- TypeScript throughout. Type props with the generic form —
+  `defineProps<{ views?: ViewKind[] }>()` — never the runtime object form.
+- Shared state goes in `src/composables/` and is consumed through
+  `useShellContext()`, not passed down through long prop chains.
+
+## Conventions
+
+- Comments explain *why*, in full sentences, not what the next line does.
+  Match the density of the file you are editing.
+- Reuse the types in `src/types.ts` and the tokens in `src/style/tokens.css`.
+  Do not invent a parallel type or hardcode a colour.
+- No new runtime dependencies. If you think you need one, say so instead of
+  adding it to package.json.
+
+## Before you finish
+
+Run these and fix what they report — do not report the work done until they pass:
+
+    npm run lint
+    npm run typecheck
+    npm run test:unit
+
+`npm run test:e2e` drives Playwright against Storybook and is slow; run it only
+when asked, or when the change touches component behaviour.
+
+## Editing
+
+- Prefer small, targeted edits to whole-file rewrites.
+- Read a file before you change it. Do not guess at an API that is one grep away.

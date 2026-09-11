@@ -534,6 +534,26 @@ test.describe('Header — paging through the results', () => {
     await expect(pageReadout(page)).toHaveText(/^1 \/ /)
   })
 
+  test('a new page opens at the top of the results', async ({ page }) => {
+    // A box short enough that twelve rows overrun it, which is where scrolling
+    // to the bottom and turning the page means anything at all.
+    await page.setViewportSize({ width: 1000, height: 420 })
+    await gotoStory(page, PAGED)
+
+    const results = page.locator('.dc-results')
+    await results.evaluate((element) => element.scrollTo(0, element.scrollHeight))
+    expect(await results.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+
+    await stepPage(page, 'Next')
+    await expect(pageReadout(page)).toHaveText('2 / 4')
+    expect(await results.evaluate((element) => element.scrollTop)).toBe(0)
+
+    // Both ways: stepping back is a new page of rows just as much.
+    await results.evaluate((element) => element.scrollTo(0, element.scrollHeight))
+    await stepPage(page, 'Previous')
+    expect(await results.evaluate((element) => element.scrollTop)).toBe(0)
+  })
+
   test('a page past the end lands on the last one there is', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--page-past-the-end')
     await expect(pageReadout(page)).toHaveText('4 / 4')

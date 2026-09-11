@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Component } from 'vue'
 import type { ViewKind } from '../types'
 import { useShellContext } from '../composables/context'
@@ -54,10 +54,31 @@ const kind = computed<ViewKind>(() => resolveView(shell.query.value.view, props.
 const view = computed(() => VIEWS[kind.value] ?? ListView)
 const hasRows = computed(() => shell.rows.value.length > 0)
 const failed = computed(() => shell.error.value !== null)
+
+const scroller = ref<HTMLElement | null>(null)
+
+/*
+ * A page turn starts at the top. Where the scroll is belongs to the rows that
+ * were there, and the next page is a different set of them: keeping it opens
+ * the page partway down rows nobody has read yet, or — where the new page is
+ * the shorter one — at whatever the browser clamps the old position to.
+ *
+ * Set rather than scrolled smoothly, because the rows it would travel over are
+ * being replaced as it goes. Watched on the page alone — a change to the query
+ * made from further down the results sends the page back to the first, and
+ * arrives here as a page turn like any other.
+ */
+watch(
+  () => shell.query.value.page,
+  () => {
+    if (scroller.value) scroller.value.scrollTop = 0
+  },
+)
 </script>
 
 <template>
   <div
+    ref="scroller"
     class="dc-results"
     :data-dc-pending="shell.pending.value ? 'true' : 'false'"
   >

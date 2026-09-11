@@ -2442,7 +2442,7 @@ const ji = ["data-dc-pending"], Xi = {
       ]))
     ], 8, pc));
   }
-}), ba = /* @__PURE__ */ de(yc, [["__scopeId", "data-v-9d853294"]]), wc = ["data-dc-theme"], kc = ["data-dc-width", "data-dc-align"], bc = { class: "dc-shell__panel" }, $c = /* @__PURE__ */ ue({
+}), ba = /* @__PURE__ */ de(yc, [["__scopeId", "data-v-41f54508"]]), wc = ["data-dc-theme"], kc = ["data-dc-width", "data-dc-align"], bc = { class: "dc-shell__panel" }, $c = /* @__PURE__ */ ue({
   __name: "DataShell",
   props: /* @__PURE__ */ cn({
     schema: {},

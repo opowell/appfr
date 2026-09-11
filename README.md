@@ -960,6 +960,17 @@ beside it is that same ordering the other way about, which is a press rather
 than another entry in the list. What is left in the panel is what narrows a
 type: its facets, and the expression.
 
+The ordering waits for a type, though. A mixed result set has only the
+schema-level `columns` to be ordered by — generic headings a row of any type
+can fill — and a column that holds a different thing in every row is not
+something to put a result in order of: a colour's parts ranked against a log's
+duration is one list of two measurements that were never the same measurement.
+So on `Everything` the chooser and its arrow are off the bar, and choosing a
+type brings back that type's own orderings, which is the same moment they start
+meaning something. A mixed table's own headings still sort — there the column
+is on screen with its rows under it, so pressing it orders what is in front of
+you rather than picking a generic name out of a list.
+
 It says how many, too, because what is being listed and how much of it there is
 are one question. Each type carries the population the schema publishes —
 `Items · 9,988` — and the type in force says what actually matched the moment a

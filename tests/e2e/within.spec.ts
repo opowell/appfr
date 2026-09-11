@@ -12,6 +12,8 @@ const RECORD = 'shell-data-shell--record-page'
 const NARROWED = 'shell-data-shell--record-page-narrowed'
 const ENTITY = 'shell-data-shell--record-page-entity'
 const HOME = 'shell-data-shell--home-drillable'
+/** The same type outside any scope: one of the two halves of the sort rule. */
+const DRILLED = 'shell-data-shell--drilled-into-pieces'
 
 /** The fixed part at the head of the bar — the scope, not a term. */
 const scope = (page: Page) => page.locator('.dc-within')
@@ -71,10 +73,13 @@ test.describe('within — the scope on the bar', () => {
  * all three of these.
  */
 test.describe('within — what the bar stops offering', () => {
-  test('no ordering inside a scope: the cards show every row there is', async ({ page }) => {
-    await gotoStory(page, HOME)
+  test('no ordering inside a scope: a record holds a handful of each type', async ({ page }) => {
+    // Pieces outside any scope: the ordering is on the bar, since ordering a
+    // corpus of them is a real move.
+    await gotoStory(page, DRILLED)
     await expect(sortSelect(page)).toHaveCount(1)
-    await gotoStory(page, RECORD)
+    // The same type read inside one record: gone, and the direction with it.
+    await gotoStory(page, ENTITY)
     await expect(sortSelect(page)).toHaveCount(0)
     await expect(page.locator('.dc-header__dir')).toHaveCount(0)
   })

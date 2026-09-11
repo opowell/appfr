@@ -25,6 +25,7 @@ import {
 
 const LIVE = 'routing-url-bound--live-url'
 const LIVE_OPEN = 'routing-url-bound--live-url-panel-open'
+const LANDS_ON_ENTITY = 'routing-url-bound--live-url-lands-on-entity'
 
 test.describe('URL — the query is the route', () => {
   test('the home screen has no parameters of its own', async ({ page }) => {
@@ -84,9 +85,15 @@ test.describe('URL — the query is the route', () => {
     expect(shellParams(page.url()).q).toBe('price < 40')
   })
 
+  /*
+   * On a type, since that is where the bar offers an ordering at all: across
+   * every type at once the columns are the schema's generic set and there is
+   * nothing to put a mixed result in order of.
+   */
   test('sort field and direction appear in the URL', async ({ page }) => {
-    await gotoStory(page, LIVE_OPEN)
-    await chooseSort(page, 'metric')
+    await gotoStory(page, LANDS_ON_ENTITY)
+    // `searches` names its first metric "New", which is the `metric1` column.
+    await chooseSort(page, 'new')
     await sortDirection(page).click()
     expect(shellParams(page.url())).toEqual({ s: 'metric1', d: 'asc' })
   })

@@ -169,15 +169,6 @@ test.describe('Header — how the results are drawn and ordered', () => {
    * headings are offering one list rather than two.
    */
   test('the sorts are the columns offering them, in the schema’s own words', async ({ page }) => {
-    await gotoStory(page, HOME)
-    // Across every entity the columns are the schema's generic set.
-    await expect(sortSelect(page).locator('option')).toHaveText([
-      'item',
-      'metric',
-      'metric 2',
-      'updated',
-    ])
-
     await gotoStory(page, ENTITY)
     // iRadar heads `searches` "Search" and names its metrics "New" and "Results".
     await expect(sortSelect(page).locator('option')).toHaveText([
@@ -186,6 +177,26 @@ test.describe('Header — how the results are drawn and ordered', () => {
       'results',
       'updated',
     ])
+  })
+
+  /*
+   * And across every type at once there is nothing to offer. The columns a
+   * mixed result set has are the schema's generic ones — `metric` is a
+   * different measurement in every row of it — so the bar leaves the ordering
+   * off until a type says what its columns hold.
+   */
+  test('no ordering while Everything is what is listed', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await expect(sortSelect(page)).toHaveCount(0)
+    await expect(sortDirection(page)).toHaveCount(0)
+
+    // Choosing a type is what brings it back, that being where it means
+    // something — and it is the same press either way round.
+    await chooseScope(page, 'Searches')
+    await expect(sortSelect(page)).toHaveCount(1)
+
+    await clearScope(page)
+    await expect(sortSelect(page)).toHaveCount(0)
   })
 })
 
@@ -429,7 +440,9 @@ test.describe('Header — opening the expanded query view', () => {
   })
 
   test('the header is reachable and operable from the keyboard alone', async ({ page }) => {
-    await gotoStory(page, HOME)
+    // A type in force, so the whole row of choosers is on the bar: across
+    // every type at once there is no ordering to reach.
+    await gotoStory(page, ENTITY)
     // The query comes first, since it is what the bar is mostly made of: which
     // type is listed, how it is drawn, what it is ordered by and which way
     // round — and then the button that opens the rest of the query.

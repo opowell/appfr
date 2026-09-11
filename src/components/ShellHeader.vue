@@ -170,12 +170,29 @@ const sortOptions = computed(() =>
 /**
  * And whether an ordering is worth offering at all.
  *
- * Not inside a scope. A shell read inside one record holds a handful of rows
- * of each type — the cards show all of them — so which end of five results
- * comes first is a control over nothing, and the bar of a record's page has
- * better uses for the room.
+ * Not on `Everything`. The orderings a mixed result set has to offer are the
+ * schema's generic columns, and `metric` is a different measurement in every
+ * row of it — a colour's parts ranked against a log's duration is one list of
+ * two things that were never the same thing. So the bar has nothing to name
+ * here, and a type's own orderings come back the moment a type is chosen,
+ * which is the moment they mean something.
+ *
+ * The mixed table's own headings still sort, and that is not the same offer:
+ * there the column is on screen with its rows under it, so pressing it orders
+ * what is in front of the reader rather than picking a generic name out of a
+ * list. What the bar would be offering is the choice in the abstract.
+ *
+ * Not inside a scope either. A shell read inside one record holds a handful of
+ * rows of each type — the cards show all of them — so which end of five
+ * results comes first is a control over nothing, and the bar of a record's
+ * page has better uses for the room.
  */
-const showSort = computed(() => sortOptions.value.length > 0 && !shell.within.value)
+const showSort = computed(
+  () =>
+    sortOptions.value.length > 0
+    && shell.query.value.entity !== null
+    && !shell.within.value,
+)
 
 function chooseSort(event: Event): void {
   shell.setSort((event.target as HTMLSelectElement).value)
@@ -435,8 +452,9 @@ const position = computed(() => {
 
         <!-- And what they are ordered by, the third of the choices a query
              is made of. The arrow beside it is the same order the other way
-             about. Offered where the type offers an ordering at all: a type
-             with no sortable column has nothing to put in the list. -->
+             about. Offered where there is a type in force and it offers an
+             ordering: across every type at once, and on a type with no
+             sortable column, there is nothing to put in the list. -->
         <template v-if="showSort">
           <label class="dc-header__pick">
             <span class="dc-header__sr">Sort</span>

@@ -143,7 +143,23 @@ watch(
 </template>
 
 <style scoped>
+/*
+ * The one scroller, and a containing block so that it stays the one scroller.
+ *
+ * `overflow: auto` clips a laid-out descendant but not an absolutely positioned one whose
+ * containing block is further out — and the sr-only recipe every view here uses for its
+ * announcements (`position: absolute`, a 1px box, `clip-path: inset(50%)`) sits in cards and rows
+ * that declare no `position` of their own. Without this line their containing block is the
+ * document: they are laid out at their static position far down the scrolled content, escape this
+ * clip and the shell's, and extend the *page's* scrollable area past the viewport. The host then
+ * has two scrollbars, and scrolling the outer one takes the shell's own header off the screen.
+ *
+ * Positioning the scroller is the whole fix, and it is free: every box under here that means to be
+ * placed — a grid tick, a tile's image and scrim — already has a `relative` cell of its own, and
+ * nothing in the results is meant to be drawn outside them.
+ */
 .dc-results {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow: auto;

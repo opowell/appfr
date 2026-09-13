@@ -108,6 +108,15 @@ type __VLS_Props = {
      * either way, and a host that only handles those need do nothing else.
      */
     rowPress?: 'open' | 'narrow';
+    /**
+     * What the count is short of, in the host's words — `first 1,200 of
+     * 30,200 lots` for a seller whose pages are still being fetched, or were
+     * given up on part way. The shell counts pages from the rows its source
+     * has reported, so the pager reads as if that were all of them; this goes
+     * under the pager's hover text, which is where that count is explained.
+     * Empty says nothing.
+     */
+    pagesNote?: string;
     navigationMode?: NavigationMode;
     facetNavigationMode?: NavigationMode;
 };

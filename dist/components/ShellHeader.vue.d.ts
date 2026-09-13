@@ -11,6 +11,12 @@ type __VLS_Props = {
     hideCount?: boolean;
     /** Views to offer, when the host restricts them. Defaults to all six. */
     views?: ViewKind[];
+    /**
+     * What the count is short of, in the host's words — `first 1,200 of 30,200
+     * lots`. Said where the count is, which is the pager's hover text, rather
+     * than on the bar beside it.
+     */
+    pagesNote?: string;
 };
 declare var __VLS_1: {};
 type __VLS_Slots = {} & {

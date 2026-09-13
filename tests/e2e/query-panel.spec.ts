@@ -178,7 +178,7 @@ test.describe('Query panel — narrowing the result set', () => {
     await expect(terms(page)).toHaveCount(0)
 
     await min.press('Enter')
-    await expect(terms(page)).toHaveText(['rank:90..'])
+    await expect(terms(page)).toHaveText(['rank ≥ 90'])
   })
 
   test('a toggle narrows to the rows carrying its flag', async ({ page }) => {

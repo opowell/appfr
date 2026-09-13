@@ -48,9 +48,13 @@ function describeFacet(facet: FacetDef, value: FacetValue): SummaryTerm[] {
       }))
     case 'range': {
       if (value.min === null && value.max === null) return []
-      const low = value.min ?? ''
-      const high = value.max ?? ''
-      return [{ id: facet.key, label: `${name}:${low}..${high}`, facetKey: facet.key }]
+      const label =
+        value.min !== null && value.max !== null
+          ? `${value.min} ≤ ${name} ≤ ${value.max}`
+          : value.max !== null
+            ? `${name} ≤ ${value.max}`
+            : `${name} ≥ ${value.min}`
+      return [{ id: facet.key, label, facetKey: facet.key }]
     }
     case 'toggle':
       return value.on ? [{ id: facet.key, label: `${name}:on`, facetKey: facet.key }] : []

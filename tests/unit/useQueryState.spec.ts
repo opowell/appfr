@@ -201,6 +201,16 @@ describe('useQueryState — reading and writing the URL', () => {
     expect(adapter.search.value).toBe('?e=items')
   })
 
+  it('states a range term with the bound it actually has', () => {
+    const { state } = setup('?e=items')
+    state.setRange('rank', 20, 80)
+    expect(state.terms.value.map((t) => t.label)).toContain('20 ≤ rank ≤ 80')
+    state.setRange('rank', null, 80)
+    expect(state.terms.value.map((t) => t.label)).toContain('rank ≤ 80')
+    state.setRange('rank', 20, null)
+    expect(state.terms.value.map((t) => t.label)).toContain('rank ≥ 20')
+  })
+
   it('flips a toggle facet', () => {
     const { state, adapter } = setup('?e=items')
     state.toggleFlag('seen')

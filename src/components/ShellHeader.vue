@@ -383,6 +383,65 @@ const position = computed(() => {
   }
   return props.pagesNote ? `${place}\n${props.pagesNote}` : place
 })
+
+/**
+ * What the box holds: the page being typed while it is being typed, and the
+ * query's own page at every other moment. Nothing tells the box to catch up
+ * after a step, a new query or a Back — it was never holding its own number.
+ */
+const draft = ref<string | null>(null)
+const typed = computed(() => draft.value ?? String(page.value))
+
+/**
+ * Room for the last page's digits and no more, so the field neither grows
+ * under the typing hand nor leaves the steps sitting apart from it. The
+ * padding is added back on: the shell borders every box, so the width it is
+ * given is the outside of one and the digits would be squeezed out of it.
+ */
+const boxWidth = computed(
+  () => `calc(${Math.max(2, String(shell.pageCount.value).length)}ch + 10px)`,
+)
+
+/** Typing over the number is the point, so a click offers it up whole. */
+function offerAll(event: FocusEvent): void {
+  const box = event.target as HTMLInputElement
+  box.select()
+}
+
+/** Pages are counted in digits, and the box holds nothing else. */
+function keepDigits(event: Event): void {
+  const box = event.target as HTMLInputElement
+  const digits = box.value.replace(/[^0-9]/g, '')
+  /* Held in the element as well as the ref: Vue re-renders from `typed`, which
+     a rejected keystroke leaves unchanged, and the box would keep it. */
+  if (box.value !== digits) box.value = digits
+  draft.value = digits
+}
+
+/**
+ * A typed page lands on one that exists. Past the end is the last page, the
+ * same place the steps stop at; a box left empty, or holding what is not a
+ * page at all, is a page not asked for and leaves this one where it is.
+ */
+function jumpToTyped(event: Event): void {
+  const box = event.target as HTMLInputElement
+  const wanted = Number(draft.value)
+  draft.value = null
+  const landed =
+    Number.isFinite(wanted) && wanted >= 1
+      ? Math.min(Math.trunc(wanted), Math.max(1, shell.pageCount.value))
+      : page.value
+  box.value = String(landed)
+  if (landed !== page.value) shell.setPage(landed)
+}
+
+/** Escape is the way out of a half-typed number: the page it left stands. */
+function abandonTyped(event: Event): void {
+  const box = event.target as HTMLInputElement
+  draft.value = null
+  box.value = String(page.value)
+  box.blur()
+}
 </script>
 
 <template>
@@ -572,8 +631,30 @@ const position = computed(() => {
       <span
         class="dc-header__page dc-mono"
         :title="position"
-        aria-hidden="true"
-      >{{ page }} / {{ pages }}</span>
+      >
+        <!-- The page is typed as well as stepped: page 30 is twenty-nine
+             presses away and one number wide. A text box rather than a number
+             one, because the spinner a number box brings is already here,
+             either side of it, counting in pages it knows the end of. -->
+        <input
+          class="dc-header__page-box dc-mono"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          aria-label="Page"
+          :style="{ width: boxWidth }"
+          :value="typed"
+          @focus="offerAll"
+          @input="keepDigits"
+          @keydown.enter.prevent="jumpToTyped"
+          @keydown.esc.prevent="abandonTyped"
+          @blur="jumpToTyped"
+        >
+        <span
+          class="dc-header__page-total"
+          aria-hidden="true"
+        >/ {{ pages }}</span>
+      </span>
       <span
         class="dc-header__sr"
         aria-live="polite"
@@ -935,11 +1016,44 @@ const position = computed(() => {
 }
 
 .dc-header__page {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   /* Held to a width, so stepping 9 → 10 does not shuffle the buttons. */
   min-width: 46px;
-  text-align: center;
+  justify-content: center;
   font-size: var(--dc-text-micro);
   color: var(--dc-fg-3);
+}
+
+/*
+ * A number on the bar until it is used: no frame, no fill, sized to its digits.
+ * The readout is what it has to look like, because that is what it is for all
+ * but the few seconds a page is being typed into it.
+ */
+.dc-header__page-box {
+  min-width: 0;
+  padding: 1px 2px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-fg-1);
+  font-size: var(--dc-text-micro);
+  line-height: 1;
+  text-align: center;
+}
+
+.dc-header__page-box:hover {
+  border-color: var(--dc-line);
+}
+
+/* Under the caret it is a field and is filled like one. The accent ring is the
+   shell's own, which every focused thing here wears, so the border stays the
+   quiet one rather than doubling it. */
+.dc-header__page-box:focus {
+  background: var(--dc-bg-0);
+  border-color: var(--dc-line);
+  color: var(--dc-fg-0);
 }
 
 /*

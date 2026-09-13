@@ -1171,11 +1171,15 @@ header gains a step either side of where it is, and the page is in the URL as
   27  Regulatory filings              682  116  ▬▬     running
 ```
 
-Four things this does on purpose:
+What this does on purpose:
 
 - **The control is only there when there is somewhere to go.** One page of
   results says nothing about pages; the home screen's type cards say nothing
   either, since each card runs its own query and stepping would move nothing.
+- **The page is typed as well as stepped.** The number between the steps is a
+  box: click it, type a page and press Enter, and page 30 is one number rather
+  than twenty-nine presses. An emptied box, or Escape, leaves the page where it
+  was.
 - **The rows keep counting.** Page three of twelve opens at 25, so a row's
   number is its place in the result rather than its place on screen.
 - **A change to what matched returns to the first page.** The entity, the
@@ -1186,7 +1190,9 @@ Four things this does on purpose:
 - **A page past the end lands on the last one there is.** How many pages there
   are is a count only the source knows, so the codec cannot clamp `p` the way
   it clamps a range; the shell corrects it when the results arrive, replacing
-  rather than pushing so Back does not lead straight to it again.
+  rather than pushing so Back does not lead straight to it again. A page typed
+  into the box never gets that far — the count is on screen beside it, so the
+  jump is clamped before it is made.
 - **A count still being made says so.** While the source is working — an
   async `query` in flight, a [stream](#results-that-arrive-over-time) not yet
   closed — the total is what it has found so far, so the pager reads `1 / ~4`

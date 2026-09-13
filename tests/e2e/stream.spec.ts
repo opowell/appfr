@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { chooseView, gotoStory, listRows, openPanel, pageReadout, termBar, scopeLabel } from './story'
+import { chooseView, expectPage, gotoStory, listRows, openPanel, pageReadout, termBar, scopeLabel } from './story'
 
 /**
  * Results that arrive over time.
@@ -44,12 +44,12 @@ test.describe('A streaming source', () => {
     // 48 rows at 12 a page, arriving two at a time: the pager has to grow with
     // the total rather than being told it up front — and for as long as it is
     // growing, the count is said as one that may: `~2`, not `2`.
-    await expect(pageReadout(page)).toHaveText('1 / ~2')
-    await expect(pageReadout(page)).toHaveText('1 / ~3')
-    await expect(pageReadout(page)).toHaveText('1 / ~4')
+    await expectPage(page, '1 / ~2')
+    await expectPage(page, '1 / ~3')
+    await expectPage(page, '1 / ~4')
 
     // Closed, the count is the count.
-    await expect(pageReadout(page)).toHaveText('1 / 4', { timeout: 15_000 })
+    await expectPage(page, '1 / 4', { timeout: 15_000 })
   })
 
   test('reports itself as pending until it closes', async ({ page }) => {

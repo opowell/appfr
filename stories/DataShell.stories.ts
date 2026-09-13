@@ -591,6 +591,11 @@ export const SourceError = story({ source: failingSource() })
  * of where it is — `‹ 1 / 4 ›` — and the page it is on is in the URL as `p`,
  * so a page is a link like every other state the shell can be in.
  *
+ * The page in the middle is a box as well as a readout: click it and type a
+ * number, and Enter goes there — a jump of twenty pages is one number rather
+ * than twenty presses. Past the end lands on the last page there is, and
+ * Escape leaves a half-typed number where the page already was.
+ *
  * There is no control until there is somewhere to go: at the default limit of
  * fifty this same query is one page, and the bar says nothing about pages.
  */

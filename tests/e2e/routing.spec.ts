@@ -3,10 +3,10 @@ import {
   chooseSort,
   chooseView,
   clearScope,
+  expectPage,
   gotoStory,
   listRows,
   openPanel,
-  pageReadout,
   pickEntity,
   scopeSelect,
   shellParams,
@@ -194,7 +194,7 @@ test.describe('URL — the page is in it too', () => {
     await gotoStory(page, PAGED)
     // Twelve of forty-eight searches, and a clean URL on the first page.
     await expect(listRows(page)).toHaveCount(12)
-    await expect(pageReadout(page)).toHaveText('1 / 4')
+    await expectPage(page, '1 / 4')
     expect(shellParams(page.url())).toEqual({})
 
     await stepPage(page, 'Next')
@@ -211,13 +211,13 @@ test.describe('URL — the page is in it too', () => {
     expect(shellParams(page.url())).toEqual({ p: '3' })
 
     await page.goBack()
-    await expect(pageReadout(page)).toHaveText('2 / 4')
+    await expectPage(page, '2 / 4')
     expect(shellParams(page.url())).toEqual({ p: '2' })
   })
 
   test('a pasted page loads straight into it', async ({ page }) => {
     await gotoStory(page, PAGED, '&p=3')
-    await expect(pageReadout(page)).toHaveText('3 / 4')
+    await expectPage(page, '3 / 4')
     expect(shellParams(page.url())).toEqual({ p: '3' })
   })
 

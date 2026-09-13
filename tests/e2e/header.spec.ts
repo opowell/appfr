@@ -6,10 +6,12 @@ import {
   chooseView,
   clearScope,
   clickOutsidePanel,
+  expectPage,
   gotoStory,
   header,
   listRows,
   openPanel,
+  pageBox,
   pager,
   pageReadout,
   pageStep,
@@ -24,6 +26,7 @@ import {
   termBar,
   terms,
   trigger,
+  typePage,
   viewSelect,
 } from './story'
 
@@ -482,7 +485,7 @@ test.describe('Header — paging through the results', () => {
   test('offers a step either side of where it is, and says which page that is', async ({ page }) => {
     await gotoStory(page, PAGED)
     await expect(pager(page)).toBeVisible()
-    await expect(pageReadout(page)).toHaveText('1 / 4')
+    await expectPage(page, '1 / 4')
     await expect(listRows(page)).toHaveCount(12)
   })
 
@@ -491,13 +494,51 @@ test.describe('Header — paging through the results', () => {
     const first = await listRows(page).first().innerText()
 
     await stepPage(page, 'Next')
-    await expect(pageReadout(page)).toHaveText('2 / 4')
+    await expectPage(page, '2 / 4')
     await expect(listRows(page)).toHaveCount(12)
     expect(await listRows(page).first().innerText()).not.toBe(first)
 
     await stepPage(page, 'Previous')
-    await expect(pageReadout(page)).toHaveText('1 / 4')
+    await expectPage(page, '1 / 4')
     expect(await listRows(page).first().innerText()).toBe(first)
+  })
+
+  test('a page typed into the readout is the page it goes to', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    const first = await listRows(page).first().innerText()
+
+    await typePage(page, '3')
+    await expectPage(page, '3 / 4')
+    expect(await listRows(page).first().innerText()).not.toBe(first)
+  })
+
+  test('a typed page past the end lands on the last one there is', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    await typePage(page, '99')
+    await expectPage(page, '4 / 4')
+  })
+
+  test('a box left empty leaves the page where it was', async ({ page }) => {
+    await gotoStory(page, LATER)
+    await expectPage(page, '3 / 4')
+
+    await pageBox(page).fill('')
+    await pageBox(page).press('Enter')
+    await expectPage(page, '3 / 4')
+  })
+
+  test('Escape gives up on a half-typed number', async ({ page }) => {
+    await gotoStory(page, LATER)
+    await pageBox(page).fill('1')
+    await pageBox(page).press('Escape')
+    await expectPage(page, '3 / 4')
+    expect((await rowOrdinals(page))[0]).toBe('25')
+  })
+
+  test('a step is read back in the box without being typed there', async ({ page }) => {
+    await gotoStory(page, PAGED)
+    await stepPage(page, 'Next')
+    await expect(pageBox(page)).toHaveValue('2')
   })
 
   test('there is no page before the first, and none after the last', async ({ page }) => {
@@ -506,7 +547,7 @@ test.describe('Header — paging through the results', () => {
     await expect(pageStep(page, 'Next')).toBeEnabled()
 
     await gotoStory(page, LAST)
-    await expect(pageReadout(page)).toHaveText('4 / 4')
+    await expectPage(page, '4 / 4')
     await expect(pageStep(page, 'Previous')).toBeEnabled()
     await expect(pageStep(page, 'Next')).toBeDisabled()
   })
@@ -536,7 +577,7 @@ test.describe('Header — paging through the results', () => {
 
   test('what the count is short of goes under the pager\'s hover text', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--pages-note')
-    await expect(pageReadout(page)).toHaveText('1 / 4')
+    await expectPage(page, '1 / 4')
     await expect(pageReadout(page)).toHaveAttribute(
       'title',
       'Page 1 of 4 — rows 1 to 12 of 48\nfirst 48 of 3,214 searches',
@@ -545,7 +586,7 @@ test.describe('Header — paging through the results', () => {
 
   test('a note keeps the pager up on a single page', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--pages-note-on-one-page')
-    await expect(pageReadout(page)).toHaveText('1 / 1')
+    await expectPage(page, '1 / 1')
     await expect(pageReadout(page)).toHaveAttribute('title', /first 48 of 3,214 searches$/)
     await expect(pageStep(page, 'Previous')).toBeDisabled()
     await expect(pageStep(page, 'Next')).toBeDisabled()
@@ -554,14 +595,14 @@ test.describe('Header — paging through the results', () => {
   test('narrowing the query returns to the first page', async ({ page }) => {
     await gotoStory(page, PAGED)
     await stepPage(page, 'Next')
-    await expect(pageReadout(page)).toHaveText('2 / 4')
+    await expectPage(page, '2 / 4')
 
     await openPanel(page)
     await page.getByRole('button', { name: 'running' }).first().click()
     await clickOutsidePanel(page)
 
     // Fewer pages, and back at the first of them.
-    await expect(pageReadout(page)).toHaveText(/^1 \/ /)
+    await expectPage(page, /^1 \/ /)
   })
 
   test('a new page opens at the top of the results', async ({ page }) => {
@@ -575,7 +616,7 @@ test.describe('Header — paging through the results', () => {
     expect(await results.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
 
     await stepPage(page, 'Next')
-    await expect(pageReadout(page)).toHaveText('2 / 4')
+    await expectPage(page, '2 / 4')
     expect(await results.evaluate((element) => element.scrollTop)).toBe(0)
 
     // Both ways: stepping back is a new page of rows just as much.
@@ -586,7 +627,7 @@ test.describe('Header — paging through the results', () => {
 
   test('a page past the end lands on the last one there is', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--page-past-the-end')
-    await expect(pageReadout(page)).toHaveText('4 / 4')
+    await expectPage(page, '4 / 4')
     await expect(listRows(page)).toHaveCount(12)
   })
 

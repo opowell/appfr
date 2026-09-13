@@ -512,13 +512,16 @@ export const StreamedResults = story({
 
 /**
  * The same, inserting at the front — what a scan that finds the newest first
- * looks like. A page holds `limit` rows, so each insert at 0 pushes the last
+ * looks like. A scan finds the whole match, having no way to skip to page
+ * three, and a page holds `limit` rows: so each insert at 0 pushes the last
  * row of the page onto page two, which is where a `query` for this page would
- * have left it anyway.
+ * have left it anyway, and the pager grows as the rows land — `1 / ~2`, then
+ * `~3`, then `~4`, the tilde saying the count is still being made. It settles
+ * to `1 / 4` when the stream closes.
  */
 export const StreamedNewestFirst = story({
   search: '?e=searches&v=list',
-  source: streamingSource({ newestFirst: true, chunk: 2, every: 200 }),
+  source: streamingSource({ newestFirst: true, chunk: 2, every: 200, whole: true }),
   limit: 12,
 })
 
@@ -611,6 +614,25 @@ export const LastPage = story({ search: '?e=searches&v=list&p=4', limit: 12 })
  * matches".
  */
 export const PagePastTheEnd = story({ search: '?e=searches&v=list&p=99', limit: 12 })
+
+/**
+ * A count the host knows to be short. The shell counts pages from the rows its
+ * source reported, and this source has reported forty-eight of what the host
+ * says are thousands — so the host's own line goes under the pager's hover
+ * text, where the number it qualifies is, and the pager stays up for it even
+ * where the rows fit on one page.
+ */
+export const PagesNote = story({
+  search: '?e=searches&v=list',
+  limit: 12,
+  pagesNote: 'first 48 of 3,214 searches',
+})
+
+/** The same line on a single page, which is what keeps the pager up. */
+export const PagesNoteOnOnePage = story({
+  search: '?e=searches&v=list',
+  pagesNote: 'first 48 of 3,214 searches',
+})
 
 /**
  * Paging is a position in a result set, so a change to what matched returns to

@@ -21,6 +21,12 @@ const props = defineProps<{
   hideCount?: boolean
   /** Views to offer, when the host restricts them. Defaults to all six. */
   views?: ViewKind[]
+  /**
+   * What the count is short of, in the host's words — `first 1,200 of 30,200
+   * lots`. Said where the count is, which is the pager's hover text, rather
+   * than on the bar beside it.
+   */
+  pagesNote?: string
 }>()
 
 const emit = defineEmits<{ toggle: [] }>()
@@ -341,22 +347,41 @@ const page = computed(() => shell.query.value.page)
  * what would be paged. The home screen's cards are the exception: a card per
  * type runs its own per-entity query, so the shell's single result set is not
  * what is on screen and stepping through it would move nothing.
+ *
+ * A note from the host is the other reason to be there: it says the count is
+ * short, and the count is what the pager hovers as — so a single page with
+ * more of it to come is still worth the readout, steps and all.
  */
 const paged = computed(
-  () => shell.pageCount.value > 1 && !isTypeCardsQuery(shell.query.value),
+  () =>
+    (shell.pageCount.value > 1 || Boolean(props.pagesNote)) &&
+    !isTypeCardsQuery(shell.query.value),
+)
+
+/**
+ * How many pages there are, as far as is known. While the source is still
+ * working the total is what it has found so far, and a streaming source finds
+ * more — so the count is said as one that may yet grow, `~4` rather than `4`.
+ */
+const pages = computed(() =>
+  `${shell.pending.value ? '~' : ''}${formatCount(shell.pageCount.value)}`,
 )
 
 /**
  * Where this page sits in the whole result. The bar shows the short form and
  * says this much to a tooltip and a screen reader, since `2 / 5` on its own
- * does not say what it is counting.
+ * does not say what it is counting — and the host's note under it, since what
+ * the count is short of is a fact about the same number.
  */
 const position = computed(() => {
-  const place = `Page ${page.value} of ${shell.pageCount.value}`
+  let place = `Page ${formatCount(page.value)} of ${pages.value}`
   const shown = shell.rows.value.length
-  if (!shown) return place
-  const first = shell.offset.value + 1
-  return `${place} — rows ${first} to ${first + shown - 1} of ${shell.total.value}`
+  if (shown) {
+    const first = shell.offset.value + 1
+    const total = `${shell.pending.value ? '~' : ''}${formatCount(shell.total.value)}`
+    place += ` — rows ${formatCount(first)} to ${formatCount(first + shown - 1)} of ${total}`
+  }
+  return props.pagesNote ? `${place}\n${props.pagesNote}` : place
 })
 </script>
 
@@ -548,7 +573,7 @@ const position = computed(() => {
         class="dc-header__page dc-mono"
         :title="position"
         aria-hidden="true"
-      >{{ page }} / {{ shell.pageCount.value }}</span>
+      >{{ page }} / {{ pages }}</span>
       <span
         class="dc-header__sr"
         aria-live="polite"

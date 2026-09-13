@@ -534,6 +534,23 @@ test.describe('Header — paging through the results', () => {
     await expect(page.getByText('Page 3 of 4 — rows 25 to 36 of 48')).toBeAttached()
   })
 
+  test('what the count is short of goes under the pager\'s hover text', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--pages-note')
+    await expect(pageReadout(page)).toHaveText('1 / 4')
+    await expect(pageReadout(page)).toHaveAttribute(
+      'title',
+      'Page 1 of 4 — rows 1 to 12 of 48\nfirst 48 of 3,214 searches',
+    )
+  })
+
+  test('a note keeps the pager up on a single page', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--pages-note-on-one-page')
+    await expect(pageReadout(page)).toHaveText('1 / 1')
+    await expect(pageReadout(page)).toHaveAttribute('title', /first 48 of 3,214 searches$/)
+    await expect(pageStep(page, 'Previous')).toBeDisabled()
+    await expect(pageStep(page, 'Next')).toBeDisabled()
+  })
+
   test('narrowing the query returns to the first page', async ({ page }) => {
     await gotoStory(page, PAGED)
     await stepPage(page, 'Next')

@@ -38,12 +38,18 @@ test.describe('A streaming source', () => {
     await expect.poll(() => rowCount(page)).toBe(48)
   })
 
-  test('offers more pages as more is found', async ({ page }) => {
+  test('offers more pages as more is found, and says the count may grow', async ({ page }) => {
     await gotoStory(page, NEWEST_FIRST)
 
     // 48 rows at 12 a page, arriving two at a time: the pager has to grow with
-    // the total rather than being told it up front.
-    await expect.poll(() => pageReadout(page).innerText()).toContain('/ 4')
+    // the total rather than being told it up front — and for as long as it is
+    // growing, the count is said as one that may: `~2`, not `2`.
+    await expect(pageReadout(page)).toHaveText('1 / ~2')
+    await expect(pageReadout(page)).toHaveText('1 / ~3')
+    await expect(pageReadout(page)).toHaveText('1 / ~4')
+
+    // Closed, the count is the count.
+    await expect(pageReadout(page)).toHaveText('1 / 4', { timeout: 15_000 })
   })
 
   test('reports itself as pending until it closes', async ({ page }) => {

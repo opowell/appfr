@@ -1075,6 +1075,7 @@ host writing a field of its own.
 | `within` | `string` | — | An expression the whole shell is read inside — its scope, held here rather than in the URL. See [a shell about one record](#a-shell-about-one-record). |
 | `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
+| `pagesNote` | `string` | — | What the count is short of, in your words — `first 1,200 of 30,200 lots`. Goes under the pager's hover text, and keeps the pager up on a single page. See [paging through the results](#paging-through-the-results). |
 | `views` | `ViewKind[]` | all six | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
@@ -1186,6 +1187,17 @@ Four things this does on purpose:
   are is a count only the source knows, so the codec cannot clamp `p` the way
   it clamps a range; the shell corrects it when the results arrive, replacing
   rather than pushing so Back does not lead straight to it again.
+- **A count still being made says so.** While the source is working — an
+  async `query` in flight, a [stream](#results-that-arrive-over-time) not yet
+  closed — the total is what it has found so far, so the pager reads `1 / ~4`
+  and settles to `1 / 4` when the source closes.
+- **What the count is short of is said on hover.** The shell counts pages from
+  the rows its source reported, and a source that stopped part way — a
+  seller's first twelve pages of sixty-three — has reported fewer than there
+  are. `pages-note="first 1,200 of 30,200 lots"` puts your line under the
+  pager's tooltip (`Page 1 of 12 — rows 1 to 100 of 1,200`), where the number
+  it qualifies is, and keeps the pager up on a single page so the line has
+  somewhere to be.
 
 A source is handed `offset` alongside `limit` and reports `total` for the whole
 match — see [wiring it to your data](#wiring-it-to-your-data). Building your

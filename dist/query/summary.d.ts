@@ -25,6 +25,8 @@ export interface SummaryTerm {
      */
     field?: string;
     value?: string;
+    /** The term was written with a leading `-`: it says which rows are *out*. */
+    negated?: boolean;
 }
 /** The term id the entity filter uses, so it can be lifted like any other. */
 export declare const ENTITY_TERM = "entity";

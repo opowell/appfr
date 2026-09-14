@@ -6,6 +6,7 @@ import type { EntitySchema, ShellRow } from '../types';
  *   site:*.shop AND price < 40 AND seen:false
  *   theme:space year>=1988 parts>300
  *   cve OR advisory
+ *   -theme:space -recall
  *
  * `AND` is implicit and the literal keyword is accepted for readability.
  * A bare word matches the identity or the reference — whichever columns the
@@ -14,6 +15,15 @@ import type { EntitySchema, ShellRow } from '../types';
  * below. Anything unresolvable is ignored rather than treated as a mismatch,
  * so a half-typed expression keeps showing results instead of emptying the
  * screen.
+ *
+ * A leading `-` turns a term round: `-theme:space` keeps every row the plain
+ * term would have dropped, and drops every row it would have kept. Only the
+ * *match* is turned — a term that constrains nothing, an unknown field or a
+ * number compared against a word, still constrains nothing with a `-` in
+ * front of it, since the half-typed case is the same half-typed case. The
+ * sign is read off the term as written, quotes and all: there is no way to
+ * search for a word that starts with a dash, which is a smaller thing to give
+ * up than a way to say "not this one".
  */
 export type Comparator = ':' | '=' | '>' | '<' | '>=' | '<=';
 export interface FieldTerm {
@@ -21,10 +31,14 @@ export interface FieldTerm {
     field: string;
     comparator: Comparator;
     value: string;
+    /** Written with a leading `-`: the rows this would have matched are the ones left out. */
+    negated?: boolean;
 }
 export interface TextTerm {
     kind: 'text';
     value: string;
+    /** As on {@link FieldTerm}. */
+    negated?: boolean;
 }
 export type Term = FieldTerm | TextTerm;
 /** Disjunction of conjunctions: the outer array is `OR`, each inner is `AND`. */
@@ -40,6 +54,11 @@ export declare function matchesExpression(expression: Expression, row: ShellRow,
  * nor the spacing it was written with. `parseExpression(formatTerm(t))` is `t`.
  */
 export declare function formatTerm(term: Term): string;
+/**
+ * The term turned round: the one that keeps exactly the rows this one drops.
+ * Twice over is the term it started as.
+ */
+export declare function negateTerm<T extends Term>(term: T): T;
 /**
  * A whole expression, written back as source: terms spaced within a group,
  * `OR` between them. A group with nothing left in it is dropped — an
@@ -88,6 +107,12 @@ export declare function joinExpression(parts: FieldTerm[], text: string): string
  * two and let a second copy in.
  */
 export declare function sameTerm(one: Term, other: Term): boolean;
+/**
+ * Whether two terms are about the same thing, whichever way round each is
+ * said — `set:a` and `-set:a` are one constraint with two signs, and a query
+ * holding both of them holds nothing.
+ */
+export declare function oppositeTerm(one: Term, other: Term): boolean;
 /**
  * Two expressions as one that means both — `(a OR b)` and `c` giving
  * `a c OR b c`.

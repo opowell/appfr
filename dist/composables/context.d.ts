@@ -1,5 +1,5 @@
 import type { ComputedRef, InjectionKey, Ref, ShallowRef } from 'vue';
-import type { DataSource, DomainSchema, EntitySchema, Selection, ShellRow } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellRow } from '../types';
 import type { QueryState } from './useQueryState';
 /**
  * Everything the header, the query panel and the result views need. Provided
@@ -72,8 +72,14 @@ export interface ShellContext extends QueryState {
      * and the record's type can be narrowed to; reported to the host otherwise —
      * which is every row of a type that declares no `scope`, and every row at
      * all under `rowPress: 'open'`.
+     *
+     * With `exclude` — the press made with ⌘ held, read by {@link pressOptions}
+     * — the same row is left *out* of the query instead, and the screen stays
+     * where it is: taking one record out of a list is a refinement of that
+     * list, not a move to another. Reported the same way where it would have
+     * been anyway.
      */
-    activate(row: ShellRow): void;
+    activate(row: ShellRow, options?: PressOptions): void;
     /**
      * Asking for a new record of a type, from the button {@link EntitySchema.create}
      * puts on its card. Reported the same way, and for the same reason: making
@@ -98,8 +104,11 @@ export interface ShellContext extends QueryState {
      * Reported rather than applied. The shell holds a query, not a join — how
      * this record's id reaches the other records is the host's, which is the
      * only place that knows the term means anything.
+     *
+     * `exclude` as on {@link ShellContext.activate}: the record left out of what
+     * is listed rather than narrowed to.
      */
-    drill(row: ShellRow, entity: EntitySchema | null): void;
+    drill(row: ShellRow, entity: EntitySchema | null, options?: PressOptions): void;
 }
 export declare const SHELL_CONTEXT_KEY: InjectionKey<ShellContext>;
 export declare function provideShellContext(context: ShellContext): ShellContext;

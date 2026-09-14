@@ -1,5 +1,5 @@
 import '../style/tokens.css';
-import type { DataSource, DomainSchema, EntitySchema, Selection, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewKind } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewKind } from '../types';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
 type __VLS_Props = {
@@ -176,7 +176,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     create: (entity: EntitySchema) => any;
     duplicate: (selection: Selection) => any;
     delete: (selection: Selection) => any;
-    drill: (row: ShellRow, entity: EntitySchema | null) => any;
+    drill: (row: ShellRow, entity: EntitySchema | null, options: PressOptions) => any;
     activate: (row: ShellRow) => any;
     "query-change": (query: ShellQuery) => any;
     "toggle-pin": (row: ShellRow) => any;
@@ -187,7 +187,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     onCreate?: ((entity: EntitySchema) => any) | undefined;
     onDuplicate?: ((selection: Selection) => any) | undefined;
     onDelete?: ((selection: Selection) => any) | undefined;
-    onDrill?: ((row: ShellRow, entity: EntitySchema | null) => any) | undefined;
+    onDrill?: ((row: ShellRow, entity: EntitySchema | null, options: PressOptions) => any) | undefined;
     onActivate?: ((row: ShellRow) => any) | undefined;
     "onQuery-change"?: ((query: ShellQuery) => any) | undefined;
     "onToggle-pin"?: ((row: ShellRow) => any) | undefined;

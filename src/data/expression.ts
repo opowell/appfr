@@ -8,6 +8,7 @@ import { cellValue, roleColumn, roleColumns } from '../query/columns'
  *   site:*.shop AND price < 40 AND seen:false
  *   theme:space year>=1988 parts>300
  *   cve OR advisory
+ *   -theme:space -recall
  *
  * `AND` is implicit and the literal keyword is accepted for readability.
  * A bare word matches the identity or the reference — whichever columns the
@@ -16,6 +17,15 @@ import { cellValue, roleColumn, roleColumns } from '../query/columns'
  * below. Anything unresolvable is ignored rather than treated as a mismatch,
  * so a half-typed expression keeps showing results instead of emptying the
  * screen.
+ *
+ * A leading `-` turns a term round: `-theme:space` keeps every row the plain
+ * term would have dropped, and drops every row it would have kept. Only the
+ * *match* is turned — a term that constrains nothing, an unknown field or a
+ * number compared against a word, still constrains nothing with a `-` in
+ * front of it, since the half-typed case is the same half-typed case. The
+ * sign is read off the term as written, quotes and all: there is no way to
+ * search for a word that starts with a dash, which is a smaller thing to give
+ * up than a way to say "not this one".
  */
 
 export type Comparator = ':' | '=' | '>' | '<' | '>=' | '<='
@@ -25,11 +35,15 @@ export interface FieldTerm {
   field: string
   comparator: Comparator
   value: string
+  /** Written with a leading `-`: the rows this would have matched are the ones left out. */
+  negated?: boolean
 }
 
 export interface TextTerm {
   kind: 'text'
   value: string
+  /** As on {@link FieldTerm}. */
+  negated?: boolean
 }
 
 export type Term = FieldTerm | TextTerm
@@ -86,14 +100,18 @@ export function parseExpression(input: string): Expression {
   const groups: Term[][] = []
   let group: Term[] = []
 
-  for (const token of tokenize(trimmed)) {
-    const upper = token.toUpperCase()
+  for (const written of tokenize(trimmed)) {
+    const upper = written.toUpperCase()
     if (upper === 'AND' || upper === '&&') continue
     if (upper === 'OR' || upper === '||') {
       if (group.length) groups.push(group)
       group = []
       continue
     }
+    // A dash on its own is a word, not the sign of a term that is not there.
+    const negated = written.length > 1 && written.startsWith('-')
+    const token = negated ? written.slice(1) : written
+    const sign = negated ? { negated: true } : {}
     const match = OPERATOR_PATTERN.exec(token)
     if (match && match[3] !== '') {
       group.push({
@@ -101,9 +119,10 @@ export function parseExpression(input: string): Expression {
         field: (match[1] as string).toLowerCase(),
         comparator: match[2] as Comparator,
         value: match[3] as string,
+        ...sign,
       })
     } else {
-      group.push({ kind: 'text', value: token })
+      group.push({ kind: 'text', value: token, ...sign })
     }
   }
   if (group.length) groups.push(group)
@@ -189,7 +208,14 @@ function matchesText(haystack: string, needle: string): boolean {
   return new RegExp(escaped).test(hay)
 }
 
-function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
+/**
+ * Whether the row is what the term asks for — or null, where the term asks
+ * nothing of this row: an unresolvable field, a number compared against a
+ * word, a word compared against a list. Those are not a mismatch, and they
+ * are not a match turned round either, which is why they are told apart from
+ * both here rather than folded into `true`.
+ */
+function termOutcome(term: Term, row: ShellRow, entity: EntitySchema): boolean | null {
   if (term.kind === 'text') {
     // The identity and the reference: what a bare word is looking for, in
     // whichever columns this type gave those roles to.
@@ -202,7 +228,7 @@ function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
   }
 
   const actual = resolveField(term.field, row, entity)
-  if (actual === undefined) return true // unknown field: not a constraint
+  if (actual === undefined) return null // unknown field: not a constraint
 
   // A multi-valued facet answers to each of its values on its own. Nothing
   // there is a number, so a comparison against one constrains nothing.
@@ -210,7 +236,7 @@ function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
     const equality = term.comparator === ':' || term.comparator === '='
     return equality
       ? actual.some((entry) => matchesText(String(entry), term.value))
-      : true
+      : null
   }
 
   if (term.comparator === ':' || term.comparator === '=') {
@@ -218,20 +244,27 @@ function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
       const wanted = term.value.toLowerCase()
       if (wanted === 'true' || wanted === 'yes') return actual
       if (wanted === 'false' || wanted === 'no') return !actual
-      return true
+      return null
     }
     if (typeof actual === 'number') {
       const wanted = Number(term.value)
-      return Number.isFinite(wanted) ? actual === wanted : true
+      return Number.isFinite(wanted) ? actual === wanted : null
     }
     return matchesText(String(actual), term.value)
   }
 
   const wanted = Number(term.value)
   const actualNumber = typeof actual === 'number' ? actual : Number(actual)
-  if (!Number.isFinite(wanted) || !Number.isFinite(actualNumber)) return true
+  if (!Number.isFinite(wanted) || !Number.isFinite(actualNumber)) return null
 
   return compare(term.comparator, actualNumber, wanted)
+}
+
+/** The outcome as a constraint: a term that asks nothing is satisfied, and a `-` turns the rest. */
+function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
+  const outcome = termOutcome(term, row, entity)
+  if (outcome === null) return true
+  return term.negated ? !outcome : outcome
 }
 
 function compare(comparator: Comparator, left: number, right: number): boolean {
@@ -276,8 +309,21 @@ function quote(value: string): string {
  * nor the spacing it was written with. `parseExpression(formatTerm(t))` is `t`.
  */
 export function formatTerm(term: Term): string {
-  if (term.kind === 'text') return quote(term.value)
-  return `${term.field}${term.comparator}${quote(term.value)}`
+  const sign = term.negated ? '-' : ''
+  if (term.kind === 'text') return sign + quote(term.value)
+  return `${sign}${term.field}${term.comparator}${quote(term.value)}`
+}
+
+/**
+ * The term turned round: the one that keeps exactly the rows this one drops.
+ * Twice over is the term it started as.
+ */
+export function negateTerm<T extends Term>(term: T): T {
+  if (!term.negated) return { ...term, negated: true }
+  // Dropped rather than set false, so the term is the one the parse would
+  // have made of it and compares equal to that.
+  const { negated: _sign, ...plain } = term
+  return plain as T
 }
 
 /**
@@ -359,6 +405,19 @@ const sameValue = (one: string, other: string) => one.toLowerCase() === other.to
  * two and let a second copy in.
  */
 export function sameTerm(one: Term, other: Term): boolean {
+  return Boolean(one.negated) === Boolean(other.negated) && sameConstraint(one, other)
+}
+
+/**
+ * Whether two terms are about the same thing, whichever way round each is
+ * said — `set:a` and `-set:a` are one constraint with two signs, and a query
+ * holding both of them holds nothing.
+ */
+export function oppositeTerm(one: Term, other: Term): boolean {
+  return Boolean(one.negated) !== Boolean(other.negated) && sameConstraint(one, other)
+}
+
+function sameConstraint(one: Term, other: Term): boolean {
   if (one.kind === 'field') {
     return (
       other.kind === 'field' &&

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   addTerm,
   drillExpression,
+  excludingTerm,
+  pressOptions,
   recordTerm,
   scopedEntity,
   scopeTerm,
@@ -119,12 +121,66 @@ describe('addTerm', () => {
   it('leaves the expression alone when the row is unscopable', () => {
     expect(addTerm('theme:space', null)).toBe('theme:space')
   })
+
+  /*
+   * A query that both narrows to a record and leaves it out says nothing, so
+   * the press that would make one is read as a change of mind instead.
+   */
+  it('turns a term the expression holds the other way round', () => {
+    expect(addTerm('theme:space color:"colors_10000"', '-color:"colors_10000"')).toBe(
+      'theme:space -color:colors_10000',
+    )
+    expect(addTerm('-color:colors_10000', 'color:"colors_10000"')).toBe('color:colors_10000')
+  })
+
+  it('turns it in whichever alternative holds it, and adds it to no other', () => {
+    expect(addTerm('release color:x OR recall', '-color:"x"')).toBe('release -color:x OR recall')
+  })
+})
+
+describe('excludingTerm', () => {
+  it('is the scope term with a dash in front of it', () => {
+    expect(excludingTerm('category:"categories_10007"')).toBe('-category:"categories_10007"')
+    expect(excludingTerm(scopeTerm(categories, row()))).toBe('-category:"categories_10007"')
+  })
+
+  it('is null for null, as a row with no scope gives', () => {
+    expect(excludingTerm(null)).toBeNull()
+  })
+})
+
+describe('pressOptions', () => {
+  const press = (init: MouseEventInit) => pressOptions(new MouseEvent('click', init))
+
+  it('reads ⌘ and Ctrl alike as "leave it out"', () => {
+    expect(press({ metaKey: true })).toEqual({ exclude: true })
+    expect(press({ ctrlKey: true })).toEqual({ exclude: true })
+  })
+
+  it('reads a plain press, and any other modifier, as nothing at all', () => {
+    expect(press({})).toEqual({})
+    expect(press({ shiftKey: true, altKey: true })).toEqual({})
+  })
 })
 
 describe('drillExpression', () => {
   it('narrows an existing query rather than replacing it', () => {
     const query = { ...defaultQuery(legoSchema), expr: 'theme:space' }
     expect(drillExpression(legoSchema, query, row())).toBe('theme:space category:"categories_10007"')
+  })
+
+  it('leaves the row out instead when the press says so', () => {
+    const query = { ...defaultQuery(legoSchema), expr: 'theme:space' }
+    expect(drillExpression(legoSchema, query, row(), { exclude: true })).toBe(
+      'theme:space -category:"categories_10007"',
+    )
+  })
+
+  it('leaves an unscopable row out of nothing, as it narrows to nothing', () => {
+    const query = { ...defaultQuery(legoSchema), expr: 'theme:space' }
+    expect(drillExpression(legoSchema, query, row({ entityKey: 'inventories' }), { exclude: true })).toBe(
+      'theme:space',
+    )
   })
 })
 

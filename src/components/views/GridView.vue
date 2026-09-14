@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useShellContext } from '../../composables/context'
+import { pressOptions } from '../../query/drill'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import RowPicture from './RowPicture.vue'
 import SelectTick from './SelectTick.vue'
@@ -21,7 +22,7 @@ const rows = usePresentedRows()
         type="button"
         class="dc-tile"
         :style="{ '--dc-tile-tint': entry.parts.tint ?? undefined }"
-        @click="shell.activate(entry.row)"
+        @click="shell.activate(entry.row, pressOptions($event))"
       >
         <!-- Under the scrim, which is what keeps the caption readable over a
              picture the shell knows nothing about. A tile with no picture is

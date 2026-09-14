@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { ColumnDef, RecordStatus } from '../../types'
 import { useShellContext } from '../../composables/context'
+import { pressOptions } from '../../query/drill'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { cellFull, cellText, cellValue, columnTruncates } from '../../query/columns'
 import MetricDrill from './MetricDrill.vue'
@@ -54,8 +55,9 @@ const title = computed(() => cellFull(props.column, props.entry.row))
 function press(event: MouseEvent) {
   if (!pressable.value) return
   event.stopPropagation()
-  props.column.click?.(props.entry.row)
-  if (props.column.activate) shell.activate(props.entry.row)
+  const options = pressOptions(event)
+  props.column.click?.(props.entry.row, options)
+  if (props.column.activate) shell.activate(props.entry.row, options)
 }
 </script>
 

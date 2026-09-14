@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
+import { pressOptions } from '../../query/drill'
 import { useEntityPreviews } from '../../composables/useEntityPreviews'
 import MetricDrill from './MetricDrill.vue'
 import ScopeMark from './ScopeMark.vue'
@@ -151,7 +152,7 @@ const previews = computed(() =>
         <button
           type="button"
           class="dc-type__open"
-          @click="shell.activate(entry.row)"
+          @click="shell.activate(entry.row, pressOptions($event))"
         >
           <span class="dc-type__identity">
             <span class="dc-type__primary dc-truncate">{{ entry.parts.identity }}</span>

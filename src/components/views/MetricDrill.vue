@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { ColumnDef, EntitySchema } from '../../types'
 import { useShellContext } from '../../composables/context'
+import { pressOptions } from '../../query/drill'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { cellText } from '../../query/columns'
 
@@ -42,7 +43,7 @@ const text = computed(() => cellText(props.column, props.entry.row))
 /** Stops the click reaching the row, which would open the record instead. */
 function drill(event: MouseEvent) {
   event.stopPropagation()
-  if (target.value) shell.drill(props.entry.row, target.value)
+  if (target.value) shell.drill(props.entry.row, target.value, pressOptions(event))
 }
 </script>
 

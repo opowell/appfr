@@ -173,6 +173,53 @@ test.describe('Pressing a row', () => {
 })
 
 /*
+ * The same press with ⌘ held, which leaves the record out rather than
+ * narrowing to it — and stays put, a list missing one row being the same
+ * list. Ctrl is the same key on the machines that have no ⌘, and Playwright
+ * has to be told which one it is; `Meta` is used here and read as either.
+ */
+test.describe('Pressing a row with ⌘ held', () => {
+  test('writes the record out of the query and keeps the list', async ({ page }) => {
+    await gotoStory(page, HOME, '&e=sets&v=list')
+    const before = await listRows(page).count()
+    const name = await page.locator('.dc-list__primary').first().innerText()
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
+    // Where it was: the same type, the same view, one row fewer.
+    expect(entityOf(page)).toBe('sets')
+    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(listRows(page)).toHaveCount(before - 1)
+    await expect(page.locator('.dc-list__primary').filter({ hasText: name })).toHaveCount(0)
+  })
+
+  test('says which record is out, on the bar, with its sign', async ({ page }) => {
+    await gotoStory(page, HOME, '&e=sets&v=list')
+    const name = await page.locator('.dc-list__primary').first().innerText()
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    await expect(termBar(page)).toContainText(`-set:${name} (sets_`)
+  })
+
+  test('turns the term round on a record the query already narrows to', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await press(page, 'Sets')
+    const narrowed = queryOf(page)
+    expect(narrowed).toMatch(/^set:"sets_\d+"$/)
+    await chooseScope(page, 'Sets')
+    await chooseView(page, 'list')
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    // One term, the other way about — not the two of them side by side.
+    expect(queryOf(page)).toBe(`-${narrowed!.replace(/"/g, '')}`)
+  })
+
+  test('leaves a metric pivoting to what it counts, minus the record', async ({ page }) => {
+    await gotoStory(page, TABLE)
+    await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click({ modifiers: ['Meta'] })
+    expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
+    expect(entityOf(page)).toBe('pieces')
+  })
+})
+
+/*
  * The same rule arrived at rather than pressed into. A URL naming a record is
  * what a shared link is, and a host reading its shell inside one — a record's
  * own page — writes the term itself; neither goes through a press, and the

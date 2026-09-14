@@ -28,6 +28,8 @@ export interface SummaryTerm {
    */
   field?: string
   value?: string
+  /** The term was written with a leading `-`: it says which rows are *out*. */
+  negated?: boolean
 }
 
 /** The term id the entity filter uses, so it can be lifted like any other. */
@@ -92,6 +94,7 @@ export function summaryTerms(query: ShellQuery, entity: EntitySchema | null): Su
         group: at,
         index,
         ...(term.kind === 'field' ? { field: term.field, value: term.value } : {}),
+        ...(term.negated ? { negated: true } : {}),
       })
     })
   })

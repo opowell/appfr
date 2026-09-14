@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
+import { pressOptions } from '../../query/drill'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
@@ -57,7 +58,7 @@ const showEntity = computed(() => shell.isEverything.value)
       <button
         type="button"
         class="dc-card__open"
-        @click="shell.activate(entry.row)"
+        @click="shell.activate(entry.row, pressOptions($event))"
       >
         <RowPicture
           v-if="entry.parts.image"

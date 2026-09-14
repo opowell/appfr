@@ -706,6 +706,19 @@ host whose leaves are the only records with somewhere to go (a URL opens in a
 new tab; a file opens in an editor) can leave `rowPress` alone and handle
 `activate` for exactly those.
 
+**A press with ⌘ (or Ctrl) held leaves the record out instead.** Every press
+that narrows — a row, the `→`, a metric, a card's preview row — writes
+`-host:"www.example.com"` rather than `host:"www.example.com"` when the
+modifier is down, and the screen stays where it is: taking one record out of a
+list is a refinement of that list, not a move to another, so the type and the
+view are kept, and only a metric still pivots to what it counts. A press on a
+record the query already narrows to turns the term round rather than adding
+its opposite beside it — a query saying both says nothing — and the part on
+the bar keeps its sign in front of the name: `-set:Yellow Castle (sets_10007)`.
+`pressOptions(event)` is the reading of the modifier, exported so a host's own
+cells can answer it the same way, and it is what `click(row, options)` and
+`drill(row, entity, options)` carry.
+
 A host applying one itself wants `narrow(expr, entityKey)` from `useQueryState`, not
 `setExpression` followed by `setEntity`: each of those serialises from the query the URL
 currently holds, and a route change is not synchronous, so the second writes over the first
@@ -736,7 +749,9 @@ results area, and they are the whole of what applying a drill takes:
 import { drillExpression, scopedEntity, scopeTermFor } from 'header-content-layout'
 
 scopeTermFor(schema, row)              // 'host:"www.example.com"', or null
+excludingTerm(scopeTermFor(schema, row))  // '-host:"www.example.com"', or null
 drillExpression(schema, query, row)    // the expression with that term added
+drillExpression(schema, query, row, { exclude: true })  // …or with the record left out
 scopedEntity(schema, 'host')           // the entity `host` points at — the inverse
 ```
 
@@ -914,7 +929,12 @@ cve OR advisory
 ```
 
 Whitespace means AND (the keyword is accepted too); `OR` splits alternatives; a
-bare word matches the identity and reference columns; `*` is a wildcard.
+bare word matches the identity and reference columns; `*` is a wildcard. A
+leading `-` turns a term round — `-theme:space` keeps every row the plain term
+would have dropped — and it turns only the *match*: an unknown field or a
+number compared against a word constrains nothing either way, so a half-typed
+term with a dash in front of it is still half-typed rather than an empty
+screen.
 `field:value` and `field<op>number` resolve in this order: `entity`, then a
 field the row actually carries, then a column by key or heading, then a facet
 by heading, then the generic role names (`name`, `ref`, `status`, `updated`,

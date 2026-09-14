@@ -1,5 +1,5 @@
-import type { DomainSchema, EntitySchema, ShellRow } from '../types'
-import { parseExpression, sameTerm } from '../data/expression'
+import type { DomainSchema, EntitySchema, PressOptions, ShellRow } from '../types'
+import { formatExpression, oppositeTerm, parseExpression, sameTerm } from '../data/expression'
 
 /**
  * Turning a `drill` into an expression.
@@ -51,6 +51,13 @@ export function scopeTermFor(schema: DomainSchema, row: ShellRow): string | null
  * come back, press it again — and it should not leave the field carrying the
  * term twice. What goes in is the caller's own text; what decides it is
  * already there is the term it parses to.
+ *
+ * A term the expression holds the other way round is turned rather than
+ * joined: `set:a` added to `-set:a` is `set:a`, because a query saying both
+ * says nothing, and the press that added it was a change of mind about that
+ * record and not a request for an empty screen. The expression is written
+ * back out through {@link formatExpression} in that one case, which is the
+ * same rewrite lifting a part makes.
  */
 export function addTerm(expr: string, term: string | null): string {
   if (!term) return expr
@@ -58,10 +65,39 @@ export function addTerm(expr: string, term: string | null): string {
   if (!current) return term
   const [added] = parseExpression(term).flat()
   if (!added) return current
-  const has = parseExpression(current).some((group) =>
-    group.some((existing) => sameTerm(existing, added)),
+  const groups = parseExpression(current)
+  const has = groups.some((group) => group.some((existing) => sameTerm(existing, added)))
+  if (has) return current
+  const opposed = groups.some((group) => group.some((existing) => oppositeTerm(existing, added)))
+  if (!opposed) return `${current} ${term}`
+  return formatExpression(
+    groups.map((group) =>
+      group.map((existing) => (oppositeTerm(existing, added) ? added : existing)),
+    ),
   )
-  return has ? current : `${current} ${term}`
+}
+
+/**
+ * The term that leaves a record out — `-host:"www.myzillertal.at"` — from the
+ * term that narrows to it. Null for null, so it takes what {@link scopeTerm}
+ * gives straight; and the text as it was, sign apart, so the quoting a scope
+ * term always carries is kept rather than re-decided.
+ */
+export function excludingTerm(term: string | null): string | null {
+  if (!term) return null
+  const written = term.trim()
+  if (!written) return null
+  return written.startsWith('-') ? written.slice(1) : `-${written}`
+}
+
+/**
+ * The options a pointer press carries — the one place the modifier is read, so
+ * every view agrees about which key it is. ⌘ on a Mac and Ctrl elsewhere are
+ * the same key in the same place, and both are read everywhere, so a keyboard
+ * on the wrong machine still works.
+ */
+export function pressOptions(event: MouseEvent | KeyboardEvent): PressOptions {
+  return event.metaKey || event.ctrlKey ? { exclude: true } : {}
 }
 
 /**
@@ -69,9 +105,18 @@ export function addTerm(expr: string, term: string | null): string {
  *
  * Which entity to list afterwards is the other half, and it comes straight
  * from the `drill` event — null there means narrow without pivoting.
+ *
+ * With `exclude` it is the expression that leaves the row out instead, which
+ * is what the same press means with ⌘ held.
  */
-export function drillExpression(schema: DomainSchema, query: { expr: string }, row: ShellRow): string {
-  return addTerm(query.expr, scopeTermFor(schema, row))
+export function drillExpression(
+  schema: DomainSchema,
+  query: { expr: string },
+  row: ShellRow,
+  options: PressOptions = {},
+): string {
+  const term = scopeTermFor(schema, row)
+  return addTerm(query.expr, options.exclude ? excludingTerm(term) : term)
 }
 
 /**

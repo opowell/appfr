@@ -192,6 +192,22 @@ export const COLUMN_BREAKPOINTS = [480, 620, 760, 900, 1100] as const
 export type ColumnBreakpoint = (typeof COLUMN_BREAKPOINTS)[number]
 
 /**
+ * How a press was made, beyond where it landed.
+ *
+ * Every press the shell reads carries one of these, and so does every press
+ * it reports — `click` on a column, `drill`, `activate` — so a host's own
+ * cells can answer the modifier the same way the shell's rows do.
+ */
+export interface PressOptions {
+  /**
+   * The press was made with ⌘ (or Ctrl) held: leave this record *out* of the
+   * query rather than narrow to it. `pressOptions(event)` is the reading of
+   * the event, exported so every press agrees about which key it is.
+   */
+  exclude?: boolean
+}
+
+/**
  * One column of the table view.
  *
  * A column says where its value comes from, how it is drawn, and what pressing
@@ -293,9 +309,11 @@ export interface ColumnDef {
   /**
    * Called with the row when the cell is pressed, for a column that means
    * something only the host knows. The shell reports and applies nothing, as
-   * it does for {@link ColumnDef.activate}.
+   * it does for {@link ColumnDef.activate}. How the press was made comes with
+   * it — `exclude` for one made with ⌘ held — so a host narrowing on its own
+   * can offer the same turn the shell's presses do.
    */
-  click?: (row: ShellRow) => void
+  click?: (row: ShellRow, options?: PressOptions) => void
   /**
    * The component a `component` cell renders, given `{ row, entry, value,
    * column }`. Anything a host wants a cell to be — a sparkline, a thumbnail

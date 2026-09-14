@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useShellContext } from '../../composables/context'
+import { pressOptions } from '../../query/drill'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import { roleColumn } from '../../query/columns'
 import StatusPill from '../StatusPill.vue'
@@ -160,7 +161,7 @@ const step = (delta: number) => {
         <button
           type="button"
           class="dc-preview__open"
-          @click="shell.activate(current.row)"
+          @click="shell.activate(current.row, pressOptions($event))"
         >
           Open record →
         </button>

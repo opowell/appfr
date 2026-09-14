@@ -250,7 +250,9 @@ const records = useRecordNames({
  */
 function labelOf(term: SummaryTerm): string {
   const name = records.nameOf(term)
-  return name ? `${term.field}:${name} (${term.value})` : term.label
+  // The sign stays in front of the name as it stood in front of the id: what
+  // the part says is that this record is out, and the name only says which.
+  return name ? `${term.negated ? '-' : ''}${term.field}:${name} (${term.value})` : term.label
 }
 
 /* ---------------------------------------------------------- what is listed */

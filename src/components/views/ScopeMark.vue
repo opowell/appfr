@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
+import { pressOptions } from '../../query/drill'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 
 /**
@@ -29,7 +30,7 @@ const scope = computed<string | null>(() =>
 /** Stops the click reaching the row, which would open the record instead. */
 function narrow(event: MouseEvent) {
   event.stopPropagation()
-  shell.drill(props.entry.row as ShellRow, null)
+  shell.drill(props.entry.row as ShellRow, null, pressOptions(event))
 }
 </script>
 
@@ -38,7 +39,7 @@ function narrow(event: MouseEvent) {
     v-if="scope"
     type="button"
     class="dc-scope"
-    :title="`Narrow everything to ${scope}: ${entry.row.id}`"
+    :title="`Narrow everything to ${scope}: ${entry.row.id} — ⌘-click to leave it out`"
     :aria-label="`Narrow everything to ${entry.parts.identity}`"
     @click="narrow"
   >

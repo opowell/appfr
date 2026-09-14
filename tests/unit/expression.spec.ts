@@ -4,7 +4,10 @@ import {
   formatTerm,
   joinExpression,
   matchesExpression,
+  negateTerm,
+  oppositeTerm,
   parseExpression,
+  sameTerm,
   splitExpression,
   withoutTerm,
 } from '../../src/data/expression'
@@ -207,6 +210,75 @@ describe('matchesExpression', () => {
     const rows = generateRows(sets, { seed: 'LEGO', population: 24 })
     const expression = parseExpression(legoSchema.placeholder)
     expect(() => rows.map((r) => matchesExpression(expression, r, sets))).not.toThrow()
+  })
+})
+
+describe('a term turned round', () => {
+  it('reads a leading dash as the sign of the term behind it', () => {
+    expect(parseExpression('-kind:pdf -recall')).toEqual([
+      [
+        { kind: 'field', field: 'kind', comparator: ':', value: 'pdf', negated: true },
+        { kind: 'text', value: 'recall', negated: true },
+      ],
+    ])
+  })
+
+  it('reads a dash on its own as a word', () => {
+    expect(parseExpression('-')).toEqual([[{ kind: 'text', value: '-' }]])
+  })
+
+  it('keeps the rows the plain term would have dropped, and drops the rest', () => {
+    expect(matches('-kind:pdf')).toBe(false)
+    expect(matches('-kind:html')).toBe(true)
+    expect(matches('-price')).toBe(false)
+    expect(matches('-tariff')).toBe(true)
+    expect(matches('-rank>50')).toBe(false)
+    expect(matches('-rank>60')).toBe(true)
+    expect(matches('-seen:false')).toBe(true)
+  })
+
+  /*
+   * The half that is easy to get wrong. A term that constrains nothing
+   * *matches*, so that a half-typed expression keeps showing rows — and the
+   * same half-typed expression with a dash in front of it is still half-typed,
+   * not a request for the empty screen.
+   */
+  it('turns only the match: a term that constrains nothing still constrains nothing', () => {
+    expect(matches('-nosuchfield:x')).toBe(true)
+    expect(matches('-rank>abc')).toBe(true)
+    expect(matches('-seen:maybe')).toBe(true)
+    expect(matches('-tags>3', row({ tags: ['a', 'b'] }))).toBe(true)
+  })
+
+  it('still needs every term of its group', () => {
+    expect(matches('price -kind:pdf')).toBe(false)
+    expect(matches('price -kind:html')).toBe(true)
+  })
+
+  it('writes the sign back out in front of the term', () => {
+    const expression = parseExpression('-kind:pdf -"q3 price" rank>50')
+    expect(formatExpression(expression)).toBe('-kind:pdf -"q3 price" rank>50')
+    expect(parseExpression(formatExpression(expression))).toEqual(expression)
+  })
+
+  it('is the same term only with the same sign', () => {
+    const [plain] = parseExpression('kind:pdf').flat()
+    const [turned] = parseExpression('-kind:pdf').flat()
+    expect(sameTerm(plain!, turned!)).toBe(false)
+    expect(oppositeTerm(plain!, turned!)).toBe(true)
+    expect(oppositeTerm(plain!, plain!)).toBe(false)
+    expect(oppositeTerm(turned!, parseExpression('-kind:PDF').flat()[0]!)).toBe(false)
+  })
+
+  it('turns round and back to the term the parse would have made', () => {
+    const [plain] = parseExpression('kind:pdf').flat()
+    expect(negateTerm(plain!)).toEqual(parseExpression('-kind:pdf').flat()[0])
+    expect(negateTerm(negateTerm(plain!))).toEqual(plain)
+  })
+
+  it('stands in the panel as a part, sign and all', () => {
+    expect(splitExpression('-kind:pdf brick').parts.map(formatTerm)).toEqual(['-kind:pdf'])
+    expect(splitExpression('-brick').text).toBe('-brick')
   })
 })
 

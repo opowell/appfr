@@ -12,6 +12,7 @@ import type {
   DataSource,
   DomainSchema,
   EntitySchema,
+  PressOptions,
   Selection,
   ShellAlign,
   ShellQuery,
@@ -188,7 +189,7 @@ const emit = defineEmits<{
    * for. `entity` is what to list afterwards, null when the row itself was
    * pressed. The query is unchanged — this is the request.
    */
-  drill: [row: ShellRow, entity: EntitySchema | null]
+  drill: [row: ShellRow, entity: EntitySchema | null, options: PressOptions]
   /** The query changed. The URL has already been updated. */
   'query-change': [query: ShellQuery]
   'toggle-pin': [row: ShellRow]
@@ -401,7 +402,7 @@ watch(() => query.query.value.entity, clearSelection)
  * (`drills`), and the rest is a query change, which is the shell's own. The
  * event still goes out, so a host can follow it; it does not have to.
  */
-function drill(row: ShellRow, entity: EntitySchema | null) {
+function drill(row: ShellRow, entity: EntitySchema | null, options: PressOptions = {}) {
   /*
    * One navigation, not two: a route change is not synchronous, so setting the expression and
    * then the entity would serialise the second from the query the first had not yet written.
@@ -411,13 +412,18 @@ function drill(row: ShellRow, entity: EntitySchema | null) {
    * pressed — the press going nowhere — and the screen narrowing to a record is worth making is
    * the card per type, where every card reports what it holds of it. A metric drill names a type
    * and is going to a list of it, so that one keeps the view it was drawn in.
+   *
+   * Leaving a record out goes nowhere at all: the list it was pressed in is the list it is now
+   * missing from, the same type in the same view, one row shorter. Only a metric still pivots,
+   * being a press on what the number counts — those tests, without this host's.
    */
-  query.narrow(
-    drillExpression(props.schema, query.query.value, row),
-    entity?.key ?? null,
-    entity ? undefined : 'cards',
-  )
-  emit('drill', row, entity)
+  const expr = drillExpression(props.schema, query.query.value, row, options)
+  if (options.exclude) {
+    query.narrow(expr, entity?.key ?? query.query.value.entity)
+  } else {
+    query.narrow(expr, entity?.key ?? null, entity ? undefined : 'cards')
+  }
+  emit('drill', row, entity, options)
 }
 
 /* ----------------------------------------------------------------- context */
@@ -451,9 +457,9 @@ const shell = provideShellContext({
    * The one place a press is read, so every view gets the same answer without
    * knowing which of the two it is: they all call this.
    */
-  activate: (row) => {
+  activate: (row, options = {}) => {
     if (props.rowPress === 'narrow' && scopeTermFor(props.schema, row)) {
-      drill(row, null)
+      drill(row, null, options)
       return
     }
     emit('activate', row)

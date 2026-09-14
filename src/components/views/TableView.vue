@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { ColumnDef } from '../../types'
 import { useShellContext } from '../../composables/context'
+import { pressOptions } from '../../query/drill'
 import { useColumns } from '../../composables/useColumns'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
@@ -159,7 +160,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
         v-for="entry in rows"
         :key="entry.key"
         class="dc-table__row"
-        @click="shell.activate(entry.row)"
+        @click="shell.activate(entry.row, pressOptions($event))"
       >
         <td
           v-if="shell.selectable.value"

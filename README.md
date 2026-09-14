@@ -437,6 +437,7 @@ those views leave out — no state column, no pill.
 | `when` | `always`, or only in one of the two scopes |
 | `hideBelow` | the container width it stands down at |
 | `component` | what a `component` cell renders |
+| `header` | a component of your own after the header's label, for a control over the whole column |
 
 **What pressing a cell means** is said per column rather than per table.
 `activate` opens the record — `activate(row)`, as everywhere else. `drill`
@@ -467,6 +468,17 @@ which would open the record.
 
 ```ts
 { key: 'select', kind: 'component', component: SelectCell, width: '36px' }
+```
+
+**A header of your own.** `header` puts a component of yours in the column's
+header cell, after the label and its sort button, given `{ column, entity }`.
+It is for what is about the whole column rather than any one cell — the
+button that clears every tick the cells above made, the one that fills every
+box in the column, a picker of the unit a column of figures is read in. The
+cell above ticks a row; this clears them all:
+
+```ts
+{ key: 'select', kind: 'component', component: SelectCell, header: SelectHeader, width: '36px' }
 ```
 
 There is deliberately no HTML-string cell. A column that wants markup gets a

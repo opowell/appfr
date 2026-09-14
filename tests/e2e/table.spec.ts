@@ -240,6 +240,25 @@ test.describe('Columns — as many as the schema declares', () => {
     await expect(page.locator('.dc-table input[type="checkbox"]:checked')).toHaveCount(1)
   })
 
+  test('a header of the host’s own stands over the whole column', async ({ page }) => {
+    await gotoStory(page, SELECTION)
+    const head = page.locator('.dc-table thead th').first().locator('.dc-table__head')
+    // Nothing ticked, nothing to clear: the header draws what its state says.
+    await expect(head.locator('button')).toHaveCount(0)
+
+    const rows = page.locator('.dc-table__row')
+    await rows.nth(0).locator('input[type="checkbox"]').check()
+    await rows.nth(1).locator('input[type="checkbox"]').check()
+    await expect(head.locator('button')).toHaveText('Clear 2')
+
+    // One press on the header undoes every tick the cells made.
+    await head.locator('button').click()
+    await expect(page.locator('.dc-table input[type="checkbox"]:checked')).toHaveCount(0)
+    await expect(head.locator('button')).toHaveCount(0)
+    // And it was a press on the header, not on the sort or on any row.
+    await expect(table(page)).toBeVisible()
+  })
+
   test('ticking a row does not open it', async ({ page }) => {
     await gotoStory(page, SELECTION)
     const before = page.url()

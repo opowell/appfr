@@ -152,6 +152,19 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
           <template v-else>
             {{ column.label }}
           </template>
+          <!-- A control of the host's own for the whole column, after the
+               label — see `ColumnDef.header`. In a span so it sits on the
+               label's line whatever it renders, and is found as one thing. -->
+          <span
+            v-if="column.header"
+            class="dc-table__head"
+          >
+            <component
+              :is="column.header"
+              :column="column"
+              :entity="shell.entity.value"
+            />
+          </span>
         </th>
       </tr>
     </thead>
@@ -313,6 +326,15 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
 
 .dc-table th[aria-sort='ascending'] .dc-table__sort::after {
   content: ' ↑';
+}
+
+/* The host's control, on the label's line and a word's gap after it — the
+   header's own case and letter-spacing are inherited by whatever it draws. */
+.dc-table__head {
+  display: inline-flex;
+  align-items: baseline;
+  margin-left: 0.5em;
+  vertical-align: baseline;
 }
 
 /* Where a column sits in its width. Numbers to the right, and everything else

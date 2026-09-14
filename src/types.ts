@@ -321,6 +321,15 @@ export interface ColumnDef {
    */
   component?: Component
   /**
+   * The component the column's header renders, given `{ column, entity }`,
+   * beside the label — for a control that is about the whole column rather
+   * than any one cell: the button that clears every tick the column's cells
+   * made, the one that fills every box in it, a picker of the unit a column of
+   * figures is read in. The label and its sort button stay as they are; this
+   * is what follows them, and it is drawn in every table the column is.
+   */
+  header?: Component
+  /**
    * Which scope the column appears in. `everything` is the mixed result set,
    * where no single entity's vocabulary applies; `scoped` is one entity's own
    * list. `always` when unsaid.

@@ -16,6 +16,14 @@ import type { EntitySchema, ShellRow } from '../types';
  * so a half-typed expression keeps showing results instead of emptying the
  * screen.
  *
+ * `:` and `=` both name a field, and differ only on a string: `:` is
+ * containment — `id:3070` finds `P-3070` and `P-3070bpb0745` alike — and `=`
+ * is the whole value, case-insensitive and unwildcarded — `id=3070` finds
+ * neither of those but `id=P-3070` finds only the first. An id sharing a
+ * prefix with others of its kind is what `=` is for; free text is what `:`
+ * is for. Numbers and booleans compare exactly either way, there being no
+ * containment a number could mean.
+ *
  * A leading `-` turns a term round: `-theme:space` keeps every row the plain
  * term would have dropped, and drops every row it would have kept. Only the
  * *match* is turned — a term that constrains nothing, an unknown field or a

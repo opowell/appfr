@@ -18,6 +18,14 @@ import { cellValue, roleColumn, roleColumns } from '../query/columns'
  * so a half-typed expression keeps showing results instead of emptying the
  * screen.
  *
+ * `:` and `=` both name a field, and differ only on a string: `:` is
+ * containment — `id:3070` finds `P-3070` and `P-3070bpb0745` alike — and `=`
+ * is the whole value, case-insensitive and unwildcarded — `id=3070` finds
+ * neither of those but `id=P-3070` finds only the first. An id sharing a
+ * prefix with others of its kind is what `=` is for; free text is what `:`
+ * is for. Numbers and booleans compare exactly either way, there being no
+ * containment a number could mean.
+ *
  * A leading `-` turns a term round: `-theme:space` keeps every row the plain
  * term would have dropped, and drops every row it would have kept. Only the
  * *match* is turned — a term that constrains nothing, an unknown field or a
@@ -209,6 +217,18 @@ function matchesText(haystack: string, needle: string): boolean {
 }
 
 /**
+ * Case-insensitive, whole-value comparison — no containment and no wildcard.
+ *
+ * What `=` asks for where `:` would ask "does this contain it": an id like
+ * `P-3070` is a value in its own right, and a corpus that also holds
+ * `P-3070bpb0745` answers `:` truthfully by containment and wrongly by the
+ * question a caller meant. `=` is the way to ask the second question.
+ */
+function sameText(actual: string, wanted: string): boolean {
+  return actual.toLowerCase() === wanted.toLowerCase()
+}
+
+/**
  * Whether the row is what the term asks for — or null, where the term asks
  * nothing of this row: an unresolvable field, a number compared against a
  * word, a word compared against a list. Those are not a mismatch, and they
@@ -235,7 +255,11 @@ function termOutcome(term: Term, row: ShellRow, entity: EntitySchema): boolean |
   if (Array.isArray(actual)) {
     const equality = term.comparator === ':' || term.comparator === '='
     return equality
-      ? actual.some((entry) => matchesText(String(entry), term.value))
+      ? actual.some((entry) =>
+          term.comparator === '='
+            ? sameText(String(entry), term.value)
+            : matchesText(String(entry), term.value),
+        )
       : null
   }
 
@@ -250,7 +274,9 @@ function termOutcome(term: Term, row: ShellRow, entity: EntitySchema): boolean |
       const wanted = Number(term.value)
       return Number.isFinite(wanted) ? actual === wanted : null
     }
-    return matchesText(String(actual), term.value)
+    return term.comparator === '='
+      ? sameText(String(actual), term.value)
+      : matchesText(String(actual), term.value)
   }
 
   const wanted = Number(term.value)

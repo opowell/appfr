@@ -140,6 +140,46 @@ describe('matchesExpression', () => {
     expect(matches('kind:feed')).toBe(false)
   })
 
+  describe(': as containment, = as the whole value', () => {
+    // An id sharing a prefix with another of its kind — `P-3070` next to
+    // `P-3070bpb0745`, the case that motivated `=` — rather than the fixture
+    // row's free-text fields, which `:` is right to treat as containment.
+    const part = row({ status: 'P-3070' })
+    const decorated = row({ status: 'P-3070bpb0745' })
+
+    it(': finds a value by containment, prefix included', () => {
+      expect(matches('status:P-3070', part)).toBe(true)
+      expect(matches('status:P-3070', decorated)).toBe(true)
+    })
+
+    it('= finds only the whole value, not a value it is a prefix of', () => {
+      expect(matches('status=P-3070', part)).toBe(true)
+      expect(matches('status=P-3070', decorated)).toBe(false)
+    })
+
+    it('= is still case-insensitive and still a real constraint when unmet', () => {
+      expect(matches('status=p-3070', part)).toBe(true)
+      expect(matches('status=P-3070', row({ status: 'something else' }))).toBe(false)
+    })
+
+    it('leaves numbers and booleans exact either way, there being no containment to mean', () => {
+      expect(matches('metric1=120')).toBe(true)
+      expect(matches('metric1=121')).toBe(false)
+      expect(matches('seen=true')).toBe(true)
+      expect(matches('seen=false')).toBe(false)
+    })
+
+    it('answers a multi-valued facet the same way, entry by entry', () => {
+      const multi = row({ kind: ['pdf', 'pdfx'] })
+      expect(matches('kind:pdf', multi)).toBe(true)
+      expect(matches('kind=pdf', multi)).toBe(true)
+      // `:` finds `pdfx` by containment; `=` does not, `pdf` not being the
+      // whole of it.
+      expect(matches('kind=pdfx', multi)).toBe(true)
+      expect(matches('kind=pd', multi)).toBe(false)
+    })
+  })
+
   it('matches a multi-valued facet on any one of its values', () => {
     const multi = row({ kind: ['pdf', 'feed'] })
     expect(matches('kind:pdf', multi)).toBe(true)

@@ -225,20 +225,31 @@ export function useResults(options: UseResultsOptions): ResultsState {
   }
 
   /**
-   * What the source is actually being asked: the query fields that decide
-   * which rows match and in what order, plus the page cut out of them.
+   * What the source is actually being asked: which entity, the query fields
+   * that decide which rows match and in what order, plus the page cut out of
+   * them.
    *
-   * Watching this rather than the whole query is what keeps a view switch from
-   * re-running it. The same rows drawn as a table are the same rows, and for a
-   * source that streams, re-running would mean restarting a crawl to change
-   * how its results are drawn.
+   * Watching this rather than the whole query — or the whole schema, or the
+   * whole entity — is what keeps a view switch from re-running it, and a host
+   * that rebuilds its schema for reasons of its own from restarting one too. A
+   * source reads an entity by its `key`, the one field of it any source here
+   * is documented to use (see e.g. `entityKey` in a `DataSource` — it takes
+   * `request.entity?.key`, nothing else), so that is what is watched rather
+   * than the object: a host whose schema is a `computed` returns a new entity
+   * object on every unrelated change to anything the schema reads — a count
+   * elsewhere on the page, a fill's progress — and none of that is a reason
+   * for a stream already running to restart. Restarting one is not free: a
+   * source that streams by fetching restarts the fetch. `run` still reads
+   * `options.schema.value` and `options.entity.value` fresh whenever it does
+   * run, so neither is stale — only spared from triggering a run on its own.
    */
   const asked = computed(() => {
     const query = asks()
-    return `${JSON.stringify(RESULT_FIELDS.map((field) => query[field]))}|${query.page}`
+    const entityKey = options.entity.value?.key ?? options.schema.value.entities[0]?.key ?? ''
+    return `${entityKey}|${JSON.stringify(RESULT_FIELDS.map((field) => query[field]))}|${query.page}`
   })
 
-  watch([options.source, asked, options.schema, options.entity, options.limit], run, {
+  watch([options.source, asked, options.limit], run, {
     immediate: true,
   })
 

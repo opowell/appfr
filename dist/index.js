@@ -966,9 +966,9 @@ function ur(e) {
     });
   }, C = v(() => {
     const y = u();
-    return `${JSON.stringify(na.map(($) => y[$]))}|${y.page}`;
+    return `${e.entity.value?.key ?? e.schema.value.entities[0]?.key ?? ""}|${JSON.stringify(na.map((R) => y[R]))}|${y.page}`;
   });
-  return be([e.source, C, e.schema, e.entity, e.limit], b, {
+  return be([e.source, C, e.limit], b, {
     immediate: !0
   }), Ws(() => {
     l++, w();

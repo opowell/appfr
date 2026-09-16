@@ -66,6 +66,21 @@ test.describe('Header — the query as it stands', () => {
     await expect(terms(page)).toHaveCount(0)
   })
 
+  test('recounts every other type against the query too, once the picker opens', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--expression-query')
+    // Chosen and narrowed, `Items` already reads its own match count — this is
+    // about what the *other* types in the list say, which is a query nobody
+    // has put to the source until the picker is opened.
+    expect(await scopeLabel(page)).not.toBe('Items · 9,988')
+    const before = await scopeSelect(page).locator('option').allTextContents()
+
+    await scopeSelect(page).focus()
+
+    await expect
+      .poll(() => scopeSelect(page).locator('option').allTextContents())
+      .not.toEqual(before)
+  })
+
   test('describes a narrowed query by its terms', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
     await expect(scopeSelect(page)).toHaveValue('searches')

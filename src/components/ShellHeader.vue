@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useShellContext } from '../composables/context'
+import { useEntityCounts } from '../composables/useEntityCounts'
 import { useRecordNames } from '../composables/useRecordNames'
 import { scopedEntity } from '../query/drill'
 import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
@@ -61,18 +62,37 @@ const narrowed = computed(
 const writeCount = computed(() => domain.value.formatCount ?? formatCount)
 
 /**
+ * Every entity's own count against the query as it stands, fetched as the
+ * picker opens rather than watched — see {@link useEntityCounts}.
+ */
+const entityCounts = useEntityCounts({
+  source: shell.source,
+  schema: shell.schema,
+  query: shell.query,
+  entities: shell.entities,
+  within: shell.within,
+})
+
+/**
  * How many records a type holds, said beside its name in the list of them.
  *
  * The population is what the schema publishes, and it is what makes that list
  * a chooser rather than a row of names: how many of each of these there are.
- * The type in force says something else as soon as the query narrows it — how
- * many rows matched — because that is the count that is true of what is on
- * screen, and the whole result is no longer what is being listed.
+ * Once the query narrows anything, every entity says something else instead —
+ * how many of it matched — because that is the count that is true of the
+ * query, not just of the type in force. The type in force already has its
+ * own live total, the shell's own query; the rest are counted separately as
+ * the picker opens, and one still being counted carries a `~`, since the
+ * true total may yet grow.
  */
 function countOf(entity: EntitySchema): string {
+  if (props.hideCount) return entity.count
   const chosen = entity.key === shell.query.value.entity
-  if (chosen && narrowed.value && !props.hideCount) return writeCount.value(shell.total.value)
-  return entity.count
+  if (chosen && narrowed.value) return writeCount.value(shell.total.value)
+  if (entityCounts.pristine.value) return entity.count
+  const found = entityCounts.counts.value.get(entity.key)
+  if (!found) return entity.count
+  return `${found.pending ? '~' : ''}${writeCount.value(found.total)}`
 }
 
 /** A type as the list offers it: what it is called, and how many there are. */
@@ -518,6 +538,7 @@ function abandonTyped(event: Event): void {
             <select
               class="dc-header__pick-select dc-header__scope-select"
               :value="shell.query.value.entity ?? ''"
+              @focus="entityCounts.refresh"
               @change="chooseEntity"
             >
               <option value="">{{ everythingLabel }}</option>

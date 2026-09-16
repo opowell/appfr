@@ -34,9 +34,11 @@ export { presentParts, presentRow, usePresentedRows } from './composables/usePre
 export type { PresentedRow, RowMetric, RowParts } from './composables/usePresentedRows';
 export { useColumns } from './composables/useColumns';
 export { useEntityPreviews } from './composables/useEntityPreviews';
+export { useEntityCounts } from './composables/useEntityCounts';
 export { useRecordNames } from './composables/useRecordNames';
 export type { RecordNamesState, UseRecordNamesOptions } from './composables/useRecordNames';
 export type { EntityPreview, EntityPreviewsState, UseEntityPreviewsOptions, } from './composables/useEntityPreviews';
+export type { EntityCount, EntityCountsState, UseEntityCountsOptions } from './composables/useEntityCounts';
 export { activePanel, activeTab, axisOf, cascade, CASCADE_STEP, clampRect, collapseSpace, collapseToTabs, column, defaultLayout, DEFAULT_FRAME, dropIntoSpace, fixedView, float, floatPanel, floatSplit, floatTabs, frame, frameAt, frameOf, framePathOf, frontPanel, group, groupOf, groups, hasPanel, headless, insertPanel, isFloat, isGroup, isMaximized, isMinimized, isPanelTab, isSplit, isTabOf, maximizeFrame, maximizeFrameAt, mergeSpace, MIN_FRAME, MINIMIZED_GAP, MINIMIZED_HEIGHT, MINIMIZED_WIDTH, minimizeFrame, minimizeFrameAt, movePanel, moveTab, nodeAt, nodeTitle, normalizeLayout, normalizeSizes, onlySpace, panelIds, panelNode, panelTabs, raisedPath, raiseFrame, raiseFrameAt, reconcileLayout, removePanel, replaceAt, resizeRect, resizeSplit, rootSpace, row, setActivePanel, setFrameRect, setFrameRectAt, setSizesAt, setSplitDirection, sizesOf, spaceChrome, spaceTitle, split, spreadTabs, swapPanels, tabNode, tabPanels, tileFloat, toFloat, toggleMaximized, toggleMinimized, toTiled, } from './window/layout';
 export type { DropEdge, FloatFrame, FloatRect, FrameChange, FrameGrip, FrameHandle, PanelMove, SplitDirection, SplitEdge, WindowFloat, WindowGroup, WindowNode, WindowPanelDef, WindowSpace, WindowSplit, WindowTab, WindowView, } from './window/types';
 export { isChoosable } from './menu/types';

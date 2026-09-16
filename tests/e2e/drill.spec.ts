@@ -196,7 +196,7 @@ test.describe('Pressing a row with ⌘ held', () => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const name = await page.locator('.dc-list__primary').first().innerText()
     await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
-    await expect(termBar(page)).toContainText(`-set:${name} (sets_`)
+    await expect(termBar(page)).toContainText(`-set: ${name}`)
   })
 
   test('turns the term round on a record the query already narrows to', async ({ page }) => {

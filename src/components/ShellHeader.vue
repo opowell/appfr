@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useShellContext } from '../composables/context'
 import { useRecordNames } from '../composables/useRecordNames'
+import { scopedEntity } from '../query/drill'
 import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
 import { formatCount } from '../data/format'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
@@ -242,17 +243,37 @@ const records = useRecordNames({
 })
 
 /**
+ * The word in front of a resolved part's name — the field it was written
+ * with, or {@link EntitySchema.scopeLabel} where that field reads poorly on
+ * its own (`id` naming an item is not a word a reader recognises; `item` is).
+ */
+function fieldLabelOf(field: string): string {
+  return scopedEntity(domain.value, field)?.scopeLabel ?? field
+}
+
+/**
+ * A name however it happens to have its own record's id folded into it —
+ * `'Yellow Castle (sets_10007)'`, a row drawing its own identity column the
+ * way a table wants it read. The header already says which record this is by
+ * naming it at all, so a second id trailing the name is noise rather than
+ * information.
+ */
+function withoutOwnId(name: string): string {
+  return name.replace(/\s*\([^()]*\)\s*$/, '')
+}
+
+/**
  * What a part says. `set:"sets_10007"` is what the query *is*, and a join key
  * is not something anyone recognises — so where the id turns out to name a
- * record, the part says which record: `set:Yellow Castle (sets_10007)`. The id
- * stays, because it is what the expression field holds and what a shared URL
- * carries; the name is what makes it readable.
+ * record, the part says which record: `set: Yellow Castle`.
  */
 function labelOf(term: SummaryTerm): string {
   const name = records.nameOf(term)
+  if (!name) return term.label
   // The sign stays in front of the name as it stood in front of the id: what
   // the part says is that this record is out, and the name only says which.
-  return name ? `${term.negated ? '-' : ''}${term.field}:${name} (${term.value})` : term.label
+  const sign = term.negated ? '-' : ''
+  return `${sign}${fieldLabelOf(term.field!)}: ${withoutOwnId(name)}`
 }
 
 /* ---------------------------------------------------------- what is listed */

@@ -291,8 +291,7 @@ export const DrillableTable = story({
  * *Parts*. Nothing here was typed — the expression is what the press wrote.
  *
  * The query holds a join key, `set:"sets_10007"`, and the header reads it back
- * as the record it names: **set:Yellow Castle (sets_10007)**. The id stays,
- * because it is what the expression field holds and what a shared URL carries.
+ * as the record it names: **set: Yellow Castle**.
  */
 export const DrilledIntoPieces = story({
   schema: legoSchema,

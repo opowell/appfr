@@ -403,6 +403,14 @@ export interface EntitySchema {
    */
   scope?: string
   /**
+   * What to call {@link scope}'s field in the header, where the field itself
+   * reads poorly as one — `'item'` for a field named `id`. Most scopes need
+   * nothing here: `'host'`, `'set'`, `'category'` already read as the noun a
+   * reader wants, and the header falls back to the field name where this is
+   * unset.
+   */
+  scopeLabel?: string
+  /**
    * Seed pairs of `[identity, reference]` the mock source expands into rows,
    * filling the rest of each row from what the columns say it holds.
    */

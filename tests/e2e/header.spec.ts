@@ -278,20 +278,20 @@ test.describe('Header — lifting a part of the query', () => {
 /*
  * A drill writes a join key — `set:"sets_10007"` — which is exactly right as a
  * query and unreadable as a label. The header is where someone has to
- * recognise what they are looking at, so it names the record and keeps the id.
+ * recognise what they are looking at, so it names the record instead.
  */
 test.describe('Header — a part that names a record', () => {
   const DRILLED = 'shell-data-shell--drilled-into-pieces'
 
-  test('says which record the id belongs to, and keeps the id', async ({ page }) => {
+  test('says which record the id belongs to', async ({ page }) => {
     await gotoStory(page, DRILLED)
-    await expect(terms(page)).toHaveText(['set:Yellow Castle (sets_10007)'])
+    await expect(terms(page)).toHaveText(['set: Yellow Castle'])
   })
 
   test('lifts by what it says, not by what the expression holds', async ({ page }) => {
     await gotoStory(page, DRILLED)
     const part = terms(page).first()
-    await expect(part).toHaveAttribute('aria-label', 'Remove set:Yellow Castle (sets_10007)')
+    await expect(part).toHaveAttribute('aria-label', 'Remove set: Yellow Castle')
 
     await part.click()
     await expect(terms(page)).toHaveCount(0)

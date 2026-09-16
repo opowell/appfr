@@ -87,6 +87,15 @@ function recordIn(rows: readonly ShellRow[], id: string): ShellRow | undefined {
  */
 export function useRecordNames(options: UseRecordNamesOptions): RecordNamesState {
   const names = shallowRef<ReadonlyMap<string, string>>(new Map())
+  /**
+   * The lookups still on their way, under the key their names will be held
+   * by. A run is made every time the terms or the schema move, and a host
+   * whose schema is a computed rebuilds it on every count that lands anywhere
+   * on the page — so without this, one slow lookup was asked again on each of
+   * those runs until the first answer came back, and a source that answers
+   * by reading a large table read it once per re-ask, all at once.
+   */
+  const pending = new Set<string>()
 
   const referenceOf = (term: SummaryTerm): Reference | null => {
     if (term.facetKey !== EXPRESSION_TERM || !term.field || !term.value) return null
@@ -135,8 +144,10 @@ export function useRecordNames(options: UseRecordNamesOptions): RecordNamesState
     for (const term of options.terms.value) {
       const reference = referenceOf(term)
       // Already answered — including answered with nothing, which is an answer
-      // and not worth asking twice.
-      if (reference && !names.value.has(reference.key)) wanted.set(reference.key, reference)
+      // and not worth asking twice — or already asked and not yet answered.
+      if (reference && !names.value.has(reference.key) && !pending.has(reference.key)) {
+        wanted.set(reference.key, reference)
+      }
     }
     if (!wanted.size) return
 
@@ -165,11 +176,17 @@ export function useRecordNames(options: UseRecordNamesOptions): RecordNamesState
       return
     }
 
+    for (const { reference } of asked) pending.add(reference.key)
     void Promise.all(asked.map(({ outcome }) => Promise.resolve(outcome)))
       .then(apply)
       // A name is a courtesy: the id is still on screen, and still says which
       // record the query narrowed to.
       .catch(() => {})
+      // Answered or failed, the lookup is over: a failed one is asked again on
+      // the next run, as it was before.
+      .finally(() => {
+        for (const { reference } of asked) pending.delete(reference.key)
+      })
   }
 
   watch([options.source, options.schema, options.terms], () => {

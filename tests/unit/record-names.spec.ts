@@ -98,6 +98,52 @@ describe('useRecordNames', () => {
     expect(asked).toHaveBeenCalledTimes(1)
   })
 
+  it('asks once about a record whose answer is still on its way', async () => {
+    // A source that answers when told to, and not before — the shape of a
+    // lookup that reads a large table. The query moves on twice meanwhile,
+    // which is what a host rebuilding its schema on every count does.
+    const source = createMockDataSource({ seed: 'LEGO' })
+    let answer: ((result: QueryResult) => void) | undefined
+    const asked = vi.fn(
+      (request: QueryRequest) =>
+        new Promise<QueryResult>((resolve) => {
+          answer = () => resolve(source.query(request))
+        }),
+    )
+    const { query, labels } = setup(`?e=pieces&q=${YELLOW_CASTLE}`, { query: asked })
+    expect(asked).toHaveBeenCalledTimes(1)
+    query.value = { ...query.value, page: 2 }
+    await nextTick()
+    query.value = { ...query.value, page: 3 }
+    await nextTick()
+    expect(asked).toHaveBeenCalledTimes(1)
+    expect(labels()).toEqual(['entity:pieces', 'set:sets_10007'])
+
+    answer!(undefined as never)
+    await nextTick()
+    await nextTick()
+    expect(labels()).toEqual(['entity:pieces', 'set:Yellow Castle (sets_10007)'])
+  })
+
+  it('asks again about a record whose lookup failed', async () => {
+    // A failed lookup is not an answer: the next run may do better, and the
+    // one in flight is no longer in the way of it.
+    let fail = true
+    const source = createMockDataSource({ seed: 'LEGO' })
+    const asked = vi.fn((request: QueryRequest) =>
+      fail ? Promise.reject(new Error('down')) : Promise.resolve(source.query(request)),
+    )
+    const { query, labels } = setup(`?e=pieces&q=${YELLOW_CASTLE}`, { query: asked })
+    // A turn of the event loop, so the failure has been seen and let go of.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(labels()).toEqual(['entity:pieces', 'set:sets_10007'])
+    fail = false
+    query.value = { ...query.value, page: 2 }
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(asked).toHaveBeenCalledTimes(2)
+    expect(labels()).toEqual(['entity:pieces', 'set:Yellow Castle (sets_10007)'])
+  })
+
   it('asks for the one record, scoped to its own type', () => {
     const source = createMockDataSource({ seed: 'LEGO' })
     const asked = vi.fn((request: QueryRequest): QueryResult => source.query(request))

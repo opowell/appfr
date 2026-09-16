@@ -52,6 +52,7 @@ export { presentParts, presentRow, usePresentedRows } from './composables/usePre
 export type { PresentedRow, RowMetric, RowParts } from './composables/usePresentedRows'
 export { useColumns } from './composables/useColumns'
 export { useEntityPreviews } from './composables/useEntityPreviews'
+export { useEntityCounts } from './composables/useEntityCounts'
 export { useRecordNames } from './composables/useRecordNames'
 export type { RecordNamesState, UseRecordNamesOptions } from './composables/useRecordNames'
 export type {
@@ -59,6 +60,7 @@ export type {
   EntityPreviewsState,
   UseEntityPreviewsOptions,
 } from './composables/useEntityPreviews'
+export type { EntityCount, EntityCountsState, UseEntityCountsOptions } from './composables/useEntityCounts'
 
 /* Window model */
 export {

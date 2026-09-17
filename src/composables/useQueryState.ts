@@ -176,10 +176,30 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     }
   }
 
+  /**
+   * The expression without any term on `entity`'s own {@link EntitySchema.scope}
+   * field. A query narrowed to `condition:N` lists one condition; picking
+   * Conditions from that query is a request to see them all — the rest of the
+   * query still applied — and to add or take away single ones from there. The
+   * term is what the picked entity *is*, so it comes off; every other term
+   * stays. Unchanged, text and all, where there is nothing to lift.
+   */
+  const withoutOwnScope = (entity: EntitySchema | null, expr: string): string => {
+    const field = entity?.scope?.toLowerCase()
+    if (!field || !expr.trim()) return expr
+    const groups = parseExpression(expr)
+    const kept = groups.map((group) =>
+      group.filter((term) => term.kind !== 'field' || term.field !== field),
+    )
+    if (kept.every((group, at) => group.length === groups[at]?.length)) return expr
+    return formatExpression(kept)
+  }
+
   const setEntity = (key: string | null) => {
     const patch = entityPatch(key)
     if (!Object.keys(patch).length) return
-    commit(patch, primaryMode())
+    const expr = withoutOwnScope(findEntity(schema.value, patch.entity ?? null), query.value.expr)
+    commit(expr === query.value.expr ? patch : { ...patch, expr }, primaryMode())
   }
 
   return {

@@ -319,7 +319,8 @@ export const DrilledPanelOpen = story({
  * heading, a count of one and the row the header is already naming. A card is
  * a look inside a type, and the type the query has picked the one record of
  * has nothing left inside it to look at. The set itself is still in the
- * results — choose Sets and there it is, on its own.
+ * results, and choosing Sets is how the rest come back beside it: the pick
+ * lifts the set's own term and lists every set the query still allows.
  */
 export const DrilledEverything = story({
   schema: legoSchema,

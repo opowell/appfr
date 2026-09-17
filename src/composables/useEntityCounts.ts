@@ -3,6 +3,7 @@ import type { ComputedRef, Ref, ShallowRef } from 'vue'
 import type { DataSource, DomainSchema, EntitySchema, ShellQuery } from '../types'
 import { emptyFacetState, isPristineQuery } from '../query/schema'
 import { andExpression } from '../data/expression'
+import { withoutOwnScope } from '../query/drill'
 
 /** How many rows of one entity currently match, for the type picker. */
 export interface EntityCount {
@@ -55,10 +56,12 @@ export function useEntityCounts(options: UseEntityCountsOptions): EntityCountsSt
     const entities = options.entities.value
     const within = options.within?.value.trim() ?? ''
     pristine.value = isPristineQuery(query) && !within
-    const expr = within ? andExpression(within, query.expr) : query.expr
-
     const next = new Map<string, EntityCount>()
     for (const entity of entities) {
+      // Each count is what choosing that entity would list, which for the
+      // type a term of the query names is every one of them, not the one.
+      const own = withoutOwnScope(entity, query.expr)
+      const expr = within ? andExpression(within, own) : own
       const outcome = options.source.value.query({
         query: { ...query, entity: entity.key, expr, facets: emptyFacetState(entity), page: 1 },
         schema,

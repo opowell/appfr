@@ -13,6 +13,7 @@ import type {
 } from '../types'
 import { countPages, RESULT_FIELDS } from '../query/schema'
 import { andExpression } from '../data/expression'
+import { withoutOwnScope } from '../query/drill'
 
 export interface UseResultsOptions {
   source: ComputedRef<DataSource>
@@ -70,15 +71,22 @@ export function useResults(options: UseResultsOptions): ResultsState {
   const pageCount = computed(() => countPages(total.value, options.limit.value))
 
   /**
-   * The query as the source is asked it: the one in the URL, narrowed by the
-   * scope the shell is read inside. Everything else — the header, the panel,
-   * the pager — reads the query itself, so the fixed part is never something
-   * a reader can lift.
+   * The query as the source is asked it: the one in the URL, less the term on
+   * the listed entity's own scope field, narrowed by the scope the shell is
+   * read inside. Everything else — the header, the panel, the pager — reads
+   * the query itself, so the fixed part is never something a reader can lift,
+   * and the lifted part is still there to be lifted.
+   *
+   * The host's `within` is not read as one of the terms to lift: it is the
+   * record the shell is *inside*, and a list of that record's own type inside
+   * it is the one record, which is what the host asked for.
    */
   const asks = (): ShellQuery => {
     const query = options.query.value
     const within = options.within?.value.trim()
-    return within ? { ...query, expr: andExpression(within, query.expr) } : query
+    const expr = withoutOwnScope(options.entity.value, query.expr)
+    if (within) return { ...query, expr: andExpression(within, expr) }
+    return expr === query.expr ? query : { ...query, expr }
   }
 
   const apply = (result: QueryResult) => {

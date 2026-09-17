@@ -236,16 +236,24 @@ const descending = computed(() => shell.query.value.dir === 'desc')
  * `or` marks a term that starts a new alternative. An expression's `OR` groups
  * are alternatives, and a plain row of pills would otherwise read them as one
  * list of things that all have to hold.
+ *
+ * `idle` marks a term on the listed entity's own scope field — `condition:N`
+ * while Conditions are what is listed. The list does not apply it to itself
+ * (see `withoutOwnScope`), so the pill says so rather than promising a
+ * narrowing the rows do not show; it is still the query's, still there to
+ * lift, and applies again the moment another type is listed.
  */
-const terms = computed(() =>
-  shell.terms.value.filter((term) => term.facetKey !== ENTITY_TERM).map((term, at, all) => {
+const terms = computed(() => {
+  const own = shell.entity.value?.scope?.toLowerCase()
+  return shell.terms.value.filter((term) => term.facetKey !== ENTITY_TERM).map((term, at, all) => {
     const before = all[at - 1]
     return {
       term,
       or: before?.group !== undefined && term.group !== undefined && term.group !== before.group,
+      idle: Boolean(own) && term.field?.toLowerCase() === own,
     }
-  }),
-)
+  })
+})
 
 /* ------------------------------------------------------ what a part reads as */
 
@@ -629,7 +637,10 @@ function abandonTyped(event: Event): void {
           <button
             type="button"
             class="dc-term dc-mono"
-            :title="`Remove ${labelOf(entry.term)}`"
+            :class="{ 'dc-term--idle': entry.idle }"
+            :title="entry.idle
+              ? `Not applied to ${shell.entity.value?.label} — remove ${labelOf(entry.term)}`
+              : `Remove ${labelOf(entry.term)}`"
             :aria-label="`Remove ${labelOf(entry.term)}`"
             @click="shell.removeTerm(entry.term)"
           >
@@ -856,6 +867,17 @@ function abandonTyped(event: Event): void {
 .dc-term:focus-visible {
   opacity: 0.5;
   text-decoration: line-through;
+}
+
+/*
+ * A term the listed type does not apply to itself. Drawn as a part of the
+ * query still — the same pill, in the same row, lifted the same way — but
+ * hollow, so it reads as held rather than in force.
+ */
+.dc-term--idle {
+  background: transparent;
+  border-style: dashed;
+  color: var(--dc-fg-2);
 }
 
 /*

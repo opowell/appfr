@@ -8,6 +8,7 @@ import {
   scopedEntity,
   scopeTerm,
   scopeTermFor,
+  withoutOwnScope,
 } from '../../src/query/drill'
 import { createMockDataSource, generateRows } from '../../src/data/mock'
 import { formatExpression, parseExpression } from '../../src/data/expression'
@@ -41,6 +42,30 @@ describe('scopedEntity', () => {
     // nothing anyone can look up a record by.
     expect(scopedEntity(legoSchema, 'theme')).toBeNull()
     expect(scopedEntity(legoSchema, 'inventory')).toBeNull()
+  })
+})
+
+describe('withoutOwnScope', () => {
+  const sets = findEntity(legoSchema, 'sets')!
+
+  it('lifts the term on the type\'s own scope field and keeps the rest', () => {
+    expect(withoutOwnScope(sets, 'set:"sets_10007" theme:space')).toBe('theme:space')
+  })
+
+  it('lifts a negated term too, and an alternative left empty with it', () => {
+    expect(withoutOwnScope(sets, '-set:"sets_10007" OR set:"sets_10008"')).toBe('')
+    expect(withoutOwnScope(sets, 'set:a theme:space OR set:b')).toBe('theme:space')
+  })
+
+  it('reads the field however it was capitalized', () => {
+    expect(withoutOwnScope(sets, 'Set:"sets_10007"')).toBe('')
+  })
+
+  it('leaves an expression with nothing of its own in it exactly as written', () => {
+    const written = 'Color:"colors_10000"  castle'
+    expect(withoutOwnScope(sets, written)).toBe(written)
+    expect(withoutOwnScope(inventories, 'set:"sets_10007"')).toBe('set:"sets_10007"')
+    expect(withoutOwnScope(null, 'set:"sets_10007"')).toBe('set:"sets_10007"')
   })
 })
 

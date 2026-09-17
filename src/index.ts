@@ -245,6 +245,7 @@ export {
   scopedEntity,
   scopeTerm,
   scopeTermFor,
+  withoutOwnScope,
 } from './query/drill'
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary'
 export type { SummaryTerm } from './query/summary'

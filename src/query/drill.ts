@@ -120,6 +120,31 @@ export function drillExpression(
 }
 
 /**
+ * `expr` less any term on `entity`'s own {@link EntitySchema.scope} field.
+ *
+ * A query narrowed to `condition:N` says which condition every *other* type's
+ * rows belong to; read against conditions themselves it would list the one
+ * and leave nothing to choose from. So the term is the one part of the query
+ * a list of that type does not apply to itself: every condition the rest of
+ * the query allows is shown, and the term stays in the query, still narrowing
+ * everything else, ready to be swapped for another from that list.
+ *
+ * Positive or negated, and every alternative: the field is what makes it that
+ * type's own. Unchanged, text and all, where there is nothing to lift, so an
+ * expression the reader wrote reaches the source as written.
+ */
+export function withoutOwnScope(entity: EntitySchema | null | undefined, expr: string): string {
+  const field = entity?.scope?.toLowerCase()
+  if (!field || !expr.trim()) return expr
+  const groups = parseExpression(expr)
+  const kept = groups.map((group) =>
+    group.filter((term) => term.kind !== 'field' || term.field !== field),
+  )
+  if (kept.every((group, at) => group.length === groups[at]?.length)) return expr
+  return formatExpression(kept)
+}
+
+/**
  * The entity whose records a field names — the inverse of {@link scopeTerm}.
  *
  * `set` is the field every other record carries a set's id in, so

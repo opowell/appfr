@@ -7,9 +7,9 @@ import { useEntityPreviews } from '../../src/composables/useEntityPreviews'
 import type { EntityPreviewsState } from '../../src/composables/useEntityPreviews'
 import { createMockDataSource } from '../../src/data/mock'
 import { parseQuery } from '../../src/query/codec'
-import { defaultQuery } from '../../src/query/schema'
-import { iRadarSchema } from '../../src/fixtures/schemas'
-import type { DataSource, QueryRequest, ShellQuery } from '../../src/types'
+import { defaultQuery, findEntity } from '../../src/query/schema'
+import { iRadarSchema, legoSchema } from '../../src/fixtures/schemas'
+import type { DataSource, DomainSchema, QueryRequest, ShellQuery } from '../../src/types'
 
 /** A source that records what it was asked and answers with nothing. */
 function spySource() {
@@ -57,17 +57,17 @@ describe('andExpression', () => {
 
 /* --------------------------------------------------------------- useResults */
 
-function results(within = '', search = '') {
+function results(within = '', search = '', schema: DomainSchema = iRadarSchema) {
   const { source, requests } = spySource()
-  const query = ref<ShellQuery>(parseQuery(search, iRadarSchema))
+  const query = ref<ShellQuery>(parseQuery(search, schema))
   const scope = ref(within)
   const running = effectScope()
   const state = running.run(() =>
     useResults({
       source: computed(() => source),
       query: computed(() => query.value),
-      schema: computed(() => iRadarSchema),
-      entity: computed(() => null),
+      schema: computed(() => schema),
+      entity: computed(() => findEntity(schema, query.value.entity)),
       limit: computed(() => 50),
       within: computed(() => scope.value),
     }),
@@ -105,6 +105,34 @@ describe('useResults within a scope', () => {
     scope.value = '  set:"sets_1"  '
     await nextTick()
     expect(requests).toHaveLength(1)
+  })
+})
+
+/*
+ * The one part of the query a list does not apply to itself: the term on its
+ * own type's scope field. `set:"sets_1"` narrows pieces to one set's; read
+ * against sets it would list the one, so the sets are asked for without it —
+ * and the URL keeps it, so pieces are that set's again when listed next.
+ */
+describe('useResults listing the type a term of the query names', () => {
+  it('asks the source for the query less that type\'s own term', () => {
+    const { requests } = results('', '?e=sets&q=set%3A%22sets_1%22+theme%3Aspace', legoSchema)
+    expect(requests[0]?.query.expr).toBe('theme:space')
+  })
+
+  it('leaves the URL\'s query as it is', () => {
+    const { query } = results('', '?e=sets&q=set%3A%22sets_1%22+theme%3Aspace', legoSchema)
+    expect(query.value.expr).toBe('set:"sets_1" theme:space')
+  })
+
+  it('applies the term in full to any other type', () => {
+    const { requests } = results('', '?e=pieces&q=set%3A%22sets_1%22+theme%3Aspace', legoSchema)
+    expect(requests[0]?.query.expr).toBe('set:"sets_1" theme:space')
+  })
+
+  it('keeps a scope the host holds, which is the record the shell is inside', () => {
+    const { requests } = results('set:"sets_1"', '?e=sets&q=set%3A%22sets_2%22', legoSchema)
+    expect(requests[0]?.query.expr).toBe('set:sets_1')
   })
 })
 

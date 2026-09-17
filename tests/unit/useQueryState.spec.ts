@@ -506,46 +506,18 @@ describe('narrow', () => {
 
 describe('setEntity', () => {
   /*
-   * A query narrowed to one set lists that set's pieces; picking Sets from it
-   * asks to see every set the rest of the query allows, so the term that names
-   * the one set — the field `sets` declares as its scope — is lifted, and the
-   * others are not.
+   * The query is the query. A term naming one set stays in it when Sets are
+   * picked — the list of sets does not apply it to itself, which is
+   * `withoutOwnScope`'s and the results' business — so that going back to
+   * Pieces narrows to that set's pieces again, as it did before.
    */
-  it('lifts the picked entity\'s own scope term from the expression', () => {
+  it('leaves the expression exactly as written, its own scope term included', () => {
     const adapter = createMemoryAdapter('?e=pieces&q=set%3A%22sets_10007%22+color%3A%22colors_10000%22')
     const state = useQueryState({ schema: () => legoSchema, adapter })
 
     state.setEntity('sets')
 
     expect(state.query.value.entity).toBe('sets')
-    // Written back normalized, as lifting a part with `removeTerm` writes it.
-    expect(state.query.value.expr).toBe('color:colors_10000')
-  })
-
-  it('lifts an excluding term on that field too, and an empty alternative with it', () => {
-    const adapter = createMemoryAdapter('?e=pieces&q=-set%3A%22sets_10007%22+OR+set%3A%22sets_10008%22')
-    const state = useQueryState({ schema: () => legoSchema, adapter })
-
-    state.setEntity('sets')
-
-    expect(state.query.value.expr).toBe('')
-  })
-
-  it('leaves an expression with nothing of its own in it exactly as written', () => {
-    const adapter = createMemoryAdapter('?e=pieces&q=Color%3A%22colors_10000%22++castle')
-    const state = useQueryState({ schema: () => legoSchema, adapter })
-
-    state.setEntity('sets')
-
-    expect(state.query.value.expr).toBe('Color:"colors_10000"  castle')
-  })
-
-  it('keeps a term on the field where the entity picked does not scope on it', () => {
-    const adapter = createMemoryAdapter('?e=pieces&q=set%3A%22sets_10007%22')
-    const state = useQueryState({ schema: () => legoSchema, adapter })
-
-    state.setEntity('colors')
-
-    expect(state.query.value.expr).toBe('set:"sets_10007"')
+    expect(state.query.value.expr).toBe('set:"sets_10007" color:"colors_10000"')
   })
 })

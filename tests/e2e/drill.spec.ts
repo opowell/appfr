@@ -49,15 +49,18 @@ const entityOf = (page: Page) => new URL(page.url()).searchParams.get('e')
  * Presses the record the query already names, a second time.
  *
  * Its own type's card comes off the screen the moment the query names it, so
- * there is nowhere on the home screen left to press — and choosing that type
- * from the bar lifts the term, which is the other thing there is to do with a
- * record already named. The record is still there in its type's own list, so
- * the test arrives at that list the way a shared link would: by URL, with the
- * query as it stands.
+ * there is nowhere on the home screen left to press — the record is still
+ * there, in that type's own list, which is a scope and a view away. That list
+ * does not apply the term to itself, so it holds every record of the type,
+ * and the one to press is found by its name.
  */
-async function pressAgain(page: Page, story: string, entity: string): Promise<void> {
-  await gotoStory(page, story, `&e=${entity}&v=list&q=${encodeURIComponent(queryOf(page)!)}`)
-  await page.locator('.dc-list__open').first().click()
+async function pressAgain(page: Page, label: string, name: string): Promise<void> {
+  await chooseScope(page, label)
+  await chooseView(page, 'list')
+  await listRows(page)
+    .filter({ has: page.locator('.dc-list__primary', { hasText: name }) })
+    .locator('.dc-list__open')
+    .click()
 }
 
 test.describe('A metric that counts something listable', () => {
@@ -142,32 +145,36 @@ test.describe('Pressing a row', () => {
   })
 
   /*
-   * The card went; the record did not, and choosing its type is how the
-   * other sets come back into view beside it. A list of one set would be the
-   * header's own term drawn again — what is wanted from Sets, with a set
-   * already named, is every set the rest of the query allows, so the term
-   * comes off and the others stay.
+   * The card went; the record did not, and choosing its type is where the
+   * other sets are, beside it. A list of one set would be the header's own
+   * term drawn again — what is wanted from Sets, with a set already named, is
+   * every set the rest of the query allows, so the list leaves that one term
+   * unapplied. The query keeps it: it is still on the bar, drawn as held
+   * rather than in force, and pieces are that set's again once listed.
    */
-  test('gives the type back every record once its type is chosen', async ({ page }) => {
+  test('lists every record of the type once that type is chosen', async ({ page }) => {
     await gotoStory(page, HOME, '&q=theme%3Aspace')
     const count = await card(page, 'Sets').locator('.dc-type__count').innerText()
-    await press(page, 'Sets')
-    await expect(termBar(page)).toContainText('set:')
-    await chooseScope(page, 'Sets')
-    await chooseView(page, 'list')
-    // The record's own term is lifted; the search that was there stays.
-    await expect(termBar(page)).not.toContainText('set:')
-    expect(queryOf(page)).toBe('theme:space')
-    await expect(listRows(page)).toHaveCount(Number(count))
-  })
-
-  test('still lists only the record where a link arrives already naming it', async ({ page }) => {
-    await gotoStory(page, HOME)
     const name = await card(page, 'Sets').locator('.dc-type__primary').first().innerText()
     await press(page, 'Sets')
-    // Arriving by URL is not a choice made on the bar, so the term stands.
-    await gotoStory(page, HOME, `&e=sets&v=list&q=${encodeURIComponent(queryOf(page)!)}`)
-    await expect(page.locator('.dc-list__primary')).toHaveText([name])
+    const narrowed = queryOf(page)!
+    await chooseScope(page, 'Sets')
+    await chooseView(page, 'list')
+    expect(queryOf(page)).toBe(narrowed)
+    await expect(listRows(page)).toHaveCount(Number(count))
+    await expect(page.locator('.dc-list__primary').first()).toHaveText(name)
+    await expect(terms(page).filter({ hasText: 'set:' })).toHaveClass(/dc-term--idle/)
+    await expect(terms(page).filter({ hasText: 'theme:' })).not.toHaveClass(/dc-term--idle/)
+  })
+
+  test('applies the term again the moment another type is listed', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await press(page, 'Sets')
+    const narrowed = queryOf(page)!
+    await chooseScope(page, 'Sets')
+    await chooseScope(page, 'Pieces')
+    expect(queryOf(page)).toBe(narrowed)
+    await expect(terms(page).filter({ hasText: 'set:' })).not.toHaveClass(/dc-term--idle/)
   })
 
   /*
@@ -205,11 +212,23 @@ test.describe('Pressing a row with ⌘ held', () => {
     const name = await page.locator('.dc-list__primary').first().innerText()
     await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
     expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
-    // Where it was: the same type, the same view, one row fewer.
+    // Where it was: the same type, the same view — and the same rows. The
+    // term leaves that set's pieces, colors and inventories out; the list of
+    // sets is where that set is put out and taken back, so it stays in it.
     expect(entityOf(page)).toBe('sets')
     await expect(viewSelect(page)).toHaveValue('list')
-    await expect(listRows(page)).toHaveCount(before - 1)
-    await expect(page.locator('.dc-list__primary').filter({ hasText: name })).toHaveCount(0)
+    await expect(listRows(page)).toHaveCount(before)
+    await expect(page.locator('.dc-list__primary').filter({ hasText: name })).toHaveCount(1)
+    await expect(terms(page).filter({ hasText: 'set:' })).toHaveClass(/dc-term--idle/)
+  })
+
+  test('leaves the record out of every other type', async ({ page }) => {
+    await gotoStory(page, HOME, '&e=sets&v=list')
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    const term = queryOf(page)!
+    await chooseScope(page, 'Pieces')
+    expect(queryOf(page)).toBe(term)
+    await expect(terms(page).filter({ hasText: 'set:' })).not.toHaveClass(/dc-term--idle/)
   })
 
   test('says which record is out, on the bar, with its sign', async ({ page }) => {
@@ -224,7 +243,8 @@ test.describe('Pressing a row with ⌘ held', () => {
     await press(page, 'Sets')
     const narrowed = queryOf(page)
     expect(narrowed).toMatch(/^set:"sets_\d+"$/)
-    await gotoStory(page, HOME, `&e=sets&v=list&q=${encodeURIComponent(narrowed!)}`)
+    await chooseScope(page, 'Sets')
+    await chooseView(page, 'list')
     await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
     // One term, the other way about — not the two of them side by side.
     expect(queryOf(page)).toBe(`-${narrowed!.replace(/"/g, '')}`)
@@ -258,16 +278,11 @@ test.describe('A home screen that arrives already naming a record', () => {
     await expect(card(page, 'Inventories')).toHaveCount(1)
   })
 
-  test('still holds the record, which the type’s own list shows', async ({ page }) => {
-    await gotoStory(page, HOME, '&e=sets&v=list&q=set%3A%22sets_10007%22')
-    await expect(listRows(page)).toHaveCount(1)
-  })
-
-  test('lets the type go back to every record when it is chosen', async ({ page }) => {
+  test('still holds the record, among every other of its type', async ({ page }) => {
     await gotoStory(page, NAMED)
     await chooseScope(page, 'Sets')
     await chooseView(page, 'list')
-    expect(queryOf(page)).toBeNull()
+    await expect(termBar(page)).toContainText('set:')
     await expect(listRows(page).nth(1)).toBeVisible()
   })
 })
@@ -288,9 +303,10 @@ test.describe('A narrowed query', () => {
 
   test('does not carry the same term twice', async ({ page }) => {
     await gotoStory(page, HOME)
+    const name = await card(page, 'Sets').locator('.dc-type__primary').first().innerText()
     await press(page, 'Sets')
     const once = queryOf(page)
-    await pressAgain(page, HOME, 'sets')
+    await pressAgain(page, 'Sets', name)
     expect(queryOf(page)).toBe(once)
   })
 
@@ -302,6 +318,7 @@ test.describe('A narrowed query', () => {
    */
   test('does not carry it twice once another part has been lifted', async ({ page }) => {
     await gotoStory(page, HOME, '&q=theme%3Aspace')
+    const name = await card(page, 'Sets').locator('.dc-type__primary').first().innerText()
     await press(page, 'Sets')
     const scoped = queryOf(page)!
     expect(scoped).toContain('theme:space')
@@ -313,7 +330,7 @@ test.describe('A narrowed query', () => {
     expect(lifted).not.toBe(scoped)
     expect(lifted).toMatch(/^set:sets_\d+$/)
 
-    await pressAgain(page, HOME, 'sets')
+    await pressAgain(page, 'Sets', name)
     expect(queryOf(page)).toBe(lifted)
     await expect(terms(page)).toHaveCount(1)
   })

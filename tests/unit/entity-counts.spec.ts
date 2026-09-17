@@ -4,7 +4,7 @@ import { useEntityCounts } from '../../src/composables/useEntityCounts'
 import type { EntityCountsState } from '../../src/composables/useEntityCounts'
 import { createMockDataSource } from '../../src/data/mock'
 import { parseQuery } from '../../src/query/codec'
-import { iRadarSchema } from '../../src/fixtures/schemas'
+import { iRadarSchema, legoSchema } from '../../src/fixtures/schemas'
 import type { DataSource, QueryResult, ShellQuery } from '../../src/types'
 
 function setup(search = '', overrides: { source?: DataSource } = {}) {
@@ -65,6 +65,30 @@ describe('useEntityCounts', () => {
 
     expect(seen).toHaveLength(iRadarSchema.entities.length)
     expect(seen.every((expr) => expr === 'recall')).toBe(true)
+  })
+
+  it('counts a type named by a term of the query without that term, as choosing it lists', () => {
+    const seen = new Map<string, string>()
+    const source: DataSource = {
+      query: (request) => {
+        seen.set(request.entity!.key, request.query.expr)
+        return { rows: [], total: 0, unfiltered: false }
+      },
+    }
+    const query = ref<ShellQuery>(parseQuery('?e=pieces&q=set%3A%22sets_1%22+theme%3Aspace', legoSchema))
+    const scope = effectScope()
+    const state = scope.run(() =>
+      useEntityCounts({
+        source: computed(() => source),
+        schema: computed(() => legoSchema),
+        query: computed(() => query.value),
+        entities: computed(() => legoSchema.entities),
+      }),
+    ) as EntityCountsState
+    state.refresh()
+
+    expect(seen.get('sets')).toBe('theme:space')
+    expect(seen.get('pieces')).toBe('set:"sets_1" theme:space')
   })
 
   it('re-counts on the next refresh, following a change of query', () => {

@@ -731,6 +731,17 @@ the bar keeps its sign in front of the name: `-set:Yellow Castle (sets_10007)`.
 cells can answer it the same way, and it is what `click(row, options)` and
 `drill(row, entity, options)` carry.
 
+**A row the query names says so.** A record the query narrows to wears a
+green `+` beside its name, and one the query leaves out a red `−` — in every
+view that draws records, next to the `→`. Most rows wear nothing: the query
+says nothing about them. Where it shows is exactly where it is needed — a
+list of a type does not apply the term on its own scope to itself, so a
+categories table narrowed to one category lists every category, and the mark
+is what says which. Pressing it lifts the term, whichever way round it was
+said, and the screen stays where it is; `termStanding(expr, term)` and
+`liftTerm(expr, term)` are the two halves of that, exported for a host's own
+cells.
+
 A host applying one itself wants `narrow(expr, entityKey)` from `useQueryState`, not
 `setExpression` followed by `setEntity`: each of those serialises from the query the URL
 currently holds, and a route change is not synchronous, so the second writes over the first

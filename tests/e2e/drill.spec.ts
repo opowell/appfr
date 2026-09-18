@@ -259,6 +259,57 @@ test.describe('Pressing a row with ⌘ held', () => {
 })
 
 /*
+ * The mark a row wears where the query names it: a list of a type does not
+ * apply the term on its own scope to itself, so every set is listed however
+ * the query stands on one of them, and the mark is what says which.
+ */
+test.describe('A row the query names', () => {
+  const marks = (page: Page) => page.locator('.dc-standing')
+
+  test('wears a + where the query narrows to it, and nothing elsewhere', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await press(page, 'Sets')
+    await chooseScope(page, 'Sets')
+    await chooseView(page, 'list')
+    await expect(marks(page)).toHaveCount(1)
+    await expect(marks(page)).toHaveAttribute('data-dc-standing', 'in')
+    await expect(marks(page)).toHaveText('+')
+  })
+
+  test('wears a − where the query leaves it out', async ({ page }) => {
+    await gotoStory(page, HOME, '&e=sets&v=list')
+    const name = await page.locator('.dc-list__primary').first().innerText()
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    await expect(marks(page)).toHaveCount(1)
+    await expect(marks(page)).toHaveAttribute('data-dc-standing', 'out')
+    await expect(listRows(page).filter({ has: marks(page) }).locator('.dc-list__primary')).toHaveText(name)
+  })
+
+  test('lifts the term when the mark is pressed, and stays where it is', async ({ page }) => {
+    await gotoStory(page, HOME, '&e=sets&v=list')
+    const before = await listRows(page).count()
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
+    await marks(page).click()
+    expect(queryOf(page)).toBeNull()
+    expect(entityOf(page)).toBe('sets')
+    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(listRows(page)).toHaveCount(before)
+    await expect(marks(page)).toHaveCount(0)
+  })
+
+  test('wears it in the table too', async ({ page }) => {
+    await gotoStory(page, TABLE)
+    await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click({ modifiers: ['Meta'] })
+    await chooseScope(page, 'Sets')
+    await chooseView(page, 'table')
+    await expect(marks(page)).toHaveCount(1)
+    // Beside the name, in the column that declared the scope.
+    await expect(page.locator('.dc-table__name .dc-standing')).toHaveText('−')
+  })
+})
+
+/*
  * The same rule arrived at rather than pressed into. A URL naming a record is
  * what a shared link is, and a host reading its shell inside one — a record's
  * own page — writes the term itself; neither goes through a press, and the

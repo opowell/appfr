@@ -3,11 +3,13 @@ import {
   addTerm,
   drillExpression,
   excludingTerm,
+  liftTerm,
   pressOptions,
   recordTerm,
   scopedEntity,
   scopeTerm,
   scopeTermFor,
+  termStanding,
   withoutOwnScope,
 } from '../../src/query/drill'
 import { createMockDataSource, generateRows } from '../../src/data/mock'
@@ -171,6 +173,68 @@ describe('excludingTerm', () => {
 
   it('is null for null, as a row with no scope gives', () => {
     expect(excludingTerm(null)).toBeNull()
+  })
+})
+
+describe('termStanding', () => {
+  const term = scopeTerm(categories, row())
+
+  it('is "in" where the query narrows to the record', () => {
+    expect(termStanding('theme:space category:"categories_10007"', term)).toBe('in')
+  })
+
+  it('is "out" where the query leaves the record out', () => {
+    expect(termStanding('theme:space -category:"categories_10007"', term)).toBe('out')
+  })
+
+  it('is null where the query says nothing about the record', () => {
+    expect(termStanding('theme:space', term)).toBeNull()
+    expect(termStanding('category:"categories_10008"', term)).toBeNull()
+    expect(termStanding('', term)).toBeNull()
+  })
+
+  it('reads the term by what it parses to, in any spelling', () => {
+    expect(termStanding('Category:categories_10007', term)).toBe('in')
+    expect(termStanding('-category:CATEGORIES_10007', term)).toBe('out')
+  })
+
+  it('finds the term in whichever alternative holds it', () => {
+    expect(termStanding('theme:space OR category:"categories_10007"', term)).toBe('in')
+  })
+
+  it('answers the same asked with the excluding term', () => {
+    expect(termStanding('category:"categories_10007"', excludingTerm(term))).toBe('in')
+    expect(termStanding('-category:"categories_10007"', excludingTerm(term))).toBe('out')
+  })
+
+  it('is null for a row no query can name', () => {
+    expect(termStanding('category:"categories_10007"', null)).toBeNull()
+  })
+})
+
+describe('liftTerm', () => {
+  const term = scopeTerm(categories, row())
+
+  it('takes the term out and keeps the rest', () => {
+    expect(liftTerm('theme:space category:"categories_10007"', term)).toBe('theme:space')
+  })
+
+  it('takes it out whichever way round it was said', () => {
+    expect(liftTerm('theme:space -category:"categories_10007"', term)).toBe('theme:space')
+    expect(liftTerm('category:categories_10007 -category:"categories_10007"', term)).toBe('')
+  })
+
+  it('lifts it from every alternative, and an alternative left empty with it', () => {
+    expect(liftTerm('category:"categories_10007" OR theme:space category:x', term)).toBe(
+      'theme:space category:x',
+    )
+  })
+
+  it('leaves an expression that never held the term exactly as written', () => {
+    const written = 'Theme:"space"  castle'
+    expect(liftTerm(written, term)).toBe(written)
+    expect(liftTerm(written, null)).toBe(written)
+    expect(liftTerm('', term)).toBe('')
   })
 })
 

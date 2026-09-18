@@ -91,6 +91,56 @@ export function excludingTerm(term: string | null): string | null {
 }
 
 /**
+ * How a query stands on one record: `in` where it narrows to the record,
+ * `out` where it leaves the record out, and null where it says nothing about
+ * it — which is nearly every record of nearly every query.
+ */
+export type TermStanding = 'in' | 'out'
+
+/**
+ * Whether `expr` holds `term`, and which way round it says it.
+ *
+ * A term is read by what it parses to, as {@link addTerm} reads it, so
+ * `host:a.example` in the field is `host:"a.example"` written by a drill.
+ * Found in any alternative: a query saying `set:a OR theme:space` is one that
+ * names the set, whatever the other half says.
+ *
+ * Null for a null term — a record of a type that declares no scope is one no
+ * query can name.
+ */
+export function termStanding(expr: string, term: string | null): TermStanding | null {
+  if (!term || !expr.trim()) return null
+  const [wanted] = parseExpression(term).flat()
+  if (!wanted) return null
+  const terms = parseExpression(expr).flat()
+  if (terms.some((existing) => sameTerm(existing, wanted))) return wanted.negated ? 'out' : 'in'
+  if (terms.some((existing) => oppositeTerm(existing, wanted))) return wanted.negated ? 'in' : 'out'
+  return null
+}
+
+/**
+ * `expr` with `term` lifted, whichever way round it was said.
+ *
+ * The one move a mark on a row offers: the query stops naming the record, and
+ * that is the same move whether it named it to narrow to it or to leave it
+ * out. Lifted from every alternative, since it is the *record* the reader is
+ * releasing, not one mention of it; an alternative left with nothing in it
+ * goes with it, as when a part on the bar is lifted. Unchanged, text and all,
+ * where the query never held the term.
+ */
+export function liftTerm(expr: string, term: string | null): string {
+  if (!term || !expr.trim()) return expr
+  const [wanted] = parseExpression(term).flat()
+  if (!wanted) return expr
+  const groups = parseExpression(expr)
+  const kept = groups.map((group) =>
+    group.filter((existing) => !sameTerm(existing, wanted) && !oppositeTerm(existing, wanted)),
+  )
+  if (kept.every((group, at) => group.length === groups[at]?.length)) return expr
+  return formatExpression(kept)
+}
+
+/**
  * The options a pointer press carries — the one place the modifier is read, so
  * every view agrees about which key it is. ⌘ on a Mac and Ctrl elsewhere are
  * the same key in the same place, and both are read everywhere, so a keyboard

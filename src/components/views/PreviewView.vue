@@ -7,6 +7,7 @@ import { roleColumn } from '../../query/columns'
 import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
+import QueryMark from './QueryMark.vue'
 import ScopeMark from './ScopeMark.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -120,6 +121,7 @@ const step = (delta: number) => {
             <span class="dc-preview__entity dc-mono">{{ current.entityLabel }}</span>
           </span>
           <span class="dc-preview__marks">
+            <QueryMark :entry="current" />
             <ScopeMark :entry="current" />
             <PinStar
               v-if="shell.pinnable.value"

@@ -8,6 +8,7 @@ import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { cellFull, columnAlign, columnClass, columnKey, columnTruncates } from '../../query/columns'
 import ColumnCell from './ColumnCell.vue'
+import QueryMark from './QueryMark.vue'
 import ScopeMark from './ScopeMark.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -204,6 +205,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
               :column="column"
               :entry="entry"
             />
+            <QueryMark :entry="entry" />
             <ScopeMark :entry="entry" />
           </span>
           <ColumnCell

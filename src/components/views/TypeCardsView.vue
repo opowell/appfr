@@ -4,6 +4,7 @@ import { useShellContext } from '../../composables/context'
 import { pressOptions } from '../../query/drill'
 import { useEntityPreviews } from '../../composables/useEntityPreviews'
 import MetricDrill from './MetricDrill.vue'
+import QueryMark from './QueryMark.vue'
 import ScopeMark from './ScopeMark.vue'
 
 /**
@@ -176,6 +177,7 @@ const previews = computed(() =>
             v-if="entry.parts.updated"
             class="dc-type__date"
           >{{ entry.parts.updated }}</span>
+          <QueryMark :entry="entry" />
           <ScopeMark :entry="entry" />
         </span>
       </div>

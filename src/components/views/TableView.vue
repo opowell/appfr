@@ -6,7 +6,14 @@ import { pressOptions } from '../../query/drill'
 import { useColumns } from '../../composables/useColumns'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
-import { cellFull, columnAlign, columnClass, columnKey, columnTruncates } from '../../query/columns'
+import {
+  cellFull,
+  columnAlign,
+  columnClass,
+  columnKey,
+  columnTruncates,
+  roleColumn,
+} from '../../query/columns'
 import ColumnCell from './ColumnCell.vue'
 import QueryMark from './QueryMark.vue'
 import ScopeMark from './ScopeMark.vue'
@@ -20,6 +27,18 @@ const rows = usePresentedRows()
  * reads one out of nothing and keeps no set of its own to fall back on.
  */
 const columns = useColumns()
+
+/**
+ * The column the marks go beside: the one that asked for the `→`, or, where
+ * none did, the identity. The `→` is offered only where a column asked for it,
+ * but the sign a row wears where the query names it is not an affordance the
+ * schema has to opt into — it is a fact about the query, and a table with no
+ * `→` on it still needs somewhere to say it. The name is where a reader looks
+ * for a record, so it goes there.
+ */
+const marked = computed<ColumnDef | undefined>(
+  () => columns.value.find((column) => column.scope) ?? roleColumn(columns.value, 'identity'),
+)
 
 /**
  * Whether a text cell may wrap, which is to say whether this table's rows are
@@ -194,11 +213,11 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
           :data-dc-hide="column.hideBelow"
           :title="cellTitle(column, entry)"
         >
-          <!-- The narrowing arrow is a sibling of the value, not a wrapper
-               around it: a mark that leads somewhere else cannot sit inside
-               the button that opens this record. -->
+          <!-- The marks are siblings of the value, not a wrapper around it:
+               a mark that leads somewhere else cannot sit inside the button
+               that opens this record. -->
           <span
-            v-if="column.scope"
+            v-if="column === marked"
             class="dc-table__name"
           >
             <ColumnCell
@@ -206,7 +225,10 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
               :entry="entry"
             />
             <QueryMark :entry="entry" />
-            <ScopeMark :entry="entry" />
+            <ScopeMark
+              v-if="column.scope"
+              :entry="entry"
+            />
           </span>
           <ColumnCell
             v-else

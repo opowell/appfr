@@ -20,6 +20,7 @@ import {
   rowOrdinals,
   scopeLabel,
   scopeSelect,
+  searchBox,
   sortDirection,
   sortSelect,
   stepPage,
@@ -295,6 +296,79 @@ test.describe('Header — lifting a part of the query', () => {
  * query and unreadable as a label. The header is where someone has to
  * recognise what they are looking at, so it names the record instead.
  */
+test.describe('Header — writing the next part on the bar', () => {
+  test('a word typed into the bar narrows the results, and stands as a part', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    const before = await listRows(page).count()
+
+    await searchBox(page).fill('regulatory')
+    await searchBox(page).press('Enter')
+
+    // Committed, the word is a part of the query like any other — a pill on
+    // the row — and the box is empty again for the next one.
+    await expect(terms(page)).toHaveText(['regulatory'])
+    await expect(searchBox(page)).toHaveValue('')
+    expect(await listRows(page).count()).toBeLessThan(before)
+    // It was written on the bar so that the panel need not open for it.
+    await expect(panel(page)).toHaveCount(0)
+  })
+
+  test('a term typed there is a part in its own right', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    await searchBox(page).fill('state:running')
+    await searchBox(page).press('Enter')
+    await expect(terms(page)).toHaveText(['state:running'])
+  })
+
+  test('adds to the query as it stands rather than replacing it', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--expression-query')
+    await expect(terms(page)).toHaveText(['release', 'recall'])
+
+    await searchBox(page).fill('notice')
+    await searchBox(page).press('Enter')
+
+    // Two alternatives, and the word is added to each of them: what was
+    // `release OR recall` is now `release notice OR recall notice`.
+    await expect(terms(page)).toHaveText(['release', 'notice', 'recall', 'notice'])
+  })
+
+  test('Enter on an empty box changes nothing', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--filtered-query')
+    const url = page.url()
+    await searchBox(page).press('Enter')
+    await expect(terms(page)).toHaveText(['state:running', 'schedule:daily'])
+    expect(page.url()).toBe(url)
+  })
+
+  test('Escape gives up on what was half-typed', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    await searchBox(page).fill('regul')
+    await searchBox(page).press('Escape')
+    await expect(searchBox(page)).toHaveValue('')
+    await expect(searchBox(page)).not.toBeFocused()
+    await expect(terms(page)).toHaveCount(0)
+  })
+
+  test('Backspace in an empty box lifts the part in front of it', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--filtered-query')
+    await searchBox(page).focus()
+    await searchBox(page).press('Backspace')
+    await expect(terms(page)).toHaveText(['state:running'])
+    // With something typed, Backspace is Backspace.
+    await searchBox(page).fill('ab')
+    await searchBox(page).press('Backspace')
+    await expect(searchBox(page)).toHaveValue('a')
+    await expect(terms(page)).toHaveText(['state:running'])
+  })
+
+  test('a press on the box is a press on the box, not on the bar', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    await searchBox(page).click()
+    await expect(searchBox(page)).toBeFocused()
+    await expect(panel(page)).toHaveCount(0)
+  })
+})
+
 test.describe('Header — a part that names a record', () => {
   const DRILLED = 'shell-data-shell--drilled-into-pieces'
 
@@ -472,6 +546,9 @@ test.describe('Header — opening the expanded query view', () => {
     await expect(sortSelect(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(sortDirection(page)).toBeFocused()
+    // Then the box the next part is written in, at the end of the row —
+    await page.keyboard.press('Tab')
+    await expect(searchBox(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(trigger(page)).toBeFocused()
     await page.keyboard.press('Enter')

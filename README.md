@@ -733,7 +733,8 @@ cells can answer it the same way, and it is what `click(row, options)` and
 
 **A row the query names says so.** A record the query narrows to wears a
 green `+` beside its name, and one the query leaves out a red `−` — in every
-view that draws records, next to the `→`. Most rows wear nothing: the query
+view that draws records, next to the `→` where there is one and beside the
+name where there is not. Most rows wear nothing: the query
 says nothing about them. Where it shows is exactly where it is needed — a
 list of a type does not apply the term on its own scope to itself, so a
 categories table narrowed to one category lists every category, and the mark
@@ -1104,6 +1105,20 @@ terms depend on one another, and one of them lifted out of an alternative and
 ANDed back on to the query is a different query. The header is where those come
 out one at a time. `splitExpression` and `joinExpression` are exported for a
 host writing a field of its own.
+
+The bar has a box of its own too, at the end of the row of parts, so that
+adding a word does not mean opening the panel — most of what anyone types is a
+name to look for, and the panel is a heavier move than that is worth. It is a
+draft and nothing else: Enter ANDs what was typed on to the query as it stands
+(`andExpression`, so a word added to `release OR recall` is added to each
+alternative), the new part takes its place beside the box as a pill, and the
+box is empty again for the next. Escape gives the draft up, and Backspace in
+an empty box lifts the last part on the row, whichever kind it is.
+
+```
+[Items ▾] [List ▾] [updated ▾] [↓] [year>=1988] | brick        |  ▼
+                                                  ^ Enter: [brick] joins the row
+```
 
 ## Component API
 

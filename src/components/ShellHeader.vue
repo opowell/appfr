@@ -4,6 +4,7 @@ import { useShellContext } from '../composables/context'
 import { useEntityCounts } from '../composables/useEntityCounts'
 import { useRecordNames } from '../composables/useRecordNames'
 import { scopedEntity } from '../query/drill'
+import { andExpression } from '../data/expression'
 import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
 import { formatCount } from '../data/format'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
@@ -317,6 +318,52 @@ function chooseEntity(event: Event): void {
   shell.setEntity(key || null)
 }
 
+/* ------------------------------------------------------- adding to the query */
+
+/**
+ * The box after the parts, where the next one is written.
+ *
+ * The bar shows the query as the parts it is made of, and each of them comes
+ * out when it is pressed — so the row reads as a field of parts, and a field
+ * of parts has a box at the end of it. Without one, the only way to *add* a
+ * word was to open the panel, which is a heavier move than the words are
+ * worth: most of what anyone types is a name to look for.
+ *
+ * The box is a draft and nothing else. It never holds the query's own text —
+ * what is committed shows as pills beside it, like every other part — so
+ * Enter ANDs what was typed on to the query as it stands, and the box empties
+ * to take the next. {@link andExpression} rather than a plain join, because a
+ * query with `OR` in it is alternatives, and a word added to it is added to
+ * each of them.
+ */
+const search = ref('')
+const searchBox = ref<HTMLInputElement | null>(null)
+
+function commitSearch(): void {
+  const typed = search.value.trim()
+  if (!typed) return
+  shell.setExpression(andExpression(shell.query.value.expr, typed))
+  search.value = ''
+}
+
+/** Escape gives up on what is half-typed: the query stands as it was. */
+function abandonSearch(): void {
+  search.value = ''
+  searchBox.value?.blur()
+}
+
+/**
+ * An empty box backspaces into the parts in front of it, as a field made of
+ * parts is expected to — the last pill on the row, whichever kind it is.
+ */
+function backspaceSearch(event: KeyboardEvent): void {
+  if (search.value) return
+  const last = terms.value.at(-1)
+  if (!last) return
+  event.preventDefault()
+  shell.removeTerm(last.term)
+}
+
 /* ------------------------------------------------------------ pressing the bar */
 
 /**
@@ -329,7 +376,7 @@ function chooseEntity(event: Event): void {
  * what the surface does for anyone not using a pointer.
  */
 function pressBar(event: MouseEvent): void {
-  if ((event.target as HTMLElement | null)?.closest('button, select, label')) return
+  if ((event.target as HTMLElement | null)?.closest('button, select, label, input')) return
   emit('toggle')
 }
 
@@ -647,6 +694,23 @@ function abandonTyped(event: Event): void {
             {{ labelOf(entry.term) }}
           </button>
         </template>
+
+        <!-- And the box the next part is written in, at the end of the row as
+             a field of parts has it. What it holds is a draft: Enter adds it
+             to the query, and it then stands beside the box as a pill. -->
+        <input
+          ref="searchBox"
+          v-model="search"
+          class="dc-header__search dc-mono"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Search…"
+          aria-label="Search"
+          @keydown.enter.prevent="commitSearch"
+          @keydown.esc.prevent="abandonSearch"
+          @keydown.backspace="backspaceSearch"
+        >
       </div>
 
       <!-- What the surface does, for anyone not using a pointer: a surface is
@@ -772,14 +836,14 @@ function abandonTyped(event: Event): void {
  * its own and does something else entirely when it is pressed.
  */
 .dc-header__trigger:hover:not(
-    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__dir:hover)
+    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__dir:hover, .dc-header__search:hover)
   ) {
   background: var(--dc-bg-1);
 }
 
 .dc-header[data-dc-expanded='true']
   .dc-header__trigger:hover:not(
-    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__dir:hover)
+    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__dir:hover, .dc-header__search:hover)
   ) {
   background: var(--dc-bg-2);
 }
@@ -867,6 +931,36 @@ function abandonTyped(event: Event): void {
 .dc-term:focus-visible {
   opacity: 0.5;
   text-decoration: line-through;
+}
+
+/*
+ * The box the next part is typed into. Bare, so that an empty one is the rest
+ * of the row rather than a widget on it — the placeholder is what says it is
+ * there — and bordered only once it is being typed into. It takes whatever
+ * room the parts leave and never less than a few characters, so a long query
+ * scrolls the parts rather than squeezing the box out of the row.
+ */
+.dc-header__search {
+  flex: 1 1 auto;
+  min-width: 8ch;
+  padding: 3px 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-fg-1);
+  font-size: var(--dc-text-code);
+  line-height: 1.5;
+  cursor: text;
+}
+
+.dc-header__search::placeholder {
+  color: var(--dc-fg-3);
+}
+
+.dc-header__search:focus-visible {
+  outline: none;
+  border-color: var(--dc-accent-dim);
+  background: var(--dc-bg-0);
 }
 
 /*

@@ -99,7 +99,15 @@ const step = (delta: number) => {
         :style="{ background: current.parts.tint ?? undefined }"
         aria-hidden="true"
       >
-        preview
+        <img
+          v-if="current.parts.image"
+          class="dc-preview__image"
+          :src="current.parts.image"
+          alt=""
+        >
+        <template v-else>
+          preview
+        </template>
       </div>
       <div class="dc-preview__body">
         <div class="dc-preview__top">
@@ -227,6 +235,12 @@ const step = (delta: number) => {
   font-size: var(--dc-text-micro);
   text-transform: var(--dc-caps);
   letter-spacing: var(--dc-tracking-caps-wider);
+}
+
+.dc-preview__image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .dc-preview__body {

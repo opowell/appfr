@@ -23,6 +23,8 @@ const op = (page: Page, name: string) => bar(page).getByRole('button', { name })
 const readout = (page: Page) => bar(page).locator('.dc-actions__count')
 const allTick = (page: Page) => bar(page).locator('.dc-tick')
 const rowTicks = (page: Page) => page.locator('.dc-list__row .dc-tick')
+const headTick = (page: Page) => page.locator('.dc-table thead .dc-tick')
+const tableTicks = (page: Page) => page.locator('.dc-table__row .dc-tick')
 
 /** What the story says it was last asked to do, from the header bar. */
 const asked = (page: Page) => page.locator('.sb-asked')
@@ -201,7 +203,45 @@ test.describe('Records — ticks in every view that draws rows', () => {
     await gotoStory(page, TABLE)
     await page.locator('.dc-table__row').first().locator('.dc-table__primary').click()
     // Reported, so nothing moves — and nothing was ticked by the press.
-    await expect(readout(page)).toHaveText('Select all')
+    await expect(readout(page)).toHaveText('None selected')
+  })
+
+  test('the tick for the page heads the table’s own column, and leaves the bar', async ({
+    page,
+  }) => {
+    await gotoStory(page, TABLE)
+    await expect(allTick(page)).toHaveCount(0)
+    await expect(headTick(page)).toHaveCount(1)
+    // Over the ticks it speaks for: the first heading, ahead of the columns.
+    await expect(page.locator('.dc-table thead th').first()).toHaveClass(/dc-table__pick/)
+
+    const rows = await page.locator('.dc-table__row').count()
+    await headTick(page).click()
+    await expect(readout(page)).toHaveText(`${rows} selected`)
+    await expect(tableTicks(page).nth(0)).toBeChecked()
+    await expect(tableTicks(page).last()).toBeChecked()
+    // Still the table: the press ticked the page, and sorted nothing.
+    await expect(page.locator('.dc-table')).toBeVisible()
+
+    await headTick(page).click()
+    await expect(readout(page)).toHaveText('None selected')
+    await expect(tableTicks(page).nth(0)).not.toBeChecked()
+  })
+
+  test('the table’s tick is neither on nor off with part of the page ticked', async ({
+    page,
+  }) => {
+    await gotoStory(page, TABLE)
+    await tableTicks(page).first().click()
+    expect(await headTick(page).evaluate((el) => (el as HTMLInputElement).indeterminate)).toBe(
+      true,
+    )
+    await expect(readout(page)).toHaveText('1 selected')
+
+    // The count and the way to clear it stay on the bar, whichever view.
+    await bar(page).getByRole('button', { name: 'Clear' }).click()
+    await expect(readout(page)).toHaveText('None selected')
+    await expect(headTick(page)).not.toBeChecked()
   })
 
   test('a card, a link and the one record a preview shows each carry one', async ({ page }) => {

@@ -542,7 +542,7 @@ defineExpose({
          records themselves and under the query that found them. It renders
          nothing where the type offers nothing, and stays put while the results
          scroll. -->
-    <RecordActions />
+    <RecordActions :views="views" />
 
     <slot
       name="results"

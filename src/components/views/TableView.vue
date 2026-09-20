@@ -17,6 +17,7 @@ import {
 import ColumnCell from './ColumnCell.vue'
 import QueryMark from './QueryMark.vue'
 import ScopeMark from './ScopeMark.vue'
+import PageTick from './PageTick.vue'
 import SelectTick from './SelectTick.vue'
 
 const shell = useShellContext()
@@ -138,15 +139,16 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
       <tr>
         <!-- Not a column: the shell declares none, and this is an affordance
              rather than a field of the record — the same tick the other views
-             put on a row, in the place a table has for it. The heading is for
-             a screen reader, the control that ticks the page being on the bar
-             above with the operations it is for. -->
+             put on a row, in the place a table has for it. Headed by the tick
+             that takes the whole page, which is where a table keeps that one:
+             over the column it speaks for, rather than on the bar above with
+             the operations it is for. -->
         <th
           v-if="shell.selectable.value"
           class="dc-table__pick"
           scope="col"
         >
-          <span class="dc-table__sr">Select</span>
+          <PageTick />
         </th>
         <!-- The hint sits on the cell rather than on the button inside it, so
              a sortable header and a plain one answer a hover the same way. -->
@@ -314,15 +316,11 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
   padding-right: 0;
 }
 
-.dc-table__sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+/* The header's tick sits over the rows' ticks: the header cell's `overflow:
+   hidden` and its capitals are for words, and a box has neither a baseline
+   to hang from nor a line to be cut at. */
+.dc-table th.dc-table__pick .dc-tick {
+  display: block;
 }
 
 .dc-table__row:hover {

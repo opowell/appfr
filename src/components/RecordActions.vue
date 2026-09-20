@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { ViewKind } from '../types'
 import { useShellContext } from '../composables/context'
-import { isTypeCardsQuery } from '../query/schema'
+import { isTypeCardsQuery, resolveView } from '../query/schema'
+import PageTick from './views/PageTick.vue'
 
 /**
  * What can be done with the records of the type being listed: make one, tick
@@ -15,6 +17,11 @@ import { isTypeCardsQuery } from '../query/schema'
  * says nothing about deleting is a type that is not deleted from here, and the
  * bar is one control shorter. A type that says nothing at all has no bar.
  */
+const props = defineProps<{
+  /** The views on offer, as `DataShell` was told them — see `ResultsArea`. */
+  views?: ViewKind[]
+}>()
+
 const shell = useShellContext()
 
 /**
@@ -32,6 +39,17 @@ const records = computed(() => !isTypeCardsQuery(shell.query.value))
 
 const selecting = computed(() => records.value && shell.selectable.value)
 
+/**
+ * Whether the tick that takes the page is the table's rather than the bar's.
+ * A table has a header row, and a tick over the column of ticks it speaks for
+ * is where a reader of tables looks for it; the other views have no such row,
+ * so theirs stays at the head of the bar. The count and the way to clear it
+ * are of the whole selection, and stay on the bar whichever view it is.
+ */
+const tickInHeader = computed(
+  () => resolveView(shell.query.value.view, props.views) === 'table',
+)
+
 const offered = computed(
   () =>
     records.value &&
@@ -44,25 +62,19 @@ const offered = computed(
 /** How many records are ticked, on this page and every other. */
 const count = computed(() => shell.selection.value.ids.length)
 
-/** How many of them are on screen — what the tick at the head of the bar is about. */
-const onPage = computed(() => shell.rows.value.filter((row) => shell.isSelected(row)).length)
-
-const allOnPage = computed(
-  () => shell.rows.value.length > 0 && onPage.value === shell.rows.value.length,
-)
-
-/**
- * Some of the page but not all of it, which is neither checked nor unchecked —
- * the third state a checkbox has for exactly this.
- */
-const someOnPage = computed(() => onPage.value > 0 && !allOnPage.value)
-
 /**
  * What the tick says it is counting. The number is of the whole selection
  * rather than of the page, because that is what the operations beside it are
- * for: ticks survive paging, and a delete would take the lot.
+ * for: ticks survive paging, and a delete would take the lot. With nothing
+ * ticked the words are the tick's own label where the tick is here, and a
+ * plain reading of the state where it is in the table's header — so the bar
+ * says the same thing at the same place whichever view is showing, and the
+ * rows never move when the first tick is made.
  */
-const readout = computed(() => (count.value ? `${count.value} selected` : 'Select all'))
+const readout = computed(() => {
+  if (count.value) return `${count.value} selected`
+  return tickInHeader.value ? 'None selected' : 'Select all'
+})
 
 /** An operation says how many it is for, once there are any. */
 function opLabel(label: string): string {
@@ -79,20 +91,25 @@ function opLabel(label: string): string {
       v-if="selecting"
       class="dc-actions__select"
     >
-      <label class="dc-actions__all">
-        <input
-          class="dc-tick"
-          type="checkbox"
-          :checked="allOnPage"
-          :indeterminate="someOnPage"
-          title="Select every row on this page"
-          @change="shell.selectPage(!allOnPage)"
-        >
+      <!-- The words are part of the control where the tick is here: pressing
+           them ticks the page, which is what a label around a checkbox is
+           for. Where the table's header holds the tick they are the count
+           alone. -->
+      <label
+        v-if="!tickInHeader"
+        class="dc-actions__all"
+      >
+        <PageTick />
         <span
           class="dc-actions__count"
           aria-live="polite"
         >{{ readout }}</span>
       </label>
+      <span
+        v-else
+        class="dc-actions__count dc-actions__all"
+        aria-live="polite"
+      >{{ readout }}</span>
 
       <!-- Only where there is something to clear, and it clears the ticks made
            on other pages too: the selection is one thing, wherever it was made. -->
@@ -174,13 +191,14 @@ function opLabel(label: string): string {
   min-width: 0;
 }
 
-/* The words are part of the control: pressing them ticks the page, which is
-   what a label around a checkbox is for. */
 .dc-actions__all {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   color: var(--dc-fg-2);
+}
+
+label.dc-actions__all {
   cursor: pointer;
 }
 

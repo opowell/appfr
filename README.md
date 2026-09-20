@@ -595,7 +595,7 @@ names neither `duplicate` nor `delete` has no ticks — and a type that names
 | | |
 | --- | --- |
 | the **tick on a row** | puts that record in the selection. It stops there: the row underneath still opens on any other press |
-| the **tick on the bar** | takes the whole page, and gives it back. Part of a page ticked shows as neither on nor off, which is what that third state is for |
+| the **tick for the page** | takes the whole page, and gives it back. Part of a page ticked shows as neither on nor off, which is what that third state is for. It heads the bar — except in the table, where it heads the column of ticks it speaks for, and the bar reads the count alone |
 | **Duplicate** / **Delete** | report the selection they are for, and say how many that is. With nothing ticked there is nothing for them to be for, and they say so |
 | **Clear** | unticks everything, including what was ticked on a page you have since left |
 

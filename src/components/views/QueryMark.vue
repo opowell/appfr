@@ -80,7 +80,10 @@ function lift(event: MouseEvent) {
   background: var(--dc-danger-bg);
 }
 
-.dc-standing:hover {
-  color: var(--dc-fg-0);
+/* Pressing lifts the term, and the mark fades on hover to say so — the same
+   promise the bar's pills make about theirs, with the sign kept readable. */
+.dc-standing:hover,
+.dc-standing:focus-visible {
+  opacity: 0.5;
 }
 </style>

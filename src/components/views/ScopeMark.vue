@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import type { ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
 import { pressOptions } from '../../query/drill'
@@ -27,6 +27,36 @@ const scope = computed<string | null>(() =>
   shell.narrowsOnPress.value ? null : (props.entry.entity?.scope ?? null),
 )
 
+/**
+ * Which way the press under the pointer would go — `in` narrows to the
+ * record, `out` leaves it out — and null while nothing is over the mark.
+ *
+ * The same press means two things depending on a key, and the mark says
+ * which before it is made, in the colours the `+` and `−` beside it wear
+ * afterwards. The key is read off the pointer as it arrives and moves, and
+ * off the keyboard while the pointer stays, so pressing ⌘ over a still mark
+ * turns it red without a nudge.
+ */
+const pending = ref<'in' | 'out' | null>(null)
+
+function read(event: MouseEvent | KeyboardEvent) {
+  pending.value = pressOptions(event).exclude ? 'out' : 'in'
+}
+
+function enter(event: MouseEvent) {
+  read(event)
+  window.addEventListener('keydown', read)
+  window.addEventListener('keyup', read)
+}
+
+function leave() {
+  pending.value = null
+  window.removeEventListener('keydown', read)
+  window.removeEventListener('keyup', read)
+}
+
+onBeforeUnmount(leave)
+
 /** Stops the click reaching the row, which would open the record instead. */
 function narrow(event: MouseEvent) {
   event.stopPropagation()
@@ -39,8 +69,12 @@ function narrow(event: MouseEvent) {
     v-if="scope"
     type="button"
     class="dc-scope"
+    :data-dc-pending="pending ?? undefined"
     :title="`Narrow everything to ${scope}: ${entry.row.id} — ⌘-click to leave it out`"
     :aria-label="`Narrow everything to ${entry.parts.identity}`"
+    @pointerenter="enter"
+    @pointermove="read"
+    @pointerleave="leave"
     @click="narrow"
   >
     →
@@ -59,7 +93,17 @@ function narrow(event: MouseEvent) {
   cursor: pointer;
 }
 
-.dc-scope:hover {
+/* The colour of the mark the press would leave behind: green for the `+` a
+   narrowing puts on the row, red for the `−` a ⌘-press does. */
+.dc-scope[data-dc-pending='in'] {
+  color: var(--dc-ok);
+}
+
+.dc-scope[data-dc-pending='out'] {
+  color: var(--dc-danger);
+}
+
+.dc-scope:focus-visible {
   color: var(--dc-accent);
 }
 </style>

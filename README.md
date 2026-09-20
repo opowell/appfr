@@ -741,7 +741,10 @@ categories table narrowed to one category lists every category, and the mark
 is what says which. Pressing it lifts the term, whichever way round it was
 said, and the screen stays where it is; `termStanding(expr, term)` and
 `liftTerm(expr, term)` are the two halves of that, exported for a host's own
-cells.
+cells. The marks say what a press would do before it is made: the `+` or `−`
+fades under the pointer, the way a part on the bar does, and the `→` turns
+green, or red the moment ⌘ is held over it — the colour of the mark the press
+would leave on the row.
 
 A host applying one itself wants `narrow(expr, entityKey)` from `useQueryState`, not
 `setExpression` followed by `setEntity`: each of those serialises from the query the URL

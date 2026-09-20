@@ -135,3 +135,19 @@ export declare function oppositeTerm(one: Term, other: Term): boolean;
  * expression with no terms narrows nothing, so ANDing one on changes nothing.
  */
 export declare function andExpression(one: string, other: string): string;
+/**
+ * `expr` with `typed` added the way a reader adding to their own query means
+ * it: as {@link andExpression} does, except that a term the query holds the
+ * other way round is turned rather than joined.
+ *
+ * `-set:a` typed on to `set:a` is `-set:a`, because a query saying both says
+ * nothing, and what was typed was a change of mind about that record — the
+ * same reading a press makes through `addTerm`. Turned in each alternative the
+ * old term stood in, so an `OR` query comes out with the new sign throughout.
+ *
+ * Not {@link andExpression}'s own reading, because that one also lays a
+ * host's `within` under the query, and there the opposite is not a change of
+ * mind but a query the host's scope rules out: turning it would let the
+ * reader out of the scope.
+ */
+export declare function refineExpression(expr: string, typed: string): string;

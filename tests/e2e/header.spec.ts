@@ -18,6 +18,9 @@ import {
   panel,
   pickEntity,
   rowOrdinals,
+  openPick,
+  pickList,
+  pickOptions,
   scopeLabel,
   scopeSelect,
   searchBox,
@@ -42,14 +45,14 @@ test.describe('Header — the query as it stands', () => {
     // Nothing is filtered, so the scope is the whole corpus — and the control
     // that says so says how much of it there is. Five entities of forty-eight
     // generated rows each.
-    await expect(scopeSelect(page)).toHaveValue('')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
     expect(await scopeLabel(page)).toBe('Everything · 240')
   })
 
   test('describes the home screen by what it is showing', async ({ page }) => {
     await gotoStory(page, HOME)
     // How they are drawn is the second of the two choosers, beside the scope.
-    await expect(viewSelect(page)).toHaveValue('cards')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'cards')
     // The whole sentence — the ordering included — is still the row's title.
     await expect(termBar(page)).toHaveAttribute('title', 'everything · cards · updated')
   })
@@ -58,11 +61,11 @@ test.describe('Header — the query as it stands', () => {
     await gotoStory(page, ENTITY)
     // A query with something in it is shown as the parts it is made of, and
     // the choosers stay on the bar beside them.
-    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
     // The entity is the first of those parts, and the only one that is a
     // choice rather than a pill. It is also what says which type is listed,
     // and how many of them there are.
-    await expect(scopeSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
     expect(await scopeLabel(page)).toBe('Searches · 38')
     await expect(terms(page)).toHaveCount(0)
   })
@@ -73,18 +76,24 @@ test.describe('Header — the query as it stands', () => {
     // about what the *other* types in the list say, which is a query nobody
     // has put to the source until the picker is opened.
     expect(await scopeLabel(page)).not.toBe('Items · 9,988')
-    const before = await scopeSelect(page).locator('option').allTextContents()
 
-    await scopeSelect(page).focus()
+    await openPick(page, scopeSelect(page), 'Type')
 
+    // Their own populations are what they said before — `Scrapers · 24`,
+    // `Logs · 184k` — and `release OR recall` matches fewer of each.
     await expect
-      .poll(() => scopeSelect(page).locator('option').allTextContents())
-      .not.toEqual(before)
+      .poll(() => pickOptions(page, 'Type').allTextContents())
+      .not.toContain('Scrapers · 24')
+    await expect(pickOptions(page, 'Type').filter({ hasText: 'Logs' })).not.toHaveText('Logs · 184k')
+    // And the list is still up, with each new number said in place: the
+    // browser's own list took itself down the moment an option was rewritten,
+    // which is why the shell draws its own.
+    await expect(pickList(page, 'Type')).toBeVisible()
   })
 
   test('describes a narrowed query by its terms', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
-    await expect(scopeSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
     await expect(terms(page)).toHaveText(['state:running', 'schedule:daily'])
   })
 
@@ -130,16 +139,16 @@ test.describe('Header — the query as it stands', () => {
     await gotoStory(page, HOME)
     await openPanel(page)
     await pickEntity(page, 'Items')
-    await expect(scopeSelect(page)).toHaveValue('items')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'items')
     await expect.poll(() => scopeLabel(page)).toBe('Items · 9,988')
   })
 
   test('widens back to everything when the scope is lifted', async ({ page }) => {
     await gotoStory(page, ENTITY)
     await clearScope(page)
-    await expect(scopeSelect(page)).toHaveValue('')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
     expect(await scopeLabel(page)).toBe('Everything · 240')
-    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
   })
 })
 
@@ -168,7 +177,7 @@ test.describe('Header — how the results are drawn and ordered', () => {
 
     const names = await page.locator('.dc-table__open').allInnerTexts()
     expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a)))
-    await expect(scopeSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
   })
 
   test('the direction button reverses the order', async ({ page }) => {
@@ -190,7 +199,8 @@ test.describe('Header — how the results are drawn and ordered', () => {
   test('the sorts are the columns offering them, in the schema’s own words', async ({ page }) => {
     await gotoStory(page, ENTITY)
     // iRadar heads `searches` "Search" and names its metrics "New" and "Results".
-    await expect(sortSelect(page).locator('option')).toHaveText([
+    await openPick(page, sortSelect(page), 'Sort')
+    await expect(pickOptions(page, 'Sort')).toHaveText([
       'search',
       'new',
       'results',
@@ -237,43 +247,53 @@ test.describe('Header — lifting a part of the query', () => {
     await terms(page).filter({ hasText: 'release' }).click()
     await terms(page).filter({ hasText: 'recall' }).click()
     await expect(terms(page)).toHaveCount(0)
-    await expect(scopeSelect(page)).toHaveValue('items')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'items')
   })
 
   test('choosing Everything widens back out, and how it is drawn stands', async ({ page }) => {
     await gotoStory(page, ENTITY)
-    await scopeSelect(page).selectOption('')
+    await clearScope(page)
     await expect(terms(page)).toHaveCount(0)
-    await expect(scopeSelect(page)).toHaveValue('')
-    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
   })
 
   test('offers every type the schema declares, and Everything among them', async ({ page }) => {
-    await gotoStory(page, ENTITY)
+    await gotoStory(page, HOME)
     // Each with how many records it holds, which is what makes the list a
-    // chooser rather than a row of names. `Everything` is the one option with
-    // no count to give: how big the corpus is is not something the schema
-    // publishes, and the shell knows a result's size only once it asks.
-    await expect(scopeSelect(page).locator('option')).toHaveText([
-      'Everything',
+    // chooser rather than a row of names. On the whole corpus, with nothing
+    // narrowing it, those are the populations the schema publishes; the one
+    // count it has no word for is the corpus itself, which `Everything` says
+    // from the size of the result the shell asked for.
+    await openPick(page, scopeSelect(page), 'Type')
+    await expect(pickOptions(page, 'Type')).toHaveText([
+      /^Everything · \S+$/,
       'Searches · 38',
       'Items · 9,988',
       'Scrapers · 24',
       'Logs · 184k',
       'Settings · 20',
     ])
+  })
+
+  test('says what each chooser is a choice of, to anyone who cannot see it', async ({ page }) => {
+    await gotoStory(page, ENTITY)
     // Neither chooser spends a word of the bar saying what it is: what they
-    // hold says that already. The name is there for anyone who cannot see it.
-    await expect(page.getByRole('combobox', { name: 'Type' })).toBeVisible()
-    await expect(page.getByRole('combobox', { name: 'View' })).toBeVisible()
-    await expect(page.getByRole('combobox', { name: 'Sort' })).toBeVisible()
+    // hold says that already. The name is there for a screen reader, ahead of
+    // the choice itself — and the direction button beside the sort is not
+    // the sort.
+    await expect(page.getByRole('button', { name: /^Type / })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^View / })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Sort (?!direction)/ })).toBeVisible()
   })
 
   test('choosing another type lists that one instead', async ({ page }) => {
     await gotoStory(page, ENTITY)
     await chooseScope(page, 'Items')
-    await expect(scopeSelect(page)).toHaveValue('items')
-    await expect.poll(() => scopeLabel(page)).toBe('Items · 9,988')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'items')
+    // With how many of them there are: the picker counted every type as it
+    // opened, and the type chosen out of it keeps the number it was given.
+    await expect.poll(() => scopeLabel(page)).toMatch(/^Items · \S+$/)
     // The entity's own facets went with it: they belong to the type that had
     // them, and this is a different type.
     await expect(terms(page)).toHaveCount(0)
@@ -384,7 +404,7 @@ test.describe('Header — a part that names a record', () => {
 
     await part.click()
     await expect(terms(page)).toHaveCount(0)
-    await expect(scopeSelect(page)).toHaveValue('pieces')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'pieces')
   })
 
   test('leaves a part that constrains a value rather than naming a record', async ({ page }) => {

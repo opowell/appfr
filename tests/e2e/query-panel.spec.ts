@@ -61,7 +61,7 @@ test.describe('Query panel — the facets of the type in force', () => {
     await expect(page.locator('.dc-facet__label')).toHaveText(['State', 'Schedule', 'Results'])
     const after = await listRows(page).count()
     expect(after).toBeLessThan(before)
-    await expect(scopeSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
   })
 
   test('Everything puts every kind back in the results', async ({ page }) => {
@@ -73,7 +73,7 @@ test.describe('Query panel — the facets of the type in force', () => {
 
     await expect(page.locator('.dc-facet__label')).toHaveCount(0)
     expect(await listRows(page).count()).toBeGreaterThan(scoped)
-    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
   })
 
   test('re-shapes its facets when the entity changes', async ({ page }) => {
@@ -244,11 +244,11 @@ test.describe('Query panel — narrowing the result set', () => {
 
   test('Reset lifts the entity, the facets and the expression at once', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--facets-and-expression')
-    await expect(scopeSelect(page)).toHaveValue('items')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'items')
 
     await openPanel(page)
     await page.locator('.dc-panel__actions button', { hasText: 'Reset' }).click()
-    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
   })
 
   test('Reset is unavailable at home, where there is nothing to reset', async ({ page }) => {
@@ -304,7 +304,7 @@ test.describe('Query panel — the parts of an expression', () => {
     await expect(parts(page)).toHaveCount(0)
     // Only that part: the pieces are still what is listed, and there are more
     // of them now that they are not one set's.
-    await expect(scopeSelect(page)).toHaveValue('pieces')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'pieces')
     expect(await page.locator('.dc-table__row').count()).toBeGreaterThan(scoped)
   })
 

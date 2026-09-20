@@ -198,7 +198,7 @@ test.describe('Columns — as many as the schema declares', () => {
     await colors.locator('button.dc-drill').click()
     // This story holds its query in memory rather than the address bar, so the
     // header's account of it is where the narrowing shows.
-    await expect(scopeSelect(page)).toHaveValue('colors')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'colors')
     await expect(termBar(page)).toContainText('piece:')
   })
 

@@ -78,7 +78,7 @@ test.describe('A metric that counts something listable', () => {
     await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click()
     expect(queryOf(page)).toMatch(/^set:"sets_\d+"$/)
     expect(entityOf(page)).toBe('pieces')
-    await expect(scopeSelect(page)).toHaveValue('pieces')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'pieces')
     // A metric names the type it is going to a list of, so it keeps the view it was drawn in.
     await expect(page.locator('.dc-table')).toBeVisible()
   })
@@ -110,7 +110,7 @@ test.describe('Pressing a row', () => {
     await page.locator('.dc-list__open').first().click()
     await expect(page.locator('.dc-types')).toBeVisible()
     // `cards` is the default view, so the URL says it by leaving it out.
-    await expect(viewSelect(page)).toHaveValue('cards')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'cards')
     // And the type goes with it: a record is not of one type, it is what every type holds of it.
     expect(entityOf(page)).toBeNull()
   })
@@ -216,7 +216,7 @@ test.describe('Pressing a row with ⌘ held', () => {
     // term leaves that set's pieces, colors and inventories out; the list of
     // sets is where that set is put out and taken back, so it stays in it.
     expect(entityOf(page)).toBe('sets')
-    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
     await expect(listRows(page)).toHaveCount(before)
     await expect(page.locator('.dc-list__primary').filter({ hasText: name })).toHaveCount(1)
     await expect(terms(page).filter({ hasText: 'set:' })).toHaveClass(/dc-term--idle/)
@@ -293,7 +293,7 @@ test.describe('A row the query names', () => {
     await marks(page).click()
     expect(queryOf(page)).toBeNull()
     expect(entityOf(page)).toBe('sets')
-    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
     await expect(listRows(page)).toHaveCount(before)
     await expect(marks(page)).toHaveCount(0)
   })

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { chooseScope, gotoStory, listRows, stepPage, viewSelect } from './story'
+import { chooseScope, chooseView, gotoStory, listRows, stepPage, viewSelect } from './story'
 
 /**
  * The bar over a type's own list: make one, tick some, and copy or delete what
@@ -113,7 +113,7 @@ test.describe('Records — a selection is of records, not of what is on screen',
     await rowTicks(page).nth(0).click()
     await rowTicks(page).nth(1).click()
 
-    await viewSelect(page).selectOption('table')
+    await chooseView(page, 'table')
     await expect(page.locator('.dc-table')).toBeVisible()
     await expect(readout(page)).toHaveText('2 selected')
     await expect(page.locator('.dc-table__row .dc-tick').nth(0)).toBeChecked()
@@ -207,17 +207,17 @@ test.describe('Records — ticks in every view that draws rows', () => {
   test('a card, a link and the one record a preview shows each carry one', async ({ page }) => {
     await gotoStory(page, ACTIONS)
 
-    await viewSelect(page).selectOption('cards')
+    await chooseView(page, 'cards')
     const cards = await page.locator('.dc-card').count()
     expect(cards).toBeGreaterThan(0)
     await expect(page.locator('.dc-card .dc-tick')).toHaveCount(cards)
 
-    await viewSelect(page).selectOption('links')
+    await chooseView(page, 'links')
     const links = await page.locator('.dc-link').count()
     expect(links).toBeGreaterThan(0)
     await expect(page.locator('.dc-links__item .dc-tick')).toHaveCount(links)
 
-    await viewSelect(page).selectOption('preview')
+    await chooseView(page, 'preview')
     // One record at a time, so one tick — and ticking it counts that record.
     await expect(page.locator('.dc-preview__card .dc-tick')).toHaveCount(1)
     await page.locator('.dc-preview__card .dc-tick').click()

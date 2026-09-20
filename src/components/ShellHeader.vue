@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import PickControl from './PickControl.vue'
 import { useShellContext } from '../composables/context'
 import { useEntityCounts } from '../composables/useEntityCounts'
 import { useRecordNames } from '../composables/useRecordNames'
@@ -114,6 +115,17 @@ const everythingLabel = computed(() => {
   return `Everything · ${writeCount.value(shell.total.value)}`
 })
 
+/**
+ * The list the type picker offers: `Everything` first, under the empty key
+ * that stands for no type at all, and then each type the schema declares.
+ * Read afresh whenever a count lands, so a list that is already up says the
+ * new number in place — see {@link PickControl}.
+ */
+const entityOptions = computed(() => [
+  { key: '', label: everythingLabel.value },
+  ...shell.entities.value.map((entity) => ({ key: entity.key, label: optionLabel(entity) })),
+])
+
 /* --------------------------------------------------------- what this is about */
 
 /**
@@ -178,8 +190,8 @@ const showTypes = computed(
     ),
 )
 
-function chooseView(event: Event): void {
-  shell.setView((event.target as HTMLSelectElement).value as ViewKind)
+function chooseView(key: string): void {
+  shell.setView(key as ViewKind)
 }
 
 /**
@@ -222,8 +234,8 @@ const showSort = computed(
     && !shell.within.value,
 )
 
-function chooseSort(event: Event): void {
-  shell.setSort((event.target as HTMLSelectElement).value)
+function chooseSort(key: string): void {
+  shell.setSort(key)
 }
 
 const descending = computed(() => shell.query.value.dir === 'desc')
@@ -313,8 +325,7 @@ function labelOf(term: SummaryTerm): string {
  * and lifting the filter altogether is one option among them rather than the
  * only one on offer.
  */
-function chooseEntity(event: Event): void {
-  const key = (event.target as HTMLSelectElement).value
+function chooseEntity(key: string): void {
   shell.setEntity(key || null)
 }
 
@@ -584,54 +595,25 @@ function abandonTyped(event: Event): void {
              the one part of a query that is a choice rather than a thing to
              take off, so `Everything` is in the list beside the types and
              widening back out stays one press. -->
-        <label
+        <PickControl
           v-if="showTypes"
-          class="dc-header__pick"
-        >
-          <span class="dc-header__sr">Type</span>
-          <span class="dc-header__pick-box">
-            <select
-              class="dc-header__pick-select dc-header__scope-select"
-              :value="shell.query.value.entity ?? ''"
-              @focus="entityCounts.refresh"
-              @change="chooseEntity"
-            >
-              <option value="">{{ everythingLabel }}</option>
-              <option
-                v-for="option in shell.entities.value"
-                :key="option.key"
-                :value="option.key"
-              >{{ optionLabel(option) }}</option>
-            </select>
-            <span
-              class="dc-header__pick-mark"
-              aria-hidden="true"
-            >▾</span>
-          </span>
-        </label>
+          class="dc-header__pick dc-header__scope-select"
+          label="Type"
+          :model-value="shell.query.value.entity ?? ''"
+          :options="entityOptions"
+          @open="entityCounts.refresh"
+          @update:model-value="chooseEntity"
+        />
 
         <!-- And how they are drawn, always as well, for the same reason: it is
              a part of the query, so it is on the bar whatever else is. -->
-        <label class="dc-header__pick">
-          <span class="dc-header__sr">View</span>
-          <span class="dc-header__pick-box">
-            <select
-              class="dc-header__pick-select dc-header__view-select"
-              :value="view"
-              @change="chooseView"
-            >
-              <option
-                v-for="option in viewOptions"
-                :key="option.key"
-                :value="option.key"
-              >{{ option.label }}</option>
-            </select>
-            <span
-              class="dc-header__pick-mark"
-              aria-hidden="true"
-            >▾</span>
-          </span>
-        </label>
+        <PickControl
+          class="dc-header__pick dc-header__view-select"
+          label="View"
+          :model-value="view"
+          :options="viewOptions"
+          @update:model-value="chooseView"
+        />
 
         <!-- And what they are ordered by, the third of the choices a query
              is made of. The arrow beside it is the same order the other way
@@ -639,26 +621,14 @@ function abandonTyped(event: Event): void {
              ordering: across every type at once, and on a type with no
              sortable column, there is nothing to put in the list. -->
         <template v-if="showSort">
-          <label class="dc-header__pick">
-            <span class="dc-header__sr">Sort</span>
-            <span class="dc-header__pick-box">
-              <select
-                class="dc-header__pick-select dc-header__sort-select dc-mono"
-                :value="shell.sort.value.key"
-                @change="chooseSort"
-              >
-                <option
-                  v-for="option in sortOptions"
-                  :key="option.key"
-                  :value="option.key"
-                >{{ option.label }}</option>
-              </select>
-              <span
-                class="dc-header__pick-mark"
-                aria-hidden="true"
-              >▾</span>
-            </span>
-          </label>
+          <PickControl
+            class="dc-header__pick dc-header__sort-select"
+            label="Sort"
+            mono
+            :model-value="shell.sort.value.key"
+            :options="sortOptions"
+            @update:model-value="chooseSort"
+          />
 
           <button
             type="button"
@@ -979,7 +949,8 @@ function abandonTyped(event: Event): void {
  * is being listed, how it is drawn, and what it is ordered by. They sit in the
  * row of parts because that is what they are — terms of the query — and read
  * as ones, so the bar is still one line of the same thing rather than widgets
- * with pills after them.
+ * with pills after them. Each is a {@link PickControl}, which draws itself;
+ * the size is set here so that the three of them are set as the pills are.
  */
 .dc-header__pick {
   display: inline-flex;
@@ -987,47 +958,6 @@ function abandonTyped(event: Event): void {
   flex: 0 0 auto;
   font-size: var(--dc-text-code);
   cursor: pointer;
-}
-
-.dc-header__pick-box {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-/*
- * Drawn as the shell draws the rest of its controls rather than as the
- * operating system draws a select, so that the pills beside it and the box
- * around it are recognisably one row of the same instrument.
- */
-.dc-header__pick-select {
-  appearance: none;
-  max-width: 24ch;
-  padding: 3px 20px 3px 8px;
-  background: var(--dc-accent-bg);
-  border: 1px solid var(--dc-accent-dim);
-  border-radius: var(--dc-radius-sm);
-  color: var(--dc-accent);
-  font-family: inherit;
-  font-size: var(--dc-text-code);
-  line-height: 1.5;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-.dc-header__pick-select:hover {
-  border-color: var(--dc-accent);
-}
-
-/* The mark the appearance above took away. It belongs to the select, so it
-   never takes the press that should open it. */
-.dc-header__pick-mark {
-  position: absolute;
-  right: 7px;
-  color: var(--dc-accent);
-  font-size: var(--dc-text-eyebrow);
-  line-height: 1;
-  pointer-events: none;
 }
 
 /*

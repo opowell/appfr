@@ -173,22 +173,22 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     openPanel: () => void;
     closePanel: typeof closePanel;
 }, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
+    activate: (row: ShellRow) => any;
     create: (entity: EntitySchema) => any;
     duplicate: (selection: Selection) => any;
     delete: (selection: Selection) => any;
     drill: (row: ShellRow, entity: EntitySchema | null, options: PressOptions) => any;
-    activate: (row: ShellRow) => any;
     "query-change": (query: ShellQuery) => any;
     "toggle-pin": (row: ShellRow) => any;
     "update:open": (value: boolean) => any;
     "update:pinned": (value: string[]) => any;
     "update:selected": (value: string[]) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_PublicProps> & Readonly<{
+    onActivate?: ((row: ShellRow) => any) | undefined;
     onCreate?: ((entity: EntitySchema) => any) | undefined;
     onDuplicate?: ((selection: Selection) => any) | undefined;
     onDelete?: ((selection: Selection) => any) | undefined;
     onDrill?: ((row: ShellRow, entity: EntitySchema | null, options: PressOptions) => any) | undefined;
-    onActivate?: ((row: ShellRow) => any) | undefined;
     "onQuery-change"?: ((query: ShellQuery) => any) | undefined;
     "onToggle-pin"?: ((row: ShellRow) => any) | undefined;
     "onUpdate:open"?: ((value: boolean) => any) | undefined;

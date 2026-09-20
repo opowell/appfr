@@ -31,7 +31,7 @@ test.describe('URL — the query is the route', () => {
   test('the home screen has no parameters of its own', async ({ page }) => {
     await gotoStory(page, LIVE)
     expect(shellParams(page.url())).toEqual({})
-    await expect(viewSelect(page)).toHaveValue('cards')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'cards')
   })
 
   test('a view change appears in the URL', async ({ page }) => {
@@ -46,11 +46,11 @@ test.describe('URL — the query is the route', () => {
     await openPanel(page)
 
     await pickEntity(page, 'Scrapers')
-    await expect(scopeSelect(page)).toHaveValue('scrapers')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'scrapers')
     expect(shellParams(page.url())).toEqual({ e: 'scrapers' })
 
     await clearScope(page)
-    await expect(viewSelect(page)).toHaveValue('cards')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'cards')
     expect(shellParams(page.url())).toEqual({})
   })
 
@@ -60,7 +60,7 @@ test.describe('URL — the query is the route', () => {
 
     await pickEntity(page, 'Settings')
     expect(shellParams(page.url())).toEqual({ e: 'settings' })
-    await expect(scopeSelect(page)).toHaveValue('settings')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'settings')
   })
 
   test('facets appear in the URL, with readable separators', async ({ page }) => {
@@ -68,7 +68,7 @@ test.describe('URL — the query is the route', () => {
     await pickEntity(page, 'Searches')
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
     await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
-    await expect(scopeSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
     await expect(terms(page)).toHaveText(['state:running', 'state:paused'])
 
     expect(shellParams(page.url())).toEqual({ e: 'searches', f_state: 'running,paused' })
@@ -123,14 +123,14 @@ test.describe('URL — reload and history', () => {
 
     expect(page.url()).toBe(before)
     await expect(page.locator('.dc-table')).toBeVisible()
-    await expect(scopeSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
     await expect(terms(page)).toHaveText(['state:running'])
   })
 
   test('a pasted URL renders that query without any interaction', async ({ page }) => {
     await gotoStory(page, LIVE, '&e=items&v=grid&f_kind=pdf&s=metric1')
     await expect(page.locator('.dc-grid')).toBeVisible()
-    await expect(scopeSelect(page)).toHaveValue('items')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'items')
     await expect(terms(page)).toHaveText(['kind:pdf'])
   })
 
@@ -157,10 +157,10 @@ test.describe('URL — reload and history', () => {
 
     await openPanel(page)
     await pickEntity(page, 'Logs')
-    await expect(scopeSelect(page)).toHaveValue('logs')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'logs')
 
     await page.goBack()
-    await expect(viewSelect(page)).toHaveValue('list')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
     await expect(listRows(page)).toHaveCount(everything)
   })
 
@@ -169,7 +169,7 @@ test.describe('URL — reload and history', () => {
     await openPanel(page)
     // One pushed entry for the entity, then three facet edits that replace.
     await pickEntity(page, 'Searches')
-    await expect(scopeSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
 
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
     await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
@@ -182,7 +182,7 @@ test.describe('URL — reload and history', () => {
 
     // A single Back should land before the facets, not step through them.
     await page.goBack()
-    await expect(viewSelect(page)).toHaveValue('cards')
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'cards')
     expect(shellParams(page.url())).toEqual({})
   })
 })
@@ -250,11 +250,11 @@ test.describe('URL — what stays out of it', () => {
 test.describe('URL — landing on an entity instead of home', () => {
   test('opens on that entity with a clean URL, and can still widen out', async ({ page }) => {
     await gotoStory(page, 'routing-url-bound--live-url-lands-on-entity')
-    await expect(scopeSelect(page)).toHaveValue('searches')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
     expect(shellParams(page.url())).toEqual({})
 
     await clearScope(page)
-    await expect(scopeSelect(page)).toHaveValue('')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
     // The whole corpus has to be spelled out when an entity is the default.
     expect(shellParams(page.url())).toEqual({ e: '*' })
   })

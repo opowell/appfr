@@ -18,9 +18,9 @@ type __VLS_Props = {
      */
     pagesNote?: string;
 };
-declare var __VLS_1: {};
+declare var __VLS_23: {};
 type __VLS_Slots = {} & {
-    actions?: (props: typeof __VLS_1) => any;
+    actions?: (props: typeof __VLS_23) => any;
 };
 declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     toggle: () => any;

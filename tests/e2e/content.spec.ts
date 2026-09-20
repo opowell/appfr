@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { gotoStory, listRows } from './story'
+import { gotoStory, listRows, scopeSelect } from './story'
 
 const HOME = 'shell-data-shell--home'
 const HOME_PREVIEW = 'shell-data-shell--home-as-preview'
@@ -224,7 +224,7 @@ test.describe('Content — states other than a full result set', () => {
 
     await page.locator('.dc-results__clear').click()
     // Back to the whole corpus, which the header's scope control says it is.
-    await expect(page.locator('.dc-header__scope-select')).toHaveValue('')
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
     await expect(listRows(page).first()).toBeVisible()
   })
 

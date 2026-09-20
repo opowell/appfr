@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computed, effectScope, nextTick, ref } from 'vue'
-import { andExpression, parseExpression } from '../../src/data/expression'
+import { andExpression, parseExpression, refineExpression } from '../../src/data/expression'
 import { useResults } from '../../src/composables/useResults'
 import type { ResultsState } from '../../src/composables/useResults'
 import { useEntityPreviews } from '../../src/composables/useEntityPreviews'
@@ -52,6 +52,33 @@ describe('andExpression', () => {
 
   it('parses back to a disjunction of conjunctions', () => {
     expect(parseExpression(andExpression('cve OR advisory', 'level:error'))).toHaveLength(2)
+  })
+
+  it('keeps a term and its opposite both, since the left may be a scope the query must stay in', () => {
+    expect(andExpression('set:a', '-set:a')).toBe('set:a -set:a')
+  })
+})
+
+describe('refineExpression', () => {
+  it('ANDs as andExpression does', () => {
+    expect(refineExpression('', 'level:error')).toBe('level:error')
+    expect(refineExpression('set:"sets_1"', 'level:error')).toBe('set:sets_1 level:error')
+    expect(refineExpression('cve OR advisory', 'level:error')).toBe(
+      'cve level:error OR advisory level:error',
+    )
+    expect(refineExpression('host:"a.example"', 'host:a.example')).toBe('host:a.example')
+  })
+
+  it('turns a term the query holds the other way round rather than joining it', () => {
+    expect(refineExpression('set:a', '-set:a')).toBe('-set:a')
+    expect(refineExpression('-set:a', 'set:a')).toBe('set:a')
+    expect(refineExpression('type:P set:a', '-set:"a"')).toBe('type:P -set:a')
+  })
+
+  it('turns it in every alternative it stood in', () => {
+    expect(refineExpression('set:a OR set:a theme:space', '-set:a')).toBe(
+      '-set:a OR theme:space -set:a',
+    )
   })
 })
 

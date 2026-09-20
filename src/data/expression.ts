@@ -474,11 +474,46 @@ function withoutRepeats(group: Term[], added: Term[]): Term[] {
  * expression with no terms narrows nothing, so ANDing one on changes nothing.
  */
 export function andExpression(one: string, other: string): string {
+  return combine(one, other, (group) => group)
+}
+
+/**
+ * `expr` with `typed` added the way a reader adding to their own query means
+ * it: as {@link andExpression} does, except that a term the query holds the
+ * other way round is turned rather than joined.
+ *
+ * `-set:a` typed on to `set:a` is `-set:a`, because a query saying both says
+ * nothing, and what was typed was a change of mind about that record — the
+ * same reading a press makes through `addTerm`. Turned in each alternative the
+ * old term stood in, so an `OR` query comes out with the new sign throughout.
+ *
+ * Not {@link andExpression}'s own reading, because that one also lays a
+ * host's `within` under the query, and there the opposite is not a change of
+ * mind but a query the host's scope rules out: turning it would let the
+ * reader out of the scope.
+ */
+export function refineExpression(expr: string, typed: string): string {
+  return combine(expr, typed, (group, added) =>
+    group.filter((existing) => !added.some((term) => oppositeTerm(existing, term))),
+  )
+}
+
+/**
+ * The two expressions multiplied out, with `keep` saying what of each group
+ * on the left survives what is added to it.
+ */
+function combine(
+  one: string,
+  other: string,
+  keep: (group: Term[], added: Term[]) => Term[],
+): string {
   const left = parseExpression(one)
   const right = parseExpression(other)
   if (!left.length) return formatExpression(right)
   if (!right.length) return formatExpression(left)
   return formatExpression(
-    left.flatMap((group) => right.map((added) => [...group, ...withoutRepeats(group, added)])),
+    left.flatMap((group) =>
+      right.map((added) => [...keep(group, added), ...withoutRepeats(group, added)]),
+    ),
   )
 }

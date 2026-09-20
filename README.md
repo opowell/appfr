@@ -1113,9 +1113,10 @@ The bar has a box of its own too, at the end of the row of parts, so that
 adding a word does not mean opening the panel — most of what anyone types is a
 name to look for, and the panel is a heavier move than that is worth. It is a
 draft and nothing else: Enter ANDs what was typed on to the query as it stands
-(`andExpression`, so a word added to `release OR recall` is added to each
-alternative), the new part takes its place beside the box as a pill, and the
-box is empty again for the next. Escape gives the draft up, and Backspace in
+(`refineExpression`, so a word added to `release OR recall` is added to each
+alternative, and `-set:a` typed on to `set:a` turns the term round rather than
+leaving the query saying both), the new part takes its place beside the box as
+a pill, and the box is empty again for the next. Escape gives the draft up, and Backspace in
 an empty box lifts the last part on the row, whichever kind it is.
 
 ```

@@ -5,7 +5,7 @@ import { useShellContext } from '../composables/context'
 import { useEntityCounts } from '../composables/useEntityCounts'
 import { useRecordNames } from '../composables/useRecordNames'
 import { scopedEntity } from '../query/drill'
-import { andExpression } from '../data/expression'
+import { refineExpression } from '../data/expression'
 import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
 import { formatCount } from '../data/format'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
@@ -343,9 +343,11 @@ function chooseEntity(key: string): void {
  * The box is a draft and nothing else. It never holds the query's own text —
  * what is committed shows as pills beside it, like every other part — so
  * Enter ANDs what was typed on to the query as it stands, and the box empties
- * to take the next. {@link andExpression} rather than a plain join, because a
- * query with `OR` in it is alternatives, and a word added to it is added to
- * each of them.
+ * to take the next. {@link refineExpression} rather than a plain join, because
+ * a query with `OR` in it is alternatives, and a word added to it is added to
+ * each of them — and because a term typed the other way round from one the
+ * query holds turns it, as a press on the record would, rather than leaving
+ * the query saying both.
  */
 const search = ref('')
 const searchBox = ref<HTMLInputElement | null>(null)
@@ -353,7 +355,7 @@ const searchBox = ref<HTMLInputElement | null>(null)
 function commitSearch(): void {
   const typed = search.value.trim()
   if (!typed) return
-  shell.setExpression(andExpression(shell.query.value.expr, typed))
+  shell.setExpression(refineExpression(shell.query.value.expr, typed))
   search.value = ''
 }
 

@@ -94,10 +94,11 @@ test('every story renders without logging an error', async ({ page }) => {
 
 test('every schema story renders rows with its own vocabulary', async ({ page }) => {
   const cases: Array<[string, string[]]> = [
-    // Unscoped stories are listing the whole corpus; the rest name the entity
-    // filtered to. Either way the header says which, as the choice it is.
-    ['schemas-same-shell--i-radar', ['iRadar', 'Everything · ']],
-    ['schemas-same-shell--everything-across-kinds', ['Commerce', 'Everything · ']],
+    // Unscoped stories are listing the whole corpus, which the header leaves
+    // to the content to say; the rest name the entity filtered to, as the
+    // choice it is.
+    ['schemas-same-shell--i-radar', ['iRadar']],
+    ['schemas-same-shell--everything-across-kinds', ['Commerce']],
     ['schemas-same-shell--lego', ['LEGO', 'Sets']],
     ['schemas-same-shell--commerce', ['Commerce', 'Test results']],
     ['schemas-same-shell--battle-sim', ['Battle-sim', 'Runs']],

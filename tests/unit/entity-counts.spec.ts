@@ -40,6 +40,12 @@ describe('useEntityCounts', () => {
     expect(state.pristine.value).toBe(true)
   })
 
+  it('and still pristine with a type in force, that being no narrowing of the others', () => {
+    const { state } = setup('?e=searches&f_state=running')
+    state.refresh()
+    expect(state.pristine.value).toBe(true)
+  })
+
   it('reports the match count once the query narrows, per entity', () => {
     const { state } = setup('?q=digest')
     state.refresh()

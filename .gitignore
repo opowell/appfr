@@ -5,3 +5,5 @@ playwright-report
 blob-report
 *.tsbuildinfo
 .DS_Store
+*.code-workspace
+.claude/settings.json

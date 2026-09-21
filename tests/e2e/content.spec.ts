@@ -223,8 +223,8 @@ test.describe('Content — states other than a full result set', () => {
     await expect(page.locator('.dc-results__clear')).toHaveText('Search everything instead')
 
     await page.locator('.dc-results__clear').click()
-    // Back to the whole corpus, which the header's scope control says it is.
-    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
+    // Back to the whole corpus, so the bar has no type chooser to show.
+    await expect(scopeSelect(page)).toHaveCount(0)
     await expect(listRows(page).first()).toBeVisible()
   })
 

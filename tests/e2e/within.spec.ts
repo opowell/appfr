@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { clearScope, gotoStory, listRows, scopeLabel, sortSelect, terms } from './story'
+import { clearScope, gotoStory, listRows, scopeLabel, terms } from './story'
 import { legoSchema } from '../../src/fixtures/schemas'
 
 /**
@@ -12,8 +12,6 @@ const RECORD = 'shell-data-shell--record-page'
 const NARROWED = 'shell-data-shell--record-page-narrowed'
 const ENTITY = 'shell-data-shell--record-page-entity'
 const HOME = 'shell-data-shell--home-drillable'
-/** The same type outside any scope: one of the two halves of the sort rule. */
-const DRILLED = 'shell-data-shell--drilled-into-pieces'
 
 /** The fixed part at the head of the bar — the scope, not a term. */
 const scope = (page: Page) => page.locator('.dc-within')
@@ -70,34 +68,20 @@ test.describe('within — the scope on the bar', () => {
 
 /*
  * A control over nothing is not worth its room, which is the one rule behind
- * all three of these.
+ * all of these.
  */
 test.describe('within — what the bar stops offering', () => {
-  test('no ordering inside a scope: a record holds a handful of each type', async ({ page }) => {
-    // Pieces outside any scope: the ordering is on the bar, since ordering a
-    // corpus of them is a real move.
-    await gotoStory(page, DRILLED)
-    await expect(sortSelect(page)).toHaveCount(1)
-    // The same type read inside one record: gone, and the direction with it.
-    await gotoStory(page, ENTITY)
-    await expect(sortSelect(page)).toHaveCount(0)
-    await expect(page.locator('.dc-header__dir')).toHaveCount(0)
-  })
-
   test('no list of types while the record\u2019s own types are the screen', async ({ page }) => {
     await gotoStory(page, RECORD)
     await expect(page.locator('.dc-header__scope-select')).toHaveCount(0)
+    // Nor in a view of records across every type: `Everything` is what is
+    // listed, and the chooser only comes with a type to come back out of.
+    await gotoStory(page, 'shell-data-shell--record-page-as-list')
+    await expect(page.locator('.dc-header__scope-select')).toHaveCount(0)
   })
 
-  test('but it is there wherever it says something the screen does not', async ({ page }) => {
-    // Outside a scope: the count beside `Everything` is the size of the corpus.
-    await gotoStory(page, HOME)
-    await expect(page.locator('.dc-header__scope-select')).toHaveCount(1)
-    // With a type filtered to: it is the way back out.
+  test('but it is there with a type filtered to, as the way back out', async ({ page }) => {
     await gotoStory(page, ENTITY)
-    await expect(page.locator('.dc-header__scope-select')).toHaveCount(1)
-    // And in a view of records, nothing else names the types at all.
-    await gotoStory(page, 'shell-data-shell--record-page-as-list')
     await expect(page.locator('.dc-header__scope-select')).toHaveCount(1)
   })
 
@@ -115,22 +99,6 @@ test.describe('within — what the bar stops offering', () => {
 })
 
 test.describe('within — what the counts say', () => {
-  /*
-   * Read in a view that draws records, that being where the list of types —
-   * and with it the count of everything — is on the bar at all.
-   */
-  test('Everything counts what is in the scope, not the corpus', async ({ page }) => {
-    await gotoStory(page, 'shell-data-shell--record-page-as-list')
-    const inside = await scopeLabel(page)
-    expect(inside).toMatch(/^Everything · [\d,]+$/)
-
-    // One set cannot hold as much as the largest type there is of anything.
-    const biggest = Math.max(
-      ...legoSchema.entities.map((entity) => Number(entity.count.replace(/\D/g, ''))),
-    )
-    expect(Number(inside.replace(/\D/g, ''))).toBeLessThan(biggest)
-  })
-
   test('a type card reports its matches rather than its published population', async ({ page }) => {
     await gotoStory(page, RECORD)
     const published = legoSchema.entities.map((entity) => entity.count)

@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import {
   chooseScope,
-  chooseSort,
   chooseView,
   clearScope,
   clickOutsidePanel,
@@ -24,8 +23,7 @@ import {
   scopeLabel,
   scopeSelect,
   searchBox,
-  sortDirection,
-  sortSelect,
+  sortHeading,
   stepPage,
   termBar,
   terms,
@@ -39,14 +37,14 @@ const HOME_OPEN = 'shell-data-shell--home-panel-open'
 const ENTITY = 'shell-data-shell--entity-list'
 
 test.describe('Header — the query as it stands', () => {
-  test('names the domain, and says the whole corpus is what is listed', async ({ page }) => {
+  test('names the domain, and offers no type chooser while the whole corpus is listed', async ({ page }) => {
     await gotoStory(page, HOME)
     await expect(header(page)).toContainText('iRadar')
-    // Nothing is filtered, so the scope is the whole corpus — and the control
-    // that says so says how much of it there is. Five entities of forty-eight
-    // generated rows each.
-    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
-    expect(await scopeLabel(page)).toBe('Everything · 240')
+    // Nothing is filtered, so the scope is the whole corpus — and the content
+    // is what names the types, a card headed by each, so the bar does not
+    // offer the choice twice.
+    await expect(scopeSelect(page)).toHaveCount(0)
+    await expect(viewSelect(page)).toHaveCount(1)
   })
 
   test('describes the home screen by what it is showing', async ({ page }) => {
@@ -128,11 +126,12 @@ test.describe('Header — the query as it stands', () => {
     // a `formatCount` that does the same, so the one number the shell works
     // out for itself is written the way the ones beside it are.
     await gotoStory(page, 'shell-data-shell--host-written-counts')
-    await expect.poll(() => scopeLabel(page)).toBe('Everything · 2.0k')
-    // The other half of the same control, to show there is nothing to tell
-    // apart: a population the host wrote, in the list the live count is in.
     await chooseScope(page, 'Items')
     await expect.poll(() => scopeLabel(page)).toBe('Items · 400')
+    // And the rest of the list in the same hand, so there is nothing to tell
+    // apart: a population the host wrote, beside the live count.
+    await openPick(page, scopeSelect(page), 'Type')
+    await expect(pickOptions(page, 'Type').filter({ hasText: 'Searches' })).toHaveText('Searches · 400')
   })
 
   test('follows the scope when it changes', async ({ page }) => {
@@ -143,12 +142,13 @@ test.describe('Header — the query as it stands', () => {
     await expect.poll(() => scopeLabel(page)).toBe('Items · 9,988')
   })
 
-  test('widens back to everything when the scope is lifted', async ({ page }) => {
+  test('widens back to everything when the scope is lifted, and the chooser goes with it', async ({ page }) => {
     await gotoStory(page, ENTITY)
     await clearScope(page)
-    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
-    expect(await scopeLabel(page)).toBe('Everything · 240')
+    await expect(scopeSelect(page)).toHaveCount(0)
     await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
+    // The whole corpus is what is listed: more rows than one type held.
+    await expect.poll(() => listRows(page).count()).toBeGreaterThan(38)
   })
 })
 
@@ -169,63 +169,32 @@ test.describe('Header — how the results are drawn and ordered', () => {
     await expect(page.locator('.dc-list')).toHaveCount(0)
   })
 
-  test('the sort chooser reorders the content', async ({ page }) => {
+  /*
+   * What the results are ordered by is not on the bar: the table's own
+   * headings offer it, with the column on screen under them, and a chooser on
+   * the bar would be the same choice in the abstract.
+   */
+  test('the bar offers no ordering of its own', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    await expect(page.locator('.dc-header__sort-select')).toHaveCount(0)
+    await expect(page.locator('.dc-header__dir')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /^Sort/ })).toHaveCount(0)
+  })
+
+  test('a table heading orders the content, and pressed again reverses it', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--table-view')
     // A sort is named as the column offering it is named, and `searches` heads
     // its identity column "Search".
-    await chooseSort(page, 'search')
+    await sortHeading(page, 'Search').click()
 
     const names = await page.locator('.dc-table__open').allInnerTexts()
     expect(names).toEqual([...names].sort((a, b) => b.localeCompare(a)))
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
-  })
 
-  test('the direction button reverses the order', async ({ page }) => {
-    await gotoStory(page, ENTITY)
-
-    const first = await page.locator('.dc-list__primary').first().innerText()
-    await expect(sortDirection(page)).toHaveText('↓')
-
-    await sortDirection(page).click()
-    await expect(sortDirection(page)).toHaveText('↑')
-    expect(await page.locator('.dc-list__primary').first().innerText()).not.toBe(first)
-  })
-
-  /*
-   * The sorts are the columns that offer one, named as those columns are named
-   * and in the order the schema declared them — so the bar and the table
-   * headings are offering one list rather than two.
-   */
-  test('the sorts are the columns offering them, in the schema’s own words', async ({ page }) => {
-    await gotoStory(page, ENTITY)
-    // iRadar heads `searches` "Search" and names its metrics "New" and "Results".
-    await openPick(page, sortSelect(page), 'Sort')
-    await expect(pickOptions(page, 'Sort')).toHaveText([
-      'search',
-      'new',
-      'results',
-      'updated',
-    ])
-  })
-
-  /*
-   * And across every type at once there is nothing to offer. The columns a
-   * mixed result set has are the schema's generic ones — `metric` is a
-   * different measurement in every row of it — so the bar leaves the ordering
-   * off until a type says what its columns hold.
-   */
-  test('no ordering while Everything is what is listed', async ({ page }) => {
-    await gotoStory(page, HOME)
-    await expect(sortSelect(page)).toHaveCount(0)
-    await expect(sortDirection(page)).toHaveCount(0)
-
-    // Choosing a type is what brings it back, that being where it means
-    // something — and it is the same press either way round.
-    await chooseScope(page, 'Searches')
-    await expect(sortSelect(page)).toHaveCount(1)
-
-    await clearScope(page)
-    await expect(sortSelect(page)).toHaveCount(0)
+    await sortHeading(page, 'Search').click()
+    expect(await page.locator('.dc-table__open').allInnerTexts()).toEqual(
+      [...names].sort((a, b) => a.localeCompare(b)),
+    )
   })
 })
 
@@ -254,20 +223,19 @@ test.describe('Header — lifting a part of the query', () => {
     await gotoStory(page, ENTITY)
     await clearScope(page)
     await expect(terms(page)).toHaveCount(0)
-    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
+    await expect(scopeSelect(page)).toHaveCount(0)
     await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
   })
 
   test('offers every type the schema declares, and Everything among them', async ({ page }) => {
-    await gotoStory(page, HOME)
+    await gotoStory(page, ENTITY)
     // Each with how many records it holds, which is what makes the list a
-    // chooser rather than a row of names. On the whole corpus, with nothing
-    // narrowing it, those are the populations the schema publishes; the one
-    // count it has no word for is the corpus itself, which `Everything` says
-    // from the size of the result the shell asked for.
+    // chooser rather than a row of names. With nothing narrowing the query,
+    // those are the populations the schema publishes; the one count it has no
+    // word for is the corpus itself, so `Everything` is a plain name.
     await openPick(page, scopeSelect(page), 'Type')
     await expect(pickOptions(page, 'Type')).toHaveText([
-      /^Everything · \S+$/,
+      'Everything',
       'Searches · 38',
       'Items · 9,988',
       'Scrapers · 24',
@@ -280,11 +248,9 @@ test.describe('Header — lifting a part of the query', () => {
     await gotoStory(page, ENTITY)
     // Neither chooser spends a word of the bar saying what it is: what they
     // hold says that already. The name is there for a screen reader, ahead of
-    // the choice itself — and the direction button beside the sort is not
-    // the sort.
+    // the choice itself.
     await expect(page.getByRole('button', { name: /^Type / })).toBeVisible()
     await expect(page.getByRole('button', { name: /^View / })).toBeVisible()
-    await expect(page.getByRole('button', { name: /^Sort (?!direction)/ })).toBeVisible()
   })
 
   test('choosing another type lists that one instead', async ({ page }) => {
@@ -552,20 +518,16 @@ test.describe('Header — opening the expanded query view', () => {
   })
 
   test('the header is reachable and operable from the keyboard alone', async ({ page }) => {
-    // A type in force, so the whole row of choosers is on the bar: across
-    // every type at once there is no ordering to reach.
+    // A type in force, so both choosers are on the bar: on Everything the
+    // content names the types and there is no type chooser to reach.
     await gotoStory(page, ENTITY)
     // The query comes first, since it is what the bar is mostly made of: which
-    // type is listed, how it is drawn, what it is ordered by and which way
-    // round — and then the button that opens the rest of the query.
+    // type is listed and how it is drawn — and then the button that opens the
+    // rest of the query.
     await page.keyboard.press('Tab')
     await expect(scopeSelect(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(viewSelect(page)).toBeFocused()
-    await page.keyboard.press('Tab')
-    await expect(sortSelect(page)).toBeFocused()
-    await page.keyboard.press('Tab')
-    await expect(sortDirection(page)).toBeFocused()
     // Then the box the next part is written in, at the end of the row —
     await page.keyboard.press('Tab')
     await expect(searchBox(page)).toBeFocused()

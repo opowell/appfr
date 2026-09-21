@@ -27,7 +27,7 @@ const props = defineProps<{
   options: PickOption[]
   /** Names the list for a screen reader — what the choice is *of*. */
   label: string
-  /** Render in the monospace face, as the sort picker is. */
+  /** Render in the monospace face. */
   mono?: boolean
 }>()
 

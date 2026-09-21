@@ -52,15 +52,15 @@ test.describe('Query panel — the facets of the type in force', () => {
   })
 
   test('picking an entity narrows the results and reveals its facets', async ({ page }) => {
-    await gotoStory(page, 'shell-data-shell--home-as-list')
-    const before = await listRows(page).count()
+    await gotoStory(page, HOME_OPEN)
+    await expect(page.locator('.dc-facet__label')).toHaveCount(0)
 
-    await openPanel(page)
     await pickEntity(page, 'Searches')
 
     await expect(page.locator('.dc-facet__label')).toHaveText(['State', 'Schedule', 'Results'])
-    const after = await listRows(page).count()
-    expect(after).toBeLessThan(before)
+    // One type's records rather than a card per type.
+    await expect(page.locator('.dc-types')).toHaveCount(0)
+    await expect(page.locator('.dc-card').first()).toBeVisible()
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
   })
 

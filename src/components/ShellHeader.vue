@@ -103,26 +103,17 @@ function optionLabel(entity: EntitySchema): string {
 }
 
 /**
- * `Everything`, and how much of it there is while it is what is being listed.
- *
- * The corpus population is the one count no schema publishes, so the number
- * here is the only one the shell has: the size of the result it asked for.
- * Listing a type instead leaves this a plain name — how big the whole corpus
- * is is then a question nobody has put to the source.
- */
-const everythingLabel = computed(() => {
-  if (shell.query.value.entity !== null || props.hideCount) return 'Everything'
-  return `Everything · ${writeCount.value(shell.total.value)}`
-})
-
-/**
  * The list the type picker offers: `Everything` first, under the empty key
  * that stands for no type at all, and then each type the schema declares.
  * Read afresh whenever a count lands, so a list that is already up says the
  * new number in place — see {@link PickControl}.
+ *
+ * `Everything` carries no count. The picker is only on the bar while a type
+ * is chosen (see `showTypes`), and how big the whole corpus is is then a
+ * question nobody has put to the source.
  */
 const entityOptions = computed(() => [
-  { key: '', label: everythingLabel.value },
+  { key: '', label: 'Everything' },
   ...shell.entities.value.map((entity) => ({ key: entity.key, label: optionLabel(entity) })),
 ])
 
@@ -169,76 +160,18 @@ const view = computed(() => resolveView(shell.query.value.view, props.views))
 /**
  * Whether the list of types is worth a control of its own.
  *
- * Inside a scope, with `Everything` chosen and the types drawn as cards, it is
- * not: the page is about one record, every type of it is on screen headed by
- * its own name, and pressing that heading is the same move — so the chooser
- * would be the choice offered twice and `Everything · 6` a number the cards
- * already break down.
- *
- * Everywhere else it stays, and the three conditions are each load-bearing.
- * Outside a scope the count beside `Everything` is the only statement of how
- * big the corpus is. With a type filtered to, the chooser is the way back out
- * of it. And in the views that draw records rather than types, nothing else on
- * screen says which types there are at all.
+ * Only while a type is filtered to: the chooser is then the way to another
+ * type, and the way back out to `Everything`. On `Everything` itself the
+ * content is what offers the types — each card on the home screen is headed
+ * by its own, and the rows of a mixed list each say theirs — so a chooser on
+ * the bar would be the same choice offered twice, and the query panel still
+ * holds it for anyone who wants it as a control.
  */
-const showTypes = computed(
-  () =>
-    !(
-      Boolean(shell.within.value)
-      && shell.query.value.entity === null
-      && view.value === 'cards'
-    ),
-)
+const showTypes = computed(() => shell.query.value.entity !== null)
 
 function chooseView(key: string): void {
   shell.setView(key as ViewKind)
 }
-
-/**
- * What the results are ordered by, as the columns that offer an order — the
- * same list the table headings sort on, named as the schema names them.
- *
- * On the bar for the reason the view is on the bar: it is a part of the query,
- * and every part of a query is said where the query is. Which way round it
- * goes is the press beside it rather than another entry in the list, because
- * reversing an order is not choosing a different one.
- */
-const sortOptions = computed(() =>
-  shell.sorts.value.map((sort) => ({ key: sort.key, label: sort.label })),
-)
-
-/**
- * And whether an ordering is worth offering at all.
- *
- * Not on `Everything`. The orderings a mixed result set has to offer are the
- * schema's generic columns, and `metric` is a different measurement in every
- * row of it — a colour's parts ranked against a log's duration is one list of
- * two things that were never the same thing. So the bar has nothing to name
- * here, and a type's own orderings come back the moment a type is chosen,
- * which is the moment they mean something.
- *
- * The mixed table's own headings still sort, and that is not the same offer:
- * there the column is on screen with its rows under it, so pressing it orders
- * what is in front of the reader rather than picking a generic name out of a
- * list. What the bar would be offering is the choice in the abstract.
- *
- * Not inside a scope either. A shell read inside one record holds a handful of
- * rows of each type — the cards show all of them — so which end of five
- * results comes first is a control over nothing, and the bar of a record's
- * page has better uses for the room.
- */
-const showSort = computed(
-  () =>
-    sortOptions.value.length > 0
-    && shell.query.value.entity !== null
-    && !shell.within.value,
-)
-
-function chooseSort(key: string): void {
-  shell.setSort(key)
-}
-
-const descending = computed(() => shell.query.value.dir === 'desc')
 
 /**
  * The parts of the query the bar offers as pills — every active facet and
@@ -592,11 +525,11 @@ function abandonTyped(event: Event): void {
         :title="shell.summary.value"
         @scroll="measureTerms"
       >
-        <!-- Which type, always — a query is about something even when nothing
-             is filtered, and the whole corpus is a scope like any other. It is
-             the one part of a query that is a choice rather than a thing to
-             take off, so `Everything` is in the list beside the types and
-             widening back out stays one press. -->
+        <!-- Which type, while one is filtered to. It is the one part of a
+             query that is a choice rather than a thing to take off, so
+             `Everything` is in the list beside the types and widening back
+             out stays one press. On `Everything` the content names the types
+             instead, and the bar leaves the choice to it. -->
         <PickControl
           v-if="showTypes"
           class="dc-header__pick dc-header__scope-select"
@@ -607,8 +540,11 @@ function abandonTyped(event: Event): void {
           @update:model-value="chooseEntity"
         />
 
-        <!-- And how they are drawn, always as well, for the same reason: it is
-             a part of the query, so it is on the bar whatever else is. -->
+        <!-- And how they are drawn, always: it is a part of the query, so it
+             is on the bar whatever else is. What they are ordered by is not
+             here, because the table's own headings offer it with the column
+             on screen under them, and the bar would be the same choice in
+             the abstract. -->
         <PickControl
           class="dc-header__pick dc-header__view-select"
           label="View"
@@ -616,32 +552,6 @@ function abandonTyped(event: Event): void {
           :options="viewOptions"
           @update:model-value="chooseView"
         />
-
-        <!-- And what they are ordered by, the third of the choices a query
-             is made of. The arrow beside it is the same order the other way
-             about. Offered where there is a type in force and it offers an
-             ordering: across every type at once, and on a type with no
-             sortable column, there is nothing to put in the list. -->
-        <template v-if="showSort">
-          <PickControl
-            class="dc-header__pick dc-header__sort-select"
-            label="Sort"
-            mono
-            :model-value="shell.sort.value.key"
-            :options="sortOptions"
-            @update:model-value="chooseSort"
-          />
-
-          <button
-            type="button"
-            class="dc-header__dir dc-mono"
-            :title="descending ? 'Descending — click to reverse' : 'Ascending — click to reverse'"
-            :aria-label="`Sort direction: ${descending ? 'descending' : 'ascending'}`"
-            @click="shell.toggleDirection()"
-          >
-            {{ descending ? '↓' : '↑' }}
-          </button>
-        </template>
 
         <template
           v-for="entry in terms"
@@ -808,14 +718,14 @@ function abandonTyped(event: Event): void {
  * its own and does something else entirely when it is pressed.
  */
 .dc-header__trigger:hover:not(
-    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__dir:hover, .dc-header__search:hover)
+    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__search:hover)
   ) {
   background: var(--dc-bg-1);
 }
 
 .dc-header[data-dc-expanded='true']
   .dc-header__trigger:hover:not(
-    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__dir:hover, .dc-header__search:hover)
+    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__search:hover)
   ) {
   background: var(--dc-bg-2);
 }
@@ -960,27 +870,6 @@ function abandonTyped(event: Event): void {
   flex: 0 0 auto;
   font-size: var(--dc-text-code);
   cursor: pointer;
-}
-
-/*
- * Which way the order runs, drawn as the choosers beside it are drawn: it is
- * the other half of one control, and the two should read as a pair rather than
- * as a picker with a button after it.
- */
-.dc-header__dir {
-  flex: 0 0 auto;
-  padding: 3px 8px;
-  background: var(--dc-accent-bg);
-  border: 1px solid var(--dc-accent-dim);
-  border-radius: var(--dc-radius-sm);
-  color: var(--dc-accent);
-  font-size: var(--dc-text-code);
-  line-height: 1.5;
-  cursor: pointer;
-}
-
-.dc-header__dir:hover {
-  border-color: var(--dc-accent);
 }
 
 /*

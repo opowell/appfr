@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test'
 import {
-  chooseSort,
   chooseView,
   clearScope,
   expectPage,
@@ -10,7 +9,7 @@ import {
   pickEntity,
   scopeSelect,
   shellParams,
-  sortDirection,
+  sortHeading,
   stepPage,
   terms,
   trigger,
@@ -50,6 +49,7 @@ test.describe('URL — the query is the route', () => {
     expect(shellParams(page.url())).toEqual({ e: 'scrapers' })
 
     await clearScope(page)
+    await expect(scopeSelect(page)).toHaveCount(0)
     await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'cards')
     expect(shellParams(page.url())).toEqual({})
   })
@@ -86,16 +86,17 @@ test.describe('URL — the query is the route', () => {
   })
 
   /*
-   * On a type, since that is where the bar offers an ordering at all: across
-   * every type at once the columns are the schema's generic set and there is
-   * nothing to put a mixed result in order of.
+   * Ordered from the table's headings, which is the one place an ordering is
+   * offered: the bar carries no chooser of its own.
    */
   test('sort field and direction appear in the URL', async ({ page }) => {
     await gotoStory(page, LANDS_ON_ENTITY)
+    await chooseView(page, 'table')
     // `searches` names its first metric "New", which is the `metric1` column.
-    await chooseSort(page, 'new')
-    await sortDirection(page).click()
-    expect(shellParams(page.url())).toEqual({ s: 'metric1', d: 'asc' })
+    // The first press orders by it, and the second runs it the other way.
+    await sortHeading(page, 'New').click()
+    await sortHeading(page, 'New').click()
+    expect(shellParams(page.url())).toEqual({ v: 'table', s: 'metric1', d: 'asc' })
   })
 
   test('leaves the parameters it does not own alone', async ({ page }) => {
@@ -152,16 +153,18 @@ test.describe('URL — reload and history', () => {
   })
 
   test('Back undoes an entity filter, returning to everything', async ({ page }) => {
-    await gotoStory(page, 'routing-url-bound--live-url-list')
-    const everything = await listRows(page).count()
+    await gotoStory(page, LIVE)
+    await expect(page.locator('.dc-types')).toBeVisible()
 
     await openPanel(page)
     await pickEntity(page, 'Logs')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'logs')
+    await expect(page.locator('.dc-types')).toHaveCount(0)
 
     await page.goBack()
-    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
-    await expect(listRows(page)).toHaveCount(everything)
+    await expect(scopeSelect(page)).toHaveCount(0)
+    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'cards')
+    await expect(page.locator('.dc-types')).toBeVisible()
   })
 
   test('nudging facets does not fill the history with one entry per chip', async ({ page }) => {
@@ -254,7 +257,7 @@ test.describe('URL — landing on an entity instead of home', () => {
     expect(shellParams(page.url())).toEqual({})
 
     await clearScope(page)
-    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
+    await expect(scopeSelect(page)).toHaveCount(0)
     // The whole corpus has to be spelled out when an entity is the default.
     expect(shellParams(page.url())).toEqual({ e: '*' })
   })

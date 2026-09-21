@@ -46,6 +46,20 @@ const queryOf = (page: Page) => new URL(page.url()).searchParams.get('q')
 const entityOf = (page: Page) => new URL(page.url()).searchParams.get('e')
 
 /**
+ * Lists one type, by its key, with the query as it stands.
+ *
+ * The bar offers no chooser on Everything, and the card of a type the query
+ * already names comes off the screen — so the one way left to that type's own
+ * list is the address bar, which the shell reads its whole query back out of.
+ */
+async function listType(page: Page, key: string): Promise<void> {
+  const url = new URL(page.url())
+  url.searchParams.set('e', key)
+  await page.goto(url.toString())
+  await page.locator('.dc-shell').first().waitFor({ state: 'visible' })
+}
+
+/**
  * Presses the record the query already names, a second time.
  *
  * Its own type's card comes off the screen the moment the query names it, so
@@ -54,8 +68,8 @@ const entityOf = (page: Page) => new URL(page.url()).searchParams.get('e')
  * does not apply the term to itself, so it holds every record of the type,
  * and the one to press is found by its name.
  */
-async function pressAgain(page: Page, label: string, name: string): Promise<void> {
-  await chooseScope(page, label)
+async function pressAgain(page: Page, key: string, name: string): Promise<void> {
+  await listType(page, key)
   await chooseView(page, 'list')
   await listRows(page)
     .filter({ has: page.locator('.dc-list__primary', { hasText: name }) })
@@ -159,7 +173,7 @@ test.describe('Pressing a row', () => {
     const name = await card(page, 'Sets').locator('.dc-type__primary').first().innerText()
     await press(page, 'Sets')
     const narrowed = queryOf(page)!
-    await chooseScope(page, 'Sets')
+    await listType(page, 'sets')
     await chooseView(page, 'list')
     expect(queryOf(page)).toBe(narrowed)
     await expect(listRows(page)).toHaveCount(Number(count))
@@ -172,7 +186,7 @@ test.describe('Pressing a row', () => {
     await gotoStory(page, HOME)
     await press(page, 'Sets')
     const narrowed = queryOf(page)!
-    await chooseScope(page, 'Sets')
+    await listType(page, 'sets')
     await chooseScope(page, 'Pieces')
     expect(queryOf(page)).toBe(narrowed)
     await expect(terms(page).filter({ hasText: 'set:' })).not.toHaveClass(/dc-term--idle/)
@@ -244,7 +258,7 @@ test.describe('Pressing a row with ⌘ held', () => {
     await press(page, 'Sets')
     const narrowed = queryOf(page)
     expect(narrowed).toMatch(/^set:"sets_\d+"$/)
-    await chooseScope(page, 'Sets')
+    await listType(page, 'sets')
     await chooseView(page, 'list')
     await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
     // One term, the other way about — not the two of them side by side.
@@ -270,7 +284,7 @@ test.describe('A row the query names', () => {
   test('wears a + where the query narrows to it, and nothing elsewhere', async ({ page }) => {
     await gotoStory(page, HOME)
     await press(page, 'Sets')
-    await chooseScope(page, 'Sets')
+    await listType(page, 'sets')
     await chooseView(page, 'list')
     await expect(marks(page)).toHaveCount(1)
     await expect(marks(page)).toHaveAttribute('data-dc-standing', 'in')
@@ -337,7 +351,7 @@ test.describe('A home screen that arrives already naming a record', () => {
 
   test('still holds the record, among every other of its type', async ({ page }) => {
     await gotoStory(page, NAMED)
-    await chooseScope(page, 'Sets')
+    await listType(page, 'sets')
     await chooseView(page, 'list')
     await expect(termBar(page)).toContainText('set:')
     await expect(listRows(page).nth(1)).toBeVisible()
@@ -363,7 +377,7 @@ test.describe('A narrowed query', () => {
     const name = await card(page, 'Sets').locator('.dc-type__primary').first().innerText()
     await press(page, 'Sets')
     const once = queryOf(page)
-    await pressAgain(page, 'Sets', name)
+    await pressAgain(page, 'sets', name)
     expect(queryOf(page)).toBe(once)
   })
 
@@ -387,7 +401,7 @@ test.describe('A narrowed query', () => {
     expect(lifted).not.toBe(scoped)
     expect(lifted).toMatch(/^set:sets_\d+$/)
 
-    await pressAgain(page, 'Sets', name)
+    await pressAgain(page, 'sets', name)
     expect(queryOf(page)).toBe(lifted)
     await expect(terms(page)).toHaveCount(1)
   })

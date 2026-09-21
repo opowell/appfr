@@ -410,11 +410,17 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
 }
 
 /* Likewise held to the control's own width, and the head's control drawn as
-   the rows' are — a box of signs, not a heading. */
+   the rows' are — a box of signs, not a heading. The width follows the
+   control's type size rather than a number of pixels: three signs of 1.5em
+   each, the four lines around and between them, and the cell's own padding.
+   Set in px it fit the shell's own scale and clipped the `−` off the head
+   (and ran the rows' into the next column) wherever a host set the type
+   larger — `mono-size` on an 18px page, say. */
 .dc-table th.dc-table__standing,
 .dc-table td.dc-table__standing {
-  width: 72px;
+  width: calc(4.5em + 20px);
   padding-right: 4px;
+  font-size: var(--dc-text-meta);
   text-transform: none;
   letter-spacing: normal;
 }

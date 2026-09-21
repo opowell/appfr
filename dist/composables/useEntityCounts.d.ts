@@ -19,8 +19,11 @@ export interface EntityCountsState {
     /** Keyed by {@link EntitySchema.key}. Empty until {@link refresh} has run. */
     counts: ShallowRef<Map<string, EntityCount>>;
     /**
-     * Whether the query behind the last {@link refresh} was pristine — a
-     * caller then has nothing truer to show than each entity's own population.
+     * Whether the query behind the last {@link refresh} narrowed nothing but
+     * the type listed — a caller then has nothing truer to show than each
+     * entity's own population. The type in force is no narrowing of the others,
+     * and its facets are its own (see {@link refresh}), so only an expression,
+     * or a scope the whole shell is read inside, makes a count worth reading.
      */
     pristine: Ref<boolean>;
     /** Counts every entity against the query as it stands right now. */

@@ -24,6 +24,12 @@ import type { EntitySchema, ShellRow } from '../types';
  * is for. Numbers and booleans compare exactly either way, there being no
  * containment a number could mean.
  *
+ * Two `field:value` terms on the same field in one group are any-of rather
+ * than both: `category:5 category:7` is the rows filed under either, since
+ * no row is filed under both, and it is what pressing two categories writes.
+ * Only a positive `:` or `=` reads so — `year>=1988 year<=1990` is a range,
+ * and `-set:a -set:b` is both sets left out.
+ *
  * A leading `-` turns a term round: `-theme:space` keeps every row the plain
  * term would have dropped, and drops every row it would have kept. Only the
  * *match* is turned — a term that constrains nothing, an unknown field or a
@@ -52,7 +58,13 @@ export type Term = FieldTerm | TextTerm;
 /** Disjunction of conjunctions: the outer array is `OR`, each inner is `AND`. */
 export type Expression = Term[][];
 export declare function parseExpression(input: string): Expression;
-/** True when the row satisfies at least one `OR` group in full. */
+/**
+ * True when the row satisfies at least one `OR` group in full — every term
+ * of it, except that the naming terms on one field (see {@link names}) count
+ * as satisfied when any one of them is. A half-typed one among them is
+ * satisfied on its own, as it is anywhere, so a set holding one is satisfied
+ * whatever the rest say — the same reading a half-typed term gets alone.
+ */
 export declare function matchesExpression(expression: Expression, row: ShellRow, entity: EntitySchema): boolean;
 /**
  * One term, written back as the source that parses to it.

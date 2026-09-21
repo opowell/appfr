@@ -354,6 +354,19 @@ export interface EntitySchema {
      */
     scopeLabel?: string;
     /**
+     * Whether a term on {@link scope} narrows this type's own list as well.
+     *
+     * Unset, it does not: `condition:N` says which condition every *other*
+     * type's rows belong to, and a list of conditions under it is every
+     * condition, the one named among them — see `withoutOwnScope`. Set it where
+     * the host reads the term as a list of this type in its own right: an item
+     * named is the item and what it is made of, so the items under `id:979`
+     * are the set and its parts rather than every item there is. The term then
+     * reaches the source as written, and the header's pill stops saying it is
+     * not applied.
+     */
+    keepsScope?: boolean;
+    /**
      * Seed pairs of `[identity, reference]` the mock source expands into rows,
      * filling the rest of each row from what the columns say it holds.
      */

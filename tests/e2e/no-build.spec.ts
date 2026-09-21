@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { choosePaneMenu, closeButton, dragPanel, pane, pickEntity, storyUrl } from './story'
+import { choosePaneMenu, chooseView, closeButton, dragPanel, pane, pickEntity, storyUrl } from './story'
 
 /**
  * The static page under test. It is served by Storybook's `staticDirs` exactly
@@ -42,15 +42,19 @@ test.describe('No build — dist on a static page', () => {
   })
 
   test('what it mounts is the real shell, driving the real address bar', async ({ page }) => {
-    await page.goto(`${PAGE}?schema=LEGO&v=list`)
+    // The home screen, where a type is chosen from its card: the bar offers no
+    // chooser on Everything, and a flat list of everything has no cards.
+    await page.goto(`${PAGE}?schema=LEGO`)
     await page.locator('.dc-shell').waitFor({ state: 'visible' })
     await expect(page.locator('.dc-header__domain')).toHaveText('LEGO')
 
     await pickEntity(page, 'Sets')
+    await chooseView(page, 'list')
     await expect(page.locator('.dc-list__row').first()).toBeVisible()
 
     const params = new URL(page.url()).searchParams
     expect(params.get('e')).toBe('sets')
+    expect(params.get('v')).toBe('list')
     // The page's own parameter survives the shell writing beside it.
     expect(params.get('schema')).toBe('LEGO')
   })

@@ -179,6 +179,23 @@ const everythingColumns: ColumnDef[] = familiarColumns({
  */
 
 /**
+ * The shape a piece's picture is, by the shape the piece is: a brick is twice
+ * as wide as it is tall, a plate four times, a slope half again, and a
+ * minifigure stands. Pictures of one shape would do for a card and a tile,
+ * which draw a picture in a box of their own; the images view draws each in
+ * a box of the picture's shape, and a fixture where every picture is the same
+ * shape cannot show what that means. Ten times the size the table draws them
+ * at, because that view never enlarges a picture, and one the size of a
+ * thumbnail would hold every row down to a thumbnail's height.
+ */
+const SWATCH_SIZES: Record<string, readonly [number, number]> = {
+  brick: [560, 280],
+  plate: [560, 140],
+  slope: [420, 280],
+  minifig: [280, 560],
+}
+
+/**
  * The piece's picture, as a data URI rather than a URL. A fixture that fetched
  * anything would make every story and every test depend on a network and on
  * whoever is hosting the images this week.
@@ -189,14 +206,17 @@ const everythingColumns: ColumnDef[] = familiarColumns({
  * a card, a tile and a cell drawn *without* one, rather than drawn around an
  * empty `src`.
  */
-const swatch = (row: ShellRow): string =>
-  row.fields.rarity === true
-    ? ''
-    : 'data:image/svg+xml,' +
-      encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28">` +
-          `<rect width="56" height="28" rx="3" fill="${String(row.fields.tint)}"/></svg>`,
-      )
+const swatch = (row: ShellRow): string => {
+  if (row.fields.rarity === true) return ''
+  const [width, height] = SWATCH_SIZES[String(row.fields.shape)] ?? SWATCH_SIZES.brick!
+  return (
+    'data:image/svg+xml,' +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        `<rect width="${width}" height="${height}" rx="30" fill="${String(row.fields.tint)}"/></svg>`,
+    )
+  )
+}
 
 /**
  * Weight, held in centigrams and read in whatever unit the number is actually

@@ -26,7 +26,7 @@ export function isViewKind(value: unknown): value is ViewKind {
 
 /**
  * What each view is called wherever one is offered as a choice — the header's
- * chooser and the query panel's row of them are naming the same six things,
+ * chooser and the query panel's row of them are naming the same seven things,
  * and a view called `Cards` in one place and `cards` in the other would read
  * as two settings rather than one.
  */
@@ -34,6 +34,7 @@ export const VIEW_LABELS: Record<ViewKind, string> = {
   list: 'List',
   cards: 'Cards',
   grid: 'Grid',
+  images: 'Images',
   table: 'Table',
   links: 'Links',
   preview: 'Preview',

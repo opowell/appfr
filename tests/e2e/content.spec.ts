@@ -92,6 +92,7 @@ test.describe('Content — the view renders what the query asked for', () => {
     ['list', ENTITY, '.dc-list'],
     ['cards', 'shell-data-shell--cards-view', '.dc-cards'],
     ['grid', 'shell-data-shell--grid-view', '.dc-grid'],
+    ['images', 'shell-data-shell--images-view', '.dc-images'],
     ['table', 'shell-data-shell--table-view', '.dc-table'],
     ['links', 'shell-data-shell--links-view', '.dc-links'],
     ['preview', 'shell-data-shell--preview-view', '.dc-preview'],

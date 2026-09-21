@@ -11,7 +11,7 @@ async function viewOptions(page: Page) {
   return pickOptions(page, 'View')
 }
 
-test.describe('Views — a host may offer fewer than six', () => {
+test.describe('Views — a host may offer fewer than seven', () => {
   test('the View control offers only what the host listed', async ({ page }) => {
     await gotoStory(page, RESTRICTED)
     await expect(await viewOptions(page)).toHaveText(['List', 'Table'])
@@ -39,12 +39,13 @@ test.describe('Views — a host may offer fewer than six', () => {
 })
 
 test.describe('Views — every one of them, when the host says nothing', () => {
-  test('the View control offers all six', async ({ page }) => {
+  test('the View control offers all seven', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-panel-open')
     await expect(await viewOptions(page)).toHaveText([
       'List',
       'Cards',
       'Grid',
+      'Images',
       'Table',
       'Links',
       'Preview',
@@ -124,5 +125,99 @@ test.describe('Views — the picture a type has, where it has one', () => {
     await expect(pictures).toHaveCount(drawn - 1)
     // And every card is still a card, the one that lost its picture included.
     await expect(page.locator('.dc-card__primary')).toHaveCount(await cards.count())
+  })
+})
+
+/*
+ * The images view: the pictures alone, in rows brought to the width of the
+ * results. Every row but the last reaches the edge; no picture is drawn
+ * larger than it is; and the records keep their order and their number, a
+ * record with no picture holding its place as a square with its name on.
+ */
+test.describe('Views — the pictures alone', () => {
+  const IMAGES = 'shell-data-shell--images-view'
+
+  /** Every box on the wall, as laid: where it is, how big, and what is in it. */
+  async function boxes(page: Page) {
+    return page.locator('.dc-images__cell').evaluateAll((cells) =>
+      cells.map((cell) => {
+        const image = cell.querySelector('img')
+        return {
+          top: parseFloat((cell as HTMLElement).style.top),
+          left: parseFloat((cell as HTMLElement).style.left),
+          width: parseFloat((cell as HTMLElement).style.width),
+          height: parseFloat((cell as HTMLElement).style.height),
+          natural: image ? { width: image.naturalWidth, height: image.naturalHeight } : null,
+          name: cell.querySelector('button')?.title ?? '',
+        }
+      }),
+    )
+  }
+
+  test('every row but the last reaches the far edge', async ({ page }) => {
+    await gotoStory(page, IMAGES)
+    await expect(page.locator('.dc-images__cell img').first()).toBeVisible()
+    // Once the pictures have said their shapes — the rows are laid again as
+    // each loads, and a wall still settling is not the wall.
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll<HTMLImageElement>('.dc-images__cell img')].every((image) => image.complete),
+    )
+    const wallWidth = await page.locator('.dc-images__wall').evaluate((wall) => wall.clientWidth)
+    const laid = await boxes(page)
+    const rows = [...new Set(laid.map((box) => box.top))].sort((a, b) => a - b)
+    expect(rows.length).toBeGreaterThan(2)
+    for (const top of rows.slice(0, -1)) {
+      const right = Math.max(...laid.filter((box) => box.top === top).map((box) => box.left + box.width))
+      expect(right).toBeCloseTo(wallWidth, 0)
+    }
+  })
+
+  test('no picture is drawn larger than it is', async ({ page }) => {
+    await gotoStory(page, IMAGES)
+    await expect(page.locator('.dc-images__cell img').first()).toBeVisible()
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll<HTMLImageElement>('.dc-images__cell img')].every((image) => image.complete),
+    )
+    const pictured = (await boxes(page)).filter((box) => box.natural)
+    expect(pictured.length).toBeGreaterThan(0)
+    for (const box of pictured) {
+      expect(box.height).toBeLessThanOrEqual(box.natural!.height + 0.5)
+      expect(box.width).toBeLessThanOrEqual(box.natural!.width + 0.5)
+      // And each box is the shape of what is in it, so nothing is cropped or
+      // floating in blank.
+      expect(box.width / box.height).toBeCloseTo(box.natural!.width / box.natural!.height, 1)
+    }
+  })
+
+  test('a record with no picture keeps its place as a square with its name on', async ({ page }) => {
+    await gotoStory(page, IMAGES)
+    const blanks = page.locator('.dc-images__blank')
+    expect(await blanks.count()).toBeGreaterThan(0)
+    await expect(blanks.first()).not.toBeEmpty()
+    // As many boxes as the list view has rows: the wall is the result set.
+    const drawn = await page.locator('.dc-images__cell').count()
+    await chooseView(page, 'list')
+    await expect(page.locator('.dc-list__row')).toHaveCount(drawn)
+  })
+
+  test('a picture that fails to load becomes the record’s name, not a hole', async ({ page }) => {
+    await gotoStory(page, IMAGES)
+    const pictures = page.locator('.dc-images__cell img')
+    await expect(pictures.first()).toBeVisible()
+    const drawn = await pictures.count()
+    const blanks = await page.locator('.dc-images__blank').count()
+    // A picture is known by its address, so every record drawing the one that
+    // failed loses it — the fixture's pieces of one tint and shape share one.
+    const src = await pictures.first().getAttribute('src')
+    const sharing = await pictures.evaluateAll((images, failed) => images.filter((image) => image.getAttribute('src') === failed).length, src)
+    await pictures.first().evaluate((image) => image.dispatchEvent(new Event('error')))
+    await expect(pictures).toHaveCount(drawn - sharing)
+    await expect(page.locator('.dc-images__blank')).toHaveCount(blanks + sharing)
+  })
+
+  test('a picture opens its record', async ({ page }) => {
+    await gotoStory(page, IMAGES)
+    await expect(page.locator('.dc-images__open img').first()).toBeVisible()
+    await expect(page.locator('.dc-images__open').first()).toHaveAttribute('title', /.+/)
   })
 })

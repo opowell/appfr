@@ -9,7 +9,7 @@ is a link someone can paste, bookmark, or reload into.
 
 It is schema-driven: one `DomainSchema` describes the entities, their facets,
 what their fields are called, and what the columns of each one's table are. The
-same header, panel and six views serve any schema: swapping the schema swaps
+same header, panel and seven views serve any schema: swapping the schema swaps
 the vocabulary, not the component.
 
 For screens that are several things at once there is a second component:
@@ -71,7 +71,7 @@ Lift the entity →  everything · cards · updated     a card per type
 Cards mean different things at different scopes, which is the point: filtered
 to one entity they are one card per record; across every entity a card per
 record would be a wall of mixed things, so it is a card per type instead. The
-other five views always show the records themselves, mixed kinds and all.
+other six views always show the records themselves, mixed kinds and all.
 
 An expression works across the whole corpus too. Searching from home narrows
 every card at once and turns each card's count into how many of that type
@@ -274,7 +274,7 @@ app.provide(ROUTE_ADAPTER_KEY, route)
 | Key | Meaning |
 | --- | --- |
 | `e` | entity filter. Absent means every entity — the home screen. `*` says so explicitly, which is only needed when the host lands on an entity by default |
-| `v` | view — `list`, `cards`, `grid`, `table`, `links`, `preview`. `cards` at home means a card per type; scoped to an entity it means a card per record |
+| `v` | view — `list`, `cards`, `grid`, `images`, `table`, `links`, `preview`. `cards` at home means a card per type; scoped to an entity it means a card per record |
 | `s` | sort field |
 | `d` | direction — `asc`, `desc` |
 | `q` | expression |
@@ -406,7 +406,7 @@ called `id` of its own means that one.
 { key: 'label', value: (row) => `${row.fields.name} (${row.id})` }
 ```
 
-**Roles** are how the other five views read a column set. A card, a tile, a
+**Roles** are how the other six views read a column set. A card, a tile, a
 link row and a preview pane are an identity, a reference, a number or two and a
 mark — never a list of columns — so they ask for those parts by name:
 
@@ -417,7 +417,7 @@ mark — never a list of columns — so they ask for those parts by name:
 | `metric` | the numbers on a list row (first two), a card (first two), a home-screen preview row (first one), and every one of them in the preview pane |
 | `state` | the pill |
 | `updated` | the date on a card, a home-screen row and the preview pane |
-| `image` | the picture beside the name on a card and behind the caption on a grid tile — a value like any other, so the column is still a cell in the table. A row holding none is each of those drawn without one, and so is a source that fails to load: a catalogue addresses pictures it does not host |
+| `image` | the picture beside the name on a card, behind the caption on a grid tile, and the whole of the images view — a value like any other, so the column is still a cell in the table. A row holding none is a card and a tile drawn without one, and a square with the name on in the images view, where a record dropped from the wall would be a result gone missing; so is a source that fails to load: a catalogue addresses pictures it does not host |
 | `tint` | the grid tile's background and the preview pane's banner — never drawn as a cell, so the table leaves it out |
 
 A column with no role is a column and nothing else: it is in the table and
@@ -1157,7 +1157,7 @@ an empty box lifts the last part on the row, whichever kind it is.
 | `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
 | `pagesNote` | `string` | — | What the count is short of, in your words — `first 1,200 of 30,200 lots`. Goes under the pager's hover text, and keeps the pager up on a single page. See [paging through the results](#paging-through-the-results). |
-| `views` | `ViewKind[]` | all six | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. |
+| `views` | `ViewKind[]` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all; `mono-size` is `inherit` with the type scale given up too, every word at the host's one size and one weight with only colour and opacity varying. |
@@ -1366,7 +1366,7 @@ the ids a query narrows by, and `useShellContext`.
 The context carries the selection as well — `selectable`, `selection`,
 `isSelected`, `toggleSelect`, `selectPage` and `clearSelection`, plus `create`,
 `duplicate` and `delete` — so a view of your own can offer the ticks the
-shipped six do, and `<RecordActions>` is exported for a host laying the parts
+shipped seven do, and `<RecordActions>` is exported for a host laying the parts
 out itself. `within` is on it too, for a view that says what narrowed the
 results: it is the shell's scope rather than part of its query, so it is not on
 `query`. `useResults` and `useEntityPreviews` each take it as an option, which
@@ -1989,7 +1989,7 @@ declares to say so on its behalf. So the content says it itself:
 <script setup lang="ts">
 import { usePaneMenu, VIEW_KINDS } from 'header-content-layout'
 
-const LABELS = { list: 'List', cards: 'Cards', grid: 'Grid', table: 'Table', links: 'Links', preview: 'Preview' }
+const LABELS = { list: 'List', cards: 'Cards', grid: 'Grid', images: 'Images', table: 'Table', links: 'Links', preview: 'Preview' }
 const view = ref('table')
 
 usePaneMenu(() => [
@@ -2123,7 +2123,7 @@ provideShellContext({ ...query, schema, rows: results.rows, /* … */ })
 watch(() => props.view, (view) => query.setView(view), { immediate: true })
 ```
 
-`<ResultsArea>` then renders whichever of the six views that is. The full
+`<ResultsArea>` then renders whichever of the seven views that is. The full
 version is in `stories/helpers.ts`, as `ItemsPanel`.
 
 ### Moving panels

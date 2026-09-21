@@ -10,9 +10,9 @@
 import type { Component } from 'vue'
 
 /** The result renderers the shell ships with. */
-export type ViewKind = 'list' | 'cards' | 'grid' | 'table' | 'links' | 'preview'
+export type ViewKind = 'list' | 'cards' | 'grid' | 'images' | 'table' | 'links' | 'preview'
 
-export const VIEW_KINDS = ['list', 'cards', 'grid', 'table', 'links', 'preview'] as const
+export const VIEW_KINDS = ['list', 'cards', 'grid', 'images', 'table', 'links', 'preview'] as const
 
 /**
  * The palettes the shell ships with, the default first. `minimal` is paper,

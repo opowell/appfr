@@ -11,6 +11,7 @@ import WindowFrame from './components/WindowFrame.vue'
 import WindowPane from './components/WindowPane.vue'
 import CardsView from './components/views/CardsView.vue'
 import GridView from './components/views/GridView.vue'
+import ImagesView from './components/views/ImagesView.vue'
 import LinksView from './components/views/LinksView.vue'
 import ListView from './components/views/ListView.vue'
 import PreviewView from './components/views/PreviewView.vue'
@@ -43,6 +44,7 @@ const COMPONENTS = {
   ListView,
   CardsView,
   GridView,
+  ImagesView,
   TableView,
   LinksView,
   PreviewView,

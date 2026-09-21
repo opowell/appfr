@@ -6,6 +6,7 @@ import { useShellContext } from '../composables/context'
 import { isTypeCardsQuery, resolveView } from '../query/schema'
 import CardsView from './views/CardsView.vue'
 import GridView from './views/GridView.vue'
+import ImagesView from './views/ImagesView.vue'
 import LinksView from './views/LinksView.vue'
 import ListView from './views/ListView.vue'
 import PreviewView from './views/PreviewView.vue'
@@ -26,7 +27,7 @@ const shell = useShellContext()
 /**
  * Passed straight through to the per-type cards, which is the one view they
  * mean anything in: a card of the host's own belongs in a grid of cards, and
- * the other five views are rows and tiles of records.
+ * the other six views are rows, tiles and pictures of records.
  */
 const slots = defineSlots<{
   'cards-before'?: () => unknown
@@ -37,6 +38,7 @@ const VIEWS: Record<ViewKind, Component> = {
   list: ListView,
   cards: CardsView,
   grid: GridView,
+  images: ImagesView,
   table: TableView,
   links: LinksView,
   preview: PreviewView,

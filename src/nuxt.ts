@@ -25,6 +25,7 @@ const COMPONENTS = [
   'ListView',
   'CardsView',
   'GridView',
+  'ImagesView',
   'TableView',
   'LinksView',
   'PreviewView',

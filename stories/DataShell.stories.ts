@@ -436,6 +436,20 @@ export const PicturedGrid = story({
   schema: legoSchema,
   search: '?e=pieces&v=grid',
 })
+
+/**
+ * The pictures alone, large, in rows brought to the width of the shell.
+ *
+ * A wall rather than a grid: a picture is the shape it is, and the fixture's
+ * are four shapes — a brick's, a plate's, a slope's, a minifigure's — so a
+ * row of them is as many as fit at one height, scaled until the last one
+ * meets the edge. The pieces nobody has photographed keep their place in it
+ * as squares with their names on.
+ */
+export const ImagesView = story({
+  schema: legoSchema,
+  search: '?e=pieces&v=images',
+})
 export const TableView = story({ search: '?e=searches&v=table' })
 export const LinksView = story({ search: '?e=items&v=links' })
 export const PreviewView = story({ search: '?e=items&v=preview' })

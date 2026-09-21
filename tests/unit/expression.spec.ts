@@ -140,6 +140,40 @@ describe('matchesExpression', () => {
     expect(matches('kind:feed')).toBe(false)
   })
 
+  describe('two terms naming values of one field', () => {
+    it('are satisfied by either — a row is filed under one category, not both', () => {
+      expect(matches('kind:pdf kind:feed')).toBe(true)
+      expect(matches('kind:feed kind:pdf')).toBe(true)
+      expect(matches('kind:feed kind:html')).toBe(false)
+      expect(matches('kind=pdf kind=feed')).toBe(true)
+    })
+
+    it('still AND with everything else in the group', () => {
+      expect(matches('kind:pdf kind:feed status:ok')).toBe(true)
+      expect(matches('kind:pdf kind:feed status:failed')).toBe(false)
+      expect(matches('kind:feed kind:html OR status:ok')).toBe(true)
+    })
+
+    it('leave a range as two constraints', () => {
+      expect(matches('rank>=50 rank<=60')).toBe(true)
+      expect(matches('rank>=60 rank<=70')).toBe(false)
+      // And a comparison beside a naming term is not one of the names.
+      expect(matches('rank:55 rank:56 rank>=60')).toBe(false)
+    })
+
+    it('leave two turned terms as both left out', () => {
+      expect(matches('-kind:feed -kind:html')).toBe(true)
+      expect(matches('-kind:pdf -kind:html')).toBe(false)
+      // Named and left out on one field: the one narrows, the other drops.
+      expect(matches('kind:pdf kind:feed -kind:pdf')).toBe(false)
+    })
+
+    it('are satisfied by a half-typed one among them, as one is on its own', () => {
+      expect(matches('nosuchfield:a nosuchfield:b')).toBe(true)
+      expect(matches('rank:abc rank:99')).toBe(true)
+    })
+  })
+
   describe(': as containment, = as the whole value', () => {
     // An id sharing a prefix with another of its kind — `P-3070` next to
     // `P-3070bpb0745`, the case that motivated `=` — rather than the fixture

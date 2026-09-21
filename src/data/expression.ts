@@ -26,6 +26,12 @@ import { cellValue, roleColumn, roleColumns } from '../query/columns'
  * is for. Numbers and booleans compare exactly either way, there being no
  * containment a number could mean.
  *
+ * Two `field:value` terms on the same field in one group are any-of rather
+ * than both: `category:5 category:7` is the rows filed under either, since
+ * no row is filed under both, and it is what pressing two categories writes.
+ * Only a positive `:` or `=` reads so — `year>=1988 year<=1990` is a range,
+ * and `-set:a -set:b` is both sets left out.
+ *
  * A leading `-` turns a term round: `-theme:space` keeps every row the plain
  * term would have dropped, and drops every row it would have kept. Only the
  * *match* is turned — a term that constrains nothing, an unknown field or a
@@ -308,14 +314,46 @@ function compare(comparator: Comparator, left: number, right: number): boolean {
   }
 }
 
-/** True when the row satisfies at least one `OR` group in full. */
+/**
+ * Whether a term is one of a set that reads as any-of: a positive `field:value`
+ * or `field=value`, which names one of the values a field may hold. Two of
+ * those on the same field in one group are alternatives, not a conjunction —
+ * `category:5 category:7` is the rows filed under either, since no row is
+ * filed under both. A comparison is not one of these: `year>=1988 year<=1990`
+ * is a range, and stays two constraints; nor is a turned term, `-set:a -set:b`
+ * being both sets left out.
+ */
+function names(term: Term): term is FieldTerm {
+  return (
+    term.kind === 'field' &&
+    !term.negated &&
+    (term.comparator === ':' || term.comparator === '=')
+  )
+}
+
+/**
+ * True when the row satisfies at least one `OR` group in full — every term
+ * of it, except that the naming terms on one field (see {@link names}) count
+ * as satisfied when any one of them is. A half-typed one among them is
+ * satisfied on its own, as it is anywhere, so a set holding one is satisfied
+ * whatever the rest say — the same reading a half-typed term gets alone.
+ */
 export function matchesExpression(
   expression: Expression,
   row: ShellRow,
   entity: EntitySchema,
 ): boolean {
   if (!expression.length) return true
-  return expression.some((group) => group.every((term) => matchesTerm(term, row, entity)))
+  return expression.some((group) => {
+    const named = new Map<string, boolean>()
+    for (const term of group) {
+      if (!names(term)) continue
+      named.set(term.field, (named.get(term.field) ?? false) || matchesTerm(term, row, entity))
+    }
+    return group.every((term) =>
+      names(term) ? named.get(term.field) === true : matchesTerm(term, row, entity),
+    )
+  })
 }
 
 /**

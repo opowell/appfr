@@ -756,10 +756,9 @@ lit where those rows agree and unlit where they do not. Each press is one
 change to the expression and the table stays where it is — the column is for
 saying where the query stands on many records without leaving the list.
 `withStanding(expr, term, standing)` is what one press writes, exported with
-the rest, and `StandingControl` is the control itself. Note that two records
-narrowed *to* on the same field are two terms ANDed — `set:a set:b` — which
-this language reads as a record that is both, so `+` over a page is a query
-for nothing; `−` over a page is the page left out, which is what it says.
+the rest, and `StandingControl` is the control itself. `+` over a page is
+`set:a set:b …`, which the language reads as any of them — see the
+expression field below — and `−` over a page is the page left out.
 
 A host applying one itself wants `narrow(expr, entityKey)` from `useQueryState`, not
 `setExpression` followed by `setEntity`: each of those serialises from the query the URL
@@ -971,7 +970,12 @@ cve OR advisory
 ```
 
 Whitespace means AND (the keyword is accepted too); `OR` splits alternatives; a
-bare word matches the identity and reference columns; `*` is a wildcard. A
+bare word matches the identity and reference columns; `*` is a wildcard. Two
+`field:value` terms on one field are any-of rather than both — `category:5
+category:7` is the rows filed under either, since no row is filed under both,
+and it is what pressing two categories writes; only a positive `:` or `=`
+reads so, a range like `year>=1988 year<=1990` staying two constraints and
+`-set:a -set:b` both sets left out. A
 leading `-` turns a term round — `-theme:space` keeps every row the plain term
 would have dropped — and it turns only the *match*: an unknown field or a
 number compared against a word constrains nothing either way, so a half-typed

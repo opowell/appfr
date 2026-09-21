@@ -70,6 +70,11 @@ describe('withoutOwnScope', () => {
     expect(withoutOwnScope(inventories, 'set:"sets_10007"')).toBe('set:"sets_10007"')
     expect(withoutOwnScope(null, 'set:"sets_10007"')).toBe('set:"sets_10007"')
   })
+
+  it('leaves the term in for a type that keeps its scope', () => {
+    const kept = { ...sets, keepsScope: true }
+    expect(withoutOwnScope(kept, 'set:"sets_10007" theme:space')).toBe('set:"sets_10007" theme:space')
+  })
 })
 
 describe('recordTerm', () => {

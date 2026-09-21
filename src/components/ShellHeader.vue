@@ -187,10 +187,12 @@ function chooseView(key: string): void {
  * while Conditions are what is listed. The list does not apply it to itself
  * (see `withoutOwnScope`), so the pill says so rather than promising a
  * narrowing the rows do not show; it is still the query's, still there to
- * lift, and applies again the moment another type is listed.
+ * lift, and applies again the moment another type is listed. A type that
+ * keeps its scope has no idle term: the list does apply it.
  */
 const terms = computed(() => {
-  const own = shell.entity.value?.scope?.toLowerCase()
+  const entity = shell.entity.value
+  const own = entity?.keepsScope ? undefined : entity?.scope?.toLowerCase()
   return shell.terms.value.filter((term) => term.facetKey !== ENTITY_TERM).map((term, at, all) => {
     const before = all[at - 1]
     return {

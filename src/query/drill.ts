@@ -201,11 +201,13 @@ export function drillExpression(
  *
  * Positive or negated, and every alternative: the field is what makes it that
  * type's own. Unchanged, text and all, where there is nothing to lift, so an
- * expression the reader wrote reaches the source as written.
+ * expression the reader wrote reaches the source as written — and unchanged
+ * for a type that {@link EntitySchema.keepsScope}, whose list under the term
+ * is the host's to narrow.
  */
 export function withoutOwnScope(entity: EntitySchema | null | undefined, expr: string): string {
   const field = entity?.scope?.toLowerCase()
-  if (!field || !expr.trim()) return expr
+  if (!field || entity?.keepsScope || !expr.trim()) return expr
   const groups = parseExpression(expr)
   const kept = groups.map((group) =>
     group.filter((term) => term.kind !== 'field' || term.field !== field),

@@ -9,7 +9,7 @@ export declare const DEFAULT_SORT = "updated";
 export declare function isViewKind(value: unknown): value is ViewKind;
 /**
  * What each view is called wherever one is offered as a choice — the header's
- * chooser and the query panel's row of them are naming the same six things,
+ * chooser and the query panel's row of them are naming the same seven things,
  * and a view called `Cards` in one place and `cards` in the other would read
  * as two settings rather than one.
  */

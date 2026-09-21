@@ -1,21 +1,21 @@
-const t = (e, i, n, o = !1) => ({
+const t = (e, s, n, o = !1) => ({
   kind: "chips",
   key: e,
-  label: i,
+  label: s,
   options: n,
   ...o ? { multiple: o } : {}
-}), s = (e, i, n, o) => ({
+}), i = (e, s, n, o) => ({
   kind: "range",
   key: e,
-  label: i,
+  label: s,
   min: n,
   max: o
-}), r = (e, i, n) => ({
+}), r = (e, s, n) => ({
   kind: "toggle",
   key: e,
-  label: i,
+  label: s,
   text: n
-}), d = (e) => [
+}), u = (e) => [
   { key: "ordinal", kind: "ordinal", label: "#", width: "52px" },
   {
     key: "primary",
@@ -88,25 +88,34 @@ const t = (e, i, n, o = !1) => ({
   tabs: e.tabs,
   samples: e.samples,
   ...e.scope ? { scope: e.scope } : {},
-  columns: e.columns ?? d(e)
-}), l = d({
+  columns: e.columns ?? u(e)
+}), l = u({
   primary: "Item",
   secondary: "Reference",
   metric1: "Metric",
   metric2: "Metric 2"
-}), u = (e) => e.fields.rarity === !0 ? "" : "data:image/svg+xml," + encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="28"><rect width="56" height="28" rx="3" fill="${String(e.fields.tint)}"/></svg>`
-);
-function p(e) {
-  const i = Number(e);
-  return Number.isFinite(i) ? i < 100 ? `${Math.round(i)}cg` : i < 1e5 ? `${(i / 100).toFixed(1)}g` : `${(i / 1e5).toFixed(1)}kg` : "—";
+}), d = {
+  brick: [560, 280],
+  plate: [560, 140],
+  slope: [420, 280],
+  minifig: [280, 560]
+}, p = (e) => {
+  if (e.fields.rarity === !0) return "";
+  const [s, n] = d[String(e.fields.shape)] ?? d.brick;
+  return "data:image/svg+xml," + encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${n}"><rect width="${s}" height="${n}" rx="30" fill="${String(e.fields.tint)}"/></svg>`
+  );
+};
+function y(e) {
+  const s = Number(e);
+  return Number.isFinite(s) ? s < 100 ? `${Math.round(s)}cg` : s < 1e5 ? `${(s / 100).toFixed(1)}g` : `${(s / 1e5).toFixed(1)}kg` : "—";
 }
-const y = [
+const h = [
   { key: "ordinal", kind: "ordinal", label: "#", width: "48px" },
   // No label: a column of pictures says what it is. The role is what carries
   // it out of the table — onto the card and the tile, which are a picture and
   // a name where a piece has one.
-  { key: "thumb", role: "image", kind: "image", width: "56px", height: "28px", value: u },
+  { key: "thumb", role: "image", kind: "image", width: "56px", height: "28px", value: p },
   {
     key: "primary",
     role: "identity",
@@ -166,7 +175,7 @@ const y = [
     /* Centigrams, off a number the row already carries: the fixtures generate
        no field the schema has not named, and a weight is what `format` is for. */
     value: (e) => Math.round(Number(e.fields.metric1) * 37),
-    format: p,
+    format: y,
     hideBelow: 1100
   },
   {
@@ -241,7 +250,7 @@ const y = [
     ["Index rebuilt", "trc_63d1c7"],
     ["Export finished", "trc_18ff02"]
   ]
-}), h = {
+}), g = {
   key: "iRadar",
   label: "iRadar",
   kicker: "Web monitoring",
@@ -281,7 +290,7 @@ const y = [
       metric2: "Score",
       facets: [
         t("kind", "Kind", ["page", "pdf", "feed", "image"]),
-        s("rank", "Rank", 0, 100),
+        i("rank", "Rank", 0, 100),
         r("seen", "Seen", "Hide items already seen")
       ],
       tabs: ["Information", "Content", "Links", "Searches"],
@@ -320,7 +329,7 @@ const y = [
     m,
     c
   ]
-}, g = {
+}, f = {
   key: "LEGO",
   label: "LEGO",
   kicker: "Catalogue & inventory",
@@ -341,7 +350,7 @@ const y = [
       metric1Drill: "pieces",
       facets: [
         t("theme", "Theme", ["space", "castle", "town", "technic"]),
-        s("year", "Year", 1958, 2026),
+        i("year", "Year", 1958, 2026),
         r("owned", "Owned", "Only sets in my inventory")
       ],
       tabs: ["Information", "Inventory", "Variants", "Logs"],
@@ -369,14 +378,14 @@ const y = [
         // `shape` rather than `category`: a category is a record here, and a
         // facet under that key would shadow the join to it.
         t("shape", "Shape", ["brick", "plate", "slope", "minifig"]),
-        s("firstYear", "First year", 1958, 2026),
+        i("firstYear", "First year", 1958, 2026),
         r("rarity", "Rarity", "Only parts in < 5 sets")
       ],
       tabs: ["Information", "Colors", "Sets", "Logs"],
       // The one type in these four fixtures whose table is not the familiar
       // set: a catalogue piece is a picture, a shape, a year, two counts, a
       // weight and a flag, and no four of those are the four.
-      columns: y,
+      columns: h,
       samples: [
         ["Brick 2 x 4", "3001"],
         ["Plate 1 x 2", "3023"],
@@ -399,7 +408,7 @@ const y = [
       metric2Drill: "sets",
       facets: [
         t("family", "Family", ["solid", "transparent", "metallic", "glow"]),
-        s("firstYear", "First year", 1958, 2026),
+        i("firstYear", "First year", 1958, 2026),
         r("retired", "Retired", "Hide retired colors")
       ],
       tabs: ["Information", "Parts", "Sets", "Logs"],
@@ -422,7 +431,7 @@ const y = [
       metric2: "Spares",
       facets: [
         t("type", "Type", ["set", "minifig", "gear"]),
-        s("version", "Version", 1, 12),
+        i("version", "Version", 1, 12),
         r("complete", "Complete", "Only complete inventories")
       ],
       tabs: ["Information", "Lines", "Set", "Logs"],
@@ -447,7 +456,7 @@ const y = [
       metric1Drill: "pieces",
       facets: [
         t("level", "Level", ["root", "branch", "leaf"]),
-        s("parts", "Parts", 0, 9e3),
+        i("parts", "Parts", 0, 9e3),
         r("empty", "Empty", "Hide empty categories")
       ],
       tabs: ["Information", "Parts", "Children", "Logs"],
@@ -463,7 +472,7 @@ const y = [
     m,
     c
   ]
-}, f = {
+}, b = {
   key: "Commerce",
   label: "Commerce",
   kicker: "Crawl & test platform",
@@ -505,7 +514,7 @@ const y = [
       metric2: "Errors",
       facets: [
         t("state", "State", ["running", "done", "failed"]),
-        s("pages", "Pages", 0, 5e4),
+        i("pages", "Pages", 0, 5e4),
         r("deltas", "Deltas", "Only crawls with changes")
       ],
       tabs: ["Information", "Results", "Tenant", "Logs"],
@@ -551,7 +560,7 @@ const y = [
       metric2: "Diffs",
       facets: [
         t("outcome", "Outcome", ["pass", "fail", "skipped"]),
-        s("durationMs", "Duration ms", 0, 6e4),
+        i("durationMs", "Duration ms", 0, 6e4),
         r("noise", "Noise", "Hide known-flaky results")
       ],
       tabs: ["Information", "Diff", "Test", "Logs"],
@@ -574,7 +583,7 @@ const y = [
       metric2: "Links",
       facets: [
         t("status", "Status", ["200", "301", "404", "5xx"]),
-        s("sizeKb", "Size kB", 0, 4e3),
+        i("sizeKb", "Size kB", 0, 4e3),
         r("changes", "Changes", "Only changed since last crawl")
       ],
       tabs: ["Information", "Content", "Links", "Crawl"],
@@ -590,7 +599,7 @@ const y = [
     m,
     c
   ]
-}, b = {
+}, k = {
   key: "Battle-sim",
   label: "Battle-sim",
   kicker: "Simulation runs",
@@ -607,7 +616,7 @@ const y = [
       metric2: "In runs",
       facets: [
         t("class", "Class", ["infantry", "armour", "air", "support"]),
-        s("power", "Power", 0, 100),
+        i("power", "Power", 0, 100),
         r("retired", "Retired", "Hide retired units")
       ],
       tabs: ["Information", "Stats", "Runs", "Logs"],
@@ -630,7 +639,7 @@ const y = [
       metric2: "Runs",
       facets: [
         t("doctrine", "Doctrine", ["attrition", "manoeuvre", "siege"]),
-        s("units", "Units", 0, 200),
+        i("units", "Units", 0, 200),
         r("active", "Active", "Only factions in active runs")
       ],
       tabs: ["Information", "Units", "Runs", "Logs"],
@@ -653,7 +662,7 @@ const y = [
       metric2: "Runs",
       facets: [
         t("terrain", "Terrain", ["urban", "open", "mountain", "coast"]),
-        s("rounds", "Rounds", 1, 200),
+        i("rounds", "Rounds", 1, 200),
         r("balance", "Balance", "Only unbalanced scenarios")
       ],
       tabs: ["Information", "Map", "Runs", "Logs"],
@@ -676,7 +685,7 @@ const y = [
       metric2: "Casualties",
       facets: [
         t("outcome", "Outcome", ["win", "loss", "draw", "aborted"]),
-        s("rounds", "Rounds", 1, 200),
+        i("rounds", "Rounds", 1, 200),
         r("seeded", "Seeded", "Only reproducible seeds")
       ],
       tabs: ["Information", "Timeline", "Units", "Raw"],
@@ -692,19 +701,19 @@ const y = [
     m,
     c
   ]
-}, k = {
-  iRadar: h,
-  LEGO: g,
-  Commerce: f,
-  "Battle-sim": b
-}, w = Object.values(k);
+}, w = {
+  iRadar: g,
+  LEGO: f,
+  Commerce: b,
+  "Battle-sim": k
+}, S = Object.values(w);
 export {
-  b as battleSimSchema,
-  f as commerceSchema,
-  h as iRadarSchema,
-  g as legoSchema,
+  k as battleSimSchema,
+  b as commerceSchema,
+  g as iRadarSchema,
+  f as legoSchema,
   m as logsEntity,
-  w as schemaList,
-  k as schemas,
+  S as schemaList,
+  w as schemas,
   c as settingsEntity
 };

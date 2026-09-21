@@ -10,7 +10,7 @@ type __VLS_Props = {
 /**
  * Passed straight through to the per-type cards, which is the one view they
  * mean anything in: a card of the host's own belongs in a grid of cards, and
- * the other five views are rows and tiles of records.
+ * the other six views are rows, tiles and pictures of records.
  */
 type __VLS_Slots = {
     'cards-before'?: () => unknown;

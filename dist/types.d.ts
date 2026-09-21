@@ -8,8 +8,8 @@
  */
 import type { Component } from 'vue';
 /** The result renderers the shell ships with. */
-export type ViewKind = 'list' | 'cards' | 'grid' | 'table' | 'links' | 'preview';
-export declare const VIEW_KINDS: readonly ["list", "cards", "grid", "table", "links", "preview"];
+export type ViewKind = 'list' | 'cards' | 'grid' | 'images' | 'table' | 'links' | 'preview';
+export declare const VIEW_KINDS: readonly ["list", "cards", "grid", "images", "table", "links", "preview"];
 /**
  * The palettes the shell ships with, the default first. `minimal` is paper,
  * ink and hairlines with nothing else on — the values the layout stops working

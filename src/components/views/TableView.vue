@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import type { ColumnDef } from '../../types'
 import { useShellContext } from '../../composables/context'
-import { pressOptions } from '../../query/drill'
+import { pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
+import type { TermStanding } from '../../query/drill'
 import { useColumns } from '../../composables/useColumns'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
@@ -12,11 +13,10 @@ import {
   columnClass,
   columnKey,
   columnTruncates,
-  roleColumn,
 } from '../../query/columns'
 import ColumnCell from './ColumnCell.vue'
-import QueryMark from './QueryMark.vue'
 import ScopeMark from './ScopeMark.vue'
+import StandingControl from './StandingControl.vue'
 import PageTick from './PageTick.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -29,17 +29,79 @@ const rows = usePresentedRows()
  */
 const columns = useColumns()
 
-/**
- * The column the marks go beside: the one that asked for the `→`, or, where
- * none did, the identity. The `→` is offered only where a column asked for it,
- * but the sign a row wears where the query names it is not an affordance the
- * schema has to opt into — it is a fact about the query, and a table with no
- * `→` on it still needs somewhere to say it. The name is where a reader looks
- * for a record, so it goes there.
- */
-const marked = computed<ColumnDef | undefined>(
-  () => columns.value.find((column) => column.scope) ?? roleColumn(columns.value, 'identity'),
+/** The column that asked for the `→` beside its value, if one did. */
+const marked = computed<ColumnDef | undefined>(() =>
+  columns.value.find((column) => column.scope),
 )
+
+/*
+ * Where the query stands on each row — a column of its own, rather than a
+ * sign beside the name.
+ *
+ * The other views mark a row only where the query names it, since a card has
+ * no room for a control on every record. A table has: a row is a line, and a
+ * column is what a table has for a fact about every line. So every row of a
+ * type that can be named wears the same three-way control, lit where the
+ * query narrows to the record or leaves it out and unlit — nearly always —
+ * where it says nothing, and the head of the column is the same control over
+ * every row at once. The sign is not an affordance the schema has to opt into
+ * — it is a fact about the query — so the column is there wherever some row
+ * could be named, whether or not any column asked for the `→`.
+ */
+
+/** Whether any row on this table could be named by the query. */
+const standable = computed(() =>
+  shell.entity.value
+    ? Boolean(shell.entity.value.scope)
+    : shell.entities.value.some((entity) => entity.scope),
+)
+
+/** The term naming a row, or null for a row of a type that declares no scope. */
+const termOf = (entry: PresentedRow) => scopeTerm(entry.entity, entry.row)
+
+const standingOf = (entry: PresentedRow) => termStanding(shell.query.value.expr, termOf(entry))
+
+function setStanding(entry: PresentedRow, standing: TermStanding | null) {
+  shell.setExpression(withStanding(shell.query.value.expr, termOf(entry), standing))
+}
+
+/**
+ * The rows the head of the column speaks for: the ticked ones, where any on
+ * the page are — a tick is the reader saying which rows an operation is for —
+ * and otherwise every row on the page. Rows no term could name are left out
+ * either way, there being nothing to say about them.
+ */
+const headed = computed(() => {
+  const named = rows.value.filter((entry) => termOf(entry) !== null)
+  const ticked = named.filter((entry) => entry.selected)
+  return ticked.length ? ticked : named
+})
+
+const headsTicked = computed(() => headed.value.some((entry) => entry.selected))
+
+/** What the rows the head speaks for agree on — and whether they agree. */
+const headStanding = computed<TermStanding | null>(() => {
+  const first = headed.value[0]
+  return first ? standingOf(first) : null
+})
+
+const headMixed = computed(() =>
+  headed.value.some((entry) => standingOf(entry) !== headStanding.value),
+)
+
+const headName = computed(() =>
+  headsTicked.value ? 'the ticked rows' : 'every row on this page',
+)
+
+/** One navigation for the lot, since each is a change to the same expression. */
+function setHeadStanding(standing: TermStanding | null) {
+  shell.setExpression(
+    headed.value.reduce(
+      (expr, entry) => withStanding(expr, termOf(entry), standing),
+      shell.query.value.expr,
+    ),
+  )
+}
 
 /**
  * Whether a text cell may wrap, which is to say whether this table's rows are
@@ -150,6 +212,23 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
         >
           <PageTick />
         </th>
+        <!-- Not a column either: where the query stands on each row is a
+             fact about the query rather than a field of the record. Headed
+             by the same control over every row on the page, or over the
+             ticked ones where there are any — see `headed`. -->
+        <th
+          v-if="standable"
+          class="dc-table__standing"
+          scope="col"
+        >
+          <StandingControl
+            v-if="headed.length"
+            :standing="headStanding"
+            :mixed="headMixed"
+            :name="headName"
+            @set="setHeadStanding"
+          />
+        </th>
         <!-- The hint sits on the cell rather than on the button inside it, so
              a sortable header and a plain one answer a hover the same way. -->
         <th
@@ -208,6 +287,17 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
           />
         </td>
         <td
+          v-if="standable"
+          class="dc-table__standing"
+        >
+          <StandingControl
+            v-if="termOf(entry) !== null"
+            :standing="standingOf(entry)"
+            :name="entry.parts.identity"
+            @set="setStanding(entry, $event)"
+          />
+        </td>
+        <td
           v-for="(column, index) in columns"
           :key="columnKey(column, index)"
           :class="cellClass(column)"
@@ -215,7 +305,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
           :data-dc-hide="column.hideBelow"
           :title="cellTitle(column, entry)"
         >
-          <!-- The marks are siblings of the value, not a wrapper around it:
+          <!-- The mark is a sibling of the value, not a wrapper around it:
                a mark that leads somewhere else cannot sit inside the button
                that opens this record. -->
           <span
@@ -226,11 +316,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
               :column="column"
               :entry="entry"
             />
-            <QueryMark :entry="entry" />
-            <ScopeMark
-              v-if="column.scope"
-              :entry="entry"
-            />
+            <ScopeMark :entry="entry" />
           </span>
           <ColumnCell
             v-else
@@ -321,6 +407,16 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
    to hang from nor a line to be cut at. */
 .dc-table th.dc-table__pick .dc-tick {
   display: block;
+}
+
+/* Likewise held to the control's own width, and the head's control drawn as
+   the rows' are — a box of signs, not a heading. */
+.dc-table th.dc-table__standing,
+.dc-table td.dc-table__standing {
+  width: 72px;
+  padding-right: 4px;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .dc-table__row:hover {

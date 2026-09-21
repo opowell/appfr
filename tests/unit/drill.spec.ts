@@ -10,6 +10,7 @@ import {
   scopeTerm,
   scopeTermFor,
   termStanding,
+  withStanding,
   withoutOwnScope,
 } from '../../src/query/drill'
 import { createMockDataSource, generateRows } from '../../src/data/mock'
@@ -241,14 +242,49 @@ describe('liftTerm', () => {
 describe('pressOptions', () => {
   const press = (init: MouseEventInit) => pressOptions(new MouseEvent('click', init))
 
-  it('reads ⌘ and Ctrl alike as "leave it out"', () => {
+  it('reads ⌘, Ctrl and ⇧ alike as "leave it out"', () => {
     expect(press({ metaKey: true })).toEqual({ exclude: true })
     expect(press({ ctrlKey: true })).toEqual({ exclude: true })
+    expect(press({ shiftKey: true })).toEqual({ exclude: true })
   })
 
   it('reads a plain press, and any other modifier, as nothing at all', () => {
     expect(press({})).toEqual({})
-    expect(press({ shiftKey: true, altKey: true })).toEqual({})
+    expect(press({ altKey: true })).toEqual({})
+  })
+})
+
+describe('withStanding', () => {
+  const term = scopeTerm(categories, row())
+
+  it('narrows to the record, turning a term that left it out', () => {
+    expect(withStanding('theme:space', term, 'in')).toBe('theme:space category:"categories_10007"')
+    // Rewritten through the formatter, which quotes only where it has to.
+    expect(withStanding('-category:"categories_10007"', term, 'in')).toBe(
+      'category:categories_10007',
+    )
+  })
+
+  it('leaves the record out, turning a term that narrowed to it', () => {
+    expect(withStanding('theme:space', term, 'out')).toBe('theme:space -category:"categories_10007"')
+    expect(withStanding('category:"categories_10007"', term, 'out')).toBe(
+      '-category:categories_10007',
+    )
+  })
+
+  it('says nothing about the record, whichever way the query stood on it', () => {
+    expect(withStanding('theme:space category:"categories_10007"', term, null)).toBe('theme:space')
+    expect(withStanding('theme:space -category:"categories_10007"', term, null)).toBe('theme:space')
+    expect(withStanding('theme:space', term, null)).toBe('theme:space')
+  })
+
+  it('leaves the expression alone where it already stands that way', () => {
+    expect(withStanding('category:"categories_10007"', term, 'in')).toBe('category:"categories_10007"')
+  })
+
+  it('leaves the expression alone for a record no term can name', () => {
+    expect(withStanding('theme:space', null, 'in')).toBe('theme:space')
+    expect(withStanding('theme:space', null, null)).toBe('theme:space')
   })
 })
 

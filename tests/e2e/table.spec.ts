@@ -140,6 +140,10 @@ test.describe('Columns — as many as the schema declares', () => {
   test('draws the declared set, in order, and nothing the shell added', async ({ page }) => {
     await gotoStory(page, COLUMNS)
     const labels = (await headings(page).allInnerTexts()).map((text) => text.trim())
+    // The one thing the shell adds, ahead of the declared set: the column
+    // saying where the query stands on each row, since pieces can be named.
+    // Headed by the same control the rows wear, not by a label.
+    expect(labels.shift()).toMatch(/^\+\s*·\s*−$/)
     expect(labels).toEqual([
       '#',
       // The picture column heads nothing: a column of pictures says what it is.

@@ -287,6 +287,18 @@ export const DrillableTable = story({
 })
 
 /**
+ * The same table with ticks on its rows, which is what the head of the
+ * standing column speaks for once any are ticked: `+`, `·` or `−` over the
+ * ticked sets rather than over the whole page.
+ */
+export const DrillableTableTicked = story({
+  schema: legoSchema,
+  liveUrl: true,
+  selectable: true,
+  defaults: { entity: 'sets', landing: 'entity', view: 'table' },
+})
+
+/**
  * Where a drill lands: the pieces of one set, reached by pressing that set's
  * *Parts*. Nothing here was typed — the expression is what the press wrote.
  *

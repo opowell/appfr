@@ -718,7 +718,7 @@ host whose leaves are the only records with somewhere to go (a URL opens in a
 new tab; a file opens in an editor) can leave `rowPress` alone and handle
 `activate` for exactly those.
 
-**A press with ⌘ (or Ctrl) held leaves the record out instead.** Every press
+**A press with ⌘ (or Ctrl, or ⇧) held leaves the record out instead.** Every press
 that narrows — a row, the `→`, a metric, a card's preview row — writes
 `-host:"www.example.com"` rather than `host:"www.example.com"` when the
 modifier is down, and the screen stays where it is: taking one record out of a
@@ -745,6 +745,21 @@ cells. The marks say what a press would do before it is made: the `+` or `−`
 fades under the pointer, the way a part on the bar does, and the `→` turns
 green, or red the moment ⌘ is held over it — the colour of the mark the press
 would leave on the row.
+
+**The table has a column for it.** A table has room a card does not, so
+there every row of a type that can be named wears the same three-way control
+— `+` narrows to the record, `·` says nothing about it, `−` leaves it out —
+lit where the query stands, in a column of its own after the ticks and before
+the first column the schema declared. At its head is the same control over
+every row on the page at once, or over the ticked rows where any are; it is
+lit where those rows agree and unlit where they do not. Each press is one
+change to the expression and the table stays where it is — the column is for
+saying where the query stands on many records without leaving the list.
+`withStanding(expr, term, standing)` is what one press writes, exported with
+the rest, and `StandingControl` is the control itself. Note that two records
+narrowed *to* on the same field are two terms ANDed — `set:a set:b` — which
+this language reads as a record that is both, so `+` over a page is a query
+for nothing; `−` over a page is the page left out, which is what it says.
 
 A host applying one itself wants `narrow(expr, entityKey)` from `useQueryState`, not
 `setExpression` followed by `setEntity`: each of those serialises from the query the URL

@@ -39,6 +39,7 @@ export { default as PinStar } from './components/views/PinStar.vue'
 export { default as SelectTick } from './components/views/SelectTick.vue'
 export { default as ScopeMark } from './components/views/ScopeMark.vue'
 export { default as QueryMark } from './components/views/QueryMark.vue'
+export { default as StandingControl } from './components/views/StandingControl.vue'
 export { default as MetricDrill } from './components/views/MetricDrill.vue'
 export { default as ColumnCell } from './components/views/ColumnCell.vue'
 
@@ -249,6 +250,7 @@ export {
   scopeTermFor,
   termStanding,
   withoutOwnScope,
+  withStanding,
 } from './query/drill'
 export type { TermStanding } from './query/drill'
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary'

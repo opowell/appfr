@@ -141,13 +141,33 @@ export function liftTerm(expr: string, term: string | null): string {
 }
 
 /**
+ * `expr` with the query's standing on one record set outright: narrowed to
+ * it, leaving it out, or — null — saying nothing about it.
+ *
+ * The three moves a mark on a row offers, as one: {@link addTerm} for the two
+ * signs, which turns the term the other way round where the query held it so,
+ * and {@link liftTerm} for neither. Unchanged for a null term, as they are —
+ * a record of a type that declares no scope is one no query can name.
+ */
+export function withStanding(
+  expr: string,
+  term: string | null,
+  standing: TermStanding | null,
+): string {
+  if (!term) return expr
+  if (standing === null) return liftTerm(expr, term)
+  return addTerm(expr, standing === 'out' ? excludingTerm(term) : term)
+}
+
+/**
  * The options a pointer press carries — the one place the modifier is read, so
  * every view agrees about which key it is. ⌘ on a Mac and Ctrl elsewhere are
  * the same key in the same place, and both are read everywhere, so a keyboard
- * on the wrong machine still works.
+ * on the wrong machine still works; ⇧ says the same thing on either, being
+ * the one key a reader reaches for to turn a press the other way round.
  */
 export function pressOptions(event: MouseEvent | KeyboardEvent): PressOptions {
-  return event.metaKey || event.ctrlKey ? { exclude: true } : {}
+  return event.metaKey || event.ctrlKey || event.shiftKey ? { exclude: true } : {}
 }
 
 /**

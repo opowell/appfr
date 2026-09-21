@@ -69,8 +69,9 @@ test.describe('A metric that counts something listable', () => {
     const first = page.locator('.dc-table__row').first()
     // Sets: metric1 is Parts and leads to pieces; metric2 is Minifigs, which
     // this schema does not list, so that number stays plain text.
-    await expect(first.locator('td').nth(3).locator('button.dc-drill')).toHaveCount(1)
-    await expect(first.locator('td').nth(4).locator('button.dc-drill')).toHaveCount(0)
+    // One further along than the columns say: the standing column comes first.
+    await expect(first.locator('td').nth(4).locator('button.dc-drill')).toHaveCount(1)
+    await expect(first.locator('td').nth(5).locator('button.dc-drill')).toHaveCount(0)
   })
 
   test('narrows to that type, scoped to the record pressed', async ({ page }) => {
@@ -298,14 +299,19 @@ test.describe('A row the query names', () => {
     await expect(marks(page)).toHaveCount(0)
   })
 
-  test('wears it in the table too', async ({ page }) => {
+  test('shows it in the table as the lit sign of its standing column', async ({ page }) => {
     await gotoStory(page, TABLE)
     await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click({ modifiers: ['Meta'] })
     await chooseScope(page, 'Sets')
     await chooseView(page, 'table')
-    await expect(marks(page)).toHaveCount(1)
-    // Beside the name, in the column that declared the scope.
-    await expect(page.locator('.dc-table__name .dc-standing')).toHaveText('−')
+    // Not the mark beside the name — a table has a column for this, on
+    // every row, and the one the query leaves out is the one row lit `−`.
+    await expect(marks(page)).toHaveCount(0)
+    const lit = page.locator(
+      'td.dc-table__standing [data-dc-active="true"]:not([data-dc-standing="none"])',
+    )
+    await expect(lit).toHaveCount(1)
+    await expect(lit).toHaveAttribute('data-dc-standing', 'out')
   })
 })
 

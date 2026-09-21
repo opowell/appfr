@@ -2661,24 +2661,28 @@ with another project's server on the same machine.
 
 There is no registry in the middle: a consumer names a tag of this repository
 and gets `dist/` out of the tarball, which is why `dist/` is committed. So a
-release is a tag, and `npm version` is the whole of it:
+release is a tag, and `npm version` cuts it; `npm run release` publishes it:
 
 ```bash
 git commit -m 'What changed'   # the work, without dist/
-npm version minor              # lint, typecheck, build, test, tag, push
+npm version minor              # lint, typecheck, build, test, commit, tag
+npm run release                # git push origin main --follow-tags
 ```
 
 `npm version` refuses a dirty tree, which is the point — the change lands as its
 own commit first, and `Release vX.Y.Z` stays a version bump and the artifacts it
-implies. Three hooks do the rest:
+implies. Two hooks do the rest:
 
 | Hook | Does |
 | --- | --- |
 | `preversion` | lint, typecheck, `build`, then `test`. Building before testing is what lets the No Build stories cover *this* build rather than the last one. |
 | `version` | builds again and stages `dist/`, so the artifacts ride in the version commit rather than trailing it |
-| `postversion` | `git push origin main --follow-tags` |
 
 Anything red stops it before the version is written, and nothing needs undoing.
+The push is deliberately not a hook: everything up to it is local and can be
+undone with a `git reset` and `git tag -d`, and the push is the one step that
+cannot — so it is its own command, run on purpose. A consumer can only name
+the tag once it is on the remote.
 
 Versions are pre-1.0 and the minor is where breaking goes, so `minor` is the
 usual argument and `patch` is for a fix that changes nothing a host is holding.

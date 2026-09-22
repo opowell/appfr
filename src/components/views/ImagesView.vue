@@ -6,6 +6,7 @@ import { pressOptions } from '../../query/drill'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { justify } from '../../data/justify'
+import type { PictureShape } from '../../data/justify'
 import RowPicture from './RowPicture.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -23,11 +24,13 @@ import SelectTick from './SelectTick.vue'
  * time one does.
  *
  * And nothing is ever drawn larger than it is. A picture has only so many
- * pixels, and a box reached by blowing one up is a box with a blur in it; so
- * a picture with fewer than its box has room for sits at its own size in the
- * middle of it, on the box's ground. The box, not the row, takes the
- * shortfall: a row held down to its smallest picture was, on a catalogue
- * with old scans in it, a row of thumbnails whenever one was there.
+ * pixels, and a box reached by blowing one up is a box with a blur in it. So
+ * a row aims no higher than its tallest picture — a page of thumbnails is
+ * more of them per row, at the size they are, rather than a few floating in
+ * boxes nothing can fill — and a picture smaller than the box it did get sits
+ * at its own size in the middle of it. The row answers a page whose pictures
+ * are all small; the box answers the small one beside a large one, which no
+ * row height can.
  *
  * Every picture opens its record, as a tile does, and says which record it is
  * on hover and to a screen reader. A record with no picture — none stored, or
@@ -82,10 +85,10 @@ function naturalOf(entry: PresentedRow): Natural | undefined {
   return src ? naturals.get(src) : undefined
 }
 
-/** Width over height: the shape, whatever size it is drawn at. */
-function shapeOf(entry: PresentedRow): number {
+/** The shape a row is laid from, and the size once the picture has said it. */
+function shapeOf(entry: PresentedRow): PictureShape {
   const natural = naturalOf(entry)
-  return natural ? natural.width / natural.height : SQUARE
+  return natural ? { ratio: natural.width / natural.height, height: natural.height } : { ratio: SQUARE }
 }
 
 /*
@@ -143,7 +146,7 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
   for (const row of laid) {
     let left = 0
     for (const entry of row.items) {
-      const boxWidth = shapeOf(entry) * row.height
+      const boxWidth = shapeOf(entry).ratio * row.height
       const natural = naturalOf(entry)
       const smaller = natural !== undefined && natural.height < row.height
       boxes.push({

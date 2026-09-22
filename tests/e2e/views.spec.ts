@@ -212,6 +212,26 @@ test.describe('Views — the pictures alone', () => {
     }
   })
 
+  /*
+   * The other half of never enlarging: a row is no taller than the tallest
+   * picture in it. A page whose pictures are all small is more of them per
+   * row at the size they are — not a few floating in boxes nothing can fill.
+   */
+  test('no row is taller than the tallest picture in it', async ({ page }) => {
+    await gotoStory(page, IMAGES)
+    await settled(page)
+    const laid = await boxes(page)
+    const rows = new Map<number, typeof laid>()
+    for (const box of laid) rows.set(box.top, [...(rows.get(box.top) ?? []), box])
+    expect(rows.size).toBeGreaterThan(2)
+    for (const [, row] of rows) {
+      const pictured = row.filter((box) => box.natural)
+      if (!pictured.length) continue
+      const tallest = Math.max(...pictured.map((box) => box.natural!.height))
+      expect(row[0]!.height).toBeLessThanOrEqual(tallest + 0.5)
+    }
+  })
+
   test('a record with no picture keeps its place as a square with its name on', async ({ page }) => {
     await gotoStory(page, IMAGES)
     const blanks = page.locator('.dc-images__blank')

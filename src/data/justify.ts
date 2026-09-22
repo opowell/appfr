@@ -5,39 +5,30 @@
  * chose the size of, and a picture is the size it is. Tiles the same size
  * would have to crop or letterbox, and a part cropped to a square is the wrong
  * part. So instead every row is scaled to exactly the width on offer — the
- * pictures in it share a height, each as wide as its shape says it is at that
- * height, and the row takes pictures until that height is one every picture
- * in it can be drawn at. The reader's order is kept, left to right and then
- * down, which a masonry of columns would not.
+ * boxes in it share a height, each as wide as its picture's shape says it is
+ * at that height, and the row is packed until the next picture would take it
+ * under the height it aims for. The reader's order is kept, left to right and
+ * then down, which a masonry of columns would not.
  *
- * And nothing is ever drawn larger than it is. A picture has only so many
- * pixels, and a row that reached the edge by blowing one up would be a row
- * with a blur in it; so a row's height is capped at the smallest picture in
- * it, and a row that cannot reach the edge under that cap — only ever the
- * last — stops where it stops rather than stretch.
+ * The boxes, not the pictures: a picture with fewer pixels than its box has
+ * room for is the view's to draw at its own size inside it, rather than this
+ * function's to shrink the row for. A row that took its height from its
+ * smallest picture was, on a real catalogue, a row of thumbnails whenever one
+ * old scan was in it.
  *
  * Pure, so a test can hang a wall without a browser: the caller measures the
  * width and the shapes, and lays out what comes back.
  */
 
-export interface PictureShape {
-  /** Width over height — the shape, whatever size it is drawn at. */
-  ratio: number
-  /**
-   * The tallest it may be drawn: its own height in pixels, once known. Left
-   * out for a picture not yet loaded, which the aim alone caps.
-   */
-  height?: number
-}
-
 export interface JustifiedRow<T> {
   items: T[]
-  /** How tall every picture in the row is drawn, in the width's units. */
+  /** How tall every box in the row is drawn, in the width's units. */
   height: number
   /**
    * Whether the row reaches the far edge. The last row is the one that may
-   * not: with too few pictures left to fill it without enlarging one, it is
-   * drawn as tall as they allow and ends where it ends.
+   * not: with too few pictures left to fill it at anything near the height
+   * the others have, it keeps the aim and ends where it ends — never
+   * stretched to the edge, a few huge boxes being no way to end a wall.
    */
   filled: boolean
 }
@@ -45,9 +36,9 @@ export interface JustifiedRow<T> {
 export interface JustifyOptions {
   /** The width every filled row measures. */
   width: number
-  /** The height a row aims for, and the most a row is ever drawn at. */
+  /** The height a row aims for; filled rows land as near it as packing allows. */
   height: number
-  /** Between pictures in a row, and so part of what a row's width is spent on. */
+  /** Between boxes in a row, and so part of what a row's width is spent on. */
   gap?: number
 }
 
@@ -60,44 +51,51 @@ function fillHeight(ratioSum: number, count: number, width: number, gap: number)
 }
 
 /**
- * Packs `items` into rows, `shapeOf(item)` being the shape each picture is
- * and, once it is known, how tall it may be drawn.
+ * Packs `items` into rows, each `ratioOf(item)` being its width over its
+ * height — the shape the picture is, whatever size it is drawn at.
  *
- * Greedy, one pass: a picture joins the row, and the row closes the moment
- * the height that brings it to the edge is one no picture in it has to be
- * enlarged to reach. A width of nothing — a wall not yet measured — is one
+ * Greedy, one pass: a picture joins the row until the row would be under its
+ * aim with it in, and then it goes whichever side leaves the row's height
+ * nearer that aim. A width of nothing — a wall not yet measured — is one
  * unfilled row of everything, which is what the caller can draw before it
  * knows better.
  */
 export function justify<T>(
   items: readonly T[],
-  shapeOf: (item: T) => PictureShape,
+  ratioOf: (item: T) => number,
   options: JustifyOptions,
 ): JustifiedRow<T>[] {
   const { width, height, gap = 0 } = options
   if (!items.length) return []
+  if (!(width > 0) || !(height > 0)) return [{ items: [...items], height, filled: false }]
 
   const rows: JustifiedRow<T>[] = []
   let pending: T[] = []
   let ratioSum = 0
-  let cap = height
 
   for (const item of items) {
-    const shape = shapeOf(item)
-    pending.push(item)
-    ratioSum += Math.max(shape.ratio, Number.EPSILON)
-    if (shape.height !== undefined && shape.height > 0) cap = Math.min(cap, shape.height)
+    const ratio = Math.max(ratioOf(item), Number.EPSILON)
+    const withHeight = fillHeight(ratioSum + ratio, pending.length + 1, width, gap)
+    if (withHeight > height) {
+      pending.push(item)
+      ratioSum += ratio
+      continue
+    }
 
-    if (!(width > 0)) continue
-    const toEdge = fillHeight(ratioSum, pending.length, width, gap)
-    if (toEdge <= cap) {
-      rows.push({ items: pending, height: toEdge, filled: true })
+    // The row is full with this in it. Full without it too, only taller — and
+    // the taller one is the row when it is the nearer to the aim.
+    const withoutHeight = pending.length ? fillHeight(ratioSum, pending.length, width, gap) : Infinity
+    if (withoutHeight - height < height - withHeight) {
+      rows.push({ items: pending, height: withoutHeight, filled: true })
+      pending = [item]
+      ratioSum = ratio
+    } else {
+      rows.push({ items: [...pending, item], height: withHeight, filled: true })
       pending = []
       ratioSum = 0
-      cap = height
     }
   }
 
-  if (pending.length) rows.push({ items: pending, height: cap, filled: false })
+  if (pending.length) rows.push({ items: pending, height, filled: false })
   return rows
 }

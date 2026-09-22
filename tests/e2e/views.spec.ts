@@ -154,14 +154,28 @@ test.describe('Views — the pictures alone', () => {
     )
   }
 
-  test('every row but the last reaches the far edge', async ({ page }) => {
-    await gotoStory(page, IMAGES)
+  /**
+   * Once every picture has said its shape — the rows are laid again as each
+   * loads, and a wall still settling is not the wall. The pictures load
+   * lazily, so the wall is scrolled through once to ask for all of them.
+   */
+  async function settled(page: Page) {
     await expect(page.locator('.dc-images__cell img').first()).toBeVisible()
-    // Once the pictures have said their shapes — the rows are laid again as
-    // each loads, and a wall still settling is not the wall.
+    await page.locator('.dc-results').evaluate(async (scroller) => {
+      for (let y = 0; y <= scroller.scrollHeight; y += scroller.clientHeight) {
+        scroller.scrollTop = y
+        await new Promise((tick) => setTimeout(tick, 50))
+      }
+      scroller.scrollTop = 0
+    })
     await page.waitForFunction(() =>
       [...document.querySelectorAll<HTMLImageElement>('.dc-images__cell img')].every((image) => image.complete),
     )
+  }
+
+  test('every row but the last reaches the far edge', async ({ page }) => {
+    await gotoStory(page, IMAGES)
+    await settled(page)
     const wallWidth = await page.locator('.dc-images__wall').evaluate((wall) => wall.clientWidth)
     const laid = await boxes(page)
     const rows = [...new Set(laid.map((box) => box.top))].sort((a, b) => a - b)
@@ -172,20 +186,29 @@ test.describe('Views — the pictures alone', () => {
     }
   })
 
-  test('no picture is drawn larger than it is', async ({ page }) => {
+  test('no picture is drawn larger than it is, and each box is the shape of its picture', async ({ page }) => {
     await gotoStory(page, IMAGES)
-    await expect(page.locator('.dc-images__cell img').first()).toBeVisible()
-    await page.waitForFunction(() =>
-      [...document.querySelectorAll<HTMLImageElement>('.dc-images__cell img')].every((image) => image.complete),
+    await settled(page)
+    const drawn = await page.locator('.dc-images__cell img').evaluateAll((images) =>
+      (images as HTMLImageElement[]).map((image) => {
+        const shown = image.getBoundingClientRect()
+        const box = image.closest('.dc-images__cell')!.getBoundingClientRect()
+        return {
+          shown: { width: shown.width, height: shown.height },
+          natural: { width: image.naturalWidth, height: image.naturalHeight },
+          box: { width: box.width, height: box.height },
+        }
+      }),
     )
-    const pictured = (await boxes(page)).filter((box) => box.natural)
-    expect(pictured.length).toBeGreaterThan(0)
-    for (const box of pictured) {
-      expect(box.height).toBeLessThanOrEqual(box.natural!.height + 0.5)
-      expect(box.width).toBeLessThanOrEqual(box.natural!.width + 0.5)
-      // And each box is the shape of what is in it, so nothing is cropped or
-      // floating in blank.
-      expect(box.width / box.height).toBeCloseTo(box.natural!.width / box.natural!.height, 1)
+    expect(drawn.length).toBeGreaterThan(0)
+    // The fixture has pictures both taller and shorter than a row, so both
+    // cases are on the wall: scaled down to the box, and sat inside it.
+    expect(drawn.some((picture) => picture.shown.height < picture.box.height - 1)).toBe(true)
+    expect(drawn.some((picture) => picture.shown.height > picture.box.height - 3)).toBe(true)
+    for (const picture of drawn) {
+      expect(picture.shown.height).toBeLessThanOrEqual(picture.natural.height + 0.5)
+      expect(picture.shown.width).toBeLessThanOrEqual(picture.natural.width + 0.5)
+      expect(picture.box.width / picture.box.height).toBeCloseTo(picture.natural.width / picture.natural.height, 1)
     }
   })
 

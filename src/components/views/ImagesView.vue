@@ -6,7 +6,6 @@ import { pressOptions } from '../../query/drill'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { justify } from '../../data/justify'
-import type { PictureShape } from '../../data/justify'
 import RowPicture from './RowPicture.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -17,12 +16,18 @@ import SelectTick from './SelectTick.vue'
  * A picture is the size it is, so the rows cannot be a grid: pictures of
  * different shapes in boxes of one shape are either cropped or floating in
  * blank, and a wall with blank in it is not a wall. Each row here shares one
- * height, at which every picture in it is as wide as its shape says, and the
- * height is whatever brings that row to the edge — never more than a picture
- * in it has the pixels for, a row reaching the edge by taking pictures in
- * rather than by blowing one up. The shapes and sizes come from the pictures
- * themselves as they load, a picture not yet loaded standing as a square
- * until it says otherwise; the wall is laid again each time one does.
+ * height, at which every box in it is as wide as its picture's shape says,
+ * and the height is whatever brings that row to the edge. The shapes come
+ * from the pictures themselves as they load, a picture not yet loaded
+ * standing as a square until it says otherwise; the wall is laid again each
+ * time one does.
+ *
+ * And nothing is ever drawn larger than it is. A picture has only so many
+ * pixels, and a box reached by blowing one up is a box with a blur in it; so
+ * a picture with fewer than its box has room for sits at its own size in the
+ * middle of it, on the box's ground. The box, not the row, takes the
+ * shortfall: a row held down to its smallest picture was, on a catalogue
+ * with old scans in it, a row of thumbnails whenever one was there.
  *
  * Every picture opens its record, as a tile does, and says which record it is
  * on hover and to a screen reader. A record with no picture — none stored, or
@@ -41,15 +46,20 @@ const rows = usePresentedRows()
 const ROW_HEIGHT = 240
 const GAP = 8
 /** A picture that has not said its shape yet, and a record with no picture. */
-const SQUARE: PictureShape = { ratio: 1 }
+const SQUARE = 1
+
+/** What a picture is, once it has loaded: its own pixels. */
+interface Natural {
+  width: number
+  height: number
+}
 
 /**
- * Each picture's shape and size, by its `src`, learnt as it loads. Keyed by
- * the address rather than the row, so a picture the next page or sort draws
- * again is laid at its shape at once rather than as a square that corrects
- * itself.
+ * Each picture's own size, by its `src`, learnt as it loads. Keyed by the
+ * address rather than the row, so a picture the next page or sort draws again
+ * is laid at its shape at once rather than as a square that corrects itself.
  */
-const shapes = reactive(new Map<string, PictureShape>())
+const naturals = reactive(new Map<string, Natural>())
 
 /** The pictures that would not load, drawn as the record's name instead. */
 const broken = reactive(new Set<string>())
@@ -57,7 +67,7 @@ const broken = reactive(new Set<string>())
 function measured(src: string, event: Event) {
   const image = event.target as HTMLImageElement
   if (image.naturalWidth > 0 && image.naturalHeight > 0) {
-    shapes.set(src, { ratio: image.naturalWidth / image.naturalHeight, height: image.naturalHeight })
+    naturals.set(src, { width: image.naturalWidth, height: image.naturalHeight })
   }
 }
 
@@ -67,9 +77,15 @@ function pictureOf(entry: PresentedRow): string | null {
   return src && !broken.has(src) ? src : null
 }
 
-function shapeOf(entry: PresentedRow): PictureShape {
+function naturalOf(entry: PresentedRow): Natural | undefined {
   const src = pictureOf(entry)
-  return (src && shapes.get(src)) || SQUARE
+  return src ? naturals.get(src) : undefined
+}
+
+/** Width over height: the shape, whatever size it is drawn at. */
+function shapeOf(entry: PresentedRow): number {
+  const natural = naturalOf(entry)
+  return natural ? natural.width / natural.height : SQUARE
 }
 
 /*
@@ -100,7 +116,13 @@ onBeforeUnmount(() => {
 
 interface Placed {
   entry: PresentedRow
+  /** The box: where it is on the wall, and how big. */
   style: CSSProperties
+  /**
+   * The picture in it: the whole box, or — for one with fewer pixels than
+   * the box has room for — its own size, centred by the box.
+   */
+  picture: CSSProperties
 }
 
 /**
@@ -121,7 +143,9 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
   for (const row of laid) {
     let left = 0
     for (const entry of row.items) {
-      const boxWidth = shapeOf(entry).ratio * row.height
+      const boxWidth = shapeOf(entry) * row.height
+      const natural = naturalOf(entry)
+      const smaller = natural !== undefined && natural.height < row.height
       boxes.push({
         entry,
         style: {
@@ -130,6 +154,9 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
           width: `${boxWidth}px`,
           height: `${row.height}px`,
         },
+        picture: smaller
+          ? { width: `${natural.width}px`, height: `${natural.height}px` }
+          : { width: '100%', height: '100%' },
       })
       left += boxWidth + GAP
     }
@@ -148,7 +175,7 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
       :style="{ height: `${layout.height}px` }"
     >
       <div
-        v-for="{ entry, style } in layout.boxes"
+        v-for="{ entry, style, picture } in layout.boxes"
         :key="entry.key"
         class="dc-images__cell"
         :style="style"
@@ -163,6 +190,7 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
           <RowPicture
             v-if="pictureOf(entry)"
             class="dc-images__picture"
+            :style="picture"
             :src="pictureOf(entry)!"
             @load="measured(pictureOf(entry)!, $event)"
             @error="broken.add(pictureOf(entry)!)"
@@ -205,8 +233,9 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
 
 /*
  * The whole box, and its own faint ground: a part photographed on white and
- * one cut out to nothing are the same picture here, and a picture that has
- * not loaded is a box that is visibly waiting rather than a hole in the wall.
+ * one cut out to nothing are the same picture here; a picture that has not
+ * loaded is a box that is visibly waiting rather than a hole in the wall; and
+ * a picture smaller than its box is centred on it.
  */
 .dc-images__open {
   display: flex;
@@ -227,9 +256,11 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
   border-color: var(--dc-line-2);
 }
 
+/* Sized by the layout: the box, or the picture's own pixels within it. */
 .dc-images__picture {
-  width: 100%;
-  height: 100%;
+  flex: none;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 /*

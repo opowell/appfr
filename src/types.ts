@@ -591,6 +591,18 @@ export interface QueryRequest {
    * source can hand it straight to an `OFFSET` without repeating the sum.
    */
   offset: number
+  /**
+   * Told how many rows match so far, while a `query` that takes a while is
+   * still working it out — a count read off the part of a large table seen
+   * yet, say. Each call replaces the last, and the answer `query` settles on
+   * replaces them all; nothing is said after it.
+   *
+   * Offered where the shell can put a partial count to use, and absent
+   * everywhere else — so a source calls it where it is there, and a source
+   * that answers at once, or cannot say anything before it has finished,
+   * never needs to.
+   */
+  progress?: (total: number) => void
 }
 
 export interface QueryResult {

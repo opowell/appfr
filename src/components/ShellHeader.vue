@@ -76,6 +76,12 @@ const entityCounts = useEntityCounts({
 })
 
 /**
+ * What a count says before its source has said anything: a mark in the place
+ * the number goes, so the list keeps its shape while the numbers arrive.
+ */
+const COUNTING = '…'
+
+/**
  * How many records a type holds, said beside its name in the list of them.
  *
  * The population is what the schema publishes, and it is what makes that list
@@ -85,7 +91,8 @@ const entityCounts = useEntityCounts({
  * query, not just of the type in force. The type in force already has its
  * own live total, the shell's own query; the rest are counted separately as
  * the picker opens, and one still being counted carries a `~`, since the
- * true total may yet grow.
+ * true total may yet grow. One the source has said nothing about yet reads
+ * {@link COUNTING} rather than a number at all.
  */
 function countOf(entity: EntitySchema): string {
   if (props.hideCount) return entity.count
@@ -94,6 +101,8 @@ function countOf(entity: EntitySchema): string {
   if (entityCounts.pristine.value) return entity.count
   const found = entityCounts.counts.value.get(entity.key)
   if (!found) return entity.count
+  // Nothing said yet is not nought matched, and `~0` read as the second.
+  if (!found.counted) return COUNTING
   return `${found.pending ? '~' : ''}${writeCount.value(found.total)}`
 }
 

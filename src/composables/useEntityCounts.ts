@@ -7,10 +7,19 @@ import { withoutOwnScope } from '../query/drill'
 
 /** How many rows of one entity currently match, for the type picker. */
 export interface EntityCount {
-  /** Rows of this entity matching the query, once resolved. */
+  /**
+   * Rows of this entity matching the query, once resolved — or as many as the
+   * source has counted so far, while it is still {@link pending}.
+   */
   total: number
   /** Still being counted — {@link total} may yet grow. */
   pending: boolean
+  /**
+   * Whether {@link total} is anything the source said. False while a count is
+   * pending and the source has not yet reported any of it — the `0` then is a
+   * placeholder, and a very different thing from having counted none.
+   */
+  counted: boolean
 }
 
 export interface UseEntityCountsOptions {
@@ -46,6 +55,10 @@ export interface EntityCountsState {
  * Left for the caller to trigger rather than watched: a scan of a large entity
  * is real work, and the picker is open far less often than the query changes
  * underneath it. {@link refresh} is meant to be called as the picker opens.
+ *
+ * A slow count is not left blank until it lands: each request carries a
+ * {@link QueryRequest.progress}, and what a source says through it stands as
+ * the count, still pending, until the answer replaces it.
  */
 export function useEntityCounts(options: UseEntityCountsOptions): EntityCountsState {
   const counts = shallowRef<Map<string, EntityCount>>(new Map())
@@ -60,30 +73,50 @@ export function useEntityCounts(options: UseEntityCountsOptions): EntityCountsSt
     const within = options.within?.value.trim() ?? ''
     pristine.value = query.expr.trim() === '' && !within
     const next = new Map<string, EntityCount>()
+    let building = true
     for (const entity of entities) {
       // Each count is what choosing that entity would list, which for the
       // type a term of the query names is every one of them, not the one.
       const own = withoutOwnScope(entity, query.expr)
       const expr = within ? andExpression(within, own) : own
+      let settled = false
+      const land = (count: EntityCount): void => {
+        if (current !== token) return
+        // Said while the list is still being asked for, it goes into the one
+        // about to be published rather than the one it would replace.
+        if (building) {
+          next.set(entity.key, count)
+          return
+        }
+        const updated = new Map(counts.value)
+        updated.set(entity.key, count)
+        counts.value = updated
+      }
       const outcome = options.source.value.query({
         query: { ...query, entity: entity.key, expr, facets: emptyFacetState(entity), page: 1 },
         schema,
         entity,
         limit: 0,
         offset: 0,
+        progress: (total) => {
+          // Said after the answer, or by a source answering in the same tick,
+          // it would stand over a count that is already whole.
+          if (settled) return
+          land({ total, pending: true, counted: true })
+        },
       })
       if (outcome instanceof Promise) {
-        next.set(entity.key, { total: 0, pending: true })
+        if (!next.has(entity.key)) next.set(entity.key, { total: 0, pending: true, counted: false })
         outcome.then((result) => {
-          if (current !== token) return
-          const settled = new Map(counts.value)
-          settled.set(entity.key, { total: result.total, pending: false })
-          counts.value = settled
+          settled = true
+          land({ total: result.total, pending: false, counted: true })
         })
       } else {
-        next.set(entity.key, { total: outcome.total, pending: false })
+        settled = true
+        next.set(entity.key, { total: outcome.total, pending: false, counted: true })
       }
     }
+    building = false
     counts.value = next
   }
 

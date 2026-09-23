@@ -126,6 +126,73 @@ describe('useEntityCounts', () => {
     expect(state.counts.value.size).toBe(iRadarSchema.entities.length)
   })
 
+  it('says an async count is not counted until the source says something', () => {
+    const source: DataSource = { query: () => new Promise<QueryResult>(() => {}) }
+    const { state } = setup('?q=digest', { source })
+    state.refresh()
+    const counts = [...state.counts.value.values()]
+    expect(counts.every((count) => count.pending && !count.counted)).toBe(true)
+  })
+
+  it('stands what the source reports on the way as the count, still pending', async () => {
+    let report: (total: number) => void = () => {}
+    let answer: (value: QueryResult) => void = () => {}
+    const first = iRadarSchema.entities[0]!.key
+    const source: DataSource = {
+      query: (request) => {
+        if (request.entity!.key !== first) return { rows: [], total: 0, unfiltered: false }
+        report = request.progress!
+        return new Promise<QueryResult>((resolve) => (answer = resolve))
+      },
+    }
+    const { state } = setup('?q=digest', { source })
+    state.refresh()
+
+    report(12)
+    expect(state.counts.value.get(first)).toEqual({ total: 12, pending: true, counted: true })
+    report(40)
+    expect(state.counts.value.get(first)!.total).toBe(40)
+
+    answer({ rows: [], total: 57, unfiltered: false })
+    await vi.waitFor(() => expect(state.counts.value.get(first)!.pending).toBe(false))
+    expect(state.counts.value.get(first)!.total).toBe(57)
+
+    // Late word from the source changes nothing: the answer is whole.
+    report(3)
+    expect(state.counts.value.get(first)).toEqual({ total: 57, pending: false, counted: true })
+  })
+
+  it('keeps a report made before the source had returned its promise', () => {
+    const first = iRadarSchema.entities[0]!.key
+    const source: DataSource = {
+      query: (request) => {
+        request.progress!(5)
+        return new Promise<QueryResult>(() => {})
+      },
+    }
+    const { state } = setup('?q=digest', { source })
+    state.refresh()
+    expect(state.counts.value.get(first)).toEqual({ total: 5, pending: true, counted: true })
+  })
+
+  it('drops a report for a query that has since been replaced', () => {
+    const reports: ((total: number) => void)[] = []
+    const source: DataSource = {
+      query: (request) => {
+        reports.push(request.progress!)
+        return new Promise<QueryResult>(() => {})
+      },
+    }
+    const { state, query } = setup('?q=digest', { source })
+    state.refresh()
+    const stale = reports[0]!
+    query.value = parseQuery('?q=recall', iRadarSchema)
+    state.refresh()
+    stale(99)
+    const first = iRadarSchema.entities[0]!.key
+    expect(state.counts.value.get(first)!.counted).toBe(false)
+  })
+
   it('ignores a stale async response', async () => {
     let resolveFirst: (value: QueryResult) => void = () => {}
     let call = 0

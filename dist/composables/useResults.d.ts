@@ -29,6 +29,13 @@ export interface ResultsState {
      * `stream` that has not closed. Never true for a sync source.
      */
     pending: Ref<boolean>;
+    /**
+     * True while the total itself is still being worked out, which is what a
+     * `~` on the pager says. Not while another page of a query already counted
+     * is asked for: the rows are pending, but how many match is known, and the
+     * total stays at that until the source says otherwise.
+     */
+    counting: Ref<boolean>;
     error: ShallowRef<unknown>;
     refresh(): void;
 }

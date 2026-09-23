@@ -2,10 +2,19 @@ import type { ComputedRef, Ref, ShallowRef } from 'vue';
 import type { DataSource, DomainSchema, EntitySchema, ShellQuery } from '../types';
 /** How many rows of one entity currently match, for the type picker. */
 export interface EntityCount {
-    /** Rows of this entity matching the query, once resolved. */
+    /**
+     * Rows of this entity matching the query, once resolved — or as many as the
+     * source has counted so far, while it is still {@link pending}.
+     */
     total: number;
     /** Still being counted — {@link total} may yet grow. */
     pending: boolean;
+    /**
+     * Whether {@link total} is anything the source said. False while a count is
+     * pending and the source has not yet reported any of it — the `0` then is a
+     * placeholder, and a very different thing from having counted none.
+     */
+    counted: boolean;
 }
 export interface UseEntityCountsOptions {
     source: ComputedRef<DataSource>;
@@ -38,5 +47,9 @@ export interface EntityCountsState {
  * Left for the caller to trigger rather than watched: a scan of a large entity
  * is real work, and the picker is open far less often than the query changes
  * underneath it. {@link refresh} is meant to be called as the picker opens.
+ *
+ * A slow count is not left blank until it lands: each request carries a
+ * {@link QueryRequest.progress}, and what a source says through it stands as
+ * the count, still pending, until the answer replaces it.
  */
 export declare function useEntityCounts(options: UseEntityCountsOptions): EntityCountsState;

@@ -260,6 +260,124 @@ describe('a stream and the query that outran it', () => {
   })
 })
 
+describe('paging a query already counted', () => {
+  /** A query of nine rows, pushed and closed. */
+  function counted(limit = 4) {
+    const hand = handSource()
+    const mounted = mount(hand.source, limit)
+    hand.sink.insert(rows('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'))
+    expect(mounted.state.counting.value).toBe(true)
+    hand.sink.close()
+    return { hand, ...mounted }
+  }
+
+  it('is not counting again, and keeps the total, while the next page arrives', async () => {
+    const { hand, state, query } = counted()
+    expect(state.counting.value).toBe(false)
+
+    query.value = { ...query.value, page: 2 }
+    await nextTick()
+    expect(state.pending.value).toBe(true)
+    expect(state.counting.value).toBe(false)
+    expect(state.total.value).toBe(9)
+    expect(state.pageCount.value).toBe(3)
+
+    // A source that counts as it goes starts again from its page; the pager
+    // does not follow it down.
+    hand.sink.set({ rows: rows('e', 'f', 'g', 'h'), total: 4 })
+    expect(state.rows.value.map((entry) => entry.id)).toEqual(['e', 'f', 'g', 'h'])
+    expect(state.total.value).toBe(9)
+
+    hand.sink.set({ total: 9 })
+    hand.sink.close()
+    expect(state.total.value).toBe(9)
+    expect(state.pending.value).toBe(false)
+  })
+
+  it('takes what the source counted once it closes, where that changed', async () => {
+    const { hand, state, query } = counted()
+    query.value = { ...query.value, page: 2 }
+    await nextTick()
+    hand.sink.set({ rows: rows('e', 'f', 'g', 'h'), total: 10 })
+    expect(state.total.value).toBe(9)
+    hand.sink.close()
+    expect(state.total.value).toBe(10)
+  })
+
+  it('keeps the total when the page is only made longer', async () => {
+    const hand = handSource()
+    const limit = ref(4)
+    const query = ref<ShellQuery>(defaultQuery(iRadarSchema, { entity: 'searches', landing: 'entity' }))
+    const state = effectScope().run(() =>
+      useResults({
+        source: computed(() => hand.source),
+        query: computed(() => query.value),
+        schema: computed(() => iRadarSchema),
+        entity: computed(() => searches),
+        limit: computed(() => limit.value),
+      }),
+    )!
+    hand.sink.insert(rows('a', 'b', 'c', 'd', 'e', 'f'))
+    hand.sink.close()
+
+    limit.value = 5
+    await nextTick()
+    expect(state.counting.value).toBe(false)
+    expect(state.total.value).toBe(6)
+  })
+
+  it('is still counting a query that had not finished counting', async () => {
+    const hand = handSource()
+    const { state, query } = mount(hand.source)
+    hand.sink.insert(rows('a', 'b', 'c', 'd', 'e'))
+
+    query.value = { ...query.value, page: 2 }
+    await nextTick()
+    expect(state.counting.value).toBe(true)
+  })
+
+  it('counts a different query afresh', async () => {
+    const { hand, state, query } = counted()
+    query.value = { ...query.value, sort: 'name' }
+    await nextTick()
+    expect(state.counting.value).toBe(true)
+    hand.sink.insert(rows('a'))
+    expect(state.total.value).toBe(1)
+  })
+
+  it('counts afresh after a failure', async () => {
+    const { hand, state, query } = counted()
+    query.value = { ...query.value, page: 2 }
+    await nextTick()
+    hand.sink.fail(new Error('gone'))
+    expect(state.counting.value).toBe(false)
+
+    query.value = { ...query.value, page: 1 }
+    await nextTick()
+    expect(state.counting.value).toBe(true)
+  })
+
+  it('holds for a source with no stream as well', async () => {
+    let answer: (total: number) => void = () => {}
+    const source: DataSource = {
+      query: () => new Promise((resolve) => {
+        answer = (total) => resolve({ rows: rows('a'), total, unfiltered: true })
+      }),
+    }
+    const { state, query } = mount(source)
+    expect(state.counting.value).toBe(true)
+    answer(12)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(state.counting.value).toBe(false)
+
+    query.value = { ...query.value, page: 2 }
+    await nextTick()
+    expect(state.pending.value).toBe(true)
+    expect(state.counting.value).toBe(false)
+    expect(state.total.value).toBe(12)
+  })
+})
+
 describe('a source with no stream', () => {
   it('is asked its query, exactly as before', () => {
     const source: DataSource = {

@@ -23,6 +23,8 @@ export interface ShellContext extends QueryState {
   /** How many pages the total comes to. Never fewer than one. */
   pageCount: ComputedRef<number>
   pending: Ref<boolean>
+  /** Whether the total is still being counted — see `ResultsState.counting`. */
+  counting: Ref<boolean>
   error: ShallowRef<unknown>
   /**
    * The data source, so a view can ask its own questions — the home screen's

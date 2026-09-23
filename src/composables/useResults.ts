@@ -45,6 +45,13 @@ export interface ResultsState {
    * `stream` that has not closed. Never true for a sync source.
    */
   pending: Ref<boolean>
+  /**
+   * True while the total itself is still being worked out, which is what a
+   * `~` on the pager says. Not while another page of a query already counted
+   * is asked for: the rows are pending, but how many match is known, and the
+   * total stays at that until the source says otherwise.
+   */
+  counting: Ref<boolean>
   error: ShallowRef<unknown>
   refresh(): void
 }
@@ -62,8 +69,14 @@ export function useResults(options: UseResultsOptions): ResultsState {
   const rows = shallowRef<ShellRow[]>([])
   const total = ref(0)
   const pending = ref(false)
+  const counting = ref(false)
   const error = shallowRef<unknown>(null)
   let token = 0
+  /**
+   * The last total a run settled on, and the query it counted — less the page
+   * and the page length, neither of which changes how many rows match.
+   */
+  let settled: { key: string; total: number } | null = null
   /** Teardown for the stream now running, if the source returned one. */
   let stop: (() => void) | null = null
 
@@ -89,16 +102,25 @@ export function useResults(options: UseResultsOptions): ResultsState {
     return expr === query.expr ? query : { ...query, expr }
   }
 
-  const apply = (result: QueryResult) => {
+  const apply = (result: QueryResult, key: string) => {
     rows.value = result.rows
     total.value = result.total
     error.value = null
+    settle(key)
+  }
+
+  /** The run for `key` is done, and its total is the query's. */
+  const settle = (key: string) => {
+    settled = { key, total: total.value }
+    counting.value = false
   }
 
   const failed = (thrown: unknown) => {
     error.value = thrown
     rows.value = []
     total.value = 0
+    settled = null
+    counting.value = false
   }
 
   /**
@@ -109,17 +131,32 @@ export function useResults(options: UseResultsOptions): ResultsState {
    * every paging step or sort: the rows of the query just left stay up until
    * the new query has some of its own, exactly as they do while an async
    * `query` is in flight.
+   *
+   * `known` is the total where this is another page of a query already
+   * counted. The count stays at it while the run goes, rather than dropping
+   * to nought and climbing again as a source that counts as it goes recounts
+   * — and what the source counted is taken once it closes, so a total that
+   * did change is not lost.
    */
-  const sinkFor = (current: number, limit: number): QuerySink => {
+  const sinkFor = (current: number, limit: number, key: string, known?: number): QuerySink => {
     let fresh = true
     const live = () => current === token
+    /** The total as this run has it: what it has inserted, or last stated. */
+    let own = 0
+    let told = false
+
+    const tell = (next: number) => {
+      own = next
+      told = true
+      if (known === undefined) total.value = next
+    }
 
     /** Clears the query just left, the first time this one has anything. */
     const begin = () => {
       if (fresh) {
         fresh = false
         rows.value = []
-        total.value = 0
+        tell(0)
       }
       error.value = null
     }
@@ -142,21 +179,25 @@ export function useResults(options: UseResultsOptions): ResultsState {
         // A page is `limit` rows. What an insert pushes off the end is page
         // two's, and a `query` for this page would never have returned it.
         rows.value = limit > 0 ? next.slice(0, limit) : next
-        total.value += added.length
+        tell(own + added.length)
       },
       set(update: QueryUpdate) {
         if (!live()) return
         if (update.rows) {
           begin()
           rows.value = limit > 0 ? update.rows.slice(0, limit) : update.rows
-          total.value = update.rows.length
+          tell(update.rows.length)
         }
         // Stated after, so a source that hands over a page and its real total
         // in one call gets the total it said rather than the page's length.
-        if (update.total !== undefined) total.value = update.total
+        if (update.total !== undefined) tell(update.total)
       },
       close() {
-        if (live()) pending.value = false
+        if (!live()) return
+        pending.value = false
+        // A run that said nothing leaves the rows and the count it found.
+        if (told) total.value = own
+        settle(key)
       },
       fail(thrown: unknown) {
         if (!live()) return
@@ -180,6 +221,10 @@ export function useResults(options: UseResultsOptions): ResultsState {
     // the new one down with it.
     teardown()
 
+    const key = matching.value
+    const known = settled?.key === key ? settled.total : undefined
+    counting.value = known === undefined
+
     const request: QueryRequest = {
       query: asks(),
       schema: options.schema.value,
@@ -195,7 +240,7 @@ export function useResults(options: UseResultsOptions): ResultsState {
       // inside the call still ends up not pending.
       pending.value = true
       try {
-        stop = source.stream(request, sinkFor(current, request.limit)) ?? null
+        stop = source.stream(request, sinkFor(current, request.limit, key, known)) ?? null
       } catch (thrown) {
         failed(thrown)
         pending.value = false
@@ -212,7 +257,7 @@ export function useResults(options: UseResultsOptions): ResultsState {
     }
 
     if (!(outcome instanceof Promise)) {
-      apply(outcome)
+      apply(outcome, key)
       pending.value = false
       return
     }
@@ -221,7 +266,7 @@ export function useResults(options: UseResultsOptions): ResultsState {
     outcome
       .then((result) => {
         if (current !== token) return
-        apply(result)
+        apply(result, key)
       })
       .catch((thrown) => {
         if (current !== token) return
@@ -251,11 +296,12 @@ export function useResults(options: UseResultsOptions): ResultsState {
    * `options.schema.value` and `options.entity.value` fresh whenever it does
    * run, so neither is stale — only spared from triggering a run on its own.
    */
-  const asked = computed(() => {
+  const matching = computed(() => {
     const query = asks()
     const entityKey = options.entity.value?.key ?? options.schema.value.entities[0]?.key ?? ''
-    return `${entityKey}|${JSON.stringify(RESULT_FIELDS.map((field) => query[field]))}|${query.page}`
+    return `${entityKey}|${JSON.stringify(RESULT_FIELDS.map((field) => query[field]))}`
   })
+  const asked = computed(() => `${matching.value}|${options.query.value.page}`)
 
   watch([options.source, asked, options.limit], run, {
     immediate: true,
@@ -271,5 +317,5 @@ export function useResults(options: UseResultsOptions): ResultsState {
     teardown()
   }, true)
 
-  return { rows, total, offset, pageCount, pending, error, refresh: run }
+  return { rows, total, offset, pageCount, pending, counting, error, refresh: run }
 }

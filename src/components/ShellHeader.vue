@@ -415,11 +415,13 @@ const paged = computed(
 
 /**
  * How many pages there are, as far as is known. While the source is still
- * working the total is what it has found so far, and a streaming source finds
+ * counting the total is what it has found so far, and a streaming source finds
  * more — so the count is said as one that may yet grow, `~4` rather than `4`.
+ * Not while it only fetches another page of a query it has counted: the rows
+ * are on their way, but the number of pages is known.
  */
 const pages = computed(() =>
-  `${shell.pending.value ? '~' : ''}${formatCount(shell.pageCount.value)}`,
+  `${shell.counting.value ? '~' : ''}${formatCount(shell.pageCount.value)}`,
 )
 
 /**
@@ -433,7 +435,7 @@ const position = computed(() => {
   const shown = shell.rows.value.length
   if (shown) {
     const first = shell.offset.value + 1
-    const total = `${shell.pending.value ? '~' : ''}${formatCount(shell.total.value)}`
+    const total = `${shell.counting.value ? '~' : ''}${formatCount(shell.total.value)}`
     place += ` — rows ${formatCount(first)} to ${formatCount(first + shown - 1)} of ${total}`
   }
   return props.pagesNote ? `${place}\n${props.pagesNote}` : place

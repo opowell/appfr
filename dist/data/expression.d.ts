@@ -1,4 +1,4 @@
-import type { EntitySchema, ShellRow } from '../types';
+import type { ColumnDef, EntitySchema, ShellRow } from '../types';
 /**
  * A minimal query language for the expression field: whitespace-separated
  * terms, ANDed together, with `OR` splitting alternatives.
@@ -58,6 +58,37 @@ export type Term = FieldTerm | TextTerm;
 /** Disjunction of conjunctions: the outer array is `OR`, each inner is `AND`. */
 export type Expression = Term[][];
 export declare function parseExpression(input: string): Expression;
+/**
+ * A column's shortcut: the first letter of each word of its heading — `p` for
+ * **Price**, `pr` for **Price ratio**, `mp` for **Mod. price**. Empty for a
+ * heading with no letters in it, which then has none.
+ */
+export declare function columnShortcut(label: string): string;
+/**
+ * The expression with each column shortcut written out as the column it
+ * stands for — `pr<0.5` as `ratio<0.5`, on an entity whose **Price ratio**
+ * column is keyed `ratio`.
+ *
+ * A shortcut is {@link columnShortcut} of a heading. Where two headings share
+ * one — **Condition** and **Cart** — it is the first column's, in the order
+ * the entity declares them; the other is still reached by its heading. A field
+ * that already names something is left alone (see {@link namesAlready}), and
+ * so is one no column answers to, as an unknown field is anywhere.
+ *
+ * Written out when the query is committed rather than read at match time, so
+ * the term in the address, on its pill and in front of the host's source is
+ * the column's own name: a source that answers `ratio` itself need never learn
+ * that `pr` means it.
+ *
+ * Returns what was typed, unchanged, where there is nothing to write out.
+ */
+export declare function expandShortcuts(input: string, entity: EntitySchema | null | undefined): string;
+/**
+ * The shortcut {@link expandShortcuts} writes out as this column, or nothing
+ * where it has none: its initials name something already, belong to a column
+ * declared before it, or it has no name a term could be written with.
+ */
+export declare function columnShortcutOf(column: ColumnDef, entity: EntitySchema | null | undefined): string | undefined;
 /**
  * True when the row satisfies at least one `OR` group in full — every term
  * of it, except that the naming terms on one field (see {@link names}) count

@@ -66,7 +66,7 @@ export { createVueRouterAdapter } from './routing/vueRouter';
 export type { RouterLike } from './routing/vueRouter';
 export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS } from './data/mock';
 export type { MockSourceOptions } from './data/mock';
-export { andExpression, refineExpression, formatExpression, formatTerm, joinExpression, matchesExpression, negateTerm, oppositeTerm, parseExpression, sameTerm, splitExpression, withoutTerm, } from './data/expression';
+export { andExpression, columnShortcut, columnShortcutOf, expandShortcuts, refineExpression, formatExpression, formatTerm, joinExpression, matchesExpression, negateTerm, oppositeTerm, parseExpression, sameTerm, splitExpression, withoutTerm, } from './data/expression';
 export type { Comparator, Expression, ExpressionSplit, FieldTerm, Term, TextTerm, } from './data/expression';
 export { fnv1a, formatCount, formatDate, formatMetric, formatOrdinal } from './data/format';
 export { COLUMN_BREAKPOINTS, COLUMN_ROLES, RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS, } from './types';

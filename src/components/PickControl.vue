@@ -55,6 +55,21 @@ const byKey = ref(false)
 
 const open = computed(() => anchor.value !== null)
 
+/**
+ * Where the list is drawn: the shell's own root, rather than here beside the
+ * button.
+ *
+ * The pickers sit in the bar's row of parts, and that row fades whichever
+ * edge has more of the query behind it with a mask — which clips everything
+ * painted inside it, a list `position: fixed` or not. So on any query longer
+ * than the bar the list went up, took the focus and was painted nowhere, and
+ * the picker looked as though it had ignored the press. The shell's root
+ * carries the theme and is already what the list is positioned against, so
+ * nothing about how it looks or where it sits changes by being drawn there.
+ * `body` where the picker is used outside a shell.
+ */
+const host = ref<HTMLElement | null>(null)
+
 /** What the button says: the chosen option's own label, as it stands now. */
 const chosen = computed(
   () => props.options.find((option) => option.key === props.modelValue) ?? props.options[0],
@@ -86,6 +101,7 @@ const listStyle = computed(() =>
 function show(fromKey: boolean) {
   const box = trigger.value?.getBoundingClientRect()
   if (!box) return
+  host.value = trigger.value?.closest<HTMLElement>('.dc-shell') ?? document.body
   // Below the button, and mirrored to end at its right edge if it cannot fit.
   anchor.value = { x: box.left, y: box.bottom + 4, mirrorX: box.right }
   byKey.value = fromKey
@@ -165,18 +181,22 @@ function choose(item: MenuItemDef) {
       aria-hidden="true"
     >▾</span>
 
-    <MenuList
-      v-if="anchor"
-      ref="menu"
-      class="dc-pick__list"
-      :style="listStyle"
-      :items="items"
-      :at="anchor"
-      :label="label"
-      :autofocus="byKey"
-      @choose="choose"
-      @dismiss="hide(true)"
-    />
+    <Teleport
+      v-if="anchor && host"
+      :to="host"
+    >
+      <MenuList
+        ref="menu"
+        class="dc-pick__list"
+        :style="listStyle"
+        :items="items"
+        :at="anchor"
+        :label="label"
+        :autofocus="byKey"
+        @choose="choose"
+        @dismiss="hide(true)"
+      />
+    </Teleport>
   </span>
 </template>
 

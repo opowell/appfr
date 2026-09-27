@@ -37,6 +37,26 @@ describe('PickControl', () => {
     expect(pick.emitted('close')).toHaveLength(1)
   })
 
+  it('draws its list at the shell root, out of the row whose fade would clip it', async () => {
+    const shell = document.createElement('div')
+    shell.className = 'dc-shell'
+    const row = document.createElement('div')
+    row.className = 'dc-header__terms'
+    shell.append(row)
+    document.body.append(shell)
+    wrapper = mount(PickControl, {
+      props: { modelValue: 'a', options, label: 'Type' },
+      attachTo: row,
+    })
+    await wrapper.find('.dc-pick__button').trigger('click')
+    const list = document.querySelector('.dc-pick__list')!
+    expect(list.parentElement).toBe(shell)
+    expect(row.contains(list)).toBe(false)
+    wrapper.unmount()
+    wrapper = undefined
+    shell.remove()
+  })
+
   it('says nothing of a list that was never up', async () => {
     const pick = picker()
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }))

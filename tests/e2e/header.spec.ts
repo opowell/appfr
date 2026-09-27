@@ -422,6 +422,26 @@ test.describe('Header — a query longer than the bar', () => {
     await expect(termBar(page)).toHaveCSS('mask-image', /linear-gradient/)
   })
 
+  /*
+   * The fade is a mask, and a mask clips whatever is painted inside the row —
+   * the pickers' lists included, `position: fixed` or not. So a picker on a
+   * query longer than the bar opened a list nobody could see. What is asserted
+   * is what a press reaches, the point of a list being to be pressed.
+   */
+  test('leaves the lists of the pickers where they can be seen and pressed', async ({ page }) => {
+    await gotoStory(page, LONG)
+    await expect(termBar(page)).toHaveAttribute('data-dc-more', 'end')
+    await viewSelect(page).click()
+    const list = pickList(page, 'View')
+    await expect(list).toBeVisible()
+    const reached = await list.evaluate((element) => {
+      const box = element.getBoundingClientRect()
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.bottom - 8)
+      return element.contains(hit)
+    })
+    expect(reached).toBe(true)
+  })
+
   test('says nothing at all when the whole query fits', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
     await expect(termBar(page)).toHaveAttribute('data-dc-more', '')

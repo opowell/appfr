@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  columnShortcut,
+  expandShortcuts,
   formatExpression,
   formatTerm,
   joinExpression,
@@ -83,6 +85,67 @@ describe('field precedence', () => {
   it('keeps `entity` the shell\u2019s own, so a corpus can always be narrowed by kind', () => {
     const subject = category({ entity: 'something else' })
     expect(matches('entity:categories', subject, categories)).toBe(true)
+  })
+})
+
+describe('column shortcuts', () => {
+  /*
+   * A heading's initials stand for its column when a query is committed, and
+   * are written out as the column's own name — so what the host's source is
+   * handed is the term it would have been handed had the name been typed.
+   */
+  const lots = {
+    ...items,
+    columns: [
+      { key: 'priceValue', label: 'Price' },
+      { key: 'modPrice', label: 'Mod. price' },
+      { key: 'ratio', label: 'Price ratio' },
+      { key: 'conditionName', label: 'Condition' },
+      { key: 'cartQuantity', label: 'Cart' },
+      { key: 'storeName', label: 'Store' },
+      { key: 'ordinal', label: '#' },
+    ],
+  }
+
+  it('takes the first letter of each word of the heading', () => {
+    expect(columnShortcut('Price')).toBe('p')
+    expect(columnShortcut('Price ratio')).toBe('pr')
+    expect(columnShortcut('Mod. price')).toBe('mp')
+    expect(columnShortcut('Weight (g)')).toBe('wg')
+    expect(columnShortcut('#')).toBe('')
+  })
+
+  it('writes a shortcut out as the column\u2019s key, lowercased as the parse reads it', () => {
+    expect(expandShortcuts('pr<0.5', lots)).toBe('ratio<0.5')
+    expect(expandShortcuts('p >= 2 mp<3', lots)).toBe('pricevalue>=2 modprice<3')
+    expect(expandShortcuts('-pr>1 OR q', lots)).toBe('-ratio>1 OR q')
+  })
+
+  it('gives a shortcut two headings share to the first column', () => {
+    expect(expandShortcuts('c:new', lots)).toBe('conditionname:new')
+  })
+
+  it('never stands in for a name the query could already say', () => {
+    // `store` is the Store heading, which a host may well read as a field of
+    // its own; `ref` is a generic name; `entity` is the shell's.
+    const shadowing = {
+      ...lots,
+      columns: [...(lots.columns ?? []), { key: 'frame', label: 'Rear end frame' }],
+    }
+    expect(expandShortcuts('store:BrickFlip', lots)).toBe('store:BrickFlip')
+    expect(expandShortcuts('ref:x', shadowing)).toBe('ref:x')
+    expect(expandShortcuts('entity:items', lots)).toBe('entity:items')
+  })
+
+  it('leaves what was typed as it was where there is nothing to write out', () => {
+    expect(expandShortcuts('  brick  Price:3 ', lots)).toBe('  brick  Price:3 ')
+    expect(expandShortcuts('pr<0.5', null)).toBe('pr<0.5')
+  })
+
+  it('reaches a column keyed in camel case once written out', () => {
+    const subject = row({ modPrice: 2.5 })
+    expect(matches(expandShortcuts('mp<3', lots), subject, lots)).toBe(true)
+    expect(matches(expandShortcuts('mp>3', lots), subject, lots)).toBe(false)
   })
 })
 

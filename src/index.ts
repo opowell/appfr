@@ -271,6 +271,8 @@ export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS } from '.
 export type { MockSourceOptions } from './data/mock'
 export {
   andExpression,
+  columnShortcut,
+  expandShortcuts,
   refineExpression,
   formatExpression,
   formatTerm,

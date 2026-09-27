@@ -989,6 +989,18 @@ convention that happens to read the same. An unrecognised field is ignored
 rather than treated as a mismatch, so a half-typed expression keeps showing
 results.
 
+A heading of more than one word is written run together and in any case —
+`priceratio<0.5` for **Price ratio** — or by its shortcut, the first letter of
+each word: `pr<0.5`, `p>2` for **Price**, `mp` for **Mod. price**. A shortcut is
+written out as the column's key when the query is committed, so the address,
+the pill and the host's source all see `ratio<0.5`; the host never has to know
+shortcuts exist (`expandShortcuts`, `columnShortcut`). Where two headings share
+one, it is the first column's, in the order the entity declares them, and the
+other is reached by its heading. A shortcut never stands in for a name the
+query could already say — a column's key or heading, a facet, `entity`, a
+generic name — so nothing written before shortcuts changes meaning. A column
+key is matched whatever its case, since the parse lowercases every field.
+
 A term against a multi-valued facet is satisfied by any one of the row's
 values, so `region:eu` keeps a tenant that runs in `eu` and `us` both. A
 numeric comparison against one constrains nothing.

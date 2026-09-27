@@ -5,7 +5,7 @@ import { useShellContext } from '../composables/context'
 import { useEntityCounts } from '../composables/useEntityCounts'
 import { useRecordNames } from '../composables/useRecordNames'
 import { scopedEntity } from '../query/drill'
-import { refineExpression } from '../data/expression'
+import { expandShortcuts, refineExpression } from '../data/expression'
 import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
 import { formatCount } from '../data/format'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
@@ -299,7 +299,9 @@ const searchBox = ref<HTMLInputElement | null>(null)
 function commitSearch(): void {
   const typed = search.value.trim()
   if (!typed) return
-  shell.setExpression(refineExpression(shell.query.value.expr, typed))
+  shell.setExpression(
+    refineExpression(shell.query.value.expr, expandShortcuts(typed, shell.entity.value)),
+  )
   search.value = ''
 }
 

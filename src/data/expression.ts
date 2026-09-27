@@ -1,4 +1,4 @@
-import type { ColumnRole, EntitySchema, ShellRow } from '../types'
+import type { ColumnDef, ColumnRole, EntitySchema, ShellRow } from '../types'
 import { cellValue, roleColumn, roleColumns } from '../query/columns'
 
 /**
@@ -184,10 +184,12 @@ function resolveField(field: string, row: ShellRow, entity: EntitySchema): unkno
 
   if (field in row.fields) return row.fields[field]
 
+  // A key is matched whatever its case, since the parse lowercases every
+  // field it reads: a column keyed `modPrice` is otherwise out of reach.
   const named = columns.find(
     (column) =>
-      column.key === field ||
-      column.field === field ||
+      column.key?.toLowerCase() === field.toLowerCase() ||
+      column.field?.toLowerCase() === field.toLowerCase() ||
       (column.label !== undefined && alias(column.label) === normalized),
   )
   if (named) return cellValue(named, row)
@@ -208,6 +210,88 @@ function resolveField(field: string, row: ShellRow, entity: EntitySchema): unkno
     if (column) return cellValue(column, row)
   }
   return undefined
+}
+
+/**
+ * A column's shortcut: the first letter of each word of its heading — `p` for
+ * **Price**, `pr` for **Price ratio**, `mp` for **Mod. price**. Empty for a
+ * heading with no letters in it, which then has none.
+ */
+export function columnShortcut(label: string): string {
+  return (label.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).map((word) => word.charAt(0)).join('')
+}
+
+/** A name the parse would read back as the whole field, and so one a term can be written with. */
+const WRITABLE_FIELD = /^[a-z_][\w.-]*$/
+
+/**
+ * What a column is written as in a term: its key or field, lowercased as the
+ * parse lowercases every field, or its heading run together where it has
+ * neither — or nothing, where none of those survives being written as one.
+ */
+function writtenName(column: ColumnDef): string | undefined {
+  const name = (column.key ?? column.field)?.toLowerCase()
+  if (name !== undefined) return WRITABLE_FIELD.test(name) ? name : undefined
+  const heading = column.label === undefined ? undefined : alias(column.label)
+  return heading !== undefined && WRITABLE_FIELD.test(heading) ? heading : undefined
+}
+
+/**
+ * Whether a field already names something without shortcuts: `entity`, a
+ * column by key, field or heading, a facet by key or heading, or a generic
+ * name. A shortcut never stands in for any of these, so everything a query
+ * could say before shortcuts it still says.
+ */
+function namesAlready(field: string, entity: EntitySchema): boolean {
+  const normalized = alias(field)
+  if (normalized === 'entity') return true
+  if (ROLE_ALIASES.some(([name]) => name === normalized)) return true
+  if (/^metric\d+$/.test(normalized)) return true
+  const named = (name: string | undefined) =>
+    name !== undefined && alias(name) === normalized
+  return (
+    (entity.columns ?? []).some(
+      (column) => named(column.key) || named(column.field) || named(column.label),
+    ) || entity.facets.some((facet) => named(facet.key) || named(facet.label))
+  )
+}
+
+/**
+ * The expression with each column shortcut written out as the column it
+ * stands for — `pr<0.5` as `ratio<0.5`, on an entity whose **Price ratio**
+ * column is keyed `ratio`.
+ *
+ * A shortcut is {@link columnShortcut} of a heading. Where two headings share
+ * one — **Condition** and **Cart** — it is the first column's, in the order
+ * the entity declares them; the other is still reached by its heading. A field
+ * that already names something is left alone (see {@link namesAlready}), and
+ * so is one no column answers to, as an unknown field is anywhere.
+ *
+ * Written out when the query is committed rather than read at match time, so
+ * the term in the address, on its pill and in front of the host's source is
+ * the column's own name: a source that answers `ratio` itself need never learn
+ * that `pr` means it.
+ *
+ * Returns what was typed, unchanged, where there is nothing to write out.
+ */
+export function expandShortcuts(input: string, entity: EntitySchema | null | undefined): string {
+  if (!entity) return input
+  const columns = entity.columns ?? []
+  let changed = false
+  const expanded = parseExpression(input).map((group) =>
+    group.map((term): Term => {
+      if (term.kind !== 'field' || namesAlready(term.field, entity)) return term
+      const column = columns.find(
+        (candidate) =>
+          candidate.label !== undefined && columnShortcut(candidate.label) === term.field,
+      )
+      const name = column && writtenName(column)
+      if (!name) return term
+      changed = true
+      return { ...term, field: name }
+    }),
+  )
+  return changed ? formatExpression(expanded) : input
 }
 
 /**

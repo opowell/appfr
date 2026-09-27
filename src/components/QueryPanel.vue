@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import type { FacetValue } from '../types'
 import { useShellContext } from '../composables/context'
-import { formatTerm, joinExpression, splitExpression } from '../data/expression'
+import { expandShortcuts, formatTerm, joinExpression, splitExpression } from '../data/expression'
 import FacetControl from './FacetControl.vue'
 
 defineProps<{
@@ -57,7 +57,10 @@ function run() {
   // The parts are committed as they are pressed, so the text is the only thing
   // ever pending here — and rewriting an expression nobody has touched would
   // push a history entry for a query that has not changed.
-  if (dirty.value) shell.setExpression(joinExpression(expression.value.parts, draft.value))
+  if (dirty.value) {
+    const typed = expandShortcuts(draft.value, shell.entity.value)
+    shell.setExpression(joinExpression(expression.value.parts, typed))
+  }
   emit('close')
 }
 

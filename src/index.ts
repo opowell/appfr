@@ -272,6 +272,7 @@ export type { MockSourceOptions } from './data/mock'
 export {
   andExpression,
   columnShortcut,
+  columnShortcutOf,
   expandShortcuts,
   refineExpression,
   formatExpression,

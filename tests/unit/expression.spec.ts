@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   columnShortcut,
+  columnShortcutOf,
   expandShortcuts,
   formatExpression,
   formatTerm,
@@ -140,6 +141,17 @@ describe('column shortcuts', () => {
   it('leaves what was typed as it was where there is nothing to write out', () => {
     expect(expandShortcuts('  brick  Price:3 ', lots)).toBe('  brick  Price:3 ')
     expect(expandShortcuts('pr<0.5', null)).toBe('pr<0.5')
+  })
+
+  it('names a column\u2019s shortcut only where the column owns it', () => {
+    const [price, , ratio, condition, cart, store, ordinal] = lots.columns
+    expect(columnShortcutOf(price!, lots)).toBe('p')
+    expect(columnShortcutOf(ratio!, lots)).toBe('pr')
+    expect(columnShortcutOf(condition!, lots)).toBe('c')
+    expect(columnShortcutOf(cart!, lots)).toBeUndefined()
+    expect(columnShortcutOf(store!, lots)).toBe('s')
+    expect(columnShortcutOf(ordinal!, lots)).toBeUndefined()
+    expect(columnShortcutOf(price!, null)).toBeUndefined()
   })
 
   it('reaches a column keyed in camel case once written out', () => {

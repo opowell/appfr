@@ -170,15 +170,28 @@ test.describe('Columns — as many as the schema declares', () => {
     await expect((await column(page, 'Colors')).first()).toHaveText(/^\d+(\.\d)?[km]?$/)
   })
 
-  test('answers a hover on the header with what the label left out', async ({ page }) => {
+  test('answers a hover on the header with what the label left out, and its shortcut', async ({ page }) => {
     await gotoStory(page, COLUMNS)
     const labels = (await headings(page).allInnerTexts()).map((text) => text.trim())
     const weight = headings(page).nth(labels.indexOf('Weight'))
 
-    await expect(weight).toHaveAttribute('title', 'Grams, from the centigrams the catalogue keeps')
+    await expect(weight).toHaveAttribute(
+      'title',
+      'Grams, from the centigrams the catalogue keeps\nShortcut: w',
+    )
+    // The shortcut alone where there is no hint, and only on the column that
+    // owns it: State's initials are Shape's, Shape being declared first.
+    await expect(headings(page).nth(labels.indexOf('Shape'))).toHaveAttribute(
+      'title',
+      'Shortcut: s',
+    )
+    await expect(headings(page).nth(labels.indexOf('First year'))).toHaveAttribute(
+      'title',
+      'Shortcut: fy',
+    )
     // And a header with nothing more to say says nothing: a tooltip repeating
     // the label costs a hover and adds no word.
-    await expect(headings(page).nth(labels.indexOf('Shape'))).not.toHaveAttribute('title', /.*/)
+    await expect(headings(page).nth(labels.indexOf('State'))).not.toHaveAttribute('title', /.*/)
   })
 
   test('draws the marks a column asks for — a picture and a pill', async ({ page }) => {

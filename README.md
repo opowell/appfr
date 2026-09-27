@@ -996,7 +996,8 @@ written out as the column's key when the query is committed, so the address,
 the pill and the host's source all see `ratio<0.5`; the host never has to know
 shortcuts exist (`expandShortcuts`, `columnShortcut`). Where two headings share
 one, it is the first column's, in the order the entity declares them, and the
-other is reached by its heading. A shortcut never stands in for a name the
+other is reached by its heading. A table header's hover title names its
+column's shortcut after the hint (`columnShortcutOf`). A shortcut never stands in for a name the
 query could already say — a column's key or heading, a facet, `entity`, a
 generic name — so nothing written before shortcuts changes meaning. A column
 key is matched whatever its case, since the parse lowercases every field.

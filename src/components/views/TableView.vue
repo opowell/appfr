@@ -5,6 +5,7 @@ import { useShellContext } from '../../composables/context'
 import { pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
 import type { TermStanding } from '../../query/drill'
 import { useColumns } from '../../composables/useColumns'
+import { columnShortcutOf } from '../../data/expression'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import {
@@ -28,6 +29,17 @@ const rows = usePresentedRows()
  * reads one out of nothing and keeps no set of its own to fall back on.
  */
 const columns = useColumns()
+
+/**
+ * What a header says on hover: its hint, then the shortcut the expression
+ * field takes for the column — the only place a reader can learn `pr` is
+ * **Price ratio** without being told.
+ */
+function headerTitle(column: ColumnDef): string | undefined {
+  const shortcut = columnShortcutOf(column, shell.entity.value)
+  const line = shortcut ? `Shortcut: ${shortcut}` : undefined
+  return [column.hint, line].filter(Boolean).join('\n') || undefined
+}
 
 /** The column that asked for the `→` beside its value, if one did. */
 const marked = computed<ColumnDef | undefined>(() =>
@@ -230,7 +242,8 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
           />
         </th>
         <!-- The hint sits on the cell rather than on the button inside it, so
-             a sortable header and a plain one answer a hover the same way. -->
+             a sortable header and a plain one answer a hover the same way.
+             The column's shortcut in the expression field follows it. -->
         <th
           v-for="(column, index) in columns"
           :key="columnKey(column, index)"
@@ -240,7 +253,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
           :data-dc-align="columnAlign(column)"
           :data-dc-hide="column.hideBelow"
           :aria-sort="ariaSort(column)"
-          :title="column.hint"
+          :title="headerTitle(column)"
         >
           <button
             v-if="isSortable(column)"

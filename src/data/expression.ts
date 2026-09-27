@@ -276,15 +276,11 @@ function namesAlready(field: string, entity: EntitySchema): boolean {
  */
 export function expandShortcuts(input: string, entity: EntitySchema | null | undefined): string {
   if (!entity) return input
-  const columns = entity.columns ?? []
   let changed = false
   const expanded = parseExpression(input).map((group) =>
     group.map((term): Term => {
-      if (term.kind !== 'field' || namesAlready(term.field, entity)) return term
-      const column = columns.find(
-        (candidate) =>
-          candidate.label !== undefined && columnShortcut(candidate.label) === term.field,
-      )
+      if (term.kind !== 'field') return term
+      const column = shortcutOwner(term.field, entity)
       const name = column && writtenName(column)
       if (!name) return term
       changed = true
@@ -292,6 +288,28 @@ export function expandShortcuts(input: string, entity: EntitySchema | null | und
     }),
   )
   return changed ? formatExpression(expanded) : input
+}
+
+/** The column a shortcut stands for on this entity, if it stands for one. */
+function shortcutOwner(shortcut: string, entity: EntitySchema): ColumnDef | undefined {
+  if (!shortcut || namesAlready(shortcut, entity)) return undefined
+  return (entity.columns ?? []).find(
+    (column) => column.label !== undefined && columnShortcut(column.label) === shortcut,
+  )
+}
+
+/**
+ * The shortcut {@link expandShortcuts} writes out as this column, or nothing
+ * where it has none: its initials name something already, belong to a column
+ * declared before it, or it has no name a term could be written with.
+ */
+export function columnShortcutOf(
+  column: ColumnDef,
+  entity: EntitySchema | null | undefined,
+): string | undefined {
+  if (!entity || column.label === undefined || !writtenName(column)) return undefined
+  const shortcut = columnShortcut(column.label)
+  return shortcutOwner(shortcut, entity) === column ? shortcut : undefined
 }
 
 /**

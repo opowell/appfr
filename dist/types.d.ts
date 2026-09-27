@@ -536,6 +536,17 @@ export interface QueryRequest {
      * never needs to.
      */
     progress?: (total: number) => void;
+    /**
+     * Aborted once nobody wants the answer any more — a count for a picker that
+     * has closed, or been opened again and asked afresh. The shell throws away
+     * whatever a request answers after this, so a source that is walking a
+     * large table can stop where it is and settle however is convenient. A
+     * source that answers at once can ignore it.
+     *
+     * Offered where the shell can tell the answer has stopped mattering, and
+     * absent everywhere else.
+     */
+    signal?: AbortSignal;
 }
 export interface QueryResult {
     rows: ShellRow[];

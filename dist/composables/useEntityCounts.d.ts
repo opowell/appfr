@@ -35,8 +35,17 @@ export interface EntityCountsState {
      * or a scope the whole shell is read inside, makes a count worth reading.
      */
     pristine: Ref<boolean>;
-    /** Counts every entity against the query as it stands right now. */
+    /**
+     * Counts every entity against the query as it stands right now, calling
+     * off whatever the last refresh still had running.
+     */
     refresh(): void;
+    /**
+     * Calls off the counts still running, for a picker that has closed: each
+     * request's {@link QueryRequest.signal} is aborted and nothing it answers
+     * afterwards lands. What has already landed stays.
+     */
+    cancel(): void;
 }
 /**
  * Counts each entity separately against the current query, for the type
@@ -51,5 +60,10 @@ export interface EntityCountsState {
  * A slow count is not left blank until it lands: each request carries a
  * {@link QueryRequest.progress}, and what a source says through it stands as
  * the count, still pending, until the answer replaces it.
+ *
+ * Nor is a count nobody is waiting for left running: a picker opened, closed
+ * and opened again is one round of counting, not three stacked up. Each round
+ * carries an {@link AbortSignal}, aborted by the next {@link refresh}, by
+ * {@link cancel}, and when the owning scope ends.
  */
 export declare function useEntityCounts(options: UseEntityCountsOptions): EntityCountsState;

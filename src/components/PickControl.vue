@@ -38,6 +38,11 @@ const emit = defineEmits<{
    * moment rather than watched — see {@link useEntityCounts}.
    */
   open: []
+  /**
+   * The list has come down, however it was taken down. Whatever {@link open}
+   * set going for it can stop — see {@link useEntityCounts}.
+   */
+  close: []
 }>()
 
 const uid = useId() ?? 'dc-pick'
@@ -88,6 +93,7 @@ function show(fromKey: boolean) {
 }
 
 function hide(refocus: boolean) {
+  if (anchor.value) emit('close')
   anchor.value = null
   if (refocus) trigger.value?.focus()
 }

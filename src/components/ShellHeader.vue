@@ -552,6 +552,7 @@ function abandonTyped(event: Event): void {
           :model-value="shell.query.value.entity ?? ''"
           :options="entityOptions"
           @open="entityCounts.refresh"
+          @close="entityCounts.cancel"
           @update:model-value="chooseEntity"
         />
 

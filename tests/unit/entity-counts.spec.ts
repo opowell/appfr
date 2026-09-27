@@ -219,4 +219,63 @@ describe('useEntityCounts', () => {
     )
     expect(state.counts.value.get(firstEntity)!.total).not.toBe(999_999)
   })
+
+  describe('calling off a round nobody is waiting for', () => {
+    /** A source that never answers, keeping each request's signal. */
+    function holding() {
+      const signals: AbortSignal[] = []
+      const source: DataSource = {
+        query: (request) => {
+          signals.push(request.signal!)
+          return new Promise<QueryResult>(() => {})
+        },
+      }
+      return { signals, source }
+    }
+
+    it('gives every count of a round the same live signal', () => {
+      const { signals, source } = holding()
+      const { state } = setup('?q=digest', { source })
+      state.refresh()
+      expect(signals).toHaveLength(iRadarSchema.entities.length)
+      expect(new Set(signals).size).toBe(1)
+      expect(signals[0]!.aborted).toBe(false)
+    })
+
+    it('aborts the last round when the picker opens again, so opens do not stack up', () => {
+      const { signals, source } = holding()
+      const { state } = setup('?q=digest', { source })
+      state.refresh()
+      const first = signals[0]!
+      state.refresh()
+      expect(first.aborted).toBe(true)
+      expect(signals.at(-1)!.aborted).toBe(false)
+    })
+
+    it('aborts on cancel, and a count answered after it does not land', async () => {
+      let answer: (value: QueryResult) => void = () => {}
+      let signal: AbortSignal | undefined
+      const source: DataSource = {
+        query: (request) => {
+          signal = request.signal
+          return new Promise<QueryResult>((resolve) => (answer = resolve))
+        },
+      }
+      const { state } = setup('?q=digest', { source })
+      state.refresh()
+      state.cancel()
+      expect(signal!.aborted).toBe(true)
+      answer({ rows: [], total: 42, unfiltered: false })
+      await Promise.resolve()
+      expect([...state.counts.value.values()].some((count) => count.total === 42)).toBe(false)
+    })
+
+    it('aborts when the scope that owns the counts ends', () => {
+      const { signals, source } = holding()
+      const { state, scope } = setup('?q=digest', { source })
+      state.refresh()
+      scope.stop()
+      expect(signals[0]!.aborted).toBe(true)
+    })
+  })
 })

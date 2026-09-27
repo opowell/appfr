@@ -1,4 +1,4 @@
-import { ref, shallowRef } from 'vue'
+import { getCurrentScope, onScopeDispose, ref, shallowRef } from 'vue'
 import type { ComputedRef, Ref, ShallowRef } from 'vue'
 import type { DataSource, DomainSchema, EntitySchema, ShellQuery } from '../types'
 import { emptyFacetState } from '../query/schema'
@@ -42,8 +42,17 @@ export interface EntityCountsState {
    * or a scope the whole shell is read inside, makes a count worth reading.
    */
   pristine: Ref<boolean>
-  /** Counts every entity against the query as it stands right now. */
+  /**
+   * Counts every entity against the query as it stands right now, calling
+   * off whatever the last refresh still had running.
+   */
   refresh(): void
+  /**
+   * Calls off the counts still running, for a picker that has closed: each
+   * request's {@link QueryRequest.signal} is aborted and nothing it answers
+   * afterwards lands. What has already landed stays.
+   */
+  cancel(): void
 }
 
 /**
@@ -59,14 +68,28 @@ export interface EntityCountsState {
  * A slow count is not left blank until it lands: each request carries a
  * {@link QueryRequest.progress}, and what a source says through it stands as
  * the count, still pending, until the answer replaces it.
+ *
+ * Nor is a count nobody is waiting for left running: a picker opened, closed
+ * and opened again is one round of counting, not three stacked up. Each round
+ * carries an {@link AbortSignal}, aborted by the next {@link refresh}, by
+ * {@link cancel}, and when the owning scope ends.
  */
 export function useEntityCounts(options: UseEntityCountsOptions): EntityCountsState {
   const counts = shallowRef<Map<string, EntityCount>>(new Map())
   const pristine = ref(true)
   let token = 0
+  let round: AbortController | undefined
+
+  const cancel = (): void => {
+    token++
+    round?.abort()
+    round = undefined
+  }
 
   const refresh = (): void => {
-    const current = ++token
+    cancel()
+    const current = token
+    const { signal } = (round = new AbortController())
     const query = options.query.value
     const schema = options.schema.value
     const entities = options.entities.value
@@ -98,6 +121,7 @@ export function useEntityCounts(options: UseEntityCountsOptions): EntityCountsSt
         entity,
         limit: 0,
         offset: 0,
+        signal,
         progress: (total) => {
           // Said after the answer, or by a source answering in the same tick,
           // it would stand over a count that is already whole.
@@ -120,5 +144,7 @@ export function useEntityCounts(options: UseEntityCountsOptions): EntityCountsSt
     counts.value = next
   }
 
-  return { counts, pristine, refresh }
+  if (getCurrentScope()) onScopeDispose(cancel)
+
+  return { counts, pristine, refresh, cancel }
 }

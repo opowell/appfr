@@ -50,6 +50,9 @@ export { provideWindowContext, useWindowContext, WINDOW_CONTEXT_KEY, } from './c
 export type { DropTarget, MoveDirection, WindowContext } from './composables/windowContext';
 export { PANE_CONTEXT_KEY, providePaneContext, usePaneContext, usePaneMenu, } from './composables/paneMenu';
 export type { PaneContext } from './composables/paneMenu';
+export { useLayoutRoute } from './composables/useLayoutRoute';
+export type { LayoutRoute, UseLayoutRouteOptions } from './composables/useLayoutRoute';
+export { decodeLayout, encodeLayout } from './window/codec';
 export { ENTITY_ALL, FACET_PREFIX, PARAM_DIR, PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_SORT, PARAM_VIEW, parseQuery, serializeQuery, } from './query/codec';
 export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, defaultQuery, emptyFacetState, emptyFacetValue, findEntity, findSort, focusEntity, hasActiveFacets, isEntityScoped, isFacetActive, isPristineQuery, isTypeCardsQuery, isViewKind, reconcileFacets, resolveView, RESULT_FIELDS, sortsFor, VIEW_LABELS, } from './query/schema';
 export { cellFull, cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, EMPTY_CELL, roleColumn, roleColumns, rowKey, } from './query/columns';

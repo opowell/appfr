@@ -1473,6 +1473,11 @@ Anything. A panel is a title, some optional chrome, and a slot:
 Each receives `panel`, `view` and `active`, so one generic `#panel` slot can
 serve every panel by switching on `panel.id`.
 
+The header is one height — 36px — whichever tab is on top. Actions are
+centred in it and have to fit it: a page-sized button there spills over the
+strip's edge rather than growing the strip, which would make every switch to
+or from that tab jump.
+
 Only the panel on top of its group is rendered. A panel that needs to keep
 something across tab switches — a scroll position, a half-typed filter — holds
 it outside the slot, in the store or composable the slot reads from.
@@ -2232,6 +2237,58 @@ A layout saved last release cannot leave a hole in this one.
 
 A layout whose root is a float gains new panels as new windows on it, stepped
 clear of the last, rather than as a tiled pane wedged beside the desktop.
+
+### The layout in the URL
+
+`useLayoutRoute` holds a layout in one query parameter, so a reload — or a
+link someone was sent — opens the window as it was left: which panels are
+open, how they are split and sized, and which tab is on top.
+
+```ts
+import { createHistoryAdapter, panelNode, ROUTE_ADAPTER_KEY, row, useLayoutRoute } from 'header-content-layout'
+
+const route = createHistoryAdapter()
+provide(ROUTE_ADAPTER_KEY, route) // the DataShell in the window shares it
+const home = () => row([panelNode('browse')])
+const layout = ref(home())
+useLayoutRoute(layout, { adapter: route, home })
+```
+
+```vue
+<WindowFrame v-model:layout="layout" :panels="panels" movable />
+```
+
+- **One adapter for the page.** The shell's query and the layout are written
+  through the same `RouteAdapter`, so each keeps the other's parameters. Two
+  adapters over one address bar each write from a search the other has since
+  changed, and drop what it wrote.
+- **`home`** is the layout the window opens with. While the window is in it the
+  parameter is left out, so an untouched window has the URL it always had, and
+  Back to a URL without one goes back to it.
+- **Replace, not push.** Moving a splitter is not somewhere to come back to, so
+  changes replace the history entry, after `delay` ms (200 by default) — a
+  splitter dragged across the screen is one write, not one per frame.
+  Back and forward still move the layout when the URL they land on has one.
+- **The URL names panels, not what is in them.** A host whose panels come and
+  go — a record opened beside a list — has to declare them again from the ids
+  the layout names: read `panelIds(layout.value)` after the call and rebuild
+  `panels` from them. A panel the host no longer has is dropped as it is from
+  any stored layout.
+- **A mangled parameter is ignored**, not thrown: the window opens at `home`.
+
+The parameter is `w` unless `param` says otherwise. Its value is
+`encodeLayout(layout)`, a [Rison](https://github.com/Nanonid/rison)-style
+notation that a query value carries without percent-escaping, and whose
+compact form leaves out every default — a panel alone in its group is just
+its id:
+
+```
+w=(r:!((g:!(browse),h:!t),(g:!('rec:1','rec:2'),a:'rec:2')),z:!(0.6,0.4))
+```
+
+`encodeLayout` and `decodeLayout` are exported for a host that keeps layouts
+somewhere other than the URL; `decodeLayout` returns `null` for anything it
+could not have written.
 
 The operations behind all of this are exported and pure — `movePanel`,
 `insertPanel`, `removePanel`, `swapPanels`, `moveTab`, `setActivePanel`,

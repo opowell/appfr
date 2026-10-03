@@ -186,6 +186,9 @@ export {
   usePaneMenu,
 } from './composables/paneMenu'
 export type { PaneContext } from './composables/paneMenu'
+export { useLayoutRoute } from './composables/useLayoutRoute'
+export type { LayoutRoute, UseLayoutRouteOptions } from './composables/useLayoutRoute'
+export { decodeLayout, encodeLayout } from './window/codec'
 
 /* Query model */
 export {

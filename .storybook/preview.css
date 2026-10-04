@@ -186,3 +186,22 @@ body {
   font-size: var(--dc-text-code);
   color: var(--dc-fg-2);
 }
+
+/* The KeepAlive story's note pad. */
+.sb-kept {
+  padding: 12px 14px;
+}
+
+.sb-kept__mounts,
+.sb-kept__line {
+  margin: 0 0 6px;
+  color: var(--dc-fg-2);
+}
+
+.sb-kept__text {
+  display: block;
+  width: 100%;
+  min-height: 80px;
+  margin: 0 0 10px;
+  font: inherit;
+}

@@ -1482,6 +1482,20 @@ Only the panel on top of its group is rendered. A panel that needs to keep
 something across tab switches — a scroll position, a half-typed filter — holds
 it outside the slot, in the store or composable the slot reads from.
 
+Some content cannot be held anywhere else: a page in an iframe, a live
+connection, a form a person is halfway through. A panel can ask to be **kept
+alive** instead:
+
+```ts
+{ id: 'preview', title: 'Preview', keepAlive: true }
+```
+
+It is then rendered once and stays mounted while another tab of its pane is on
+top — hidden rather than torn down — and comes back with its scroll position.
+Its slot is told `active: false` while it is hidden, and the items it put in
+its menu stay in its own menu rather than the tab on top's. What it is kept by
+is its pane: moved to another pane, or closed, it is rendered afresh there.
+
 ### Tabs
 
 `group(['sources', 'activity', 'log'], 'activity')` puts three panels in one
@@ -2309,7 +2323,7 @@ or a test without going near the DOM.
 
 | Prop | Type | Default | Notes |
 | --- | --- | --- | --- |
-| `panels` | `WindowPanelDef[]` | — | Required. Id, title, and optional subtitle, views and `fixed`. |
+| `panels` | `WindowPanelDef[]` | — | Required. Id, title, and optional subtitle, views, `fixed`, `closable` and `keepAlive`. |
 | `layout` | `WindowNode \| null` | one row of every panel | `v-model:layout` to own the arrangement, tabs and their order included. |
 | `views` | `Record<string, string>` | each panel's default | `v-model:views` — panel id to view key. |
 | `movable` | `boolean` | `false` | Lets panels be dragged into a new part of the grid, and floating windows be moved. |

@@ -288,6 +288,27 @@ test.describe('Views — a type whose card is its picture', () => {
     expect(picture!.width).toBeGreaterThan(record!.width)
   })
 
+  test('the name is under the picture, and the picture reaches the card’s edges', async ({ page }) => {
+    await gotoStory(page, PICTURE)
+    const card = page.locator('.dc-card').filter({ has: page.locator('.dc-card__image') }).first()
+    const box = (await card.boundingBox())!
+    const picture = (await card.locator('.dc-card__image').boundingBox())!
+    const name = (await card.locator('.dc-card__primary').boundingBox())!
+    expect(name.y).toBeGreaterThanOrEqual(picture.y + picture.height - 1)
+    // No padding: only the card's border between its edge and the picture's.
+    expect(picture.x - box.x).toBeLessThanOrEqual(2)
+    expect(box.x + box.width - (picture.x + picture.width)).toBeLessThanOrEqual(2)
+    expect(picture.y - box.y).toBeLessThanOrEqual(2)
+  })
+
+  test('a wall of picture cards is narrower than one of record cards', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--pictured-cards')
+    const record = (await page.locator('.dc-card').first().boundingBox())!
+    await gotoStory(page, PICTURE)
+    const picture = (await page.locator('.dc-card').first().boundingBox())!
+    expect(picture.width).toBeLessThan(record.width)
+  })
+
   test('a piece with no picture is its name, in the same card', async ({ page }) => {
     await gotoStory(page, PICTURE)
     const bare = page.locator('.dc-card').filter({ hasNot: page.locator('.dc-card__image') })

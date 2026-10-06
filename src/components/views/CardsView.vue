@@ -18,10 +18,16 @@ const showEntity = computed(() => shell.isEverything.value)
 
 /** A card that is its picture and its name — see `EntitySchema.card`. */
 const isPicture = (entry: PresentedRow) => entry.entity?.card === 'picture'
+
+/** Every card a picture card, so the columns can be as narrow as one. */
+const allPictures = computed(() => rows.value.length > 0 && rows.value.every(isPicture))
 </script>
 
 <template>
-  <div class="dc-cards">
+  <div
+    class="dc-cards"
+    :class="{ 'dc-cards--pictures': allPictures }"
+  >
     <div
       v-for="entry in rows"
       :key="entry.key"
@@ -181,27 +187,59 @@ const isPicture = (entry: PresentedRow) => entry.entity?.card === 'picture'
 }
 
 /*
- * A picture card is the picture and the name, so both sit in the middle of
- * it: a card in a row of taller ones, or one with no picture to its name, is
- * then the same card with more room round it. Its top row is the tick, the
- * star and the query's marks where any of them is drawn, and otherwise is not
- * there to take up a line.
+ * A picture card is a picture with its name under it: the picture across the
+ * whole card, edge to edge, and square, so a wall of them lines up whatever
+ * shape each picture is. The columns are as narrow as one when every card is
+ * one, since a picture card has no line of text that needs the width.
+ *
+ * Its top row is the tick, the star and the query's marks where any of them
+ * is drawn, floated over the picture's corner, and otherwise is not there. A
+ * card with no picture is its name, in the middle of the room the picture
+ * would have had.
  */
+.dc-cards--pictures {
+  grid-template-columns: repeat(auto-fill, minmax(var(--dc-card-picture, 160px), 1fr));
+}
+
 .dc-card--picture {
-  justify-content: center;
+  position: relative;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-.dc-card--picture .dc-card__open {
-  align-items: center;
-}
-
-.dc-card--picture .dc-card__image {
-  width: var(--dc-card-picture, 96px);
-  height: var(--dc-card-picture, 96px);
+.dc-card--picture .dc-card__top {
+  position: absolute;
+  inset: 6px 6px auto;
+  z-index: 1;
 }
 
 .dc-card--picture .dc-card__top:not(:has(.dc-card__lead > *, .dc-card__top-right > *)) {
   display: none;
+}
+
+.dc-card--picture .dc-card__open {
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dc-card--picture .dc-card__image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 0;
+}
+
+.dc-card--picture .dc-card__names {
+  padding: 8px 10px;
+}
+
+.dc-card--picture .dc-card__open:not(:has(.dc-card__image)) {
+  align-items: center;
+  justify-content: center;
+  min-height: var(--dc-card-picture, 160px);
+  text-align: center;
 }
 
 .dc-card__primary {

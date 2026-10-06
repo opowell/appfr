@@ -450,7 +450,7 @@ export interface EntitySchema {
    *
    * `record`, the default, is the record's row number and state over its
    * picture, name and reference, its first two numbers and its date.
-   * `picture` is the picture, drawn large, and the name beside it, and
+   * `picture` is the picture, edge to edge, and the name under it, and
    * nothing else: for a type whose records are told apart by what they look
    * like, a game or a piece, where the numbers belong to the table and a
    * wall of cards is a wall of things to pick from. The table and every other

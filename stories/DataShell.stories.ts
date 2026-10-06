@@ -436,7 +436,7 @@ export const PicturedCards = story({
  * The same pieces, as cards that are their picture and their name.
  *
  * `card: 'picture'` on a type leaves the row number, the state, the part
- * number and the counts to the table, and draws the picture large: a wall of
+ * number and the counts to the table, and puts the name under the picture: a wall of
  * things to pick one from, rather than records to read. The pieces nobody has
  * photographed are their names, in the middle of the same card.
  */

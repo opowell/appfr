@@ -308,6 +308,7 @@ export {
   VIEW_KINDS,
 } from './types'
 export type {
+  CardKind,
   ChipsFacet,
   ColumnAlign,
   ColumnBreakpoint,

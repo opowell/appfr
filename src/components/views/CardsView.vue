@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
 import { pressOptions } from '../../query/drill'
 import { usePresentedRows } from '../../composables/usePresentedRows'
+import type { PresentedRow } from '../../composables/usePresentedRows'
 import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
@@ -14,6 +15,9 @@ import SelectTick from './SelectTick.vue'
 const shell = useShellContext()
 const rows = usePresentedRows()
 const showEntity = computed(() => shell.isEverything.value)
+
+/** A card that is its picture and its name — see `EntitySchema.card`. */
+const isPicture = (entry: PresentedRow) => entry.entity?.card === 'picture'
 </script>
 
 <template>
@@ -22,6 +26,7 @@ const showEntity = computed(() => shell.isEverything.value)
       v-for="entry in rows"
       :key="entry.key"
       class="dc-card"
+      :class="{ 'dc-card--picture': isPicture(entry) }"
     >
       <div class="dc-card__top dc-mono">
         <span class="dc-card__lead">
@@ -32,7 +37,7 @@ const showEntity = computed(() => shell.isEverything.value)
             :selected="entry.selected"
             :name="entry.parts.identity"
           />
-          {{ entry.ordinal }}
+          <template v-if="!isPicture(entry)">{{ entry.ordinal }}</template>
           <span
             v-if="showEntity"
             class="dc-card__entity"
@@ -40,7 +45,7 @@ const showEntity = computed(() => shell.isEverything.value)
         </span>
         <span class="dc-card__top-right">
           <StatusPill
-            v-if="entry.parts.state"
+            v-if="entry.parts.state && !isPicture(entry)"
             :status="entry.parts.state"
           />
           <QueryMark :entry="entry" />
@@ -69,12 +74,18 @@ const showEntity = computed(() => shell.isEverything.value)
         />
         <span class="dc-card__names">
           <span class="dc-card__primary">{{ entry.parts.identity }}</span>
-          <span class="dc-card__secondary dc-mono">{{ entry.parts.reference }}</span>
+          <span
+            v-if="!isPicture(entry)"
+            class="dc-card__secondary dc-mono"
+          >{{ entry.parts.reference }}</span>
         </span>
       </button>
       <!-- Each number under its own heading: a card has the room a table row
            does not, and `1.2k` on its own says nothing. -->
-      <div class="dc-card__metrics dc-mono">
+      <div
+        v-if="!isPicture(entry)"
+        class="dc-card__metrics dc-mono"
+      >
         <MetricDrill
           v-for="metric in entry.parts.metrics.slice(0, 2)"
           :key="metric.column.key ?? metric.label"
@@ -163,10 +174,34 @@ const showEntity = computed(() => shell.isEverything.value)
  */
 .dc-card__image {
   flex: none;
-  width: 64px;
-  height: 64px;
+  width: var(--dc-card-image, 64px);
+  height: var(--dc-card-image, 64px);
   border-radius: var(--dc-radius-sm);
   background: var(--dc-bg-2);
+}
+
+/*
+ * A picture card is the picture and the name, so both sit in the middle of
+ * it: a card in a row of taller ones, or one with no picture to its name, is
+ * then the same card with more room round it. Its top row is the tick, the
+ * star and the query's marks where any of them is drawn, and otherwise is not
+ * there to take up a line.
+ */
+.dc-card--picture {
+  justify-content: center;
+}
+
+.dc-card--picture .dc-card__open {
+  align-items: center;
+}
+
+.dc-card--picture .dc-card__image {
+  width: var(--dc-card-picture, 96px);
+  height: var(--dc-card-picture, 96px);
+}
+
+.dc-card--picture .dc-card__top:not(:has(.dc-card__lead > *, .dc-card__top-right > *)) {
+  display: none;
 }
 
 .dc-card__primary {

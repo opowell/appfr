@@ -445,7 +445,22 @@ export interface EntitySchema {
    * deciding what the data is.
    */
   columns?: ColumnDef[]
+  /**
+   * What a card of this type is made of.
+   *
+   * `record`, the default, is the record's row number and state over its
+   * picture, name and reference, its first two numbers and its date.
+   * `picture` is the picture, drawn large, and the name beside it, and
+   * nothing else: for a type whose records are told apart by what they look
+   * like, a game or a piece, where the numbers belong to the table and a
+   * wall of cards is a wall of things to pick from. The table and every other
+   * view still read the roles as they always do.
+   */
+  card?: CardKind
 }
+
+/** What a card of a type is made of — see {@link EntitySchema.card}. */
+export type CardKind = 'record' | 'picture'
 
 export interface DomainSchema {
   key: string

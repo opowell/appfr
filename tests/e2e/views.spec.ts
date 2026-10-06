@@ -264,3 +264,40 @@ test.describe('Views — the pictures alone', () => {
     await expect(page.locator('.dc-images__open').first()).toHaveAttribute('title', /.+/)
   })
 })
+
+test.describe('Views — a type whose card is its picture', () => {
+  const PICTURE = 'shell-data-shell--picture-cards'
+
+  test('a card is the picture and the name, and nothing else', async ({ page }) => {
+    await gotoStory(page, PICTURE)
+    const cards = page.locator('.dc-card')
+    expect(await cards.count()).toBeGreaterThan(0)
+    await expect(cards.first().locator('.dc-card__primary')).not.toBeEmpty()
+    // No row number, no state, no reference, no numbers: those are the table's.
+    await expect(page.locator('.dc-card__top:visible')).toHaveCount(0)
+    await expect(page.locator('.dc-card .dc-pill')).toHaveCount(0)
+    await expect(page.locator('.dc-card__secondary')).toHaveCount(0)
+    await expect(page.locator('.dc-card__metrics')).toHaveCount(0)
+  })
+
+  test('the picture is drawn larger than on a record card', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--pictured-cards')
+    const record = await page.locator('.dc-card__image').first().boundingBox()
+    await gotoStory(page, PICTURE)
+    const picture = await page.locator('.dc-card__image').first().boundingBox()
+    expect(picture!.width).toBeGreaterThan(record!.width)
+  })
+
+  test('a piece with no picture is its name, in the same card', async ({ page }) => {
+    await gotoStory(page, PICTURE)
+    const bare = page.locator('.dc-card').filter({ hasNot: page.locator('.dc-card__image') })
+    expect(await bare.count()).toBeGreaterThan(0)
+    await expect(bare.first().locator('.dc-card__primary')).not.toBeEmpty()
+  })
+
+  test('the table still has every column', async ({ page }) => {
+    await gotoStory(page, PICTURE)
+    await chooseView(page, 'table')
+    await expect(page.locator('.dc-table th', { hasText: 'Part no.' })).toBeVisible()
+  })
+})

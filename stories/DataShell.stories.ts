@@ -432,6 +432,22 @@ export const PicturedCards = story({
   search: '?e=pieces&v=cards',
 })
 
+/**
+ * The same pieces, as cards that are their picture and their name.
+ *
+ * `card: 'picture'` on a type leaves the row number, the state, the part
+ * number and the counts to the table, and draws the picture large: a wall of
+ * things to pick one from, rather than records to read. The pieces nobody has
+ * photographed are their names, in the middle of the same card.
+ */
+export const PictureCards = story({
+  schema: {
+    ...legoSchema,
+    entities: legoSchema.entities.map((entity) => (entity.key === 'pieces' ? { ...entity, card: 'picture' as const } : entity)),
+  },
+  search: '?e=pieces&v=cards',
+})
+
 export const PicturedGrid = story({
   schema: legoSchema,
   search: '?e=pieces&v=grid',

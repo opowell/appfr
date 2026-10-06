@@ -532,6 +532,25 @@ of the resolvers are exported for a host rendering its own views; `useColumns()`
 is the scope's set inside a shell, and `PresentedRow.parts` is a row with every
 role already resolved.
 
+### A type whose card is its picture
+
+A card is a record to read: its row number and state, its name and reference,
+two numbers and a date. Some types are not read that way. A game, a piece, a
+product is told apart by what it looks like, and a wall of their cards is a
+wall of things to pick one from. `card: 'picture'` makes each card the picture,
+drawn large, and the name beside it, and nothing else:
+
+```ts
+{ key: 'games', label: 'Games', card: 'picture', /* … */ }
+```
+
+Only the card changes. The row number, the state, the reference and the counts
+are still in the table, and the list, the grid, the links and the preview read
+the roles as they always do. A record with no picture is its name, in the
+middle of the same card. The tick, the star and the query's marks stay on the
+card wherever the host offers them. `--dc-card-picture` is how large the
+picture is drawn (96px), as `--dc-card-image` is on a record card (64px).
+
 ### A type you can make more of
 
 `create` on an entity names what making a new one of it is called, and puts
@@ -2542,6 +2561,7 @@ are a whole theme:
 | `--dc-table-lines` | how many lines a cell may wrap to, in a table whose rows are already tall |
 | `--dc-shadow`, `--dc-header-height` | — |
 | `--dc-header-width` | how wide the bar and panel are under `matchWidth="shrink"` |
+| `--dc-card-image`, `--dc-card-picture` | how large a card's picture is drawn: on a record card (64px), and on a type's whose card is its picture (96px) |
 
 ### Any single token
 

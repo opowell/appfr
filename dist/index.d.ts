@@ -73,5 +73,5 @@ export { andExpression, columnShortcut, columnShortcutOf, expandShortcuts, refin
 export type { Comparator, Expression, ExpressionSplit, FieldTerm, Term, TextTerm, } from './data/expression';
 export { fnv1a, formatCount, formatDate, formatMetric, formatOrdinal } from './data/format';
 export { COLUMN_BREAKPOINTS, COLUMN_ROLES, RECORD_STATUSES, SHELL_THEMES, VIEW_KINDS, } from './types';
-export type { ChipsFacet, ColumnAlign, ColumnBreakpoint, ColumnDef, ColumnKind, ColumnRole, DataSource, DomainSchema, EntitySchema, FacetDef, FacetState, FacetValue, PressOptions, QueryRequest, QueryResult, QuerySink, QueryUpdate, RangeFacet, RecordStatus, Selection, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, SortDef, SortDirection, StreamingDataSource, SyncDataSource, ToggleFacet, ViewKind, } from './types';
+export type { CardKind, ChipsFacet, ColumnAlign, ColumnBreakpoint, ColumnDef, ColumnKind, ColumnRole, DataSource, DomainSchema, EntitySchema, FacetDef, FacetState, FacetValue, PressOptions, QueryRequest, QueryResult, QuerySink, QueryUpdate, RangeFacet, RecordStatus, Selection, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, SortDef, SortDirection, StreamingDataSource, SyncDataSource, ToggleFacet, ViewKind, } from './types';
 export { default as HeaderContentLayoutPlugin } from './plugin';

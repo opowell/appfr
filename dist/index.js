@@ -3092,19 +3092,19 @@ const pu = ["data-dc-pending", "data-dc-heads-only"], vu = {
       limit: t.previewsPerType,
       within: t.within,
       isPinned: (l) => t.isPinnedId(l)
-    }), r = v(() => !t.isPristine.value || !!t.within.value), i = v(
+    }), r = v(() => !t.isPristine.value || !!t.within.value), i = v(() => t.previewsPerType.value <= 0), o = v(
       () => n.value.filter(
-        (l) => !l.pinned && (l.total > 0 || l.entity.create)
+        (l) => !l.pinned && (l.total > 0 || !i.value && l.entity.create)
       )
-    ), o = v(() => t.previewsPerType.value <= 0);
+    );
     return (l, c) => (f(), m("div", {
       class: "dc-types",
       "data-dc-pending": A(a) ? "true" : "false",
-      "data-dc-heads-only": o.value ? "true" : "false"
+      "data-dc-heads-only": i.value ? "true" : "false"
     }, [
       xe(l.$slots, "before", {}, void 0, !0),
-      A(s) ? (f(), m("p", vu, " Could not load results: " + N(A(s) instanceof Error ? A(s).message : "the data source failed."), 1)) : !i.value.length && A(a) ? (f(), m("p", hu, " Running query… ")) : i.value.length ? T("", !0) : (f(), m("p", mu, N(r.value ? "Nothing matches this query" : "Nothing here yet"), 1)),
-      (f(!0), m(ne, null, ve(i.value, (d) => (f(), m("section", {
+      A(s) ? (f(), m("p", vu, " Could not load results: " + N(A(s) instanceof Error ? A(s).message : "the data source failed."), 1)) : !o.value.length && A(a) ? (f(), m("p", hu, " Running query… ")) : o.value.length ? T("", !0) : (f(), m("p", mu, N(r.value ? "Nothing matches this query" : "Nothing here yet"), 1)),
+      (f(!0), m(ne, null, ve(o.value, (d) => (f(), m("section", {
         key: d.entity.key,
         class: "dc-type",
         "data-dc-empty": d.total ? "false" : "true"
@@ -3155,7 +3155,7 @@ const pu = ["data-dc-pending", "data-dc-heads-only"], vu = {
             pe(nn, { entry: h }, null, 8, ["entry"])
           ])
         ]))), 128)),
-        d.entity.create ? (f(), m("button", {
+        d.entity.create && !i.value ? (f(), m("button", {
           key: 1,
           type: "button",
           class: "dc-type__new",
@@ -3171,7 +3171,7 @@ const pu = ["data-dc-pending", "data-dc-heads-only"], vu = {
       xe(l.$slots, "after", {}, void 0, !0)
     ], 8, pu));
   }
-}), mr = /* @__PURE__ */ ce(Tu, [["__scopeId", "data-v-bf9ee888"]]), Lu = ["data-dc-pending"], Ru = {
+}), mr = /* @__PURE__ */ ce(Tu, [["__scopeId", "data-v-1d426500"]]), Lu = ["data-dc-pending"], Ru = {
   key: 1,
   class: "dc-results__state",
   role: "alert"

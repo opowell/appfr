@@ -438,7 +438,14 @@ function drill(row: ShellRow, entity: EntitySchema | null, options: PressOptions
    * being a press on what the number counts — those tests, without this host's.
    */
   const expr = drillExpression(props.schema, query.query.value, row, options)
-  if (options.exclude) {
+  if (options.newTab) {
+    /*
+     * The same destination, in a tab of its own: this one keeps its list, its
+     * draft and its scroll position, which is the reason to hold Shift.
+     */
+    if (options.exclude) query.narrow(expr, entity?.key ?? query.query.value.entity, undefined, 'open')
+    else query.narrow(expr, entity?.key ?? null, entity ? undefined : 'cards', 'open')
+  } else if (options.exclude) {
     query.narrow(expr, entity?.key ?? query.query.value.entity)
   } else {
     /*

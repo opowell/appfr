@@ -163,11 +163,15 @@ export function withStanding(
  * The options a pointer press carries — the one place the modifier is read, so
  * every view agrees about which key it is. ⌘ on a Mac and Ctrl elsewhere are
  * the same key in the same place, and both are read everywhere, so a keyboard
- * on the wrong machine still works; ⇧ says the same thing on either, being
- * the one key a reader reaches for to turn a press the other way round.
+ * on the wrong machine still works. ⇧ is the browser's own: Shift on a link
+ * opens it in a new window, so Shift on a press opens where it leads in a new
+ * tab — and held with ⌘, the record left out, over there.
  */
 export function pressOptions(event: MouseEvent | KeyboardEvent): PressOptions {
-  return event.metaKey || event.ctrlKey || event.shiftKey ? { exclude: true } : {}
+  return {
+    ...(event.metaKey || event.ctrlKey ? { exclude: true } : {}),
+    ...(event.shiftKey ? { newTab: true } : {}),
+  }
 }
 
 /**

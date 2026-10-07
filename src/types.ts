@@ -205,6 +205,12 @@ export interface PressOptions {
    * the event, exported so every press agrees about which key it is.
    */
   exclude?: boolean
+  /**
+   * The press was made with Shift held: go where it leads in a new browser
+   * tab, and leave this one as it is. Combines with {@link exclude} — the
+   * record left out, in a tab of its own.
+   */
+  newTab?: boolean
 }
 
 /**

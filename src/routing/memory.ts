@@ -5,6 +5,8 @@ import { normalizeSearch } from './adapter'
 export interface MemoryAdapter extends RouteAdapter {
   /** Every location navigated to, oldest first. Useful in assertions. */
   readonly history: string[]
+  /** Every location opened in a new tab, oldest first — none of them navigated to. */
+  readonly opened: string[]
 }
 
 /**
@@ -15,11 +17,16 @@ export function createMemoryAdapter(initialSearch = '', initialPath = '/'): Memo
   const search = ref(normalizeSearch(initialSearch))
   const path = ref(initialPath)
   const history: string[] = [`${path.value}${search.value}`]
+  const opened: string[] = []
 
   return {
     search,
     path,
     history,
+    opened,
+    open(next) {
+      opened.push(`${path.value}${normalizeSearch(next)}`)
+    },
     push(next) {
       search.value = normalizeSearch(next)
       history.push(`${path.value}${search.value}`)

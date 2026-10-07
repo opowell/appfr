@@ -146,7 +146,7 @@ const previews = computed(() =>
       <button
         type="button"
         class="dc-type__head"
-        @click="shell.setEntity(preview.entity.key)"
+        @click="shell.setEntity(preview.entity.key, pressOptions($event).newTab ? 'open' : undefined)"
       >
         <span class="dc-type__name">{{ preview.entity.label }}</span>
         <span class="dc-type__count dc-mono">{{ preview.count }}</span>

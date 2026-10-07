@@ -215,6 +215,51 @@ test.describe('Pressing a row', () => {
 })
 
 /*
+ * The same press with ⇧ held: where it leads, in a new tab — this one left on
+ * the list it was pressed in, which is why anyone would hold Shift.
+ */
+test.describe('Pressing with ⇧ held', () => {
+  test('opens the record in a new tab and leaves this one where it was', async ({ page, context }) => {
+    await gotoStory(page, HOME, '&e=sets&v=list')
+    const before = page.url()
+    const opened = context.waitForEvent('page')
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Shift'] })
+    const tab = await opened
+    await tab.waitForLoadState('domcontentloaded')
+    const url = new URL(tab.url())
+    expect(url.searchParams.get('q')).toMatch(/^set:"sets_\d+"$/)
+    expect(url.searchParams.get('e')).toBeNull()
+    expect(page.url()).toBe(before)
+  })
+
+  test('opens a metric’s list in a new tab, and with ⌘ leaves the record out there', async ({ page, context }) => {
+    await gotoStory(page, TABLE)
+    const before = page.url()
+    const drill = page.locator('.dc-table__row').first().locator('button.dc-drill').first()
+    let opened = context.waitForEvent('page')
+    await drill.click({ modifiers: ['Shift'] })
+    let url = new URL((await opened).url())
+    expect(url.searchParams.get('q')).toMatch(/^set:"sets_\d+"$/)
+    expect(url.searchParams.get('e')).toBe('pieces')
+    opened = context.waitForEvent('page')
+    await drill.click({ modifiers: ['Shift', 'Meta'] })
+    url = new URL((await opened).url())
+    expect(url.searchParams.get('q')).toMatch(/^-set:"sets_\d+"$/)
+    expect(page.url()).toBe(before)
+  })
+
+  test('opens a type in a new tab from its card', async ({ page, context }) => {
+    await gotoStory(page, HOME)
+    const before = page.url()
+    const opened = context.waitForEvent('page')
+    await page.locator('.dc-type__head').first().click({ modifiers: ['Shift'] })
+    const url = new URL((await opened).url())
+    expect(url.searchParams.get('e')).not.toBeNull()
+    expect(page.url()).toBe(before)
+  })
+})
+
+/*
  * The same press with ⌘ held, which leaves the record out rather than
  * narrowing to it — and stays put, a list missing one row being the same
  * list. Ctrl is the same key on the machines that have no ⌘, and Playwright

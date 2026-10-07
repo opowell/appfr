@@ -14,6 +14,13 @@ export interface RouteAdapter {
   push(search: string): void
   /** Navigate, replacing the current history entry. */
   replace(search: string): void
+  /**
+   * Opens a search in a new browser tab, leaving this one where it is — what a
+   * press made with Shift held means (see `pressOptions`). Optional: an adapter
+   * without it has nowhere else to open anything, and the press navigates here
+   * instead.
+   */
+  open?(search: string): void
   /** Release any listeners. Called on unmount for adapters the shell created. */
   dispose?(): void
 }

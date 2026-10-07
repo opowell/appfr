@@ -563,3 +563,34 @@ describe('setEntity', () => {
     expect(state.query.value.expr).toBe('set:"sets_10007" color:"colors_10000"')
   })
 })
+
+describe('useQueryState — a new tab', () => {
+  it('opens a narrowing in a new tab and leaves this one where it was', () => {
+    const { state, adapter } = setup('?e=searches')
+    const before = [...adapter.history]
+    state.narrow('search:"s1"', 'items', undefined, 'open')
+    expect(adapter.history).toEqual(before)
+    expect(adapter.opened).toHaveLength(1)
+    expect(adapter.opened[0]).toContain('e=items')
+    expect(adapter.opened[0]).toContain('search')
+    expect(state.query.value.entity).toBe('searches')
+  })
+
+  it('opens a type in a new tab, even the type already listed', () => {
+    const { state, adapter } = setup('?e=searches')
+    state.setEntity('items', 'open')
+    state.setEntity('searches', 'open')
+    expect(adapter.opened.map((href) => href.includes('e=items'))).toEqual([true, false])
+    expect(adapter.opened[1]).toContain('e=searches')
+    expect(state.query.value.entity).toBe('searches')
+  })
+
+  it('navigates here where the adapter has no tab to open', () => {
+    const adapter = createMemoryAdapter('?e=searches')
+    const bare = { search: adapter.search, path: adapter.path, push: adapter.push, replace: adapter.replace }
+    const scope = effectScope()
+    const state = scope.run(() => useQueryState({ schema: iRadarSchema, adapter: bare })) as QueryState
+    state.setEntity('items', 'open')
+    expect(state.query.value.entity).toBe('items')
+  })
+})

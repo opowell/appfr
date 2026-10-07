@@ -11,6 +11,12 @@ export interface RouterLike {
   currentRoute: { value: { path: string; fullPath: string } }
   push(to: string): unknown
   replace(to: string): unknown
+  /**
+   * Turns a location into the `href` the browser would load for it — under hash
+   * history, `#/` and all. What opening a query in a new tab needs, and present
+   * on every real `Router`; without it a new tab gets the path as it stands.
+   */
+  resolve?(to: string): { href: string }
 }
 
 function searchOf(fullPath: string): string {
@@ -42,6 +48,11 @@ export function createVueRouterAdapter(router: RouterLike): RouteAdapter {
     path: path as RouteAdapter['path'],
     push: (next) => router.push(`${path.value}${normalizeSearch(next)}`),
     replace: (next) => router.replace(`${path.value}${normalizeSearch(next)}`),
+    open: (next) => {
+      if (typeof window === 'undefined') return
+      const to = `${path.value}${normalizeSearch(next)}`
+      window.open(router.resolve?.(to).href ?? to, '_blank', 'noopener')
+    },
     dispose: stop,
   }
 }

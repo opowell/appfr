@@ -247,10 +247,14 @@ describe('liftTerm', () => {
 describe('pressOptions', () => {
   const press = (init: MouseEventInit) => pressOptions(new MouseEvent('click', init))
 
-  it('reads ⌘, Ctrl and ⇧ alike as "leave it out"', () => {
+  it('reads ⌘ and Ctrl alike as "leave it out"', () => {
     expect(press({ metaKey: true })).toEqual({ exclude: true })
     expect(press({ ctrlKey: true })).toEqual({ exclude: true })
-    expect(press({ shiftKey: true })).toEqual({ exclude: true })
+  })
+
+  it('reads ⇧ as "in a new tab", and with ⌘ as both', () => {
+    expect(press({ shiftKey: true })).toEqual({ newTab: true })
+    expect(press({ shiftKey: true, metaKey: true })).toEqual({ exclude: true, newTab: true })
   })
 
   it('reads a plain press, and any other modifier, as nothing at all', () => {

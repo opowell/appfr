@@ -744,7 +744,7 @@ host whose leaves are the only records with somewhere to go (a URL opens in a
 new tab; a file opens in an editor) can leave `rowPress` alone and handle
 `activate` for exactly those.
 
-**A press with ⌘ (or Ctrl, or ⇧) held leaves the record out instead.** Every press
+**A press with ⌘ (or Ctrl) held leaves the record out instead.** Every press
 that narrows — a row, the `→`, a metric, a card's preview row — writes
 `-host:"www.example.com"` rather than `host:"www.example.com"` when the
 modifier is down, and the screen stays where it is: taking one record out of a
@@ -756,6 +756,19 @@ the bar keeps its sign in front of the name: `-set:Yellow Castle (sets_10007)`.
 `pressOptions(event)` is the reading of the modifier, exported so a host's own
 cells can answer it the same way, and it is what `click(row, options)` and
 `drill(row, entity, options)` carry.
+
+**A press with ⇧ held goes there in a new tab.** Shift is the browser's own
+key for a link opened elsewhere, so a row, the `→`, a metric or a type card's
+heading pressed with it opens the query it leads to in a new browser tab, and
+this one stays on the list it was pressed in — draft, page and scroll and all.
+With ⌘ too it is the record left out, over there. `pressOptions` reads it as
+`newTab`; the navigation is `narrow(expr, entity, view, 'open')` or
+`setEntity(key, 'open')`, `'open'` being the third `NavigationMode`. Where it
+opens is the route adapter's `open(search)`: the History adapter keeps the
+page's path and hash, the vue-router one asks `router.resolve` for the `href`
+(so a hash-history app gets its `#/…`), and the memory adapter records the
+location in `opened` and navigates nowhere. An adapter of a host's own that
+has no `open` degrades to navigating this tab.
 
 **A row the query names says so.** A record the query narrows to wears a
 green `+` beside its name, and one the query leaves out a red `−` — in every
@@ -1296,7 +1309,7 @@ own.
 | `open` | `boolean` | — | `v-model:open` to control the panel; omit and the shell holds it. |
 | `pinned` | `string[]` | — | `v-model:pinned` to control pinning; omit and the shell holds it. |
 | `selected` | `string[]` | — | `v-model:selected` to control which records are ticked; omit and the shell holds it. |
-| `navigationMode` | `'push' \| 'replace'` | `'push'` | For entity, view, sort and expression. |
+| `navigationMode` | `'push' \| 'replace'` | `'push'` | For entity, view, sort and expression. (`'open'`, a new tab, is what a ⇧-press uses.) |
 | `facetNavigationMode` | `'push' \| 'replace'` | `'replace'` | For individual facet edits. |
 
 **Events** — `activate(row)` when a row is opened, `create(entity)` when a

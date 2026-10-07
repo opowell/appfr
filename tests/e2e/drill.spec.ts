@@ -229,6 +229,16 @@ test.describe('Pressing with the browser’s modifiers', () => {
     expect(queryOf(page)).toBe(linked)
   })
 
+  test('looks as it did as a button, whatever a host says about links', async ({ page }) => {
+    await gotoStory(page, HOME)
+    // What nearly every host page says about its links.
+    await page.addStyleTag({ content: 'a { color: rgb(255, 0, 0); } a:hover { text-decoration: underline; }' })
+    const head = page.locator('.dc-type__head').first()
+    await head.hover()
+    await expect(head).toHaveCSS('text-decoration-line', 'none')
+    await expect(head.locator('.dc-type__name')).not.toHaveCSS('color', 'rgb(255, 0, 0)')
+  })
+
   test('opens the record in a new tab with ⌘, and leaves this one where it was', async ({ page, context }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const before = page.url()

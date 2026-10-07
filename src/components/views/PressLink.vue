@@ -55,8 +55,23 @@ function click(event: MouseEvent) {
  */
 :where(a.dc-press) {
   display: inline-block;
+  cursor: pointer;
+}
+</style>
+
+<style>
+/*
+ * What a host's own link styles would otherwise put on these — `a { color }`
+ * and `a:hover { text-decoration: underline }` are in nearly every page — undone.
+ *
+ * Global and exactly this specific on purpose: `html a.dc-press` (0,1,2) beats
+ * a host's `a` and `a:hover` (0,1,1), and loses to every rule a view scopes
+ * to its own class (0,2,0 and up) — so a metric keeps its dotted underline and
+ * its hover colour, and a type's name stops turning into a hover-underlined
+ * link the moment it became one.
+ */
+html a.dc-press {
   color: inherit;
   text-decoration: none;
-  cursor: pointer;
 }
 </style>

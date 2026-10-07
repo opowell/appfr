@@ -25,7 +25,11 @@ export interface UseEntityPreviewsOptions {
     schema: ComputedRef<DomainSchema>;
     query: ComputedRef<ShellQuery>;
     entities: ComputedRef<EntitySchema[]>;
-    /** Rows to show inside each type's card. */
+    /**
+     * Rows to show inside each type's card. `0` shows none — each card is then
+     * its type and its count — rather than meaning *no limit*, as it does to a
+     * source.
+     */
     limit: ComputedRef<number>;
     /**
      * An expression every card is read inside — see {@link UseResultsOptions.within}.

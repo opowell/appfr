@@ -2,7 +2,11 @@ import type { ComputedRef, MaybeRefOrGetter } from 'vue';
 import type { DomainSchema, EntitySchema, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
 import type { RouteAdapter } from '../routing/adapter';
 import type { SummaryTerm } from '../query/summary';
-export type NavigationMode = 'push' | 'replace';
+/**
+ * How a change reaches the address bar: a new history entry, the current one
+ * rewritten, or — `open` — a new browser tab, this one left where it was.
+ */
+export type NavigationMode = 'push' | 'replace' | 'open';
 export interface UseQueryStateOptions {
     schema: MaybeRefOrGetter<DomainSchema>;
     adapter: RouteAdapter;
@@ -42,8 +46,11 @@ export interface QueryState {
     /** True when no entity filter is applied — every entity is in the results. */
     isEverything: ComputedRef<boolean>;
     hasFacets: ComputedRef<boolean>;
-    /** Filters to one entity, or back to the whole corpus with `null`. */
-    setEntity(key: string | null): void;
+    /**
+     * Filters to one entity, or back to the whole corpus with `null`. `open`
+     * lists it in a new tab instead.
+     */
+    setEntity(key: string | null, mode?: NavigationMode): void;
     /** Clears the entity filter — back to everything. */
     clearEntity(): void;
     setView(view: ViewKind): void;
@@ -70,7 +77,7 @@ export interface QueryState {
      *
      * Returns whether it navigated, as {@link QueryState.setExpression} does.
      */
-    narrow(expr: string, entityKey: string | null, view?: ViewKind): boolean;
+    narrow(expr: string, entityKey: string | null, view?: ViewKind, mode?: NavigationMode): boolean;
     /**
      * Moves to a page of the current results, 1-based and clamped there. What
      * the last page is depends on a count this composable has no sight of — the

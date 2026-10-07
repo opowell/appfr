@@ -13,6 +13,14 @@ export interface RouterLike {
     };
     push(to: string): unknown;
     replace(to: string): unknown;
+    /**
+     * Turns a location into the `href` the browser would load for it — under hash
+     * history, `#/` and all. What opening a query in a new tab needs, and present
+     * on every real `Router`; without it a new tab gets the path as it stands.
+     */
+    resolve?(to: string): {
+        href: string;
+    };
 }
 /**
  * Routes shell queries through vue-router, so a query change is an ordinary

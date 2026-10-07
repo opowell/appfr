@@ -191,6 +191,8 @@ export type { PaneContext } from './composables/paneMenu'
 export { useLayoutRoute } from './composables/useLayoutRoute'
 export type { LayoutRoute, UseLayoutRouteOptions } from './composables/useLayoutRoute'
 export { decodeLayout, encodeLayout } from './window/codec'
+export { openPopOut, popOutRect } from './window/popOut'
+export type { PopOutRect } from './window/popOut'
 
 /* Query model */
 export {

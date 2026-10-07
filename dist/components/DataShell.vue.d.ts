@@ -151,6 +151,10 @@ type __VLS_Slots = {
         /** Rows before the first of `rows` — for numbering that keeps counting. */
         offset: number;
         pageCount: number;
+        /**
+         * The query these rows answer: the committed one, with whatever is being
+         * typed in the header's box ANDed on — see `liveQuery` on the context.
+         */
         query: ShellQuery;
         pending: boolean;
     }) => unknown;

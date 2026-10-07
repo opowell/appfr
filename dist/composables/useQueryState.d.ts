@@ -49,7 +49,15 @@ export interface QueryState {
     setView(view: ViewKind): void;
     setSort(key: string): void;
     toggleDirection(): void;
-    setExpression(expr: string): void;
+    /**
+     * Writes the expression, returning whether that went anywhere — false where
+     * it is the expression already in force, and the URL is left as it was.
+     *
+     * Said because a route change is not synchronous: a caller holding something
+     * on screen until the new query lands has to know whether one is coming, or
+     * it waits for good on a navigation that was never made.
+     */
+    setExpression(expr: string): boolean;
     /**
      * The expression, the entity to list and — where it matters — how to draw
      * them, in one navigation.
@@ -59,8 +67,10 @@ export interface QueryState {
      * holds, and a route change is not synchronous — so the second would write
      * over the first before it had arrived. This is what narrowing to a record
      * needs, since that is two or three things at once.
+     *
+     * Returns whether it navigated, as {@link QueryState.setExpression} does.
      */
-    narrow(expr: string, entityKey: string | null, view?: ViewKind): void;
+    narrow(expr: string, entityKey: string | null, view?: ViewKind): boolean;
     /**
      * Moves to a page of the current results, 1-based and clamped there. What
      * the last page is depends on a count this composable has no sight of — the

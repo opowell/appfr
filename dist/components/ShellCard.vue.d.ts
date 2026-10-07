@@ -28,6 +28,27 @@ type __VLS_Props = {
      * and quieter than the cards that hold something.
      */
     muted?: boolean;
+    /**
+     * A press on the head folds the card to the head alone, and another opens
+     * it again — for a page of cards the reader wants to put some of out of the
+     * way without losing their place among the rest.
+     *
+     * Off unless asked for. A head is where a host puts its own controls, and a
+     * card that started folding on every press of its head would be a card
+     * whose head a host had to audit: off, nothing a host already has changes.
+     */
+    collapsible?: boolean;
+    /**
+     * Whether the card is folded, for a host that owns that: bind
+     * `v-model:collapsed` to remember it, or to fold every card at once. Left
+     * unbound, the card holds it itself, starting from {@link defaultCollapsed}.
+     */
+    collapsed?: boolean;
+    /**
+     * Whether a collapsible card starts folded, where nothing binds
+     * `collapsed` — the card then holds the state itself, from here.
+     */
+    defaultCollapsed?: boolean;
 };
 type __VLS_Slots = {
     /** The whole head, replacing the title and count. */
@@ -39,7 +60,13 @@ type __VLS_Slots = {
     /** A row under the content, drawn as the type card's own button is. */
     foot?: () => unknown;
 };
-declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
+    "update:collapsed": (collapsed: boolean) => any;
+}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
+    "onUpdate:collapsed"?: ((collapsed: boolean) => any) | undefined;
+}>, {
+    collapsed: boolean;
+}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: __VLS_WithSlots<typeof __VLS_component, __VLS_Slots>;
 export default _default;
 type __VLS_WithSlots<T, S> = T & {

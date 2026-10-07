@@ -31,6 +31,7 @@ import { provideShellContext } from '../composables/context'
 import { useQueryState } from '../composables/useQueryState'
 import type { NavigationMode } from '../composables/useQueryState'
 import { useResults } from '../composables/useResults'
+import { useDraft } from '../composables/useDraft'
 import ShellHeader from './ShellHeader.vue'
 import QueryPanel from './QueryPanel.vue'
 import RecordActions from './RecordActions.vue'
@@ -238,6 +239,10 @@ const slots = defineSlots<{
     /** Rows before the first of `rows` — for numbering that keeps counting. */
     offset: number
     pageCount: number
+    /**
+     * The query these rows answer: the committed one, with whatever is being
+     * typed in the header's box ANDed on — see `liveQuery` on the context.
+     */
     query: ShellQuery
     pending: boolean
   }) => unknown
@@ -271,9 +276,20 @@ const query = useQueryState({
 /** Trimmed once: an empty scope and no scope at all are the same shell. */
 const within = computed(() => props.within?.trim() ?? '')
 
+/**
+ * What is typed in the header's box, read as it is typed — see
+ * {@link useDraft}. The results are asked the query it makes, `live`, which
+ * is the committed query itself whenever the box is empty.
+ */
+const draft = useDraft({
+  query: query.query,
+  entity: query.entity,
+  setExpression: query.setExpression,
+})
+
 const results = useResults({
   source,
-  query: query.query,
+  query: draft.live,
   schema: computed(() => props.schema),
   entity: query.entity,
   limit: computed(() => props.limit),
@@ -292,9 +308,12 @@ watch(query.query, (value) => emit('query-change', value))
  * back to the page that was corrected and forward again.
  */
 watch(
-  [results.pageCount, results.pending, query.query],
+  [results.pageCount, results.pending, query.query, draft.drafting],
   () => {
-    if (results.pending.value) return
+    // A draft's pages are the draft's: the count is of its results, not of
+    // the query's, and correcting the URL by it would write a page the query
+    // never had — on a keystroke, which is the one thing a draft never does.
+    if (results.pending.value || draft.drafting.value) return
     const last = results.pageCount.value
     if (query.query.value.page > last) query.setPage(last, 'replace')
   },
@@ -422,7 +441,15 @@ function drill(row: ShellRow, entity: EntitySchema | null, options: PressOptions
   if (options.exclude) {
     query.narrow(expr, entity?.key ?? query.query.value.entity)
   } else {
-    query.narrow(expr, entity?.key ?? null, entity ? undefined : 'cards')
+    /*
+     * A record pressed while a draft is live is what the draft was looking
+     * for: the answer to it rather than a refinement of it. So the draft goes
+     * with the press — the words were how the record was found, and ANDed on
+     * to the record's own screen they would hide most of what it is about.
+     * Leaving one out keeps it, that being a refinement of the very list the
+     * draft drew.
+     */
+    draft.release(() => query.narrow(expr, entity?.key ?? null, entity ? undefined : 'cards'))
   }
   emit('drill', row, entity, options)
 }
@@ -431,6 +458,19 @@ function drill(row: ShellRow, entity: EntitySchema | null, options: PressOptions
 
 const shell = provideShellContext({
   ...query,
+  draft: draft.text,
+  liveQuery: draft.live,
+  drafting: draft.drafting,
+  commitDraft: draft.commit,
+  abandonDraft: draft.abandon,
+  /*
+   * A page of what is on screen: the draft's, while one is live, which are
+   * held beside it rather than in the URL — see `liveQuery`.
+   */
+  setPage: (page, mode) => {
+    if (draft.drafting.value) draft.setPage(page)
+    else query.setPage(page, mode)
+  },
   schema: computed(() => props.schema),
   entities: computed(() => props.schema.entities),
   rows: results.rows,
@@ -552,7 +592,7 @@ defineExpose({
       :total="shell.total.value"
       :offset="shell.offset.value"
       :page-count="shell.pageCount.value"
-      :query="shell.query.value"
+      :query="shell.liveQuery.value"
       :pending="shell.pending.value"
     >
       <ResultsArea :views="views">

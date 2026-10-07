@@ -638,6 +638,43 @@ export function refineExpression(expr: string, typed: string): string {
   )
 }
 
+/** A field and its operator with the value still to come: `status:`, `price <`. */
+const UNFINISHED_PATTERN = /^[A-Za-z_][\w.-]*\s*(?:>=|<=|:|=|>|<)$/
+
+/**
+ * What of a draft can be read as a query while it is still being typed.
+ *
+ * Most of it already reads as itself: an unknown field constrains nothing, a
+ * word half-way through is a shorter word, and a quote not yet closed runs to
+ * the end of the box. Two things do not. A field with its operator and no
+ * value — `status:` on the way to `status:failed` — parses as a *word*, and a
+ * word nobody's name contains empties the screen for exactly the keystroke
+ * the reader is most likely to pause on. And a `-` on its own, the first
+ * character of every term being turned round, is a word too, and every id
+ * with a dash in it matches it. Both are what is about to be a term rather
+ * than a term, so they are left out until they are one.
+ *
+ * Written back out as the parse reads it, the way a committed term is: the
+ * draft is ANDed on to the query, and that is done to parts, not to text.
+ *
+ * Only for reading a draft live. What Enter commits is what was typed, as it
+ * always was: a reader who presses Enter on `status:` asked for that.
+ */
+export function readDraft(input: string): string {
+  return formatExpression(
+    parseExpression(input)
+      .map((group) =>
+        group.filter(
+          (term) =>
+            term.kind !== 'text' || (term.value !== '-' && !UNFINISHED_PATTERN.test(term.value)),
+        ),
+      )
+      // An alternative with nothing left in it is no alternative: `brick OR`
+      // on the way to `brick OR plate` is `brick` until there is a second.
+      .filter((group) => group.length > 0),
+  )
+}
+
 /**
  * The two expressions multiplied out, with `keep` saying what of each group
  * on the left survives what is added to it.

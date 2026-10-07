@@ -5,7 +5,6 @@ import { useShellContext } from '../composables/context'
 import { useEntityCounts } from '../composables/useEntityCounts'
 import { useRecordNames } from '../composables/useRecordNames'
 import { scopedEntity } from '../query/drill'
-import { expandShortcuts, refineExpression } from '../data/expression'
 import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
 import { formatCount } from '../data/format'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
@@ -44,12 +43,13 @@ const domain = computed(() => shell.schema.value)
 /**
  * Whether the results are narrower than the type in force: a facet, an
  * expression, or the scope the whole shell is read inside — which the reader
- * did not ask for and cannot lift, but which is no less a narrowing.
+ * did not ask for and cannot lift, but which is no less a narrowing. A draft
+ * being typed is one too, being what the results are read under right now.
  */
 const narrowed = computed(
   () =>
     shell.hasFacets.value ||
-    Boolean(shell.query.value.expr.trim()) ||
+    Boolean(shell.liveQuery.value.expr.trim()) ||
     Boolean(shell.within.value),
 )
 
@@ -70,7 +70,9 @@ const writeCount = computed(() => domain.value.formatCount ?? formatCount)
 const entityCounts = useEntityCounts({
   source: shell.source,
   schema: shell.schema,
-  query: shell.query,
+  // What each type holds of what is on screen, the draft's results included:
+  // a count of the committed query would disagree with the rows under it.
+  query: shell.liveQuery,
   entities: shell.entities,
   within: shell.within,
 })
@@ -284,30 +286,25 @@ function chooseEntity(key: string): void {
  * word was to open the panel, which is a heavier move than the words are
  * worth: most of what anyone types is a name to look for.
  *
- * The box is a draft and nothing else. It never holds the query's own text —
- * what is committed shows as pills beside it, like every other part — so
- * Enter ANDs what was typed on to the query as it stands, and the box empties
- * to take the next. {@link refineExpression} rather than a plain join, because
- * a query with `OR` in it is alternatives, and a word added to it is added to
- * each of them — and because a term typed the other way round from one the
- * query holds turns it, as a press on the record would, rather than leaving
- * the query saying both.
+ * The box is a draft. It never holds the query's own text — what is committed
+ * shows as pills beside it, like every other part — so Enter ANDs what was
+ * typed on to the query as it stands, and the box empties to take the next.
+ * `refineExpression` rather than a plain join, because a query with `OR` in
+ * it is alternatives, and a word added to it is added to each of them — and
+ * because a term typed the other way round from one the query holds turns it,
+ * as a press on the record would, rather than leaving the query saying both.
+ *
+ * It is a draft the results already answer, though: what is typed narrows
+ * them as it is typed, the URL untouched until Enter — see `liveQuery` on the
+ * context. The text is the shell's rather than this component's for that
+ * reason: the results are read under it, and a press on one of them is what
+ * gives it up.
  */
-const search = ref('')
 const searchBox = ref<HTMLInputElement | null>(null)
-
-function commitSearch(): void {
-  const typed = search.value.trim()
-  if (!typed) return
-  shell.setExpression(
-    refineExpression(shell.query.value.expr, expandShortcuts(typed, shell.entity.value)),
-  )
-  search.value = ''
-}
 
 /** Escape gives up on what is half-typed: the query stands as it was. */
 function abandonSearch(): void {
-  search.value = ''
+  shell.abandonDraft()
   searchBox.value?.blur()
 }
 
@@ -316,7 +313,7 @@ function abandonSearch(): void {
  * parts is expected to — the last pill on the row, whichever kind it is.
  */
 function backspaceSearch(event: KeyboardEvent): void {
-  if (search.value) return
+  if (shell.draft.value) return
   const last = terms.value.at(-1)
   if (!last) return
   event.preventDefault()
@@ -397,7 +394,8 @@ onBeforeUnmount(() => watching?.disconnect())
 
 /* -------------------------------------------------------------------- pages */
 
-const page = computed(() => shell.query.value.page)
+/** The page on screen — the draft's own, while one is being typed. */
+const page = computed(() => shell.liveQuery.value.page)
 
 /**
  * Pages are offered when there is more than one and when the results below are
@@ -594,18 +592,19 @@ function abandonTyped(event: Event): void {
         </template>
 
         <!-- And the box the next part is written in, at the end of the row as
-             a field of parts has it. What it holds is a draft: Enter adds it
-             to the query, and it then stands beside the box as a pill. -->
+             a field of parts has it. What it holds is a draft the results are
+             already read under: Enter adds it to the query, and it then
+             stands beside the box as a pill. -->
         <input
           ref="searchBox"
-          v-model="search"
+          v-model="shell.draft.value"
           class="dc-header__search dc-mono"
           type="text"
           autocomplete="off"
           spellcheck="false"
           placeholder="Search…"
           aria-label="Search"
-          @keydown.enter.prevent="commitSearch"
+          @keydown.enter.prevent="shell.commitDraft"
           @keydown.esc.prevent="abandonSearch"
           @keydown.backspace="backspaceSearch"
         >

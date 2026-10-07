@@ -79,7 +79,15 @@ export interface QueryState {
   setView(view: ViewKind): void
   setSort(key: string): void
   toggleDirection(): void
-  setExpression(expr: string): void
+  /**
+   * Writes the expression, returning whether that went anywhere — false where
+   * it is the expression already in force, and the URL is left as it was.
+   *
+   * Said because a route change is not synchronous: a caller holding something
+   * on screen until the new query lands has to know whether one is coming, or
+   * it waits for good on a navigation that was never made.
+   */
+  setExpression(expr: string): boolean
   /**
    * The expression, the entity to list and — where it matters — how to draw
    * them, in one navigation.
@@ -89,8 +97,10 @@ export interface QueryState {
    * holds, and a route change is not synchronous — so the second would write
    * over the first before it had arrived. This is what narrowing to a record
    * needs, since that is two or three things at once.
+   *
+   * Returns whether it navigated, as {@link QueryState.setExpression} does.
    */
-  narrow(expr: string, entityKey: string | null, view?: ViewKind): void
+  narrow(expr: string, entityKey: string | null, view?: ViewKind): boolean
   /**
    * Moves to a page of the current results, 1-based and clamped there. What
    * the last page is depends on a count this composable has no sight of — the
@@ -131,11 +141,13 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
   const sorts = computed(() => sortsFor(entity.value, schema.value))
   const sort = computed(() => findSort(entity.value, query.value.sort, schema.value))
 
-  const navigate = (next: ShellQuery, mode: NavigationMode) => {
+  /** Whether it went anywhere: a query that serialises to the URL already there does not. */
+  const navigate = (next: ShellQuery, mode: NavigationMode): boolean => {
     const search = serializeQuery(next, schema.value, defaults.value, adapter.search.value)
-    if (search === adapter.search.value) return
+    if (search === adapter.search.value) return false
     if (mode === 'push') adapter.push(search)
     else adapter.replace(search)
+    return true
   }
 
   const primaryMode = () => toValue(options.navigationMode) ?? 'push'
@@ -147,9 +159,9 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
    * different result set makes the position meaningless. A patch that names a
    * page is saying where to go, so it is left alone.
    */
-  const commit = (patch: Partial<ShellQuery>, mode: NavigationMode) => {
+  const commit = (patch: Partial<ShellQuery>, mode: NavigationMode): boolean => {
     const page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
-    navigate({ ...query.value, ...patch, page }, mode)
+    return navigate({ ...query.value, ...patch, page }, mode)
   }
 
   const patchFacets = (key: string, produce: (current: FacetValue) => FacetValue) => {
@@ -208,10 +220,10 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
       commit({ dir: query.value.dir === 'desc' ? 'asc' : 'desc' }, primaryMode())
     },
     setExpression(expr) {
-      commit({ expr }, primaryMode())
+      return commit({ expr }, primaryMode())
     },
     narrow(expr, entityKey, view) {
-      commit({ expr, ...entityPatch(entityKey), ...(view ? { view } : {}) }, primaryMode())
+      return commit({ expr, ...entityPatch(entityKey), ...(view ? { view } : {}) }, primaryMode())
     },
     setPage(page, mode) {
       commit({ page: Math.max(1, Math.floor(page)) }, mode ?? primaryMode())

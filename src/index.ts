@@ -46,11 +46,13 @@ export { default as ColumnCell } from './components/views/ColumnCell.vue'
 
 /* Composables */
 export { provideShellContext, useShellContext, SHELL_CONTEXT_KEY } from './composables/context'
-export type { ShellContext } from './composables/context'
+export type { ShellContext, ShellContextInput } from './composables/context'
 export { useQueryState } from './composables/useQueryState'
 export type { NavigationMode, QueryState, UseQueryStateOptions } from './composables/useQueryState'
 export { useResults } from './composables/useResults'
 export type { ResultsState, UseResultsOptions } from './composables/useResults'
+export { DRAFT_DELAY, useDraft } from './composables/useDraft'
+export type { DraftState, UseDraftOptions } from './composables/useDraft'
 export { presentParts, presentRow, usePresentedRows } from './composables/usePresentedRows'
 export type { PresentedRow, RowMetric, RowParts } from './composables/usePresentedRows'
 export { useColumns } from './composables/useColumns'
@@ -280,6 +282,7 @@ export {
   columnShortcut,
   columnShortcutOf,
   expandShortcuts,
+  readDraft,
   refineExpression,
   formatExpression,
   formatTerm,

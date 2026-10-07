@@ -71,7 +71,8 @@ const scroller = ref<HTMLElement | null>(null)
  * arrives here as a page turn like any other.
  */
 watch(
-  () => shell.query.value.page,
+  // The page on screen, which is the draft's own while one is being typed.
+  () => shell.liveQuery.value.page,
   () => {
     if (scroller.value) scroller.value.scrollTop = 0
   },

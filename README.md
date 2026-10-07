@@ -1182,6 +1182,52 @@ an empty box lifts the last part on the row, whichever kind it is.
                                                   ^ Enter: [brick] joins the row
 ```
 
+It is a draft the results already answer, though. What is typed narrows them
+as it is typed — the query AND the draft, read after a pause of
+`DRAFT_DELAY` (150ms) so that a word typed faster than a source answers is one
+query rather than one per letter — and everything that says what matched goes
+with it: the rows, the total and the pager, the card per type and the count on
+each, the counts in the type picker. Nothing reaches the URL while it does.
+The history holds the queries that were asked rather than every prefix of them
+on the way, so Back from a committed `brick` goes to before it, not to `bric`.
+Enter commits it exactly as it always did, Escape gives it up and the results
+are the query's again at once, and a box emptied by hand is read at once too:
+there is nothing to wait for in going back.
+
+A few things follow from the draft not being in the URL:
+
+- **Its pages are its own.** The results start at page one whatever page the
+  query was on, and the pager pages the draft's results — held beside the
+  draft rather than written to the address, and back at page one whenever the
+  draft changes. Escape returns to the query's own page.
+- **A term on its way to being one reads as nothing yet.** `status:` is a word
+  to the parse — a field with no value — and a word no record's name contains
+  would empty the screen on exactly the keystroke a reader pauses on before
+  the value. So a field with its operator and nothing after it, and the lone
+  `-` every turned term starts with, are left out of what is read until they
+  are terms (`readDraft`). Enter still commits what was typed: a reader who
+  presses Enter on `status:` asked for that. Everything else already degrades
+  on its own — an unknown field constrains nothing, and a quote not yet closed
+  runs to the end of the box.
+- **A press on a record the draft found takes the draft with it.** Narrowing
+  to a record is what the draft was looking for, and the words that found it,
+  ANDed on to the record's own screen, would hide most of what it is about.
+  Leaving a record *out* (⌘-press) keeps the draft, being a refinement of the
+  very list the draft drew; so does every other change to the query — a sort,
+  a view, a pill lifted.
+- **Nothing on screen flashes back.** Enter and a press empty the box at once,
+  but the draft's results stay up until the new query lands, so a router that
+  writes the URL a tick later (vue-router, Nuxt) goes from the draft's results
+  to the committed query's without the query-without-it in between.
+
+The context carries the draft for a view of your own: `draft` (the box's
+text), `liveQuery` (the query the results are read under — `query` itself
+whenever nothing is typed), `drafting`, `commitDraft` and `abandonDraft`. A
+view that runs its own query against the source should read `liveQuery`, or it
+goes on showing what the reader is typing their way out of. `useDraft` is the
+same thing as a composable, for a host putting the header over results of its
+own.
+
 ## Component API
 
 ### `<DataShell>`
@@ -1223,7 +1269,9 @@ updated, `toggle-pin(row)`, plus `update:open`, `update:pinned` and
 `cards-before` and `cards-after` for [cards of your own](#cards-of-your-own)
 above and below the card-per-type screen, and `results` to replace the content
 area entirely (receives `rows` — the current page of them — plus `total`,
-`offset`, `pageCount`, `query` and `pending`).
+`offset`, `pageCount`, `query` and `pending`). That `query` is the one the rows
+answer, which is the committed query with whatever is being typed in the
+header's box ANDed on — see [the field it is edited in](#the-field-it-is-edited-in).
 
 `panel-section` is where an application's own commands go when they are not
 about the query — the header bar's width belongs to the summary it exists to
@@ -1410,6 +1458,17 @@ out itself. `within` is on it too, for a view that says what narrowed the
 results: it is the shell's scope rather than part of its query, so it is not on
 `query`. `useResults` and `useEntityPreviews` each take it as an option, which
 is how a host wiring its own results area keeps them inside the same scope.
+
+So is `liveQuery`, the query as the results are read under it while a draft is
+being typed in the header's box, and the draft's own `draft`, `drafting`,
+`commitDraft` and `abandonDraft`. A host that builds its own context with
+`provideShellContext` may leave all five out, and gets the box as it was
+before it was read live — a draft Enter commits and that narrows nothing until
+then — since its own results were wired to `query` and the header's counts
+would otherwise disagree with them. To have it read live, make the draft with
+`useDraft({ query, entity, setExpression })`, hand its `live` to `useResults`
+as the query, provide its parts on the context, and send `setPage` to the
+draft's own while it is `drafting` — `DataShell` is the worked example.
 
 ## Windows
 

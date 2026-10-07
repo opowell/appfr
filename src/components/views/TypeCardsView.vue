@@ -34,7 +34,9 @@ defineSlots<{
 const { previews: found, pending, error } = useEntityPreviews({
   source: shell.source,
   schema: shell.schema,
-  query: shell.query,
+  // The query as the results are read under it, so a word being typed in the
+  // header narrows the cards as it narrows any list — see `liveQuery`.
+  query: shell.liveQuery,
   entities: shell.entities,
   limit: shell.previewsPerType,
   within: shell.within,
@@ -44,9 +46,12 @@ const { previews: found, pending, error } = useEntityPreviews({
 /**
  * With a query running, say which types it excluded rather than showing gaps.
  * A scope the shell is read inside counts: the URL may hold no query at all,
- * and a type with nothing in it still has nothing that *matched*.
+ * and a type with nothing in it still has nothing that *matched*. So does a
+ * draft being typed, for the same reason.
  */
-const narrowed = computed(() => !shell.isPristine.value || Boolean(shell.within.value))
+const narrowed = computed(
+  () => !shell.isPristine.value || Boolean(shell.within.value) || shell.drafting.value,
+)
 
 /**
  * The cards worth drawing: the types that hold something, and the types that

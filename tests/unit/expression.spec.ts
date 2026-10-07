@@ -10,6 +10,7 @@ import {
   negateTerm,
   oppositeTerm,
   parseExpression,
+  readDraft,
   sameTerm,
   splitExpression,
   withoutTerm,
@@ -428,6 +429,43 @@ describe('a term turned round', () => {
   it('stands in the panel as a part, sign and all', () => {
     expect(splitExpression('-kind:pdf brick').parts.map(formatTerm)).toEqual(['-kind:pdf'])
     expect(splitExpression('-brick').text).toBe('-brick')
+  })
+})
+
+/*
+ * The header's box narrows the results as it is typed, so what is in it is
+ * read at every pause — including the ones in the middle of a term.
+ */
+describe('a draft read while it is typed', () => {
+  it('reads a finished draft as the parse writes it back out', () => {
+    expect(readDraft('brick')).toBe('brick')
+    expect(readDraft('  Theme:space AND year >= 1988 ')).toBe('theme:space year>=1988')
+    expect(readDraft('release OR recall')).toBe('release OR recall')
+  })
+
+  it('leaves out a field whose value has not been typed yet', () => {
+    expect(readDraft('status:')).toBe('')
+    expect(readDraft('price <')).toBe('')
+    expect(readDraft('year>=')).toBe('')
+    expect(readDraft('brick status:')).toBe('brick')
+    expect(readDraft('-theme:')).toBe('')
+  })
+
+  it('leaves out the dash a turned term starts with, until the term is there', () => {
+    expect(readDraft('-')).toBe('')
+    expect(readDraft('brick -')).toBe('brick')
+    expect(readDraft('-brick')).toBe('-brick')
+  })
+
+  it('drops an alternative that is nothing yet, and keeps the rest', () => {
+    expect(readDraft('brick OR')).toBe('brick')
+    expect(readDraft('brick OR status:')).toBe('brick')
+  })
+
+  it('reads a quote not yet closed as running to the end of the box', () => {
+    expect(parseExpression(readDraft('"platform eng'))).toEqual([
+      [{ kind: 'text', value: 'platform eng' }],
+    ])
   })
 })
 

@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import type { ColumnDef, EntitySchema } from '../../types'
 import { useShellContext } from '../../composables/context'
-import { pressOptions } from '../../query/drill'
+import type { PressOptions } from '../../types'
+import PressLink from './PressLink.vue'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { cellText } from '../../query/columns'
 
@@ -41,22 +42,26 @@ const name = computed(() => props.column.label ?? '')
 const text = computed(() => cellText(props.column, props.entry.row))
 
 /** Stops the click reaching the row, which would open the record instead. */
-function drill(event: MouseEvent) {
+/** Where the number leads, so it is a link the browser can open elsewhere too. */
+const href = computed(() => (target.value ? shell.drillHref(props.entry.row, target.value) : null))
+
+function drill(options: PressOptions, event: MouseEvent) {
+  // The row's own press would open the record — a count leads somewhere of its own.
   event.stopPropagation()
-  if (target.value) shell.drill(props.entry.row, target.value, pressOptions(event))
+  if (target.value) shell.drill(props.entry.row, target.value, options)
 }
 </script>
 
 <template>
-  <button
+  <PressLink
     v-if="target"
-    type="button"
     class="dc-drill"
+    :href="href"
     :title="`${name} of ${entry.parts.identity} — show the ${target.label.toLowerCase()}`"
-    @click="drill"
+    @press="drill"
   >
     <slot>{{ text }}</slot>
-  </button>
+  </PressLink>
   <span v-else><slot>{{ text }}</slot></span>
 </template>
 

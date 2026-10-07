@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useShellContext } from '../../composables/context'
-import { pressOptions } from '../../query/drill'
+import PressLink from './PressLink.vue'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import RowPicture from './RowPicture.vue'
 import SelectTick from './SelectTick.vue'
@@ -18,11 +18,11 @@ const rows = usePresentedRows()
       :key="entry.key"
       class="dc-grid__cell"
     >
-      <button
-        type="button"
+      <PressLink
         class="dc-tile"
         :style="{ '--dc-tile-tint': entry.parts.tint ?? undefined }"
-        @click="shell.activate(entry.row, pressOptions($event))"
+        :href="shell.pressHref(entry.row)"
+        @press="(options) => shell.activate(entry.row, options)"
       >
         <!-- Under the scrim, which is what keeps the caption readable over a
              picture the shell knows nothing about. A tile with no picture is
@@ -41,7 +41,7 @@ const rows = usePresentedRows()
             <span class="dc-tile__primary">{{ entry.parts.identity }}</span>
           </span>
         </span>
-      </button>
+      </PressLink>
 
       <SelectTick
         v-if="shell.selectable.value"

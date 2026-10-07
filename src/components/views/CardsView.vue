@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
-import { pressOptions } from '../../query/drill'
+import PressLink from './PressLink.vue'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import StatusPill from '../StatusPill.vue'
@@ -68,10 +68,10 @@ const allPictures = computed(() => rows.value.length > 0 && rows.value.every(isP
            card is one press however much of it a reader aims at. Cards of a
            type with no `image` column are the same card without the picture,
            laid out by the class rather than by an empty box. -->
-      <button
-        type="button"
+      <PressLink
         class="dc-card__open"
-        @click="shell.activate(entry.row, pressOptions($event))"
+        :href="shell.pressHref(entry.row)"
+        @press="(options) => shell.activate(entry.row, options)"
       >
         <RowPicture
           v-if="entry.parts.image"
@@ -85,7 +85,7 @@ const allPictures = computed(() => rows.value.length > 0 && rows.value.every(isP
             class="dc-card__secondary dc-mono"
           >{{ entry.parts.reference }}</span>
         </span>
-      </button>
+      </PressLink>
       <!-- Each number under its own heading: a card has the room a table row
            does not, and `1.2k` on its own says nothing. -->
       <div

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ColumnDef } from '../../types'
+import type { ColumnDef, ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
-import { pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
+import { isBrowserPress, pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
 import type { TermStanding } from '../../query/drill'
 import { useColumns } from '../../composables/useColumns'
 import { columnShortcutOf } from '../../data/expression'
@@ -35,6 +35,28 @@ const columns = useColumns()
  * field takes for the column — the only place a reader can learn `pr` is
  * **Price ratio** without being told.
  */
+/**
+ * A press on a row anywhere but the links in it.
+ *
+ * A table row cannot be a link — its cells hold ticks, marks and counts of
+ * their own — so what the browser does with a modified click on a link is
+ * done here by hand, to the row's own `href`: ⌘/Ctrl opens it in a new tab,
+ * ⇧ in a new window. The record's name is a real link (see `ColumnCell`),
+ * which is where the rest of the browser's ways in — a middle click, the
+ * context menu — are.
+ */
+function pressRow(row: ShellRow, event: MouseEvent) {
+  const href = shell.pressHref(row)
+  if (href && isBrowserPress(event)) {
+    const features = event.shiftKey
+      ? `noopener,popup,width=${window.outerWidth},height=${window.outerHeight}`
+      : 'noopener'
+    window.open(href, '_blank', features)
+    return
+  }
+  shell.activate(row, pressOptions(event))
+}
+
 function headerTitle(column: ColumnDef): string | undefined {
   const shortcut = columnShortcutOf(column, shell.entity.value)
   const line = shortcut ? `Shortcut: ${shortcut}` : undefined
@@ -287,7 +309,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
         v-for="entry in rows"
         :key="entry.key"
         class="dc-table__row"
-        @click="shell.activate(entry.row, pressOptions($event))"
+        @click="pressRow(entry.row, $event)"
       >
         <td
           v-if="shell.selectable.value"

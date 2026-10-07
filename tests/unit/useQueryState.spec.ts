@@ -564,33 +564,22 @@ describe('setEntity', () => {
   })
 })
 
-describe('useQueryState — a new tab', () => {
-  it('opens a narrowing in a new tab and leaves this one where it was', () => {
+describe('useQueryState — links', () => {
+  it('says where a narrowing would go without going there', () => {
     const { state, adapter } = setup('?e=searches')
     const before = [...adapter.history]
-    state.narrow('search:"s1"', 'items', undefined, 'open')
+    const href = state.narrowHref('search:"s1"', 'items')
     expect(adapter.history).toEqual(before)
-    expect(adapter.opened).toHaveLength(1)
-    expect(adapter.opened[0]).toContain('e=items')
-    expect(adapter.opened[0]).toContain('search')
     expect(state.query.value.entity).toBe('searches')
+    state.narrow('search:"s1"', 'items')
+    expect(adapter.history.at(-1)).toBe(href)
   })
 
-  it('opens a type in a new tab, even the type already listed', () => {
+  it('says where listing a type would go', () => {
     const { state, adapter } = setup('?e=searches')
-    state.setEntity('items', 'open')
-    state.setEntity('searches', 'open')
-    expect(adapter.opened.map((href) => href.includes('e=items'))).toEqual([true, false])
-    expect(adapter.opened[1]).toContain('e=searches')
+    const href = state.entityHref('items')
     expect(state.query.value.entity).toBe('searches')
-  })
-
-  it('navigates here where the adapter has no tab to open', () => {
-    const adapter = createMemoryAdapter('?e=searches')
-    const bare = { search: adapter.search, path: adapter.path, push: adapter.push, replace: adapter.replace }
-    const scope = effectScope()
-    const state = scope.run(() => useQueryState({ schema: iRadarSchema, adapter: bare })) as QueryState
-    state.setEntity('items', 'open')
-    expect(state.query.value.entity).toBe('items')
+    state.setEntity('items')
+    expect(adapter.history.at(-1)).toBe(href)
   })
 })

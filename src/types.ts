@@ -200,17 +200,11 @@ export type ColumnBreakpoint = (typeof COLUMN_BREAKPOINTS)[number]
  */
 export interface PressOptions {
   /**
-   * The press was made with ⌘ (or Ctrl) held: leave this record *out* of the
+   * The press was made with ⌥ (Alt) held: leave this record *out* of the
    * query rather than narrow to it. `pressOptions(event)` is the reading of
    * the event, exported so every press agrees about which key it is.
    */
   exclude?: boolean
-  /**
-   * The press was made with Shift held: go where it leads in a new browser
-   * tab, and leave this one as it is. Combines with {@link exclude} — the
-   * record left out, in a tab of its own.
-   */
-  newTab?: boolean
 }
 
 /**
@@ -316,7 +310,7 @@ export interface ColumnDef {
    * Called with the row when the cell is pressed, for a column that means
    * something only the host knows. The shell reports and applies nothing, as
    * it does for {@link ColumnDef.activate}. How the press was made comes with
-   * it — `exclude` for one made with ⌘ held — so a host narrowing on its own
+   * it — `exclude` for one made with ⌥ held — so a host narrowing on its own
    * can offer the same turn the shell's presses do.
    */
   click?: (row: ShellRow, options?: PressOptions) => void

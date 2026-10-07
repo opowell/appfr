@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import type { CSSProperties } from 'vue'
 import { useShellContext } from '../../composables/context'
-import { pressOptions } from '../../query/drill'
+import PressLink from './PressLink.vue'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { justify } from '../../data/justify'
@@ -183,12 +183,12 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
         class="dc-images__cell"
         :style="style"
       >
-        <button
-          type="button"
+        <PressLink
           class="dc-images__open"
           :title="entry.parts.identity"
           :aria-label="entry.parts.identity"
-          @click="shell.activate(entry.row, pressOptions($event))"
+          :href="shell.pressHref(entry.row)"
+          @press="(options) => shell.activate(entry.row, options)"
         >
           <RowPicture
             v-if="pictureOf(entry)"
@@ -203,7 +203,7 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
             class="dc-images__blank"
             aria-hidden="true"
           >{{ entry.parts.identity }}</span>
-        </button>
+        </PressLink>
 
         <!-- Over the picture, in the corner, as on a grid tile: the box is one
              button and the tick cannot be inside it. -->

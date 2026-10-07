@@ -4,6 +4,7 @@ import {
   drillExpression,
   excludingTerm,
   liftTerm,
+  isBrowserPress,
   pressOptions,
   recordTerm,
   scopedEntity,
@@ -247,19 +248,21 @@ describe('liftTerm', () => {
 describe('pressOptions', () => {
   const press = (init: MouseEventInit) => pressOptions(new MouseEvent('click', init))
 
-  it('reads ⌘ and Ctrl alike as "leave it out"', () => {
-    expect(press({ metaKey: true })).toEqual({ exclude: true })
-    expect(press({ ctrlKey: true })).toEqual({ exclude: true })
+  it('reads ⌥ as "leave it out"', () => {
+    expect(press({ altKey: true })).toEqual({ exclude: true })
   })
 
-  it('reads ⇧ as "in a new tab", and with ⌘ as both', () => {
-    expect(press({ shiftKey: true })).toEqual({ newTab: true })
-    expect(press({ shiftKey: true, metaKey: true })).toEqual({ exclude: true, newTab: true })
+  it('leaves ⌘, Ctrl and ⇧ to the browser, which opens the link elsewhere', () => {
+    for (const init of [{ metaKey: true }, { ctrlKey: true }, { shiftKey: true }, { button: 1 }]) {
+      expect(press(init)).toEqual({})
+      expect(isBrowserPress(new MouseEvent('click', init))).toBe(true)
+    }
+    expect(isBrowserPress(new MouseEvent('click', { altKey: true }))).toBe(false)
+    expect(isBrowserPress(new MouseEvent('click'))).toBe(false)
   })
 
-  it('reads a plain press, and any other modifier, as nothing at all', () => {
+  it('reads a plain press as nothing at all', () => {
     expect(press({})).toEqual({})
-    expect(press({ altKey: true })).toEqual({})
   })
 })
 

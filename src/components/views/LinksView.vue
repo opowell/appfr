@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useShellContext } from '../../composables/context'
-import { pressOptions } from '../../query/drill'
+import PressLink from './PressLink.vue'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import SelectTick from './SelectTick.vue'
 
@@ -23,14 +23,14 @@ const rows = usePresentedRows()
         :selected="entry.selected"
         :name="entry.parts.identity"
       />
-      <button
-        type="button"
+      <PressLink
         class="dc-link"
-        @click="shell.activate(entry.row, pressOptions($event))"
+        :href="shell.pressHref(entry.row)"
+        @press="(options) => shell.activate(entry.row, options)"
       >
         <span class="dc-link__primary dc-truncate">{{ entry.parts.identity }}</span>
         <span class="dc-link__secondary dc-mono dc-truncate">{{ entry.parts.reference }}</span>
-      </button>
+      </PressLink>
     </span>
   </div>
 </template>

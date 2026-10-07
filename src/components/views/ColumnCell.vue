@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ColumnDef, RecordStatus } from '../../types'
+import type { ColumnDef, PressOptions, RecordStatus } from '../../types'
 import { useShellContext } from '../../composables/context'
 import { pressOptions } from '../../query/drill'
+import PressLink from './PressLink.vue'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { cellFull, cellText, cellValue, columnTruncates } from '../../query/columns'
 import MetricDrill from './MetricDrill.vue'
@@ -55,10 +56,22 @@ const title = computed(() => cellFull(props.column, props.entry.row))
 function press(event: MouseEvent) {
   if (!pressable.value) return
   event.stopPropagation()
-  const options = pressOptions(event)
+  pressWith(pressOptions(event))
+}
+
+function pressWith(options: PressOptions) {
   props.column.click?.(props.entry.row, options)
   if (props.column.activate) shell.activate(props.entry.row, options)
 }
+
+/**
+ * Where the press leads, where that is the shell's to say — an `activate`
+ * column, the record's name. A `click` of the host's own goes wherever the
+ * host takes it, so a cell with one is a button.
+ */
+const href = computed(() =>
+  props.column.activate && !props.column.click ? shell.pressHref(props.entry.row) : null,
+)
 </script>
 
 <template>
@@ -93,16 +106,16 @@ function press(event: MouseEvent) {
     :column="column"
   />
 
-  <button
+  <PressLink
     v-else-if="pressable"
-    type="button"
     class="dc-table__open"
     :class="{ 'dc-truncate': truncates }"
+    :href="href"
     :title="title"
-    @click="press"
+    @press="(options, event) => { event.stopPropagation(); pressWith(options) }"
   >
     {{ text }}
-  </button>
+  </PressLink>
 
   <!-- A span rather than the bare text a cell needs no more of, because a
        cell that wraps is cut short at a line count, and a line count needs a

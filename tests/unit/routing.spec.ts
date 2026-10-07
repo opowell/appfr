@@ -114,24 +114,11 @@ describe('vue-router adapter', () => {
     adapter.dispose?.()
   })
 
-  it('opens a search in a new tab at the href the router resolves it to', async () => {
+  it('gives the href the router resolves a search to, and navigates nowhere', async () => {
     const router = makeRouter()
     await router.push('/dash')
     const adapter = createVueRouterAdapter(router)
-    const opened: unknown[][] = []
-    const original = window.open
-    window.open = ((...args: unknown[]) => {
-      opened.push(args)
-      return null
-    }) as typeof window.open
-    try {
-      adapter.open?.('?v=cards')
-    } finally {
-      window.open = original
-    }
-    expect(opened).toHaveLength(1)
-    expect(opened[0]?.[0]).toBe(router.resolve('/dash?v=cards').href)
-    expect(opened[0]?.[1]).toBe('_blank')
+    expect(adapter.href?.('?v=cards')).toBe(router.resolve('/dash?v=cards').href)
     expect(router.currentRoute.value.query.v).toBeUndefined()
     adapter.dispose?.()
   })

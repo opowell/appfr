@@ -211,8 +211,8 @@ test.describe('Columns — as many as the schema declares', () => {
   test('a column that says what its value counts still leads there', async ({ page }) => {
     await gotoStory(page, COLUMNS)
     const colors = (await column(page, 'Colors')).first()
-    await expect(colors.locator('button.dc-drill')).toHaveCount(1)
-    await colors.locator('button.dc-drill').click()
+    await expect(colors.locator('.dc-drill')).toHaveCount(1)
+    await colors.locator('.dc-drill').click()
     // This story holds its query in memory rather than the address bar, so the
     // header's account of it is where the narrowing shows.
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'colors')

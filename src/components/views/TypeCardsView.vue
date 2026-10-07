@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
-import { pressOptions } from '../../query/drill'
+import PressLink from './PressLink.vue'
 import { useEntityPreviews } from '../../composables/useEntityPreviews'
 import MetricDrill from './MetricDrill.vue'
 import QueryMark from './QueryMark.vue'
@@ -143,10 +143,10 @@ const previews = computed(() =>
       class="dc-type"
       :data-dc-empty="preview.total ? 'false' : 'true'"
     >
-      <button
-        type="button"
+      <PressLink
         class="dc-type__head"
-        @click="shell.setEntity(preview.entity.key, pressOptions($event).newTab ? 'open' : undefined)"
+        :href="shell.entityHref(preview.entity.key)"
+        @press="shell.setEntity(preview.entity.key)"
       >
         <span class="dc-type__name">{{ preview.entity.label }}</span>
         <span class="dc-type__count dc-mono">{{ preview.count }}</span>
@@ -155,7 +155,7 @@ const previews = computed(() =>
           aria-hidden="true"
         >→</span>
         <span class="dc-type__sr">Show only {{ preview.entity.label.toLowerCase() }}</span>
-      </button>
+      </PressLink>
 
       <p
         v-if="!preview.total"
@@ -172,16 +172,16 @@ const previews = computed(() =>
         :key="entry.key"
         class="dc-type__row"
       >
-        <button
-          type="button"
+        <PressLink
           class="dc-type__open"
-          @click="shell.activate(entry.row, pressOptions($event))"
+          :href="shell.pressHref(entry.row)"
+          @press="(options) => shell.activate(entry.row, options)"
         >
           <span class="dc-type__identity">
             <span class="dc-type__primary dc-truncate">{{ entry.parts.identity }}</span>
             <span class="dc-type__secondary dc-mono dc-truncate">{{ entry.parts.reference }}</span>
           </span>
-        </button>
+        </PressLink>
         <!-- One number, the first this type declared: a preview row is a
              glance, and the type's own list is where the rest of them are. -->
         <span class="dc-type__trailing dc-mono">

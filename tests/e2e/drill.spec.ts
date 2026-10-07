@@ -84,13 +84,13 @@ test.describe('A metric that counts something listable', () => {
     // Sets: metric1 is Parts and leads to pieces; metric2 is Minifigs, which
     // this schema does not list, so that number stays plain text.
     // One further along than the columns say: the standing column comes first.
-    await expect(first.locator('td').nth(4).locator('button.dc-drill')).toHaveCount(1)
-    await expect(first.locator('td').nth(5).locator('button.dc-drill')).toHaveCount(0)
+    await expect(first.locator('td').nth(4).locator('.dc-drill')).toHaveCount(1)
+    await expect(first.locator('td').nth(5).locator('.dc-drill')).toHaveCount(0)
   })
 
   test('narrows to that type, scoped to the record pressed', async ({ page }) => {
     await gotoStory(page, TABLE)
-    await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click()
+    await page.locator('.dc-table__row').first().locator('.dc-drill').first().click()
     expect(queryOf(page)).toMatch(/^set:"sets_\d+"$/)
     expect(entityOf(page)).toBe('pieces')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'pieces')
@@ -100,7 +100,7 @@ test.describe('A metric that counts something listable', () => {
 
   test('leaves fewer rows than the type has in total', async ({ page }) => {
     await gotoStory(page, TABLE)
-    await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click()
+    await page.locator('.dc-table__row').first().locator('.dc-drill').first().click()
     const narrowed = await page.locator('.dc-table__row').count()
     expect(narrowed).toBeGreaterThan(0)
     // The mock generates 48 of each type, so a scoped set of pieces is fewer.
@@ -109,7 +109,7 @@ test.describe('A metric that counts something listable', () => {
 
   test('does not open the record it was pressed on', async ({ page }) => {
     await gotoStory(page, TABLE)
-    await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click()
+    await page.locator('.dc-table__row').first().locator('.dc-drill').first().click()
     // Still a list of rows: the click never reached the row behind it.
     await expect(page.locator('.dc-table')).toBeVisible()
   })
@@ -215,15 +215,25 @@ test.describe('Pressing a row', () => {
 })
 
 /*
- * The same press with ⇧ held: where it leads, in a new tab — this one left on
- * the list it was pressed in, which is why anyone would hold Shift.
+ * A press that leads somewhere is a link, so the browser's own modifiers do
+ * what they do on any link: ⌘ (or Ctrl) opens it in a new tab, ⇧ in a new
+ * window — and this screen stays where it was.
  */
-test.describe('Pressing with ⇧ held', () => {
-  test('opens the record in a new tab and leaves this one where it was', async ({ page, context }) => {
+test.describe('Pressing with the browser’s modifiers', () => {
+  test('makes every way in a link to where it leads', async ({ page }) => {
+    await gotoStory(page, HOME, '&e=sets&v=list')
+    const href = await page.locator('.dc-list__open').first().getAttribute('href')
+    const linked = new URL(href!, page.url()).searchParams.get('q')
+    expect(linked).toMatch(/^set:"sets_\d+"$/)
+    await page.locator('.dc-list__open').first().click()
+    expect(queryOf(page)).toBe(linked)
+  })
+
+  test('opens the record in a new tab with ⌘, and leaves this one where it was', async ({ page, context }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const before = page.url()
     const opened = context.waitForEvent('page')
-    await page.locator('.dc-list__open').first().click({ modifiers: ['Shift'] })
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
     const tab = await opened
     await tab.waitForLoadState('domcontentloaded')
     const url = new URL(tab.url())
@@ -232,19 +242,24 @@ test.describe('Pressing with ⇧ held', () => {
     expect(page.url()).toBe(before)
   })
 
-  test('opens a metric’s list in a new tab, and with ⌘ leaves the record out there', async ({ page, context }) => {
+  test('opens a metric’s list in a new window with ⇧', async ({ page, context }) => {
     await gotoStory(page, TABLE)
     const before = page.url()
-    const drill = page.locator('.dc-table__row').first().locator('button.dc-drill').first()
-    let opened = context.waitForEvent('page')
-    await drill.click({ modifiers: ['Shift'] })
-    let url = new URL((await opened).url())
+    const opened = context.waitForEvent('page')
+    await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Shift'] })
+    const url = new URL((await opened).url())
     expect(url.searchParams.get('q')).toMatch(/^set:"sets_\d+"$/)
     expect(url.searchParams.get('e')).toBe('pieces')
-    opened = context.waitForEvent('page')
-    await drill.click({ modifiers: ['Shift', 'Meta'] })
-    url = new URL((await opened).url())
-    expect(url.searchParams.get('q')).toMatch(/^-set:"sets_\d+"$/)
+    expect(page.url()).toBe(before)
+  })
+
+  test('opens a table row elsewhere from anywhere on it', async ({ page, context }) => {
+    await gotoStory(page, TABLE)
+    const before = page.url()
+    const opened = context.waitForEvent('page')
+    await page.locator('.dc-table__row').first().locator('td').last().click({ modifiers: ['Meta'] })
+    const url = new URL((await opened).url())
+    expect(url.searchParams.get('q')).toMatch(/^set:"sets_\d+"$/)
     expect(page.url()).toBe(before)
   })
 
@@ -252,7 +267,7 @@ test.describe('Pressing with ⇧ held', () => {
     await gotoStory(page, HOME)
     const before = page.url()
     const opened = context.waitForEvent('page')
-    await page.locator('.dc-type__head').first().click({ modifiers: ['Shift'] })
+    await page.locator('.dc-type__head').first().click({ modifiers: ['Meta'] })
     const url = new URL((await opened).url())
     expect(url.searchParams.get('e')).not.toBeNull()
     expect(page.url()).toBe(before)
@@ -260,17 +275,16 @@ test.describe('Pressing with ⇧ held', () => {
 })
 
 /*
- * The same press with ⌘ held, which leaves the record out rather than
+ * The same press with ⌥ held, which leaves the record out rather than
  * narrowing to it — and stays put, a list missing one row being the same
- * list. Ctrl is the same key on the machines that have no ⌘, and Playwright
- * has to be told which one it is; `Meta` is used here and read as either.
+ * list. ⌥ because ⌘ and ⇧ are the browser's, on a link.
  */
-test.describe('Pressing a row with ⌘ held', () => {
+test.describe('Pressing a row with ⌥ held', () => {
   test('writes the record out of the query and keeps the list', async ({ page }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const before = await listRows(page).count()
     const name = await page.locator('.dc-list__primary').first().innerText()
-    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
     expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
     // Where it was: the same type, the same view — and the same rows. The
     // term leaves that set's pieces, colors and inventories out; the list of
@@ -284,7 +298,7 @@ test.describe('Pressing a row with ⌘ held', () => {
 
   test('leaves the record out of every other type', async ({ page }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
-    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
     const term = queryOf(page)!
     await chooseScope(page, 'Pieces')
     expect(queryOf(page)).toBe(term)
@@ -294,7 +308,7 @@ test.describe('Pressing a row with ⌘ held', () => {
   test('says which record is out, on the bar, with its sign', async ({ page }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const name = await page.locator('.dc-list__primary').first().innerText()
-    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
     await expect(termBar(page)).toContainText(`-set: ${name}`)
   })
 
@@ -305,14 +319,14 @@ test.describe('Pressing a row with ⌘ held', () => {
     expect(narrowed).toMatch(/^set:"sets_\d+"$/)
     await listType(page, 'sets')
     await chooseView(page, 'list')
-    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
     // One term, the other way about — not the two of them side by side.
     expect(queryOf(page)).toBe(`-${narrowed!.replace(/"/g, '')}`)
   })
 
   test('leaves a metric pivoting to what it counts, minus the record', async ({ page }) => {
     await gotoStory(page, TABLE)
-    await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Alt'] })
     expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
     expect(entityOf(page)).toBe('pieces')
   })
@@ -339,7 +353,7 @@ test.describe('A row the query names', () => {
   test('wears a − where the query leaves it out', async ({ page }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const name = await page.locator('.dc-list__primary').first().innerText()
-    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
     await expect(marks(page)).toHaveCount(1)
     await expect(marks(page)).toHaveAttribute('data-dc-standing', 'out')
     await expect(listRows(page).filter({ has: marks(page) }).locator('.dc-list__primary')).toHaveText(name)
@@ -348,7 +362,7 @@ test.describe('A row the query names', () => {
   test('lifts the term when the mark is pressed, and stays where it is', async ({ page }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const before = await listRows(page).count()
-    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
     expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
     await marks(page).click()
     expect(queryOf(page)).toBeNull()
@@ -360,7 +374,7 @@ test.describe('A row the query names', () => {
 
   test('shows it in the table as the lit sign of its standing column', async ({ page }) => {
     await gotoStory(page, TABLE)
-    await page.locator('.dc-table__row').first().locator('button.dc-drill').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Alt'] })
     await chooseScope(page, 'Sets')
     await chooseView(page, 'table')
     // Not the mark beside the name — a table has a column for this, on

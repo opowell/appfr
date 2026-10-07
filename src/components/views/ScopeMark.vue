@@ -3,6 +3,8 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import type { ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
 import { pressOptions } from '../../query/drill'
+import type { PressOptions } from '../../types'
+import PressLink from './PressLink.vue'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 
 /**
@@ -34,7 +36,7 @@ const scope = computed<string | null>(() =>
  * The same press means two things depending on a key, and the mark says
  * which before it is made, in the colours the `+` and `−` beside it wear
  * afterwards. The key is read off the pointer as it arrives and moves, and
- * off the keyboard while the pointer stays, so pressing ⌘ over a still mark
+ * off the keyboard while the pointer stays, so pressing ⌥ over a still mark
  * turns it red without a nudge.
  */
 const pending = ref<'in' | 'out' | null>(null)
@@ -57,28 +59,30 @@ function leave() {
 
 onBeforeUnmount(leave)
 
+const href = computed(() => (scope.value ? shell.drillHref(props.entry.row as ShellRow, null) : null))
+
 /** Stops the click reaching the row, which would open the record instead. */
-function narrow(event: MouseEvent) {
+function narrow(options: PressOptions, event: MouseEvent) {
   event.stopPropagation()
-  shell.drill(props.entry.row as ShellRow, null, pressOptions(event))
+  shell.drill(props.entry.row as ShellRow, null, options)
 }
 </script>
 
 <template>
-  <button
+  <PressLink
     v-if="scope"
-    type="button"
     class="dc-scope"
+    :href="href"
     :data-dc-pending="pending ?? undefined"
-    :title="`Narrow everything to ${scope}: ${entry.row.id} — ⌘-click to leave it out`"
+    :title="`Narrow everything to ${scope}: ${entry.row.id} — ⌥-click to leave it out`"
     :aria-label="`Narrow everything to ${entry.parts.identity}`"
     @pointerenter="enter"
     @pointermove="read"
     @pointerleave="leave"
-    @click="narrow"
+    @press="narrow"
   >
     →
-  </button>
+  </PressLink>
 </template>
 
 <style scoped>
@@ -94,7 +98,7 @@ function narrow(event: MouseEvent) {
 }
 
 /* The colour of the mark the press would leave behind: green for the `+` a
-   narrowing puts on the row, red for the `−` a ⌘-press does. */
+   narrowing puts on the row, red for the `−` a ⌥-press does. */
 .dc-scope[data-dc-pending='in'] {
   color: var(--dc-ok);
 }

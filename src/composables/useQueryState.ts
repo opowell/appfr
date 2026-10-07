@@ -29,11 +29,7 @@ import type { SummaryTerm } from '../query/summary'
 import { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from '../query/summary'
 import { formatExpression, parseExpression, withoutTerm } from '../data/expression'
 
-/**
- * How a change reaches the address bar: a new history entry, the current one
- * rewritten, or — `open` — a new browser tab, this one left where it was.
- */
-export type NavigationMode = 'push' | 'replace' | 'open'
+export type NavigationMode = 'push' | 'replace'
 
 export interface UseQueryStateOptions {
   schema: MaybeRefOrGetter<DomainSchema>
@@ -76,11 +72,10 @@ export interface QueryState {
   isEverything: ComputedRef<boolean>
   hasFacets: ComputedRef<boolean>
 
-  /**
-   * Filters to one entity, or back to the whole corpus with `null`. `open`
-   * lists it in a new tab instead.
-   */
-  setEntity(key: string | null, mode?: NavigationMode): void
+  /** Filters to one entity, or back to the whole corpus with `null`. */
+  setEntity(key: string | null): void
+  /** The browser `href` {@link QueryState.setEntity} would navigate to. */
+  entityHref(key: string | null): string
   /** Clears the entity filter — back to everything. */
   clearEntity(): void
   setView(view: ViewKind): void
@@ -107,7 +102,9 @@ export interface QueryState {
    *
    * Returns whether it navigated, as {@link QueryState.setExpression} does.
    */
-  narrow(expr: string, entityKey: string | null, view?: ViewKind, mode?: NavigationMode): boolean
+  narrow(expr: string, entityKey: string | null, view?: ViewKind): boolean
+  /** The browser `href` {@link QueryState.narrow} would navigate to. */
+  narrowHref(expr: string, entityKey: string | null, view?: ViewKind): string
   /**
    * Moves to a page of the current results, 1-based and clamped there. What
    * the last page is depends on a count this composable has no sight of — the
@@ -151,14 +148,6 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
   /** Whether it went anywhere: a query that serialises to the URL already there does not. */
   const navigate = (next: ShellQuery, mode: NavigationMode): boolean => {
     const search = serializeQuery(next, schema.value, defaults.value, adapter.search.value)
-    if (mode === 'open') {
-      // A tab of its own even where it would be this one: the press asked for a second view.
-      if (adapter.open) {
-        adapter.open(search)
-        return false
-      }
-      mode = 'push'
-    }
     if (search === adapter.search.value) return false
     if (mode === 'push') adapter.push(search)
     else adapter.replace(search)
@@ -177,6 +166,17 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
   const commit = (patch: Partial<ShellQuery>, mode: NavigationMode): boolean => {
     const page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
     return navigate({ ...query.value, ...patch, page }, mode)
+  }
+
+  /**
+   * Where a commit of `patch` would go, as the browser's own `href` — so a
+   * press can be a real link, and the browser's ways of opening one elsewhere
+   * work on it unchanged.
+   */
+  const linkTo = (patch: Partial<ShellQuery>): string => {
+    const page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
+    const search = serializeQuery({ ...query.value, ...patch, page }, schema.value, defaults.value, adapter.search.value)
+    return adapter.href ? adapter.href(search) : `${adapter.path.value}${search}`
   }
 
   const patchFacets = (key: string, produce: (current: FacetValue) => FacetValue) => {
@@ -205,10 +205,10 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     }
   }
 
-  const setEntity = (key: string | null, mode?: NavigationMode) => {
+  const setEntity = (key: string | null) => {
     const patch = entityPatch(key)
-    if (!Object.keys(patch).length && mode !== 'open') return
-    commit(patch, mode ?? primaryMode())
+    if (!Object.keys(patch).length) return
+    commit(patch, primaryMode())
   }
 
   return {
@@ -224,6 +224,7 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     hasFacets: computed(() => hasActiveFacets(query.value.facets)),
 
     setEntity,
+    entityHref: (key) => linkTo(entityPatch(key)),
     clearEntity: () => setEntity(null),
     setView(view) {
       commit({ view }, primaryMode())
@@ -237,8 +238,11 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     setExpression(expr) {
       return commit({ expr }, primaryMode())
     },
-    narrow(expr, entityKey, view, mode) {
-      return commit({ expr, ...entityPatch(entityKey), ...(view ? { view } : {}) }, mode ?? primaryMode())
+    narrow(expr, entityKey, view) {
+      return commit({ expr, ...entityPatch(entityKey), ...(view ? { view } : {}) }, primaryMode())
+    },
+    narrowHref(expr, entityKey, view) {
+      return linkTo({ expr, ...entityPatch(entityKey), ...(view ? { view } : {}) })
     },
     setPage(page, mode) {
       commit({ page: Math.max(1, Math.floor(page)) }, mode ?? primaryMode())

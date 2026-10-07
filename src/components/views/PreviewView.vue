@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useShellContext } from '../../composables/context'
-import { pressOptions } from '../../query/drill'
+import PressLink from './PressLink.vue'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import { roleColumn } from '../../query/columns'
 import StatusPill from '../StatusPill.vue'
@@ -168,13 +168,13 @@ const step = (delta: number) => {
             </dd>
           </div>
         </dl>
-        <button
-          type="button"
+        <PressLink
           class="dc-preview__open"
-          @click="shell.activate(current.row, pressOptions($event))"
+          :href="current ? shell.pressHref(current.row) : null"
+          @press="(options) => current && shell.activate(current.row, options)"
         >
           Open record →
-        </button>
+        </PressLink>
       </div>
     </div>
   </div>

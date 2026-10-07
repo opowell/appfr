@@ -38,9 +38,9 @@ export function createHistoryAdapter(): RouteAdapter {
   return {
     search,
     path,
-    open(next) {
-      if (!hasWindow) return
-      window.open(`${window.location.pathname}${normalizeSearch(next)}${window.location.hash}`, '_blank', 'noopener')
+    href(next) {
+      if (!hasWindow) return `${path.value}${normalizeSearch(next)}`
+      return `${window.location.pathname}${normalizeSearch(next)}${window.location.hash}`
     },
     push: (next) => navigate(next, 'push'),
     replace: (next) => navigate(next, 'replace'),

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
-import { pressOptions } from '../../query/drill'
+import PressLink from './PressLink.vue'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
@@ -40,17 +40,17 @@ const showEntity = computed(() => shell.isEverything.value)
       <!-- The name opens the record and the metrics narrow to it, so the two
            are siblings rather than one button around everything: a count that
            leads somewhere of its own cannot be nested inside the row's. -->
-      <button
-        type="button"
+      <PressLink
         class="dc-list__open"
-        @click="shell.activate(entry.row, pressOptions($event))"
+        :href="shell.pressHref(entry.row)"
+        @press="(options) => shell.activate(entry.row, options)"
       >
         <span class="dc-list__ordinal dc-mono">{{ entry.ordinal }}</span>
         <span class="dc-list__identity">
           <span class="dc-list__primary dc-truncate">{{ entry.parts.identity }}</span>
           <span class="dc-list__secondary dc-mono dc-truncate">{{ entry.parts.reference }}</span>
         </span>
-      </button>
+      </PressLink>
       <span
         v-if="showEntity"
         class="dc-list__entity dc-mono"

@@ -909,7 +909,8 @@ is what makes one look like the cards it sits among; the shell's own card chrome
 is scoped CSS a host cannot reach. Its props are `title`, `count`, `span`
 (`'all'`, for a card a share of a row would cut short — a record's own heading,
 a block of source, a wide table), `flush` for content that draws its own edges,
-and `muted`; its slots are `head`, `aside`, the default body and `foot`. Nothing in it reads the shell's context, so it works anywhere inside a
+`muted`, and `collapsible`, `collapsed` and `defaultCollapsed` (below); its
+slots are `head`, `aside`, the default body and `foot`. Nothing in it reads the shell's context, so it works anywhere inside a
 `.dc-shell` element — including a page of your own with no query at all:
 
 ```vue
@@ -917,6 +918,47 @@ and `muted`; its slots are `head`, `aside`, the default body and `foot`. Nothing
   <ShellCard title="New run">…</ShellCard>
 </div>
 ```
+
+A page of cards about one record is a page some of which the reader wants out
+of the way — the source, once it has been read; the metadata nobody asked
+for — so a card can fold to its head:
+
+```vue
+<ShellCard title="Metadata" collapsible default-collapsed>…</ShellCard>
+<ShellCard title="Source" collapsible v-model:collapsed="sourceFolded">…</ShellCard>
+```
+
+```
+┌── › Metadata  6 fields ──────────┐      folded: the head alone, at its own
+└──────────────────────────────────┘      height rather than the row's
+┌── ⌄ Source ──────────────────────────────────────────────────────────┐
+│ { "set": "375-2", … }                                                │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `collapsible` | `boolean` | `false` | A press anywhere on the head folds the card to the head alone, and another opens it. |
+| `collapsed` | `boolean` | — | `v-model:collapsed` to own the state — to remember it, or fold every card at once. Emits `update:collapsed` on every press; bound, the card shows what you write back. |
+| `defaultCollapsed` | `boolean` | `false` | Where nothing binds `collapsed`: whether the card starts folded. The card then holds the state itself. |
+
+It is off unless asked for. A head is where a host puts its own controls, and a
+card that began folding on every press of its head would be a card whose head
+every host had to audit; off, nothing anyone already has changes. Turned on,
+the head is the toggle's *surface*, as the shell's own header bar is: a press
+on a control in it — a link, a button, a field, anything with a role that is
+pressed — belongs to that control and folds nothing, and neither does the
+click that ends a drag across the title to copy it. The chevron at the head's
+start is a real button carrying the same press for a keyboard, named for the
+card's `title`, with `aria-expanded` and `aria-controls` naming the body and
+foot it folds. Those are hidden rather than taken out, so what is in them —
+a half-filled form, a log scrolled to where it was being read — is as it was
+when the card opens again. A card with no head does not fold whatever it is
+asked: folded, it would be a hairline with no way back out.
+
+The shell's own type cards do not fold. Their head is already a button — the
+way into that type's list — and a second meaning for the same press would make
+one of the two a guess.
 
 Only the per-type screen draws the slots, that being the only view made of
 cards rather than of records: choose a type, or another view, and the cards go

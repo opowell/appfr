@@ -931,6 +931,90 @@ export const RecordPageEmpty = story({
 })
 
 /**
+ * The same page with cards that fold. A press anywhere on a `collapsible`
+ * card's head folds it to the head alone, and the chevron at its start is the
+ * same press for a keyboard. A press on a control in the head — the record's
+ * own *Duplicate* and *Delete* — is that control's, and folds nothing.
+ *
+ * *Metadata* starts folded (`defaultCollapsed`); *Source* is bound with
+ * `v-model:collapsed`, and the button in the first card's foot folds it from
+ * outside.
+ */
+export const RecordPageFoldingCards: Story = {
+  args: { schema: legoSchema, within: YELLOW_CASTLE, previewsPerType: 5 },
+  render: (storyArgs: ShellStoryArgs) => ({
+    setup() {
+      const sourceFolded = ref(false)
+      const slots = {
+        'cards-before': () => [
+          h(
+            ShellCard,
+            { span: 'all', collapsible: true },
+            {
+              head: () => [
+                h('h2', { class: 'sb-record__name' }, 'Yellow Castle'),
+                h('span', { class: 'sb-record__ref dc-mono' }, '375-2'),
+              ],
+              aside: () => [
+                h('button', { type: 'button', class: 'sb-record__duplicate' }, 'Duplicate'),
+                h('button', { type: 'button' }, 'Delete'),
+              ],
+              default: () =>
+                h('p', { class: 'sb-record__note' }, 'Press this heading to fold the card.'),
+              foot: () =>
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    class: 'sb-record__fold-source',
+                    onClick: () => {
+                      sourceFolded.value = !sourceFolded.value
+                    },
+                  },
+                  sourceFolded.value ? 'Show the source' : 'Hide the source',
+                ),
+            },
+          ),
+          h(ShellCard, { title: 'Build', collapsible: true }, {
+            default: () => h('p', null, 'Whatever the host does with the record goes here.'),
+            foot: () => h('button', { type: 'button' }, 'Start a build'),
+          }),
+        ],
+        'cards-after': () => [
+          h(
+            ShellCard,
+            { title: 'Metadata', count: '6 fields', collapsible: true, defaultCollapsed: true },
+            {
+              default: () =>
+                h('p', { class: 'dc-mono' }, 'theme:castle \u00b7 year:1978 \u00b7 parts:767'),
+            },
+          ),
+          h(
+            ShellCard,
+            {
+              title: 'Source',
+              span: 'all',
+              flush: true,
+              collapsible: true,
+              collapsed: sourceFolded.value,
+              'onUpdate:collapsed': (next: boolean) => {
+                sourceFolded.value = next
+              },
+            },
+            {
+              default: () =>
+                h('pre', { class: 'sb-record__source' }, '{\n  "set": "375-2",\n  "parts": 767\n}'),
+            },
+          ),
+        ],
+      }
+      const shell = renderShell({ ...storyArgs, slots }) as { setup(): () => unknown }
+      return shell.setup()
+    },
+  }),
+}
+
+/**
  * A card whose slots render nothing draws no strips for them. A body that is a
  * `v-if` over a warning usually has no warning, and an aside that is a row of
  * controls has none until the record has loaded — drawn either way, each is an

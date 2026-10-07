@@ -89,9 +89,9 @@ test.describe('Home — the cards are navigation', () => {
     await card(page, 'Scrapers').locator('.dc-type__head').click()
 
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'scrapers')
-    // Scoped to one type, cards mean one card per record again.
+    // One type's records, which open as a table of them.
     await expect(page.locator('.dc-types')).toHaveCount(0)
-    await expect(page.locator('.dc-cards')).toBeVisible()
+    await expect(page.locator('.dc-table')).toBeVisible()
   })
 
   test('a row opens that record', async ({ page }) => {

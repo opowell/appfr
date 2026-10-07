@@ -49,7 +49,10 @@ many of it there are, and its most recently updated few.
 └──────────────────────┘ └──────────────────────┘
 ```
 
-A card's header filters the results to that type; a row opens that record.
+A card's header filters the results to that type, which opens as a **table** of
+its records; a row opens that record. The view a URL leaves out is the default
+*for what it shows*, cards across types and a table within one, so a view nobody
+chose follows a change of type while one somebody chose survives it.
 `previewsPerType` sets how many rows each card shows (default 3), and each card
 is queried on its own, so a quiet type still shows its latest rather than being
 crowded out of a global top-N. `0` makes each card just its heading — the type
@@ -1188,7 +1191,7 @@ an empty box lifts the last part on the row, whichever kind it is.
 | `schema` | `DomainSchema` | — | Required. |
 | `source` | `DataSource` | mock over the schema | Where rows come from. |
 | `route` | `RouteAdapter` | injected, else History API | How the query reaches the URL. |
-| `defaults` | `ShellQueryDefaults` | home, `cards`, `updated`, `desc` | Fallbacks when the URL omits a field. `landing: 'entity'` opens on one entity's list instead of home. |
+| `defaults` | `ShellQueryDefaults` | home, `cards` (one type: `table`), `updated`, `desc` | Fallbacks when the URL omits a field. `landing: 'entity'` opens on one entity's list instead of home, in `view`. `entityView` is the view one type opens in. |
 | `within` | `string` | — | An expression the whole shell is read inside — its scope, held here rather than in the URL. See [a shell about one record](#a-shell-about-one-record). |
 | `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. `0` draws only each card's heading (name and count, no `create` button), in narrower wrapping columns. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |

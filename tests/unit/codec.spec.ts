@@ -67,6 +67,30 @@ describe('parseQuery', () => {
     expect(swapped.facets.rank).toEqual({ kind: 'range', min: 20, max: 80 })
   })
 
+  /*
+   * A card per type is the home screen's whole point; one type's records are rows of the same
+   * columns, which is what a table is for. So the view a URL leaves out depends on whether it
+   * names a type.
+   */
+  it('reads one type with no view as its table, and the whole corpus as cards', () => {
+    expect(parseQuery('?e=items', iRadarSchema).view).toBe('table')
+    expect(parseQuery(`?e=${ENTITY_ALL}`, iRadarSchema, { landing: 'entity' }).view).toBe('cards')
+    expect(parseQuery('?e=items&v=cards', iRadarSchema).view).toBe('cards')
+  })
+
+  it('lets a host choose the view a single type opens in', () => {
+    expect(parseQuery('?e=items', iRadarSchema, { entityView: 'list' }).view).toBe('list')
+    // …which leaves the home screen's view alone.
+    expect(parseQuery('', iRadarSchema, { entityView: 'list' }).view).toBe('cards')
+  })
+
+  it('still opens a host that lands on a type in the view it names', () => {
+    const defaults = { landing: 'entity' as const, entity: 'items', view: 'list' as const }
+    expect(parseQuery('', iRadarSchema, defaults).view).toBe('list')
+    expect(parseQuery('?e=logs', iRadarSchema, defaults).view).toBe('list')
+    expect(parseQuery('', iRadarSchema, { ...defaults, entityView: 'grid' }).view).toBe('grid')
+  })
+
   it('falls back to the whole corpus for an entity the schema does not have', () => {
     const query = parseQuery('?e=nope', iRadarSchema)
     expect(query.entity).toBeNull()
@@ -74,7 +98,7 @@ describe('parseQuery', () => {
 
   it('ignores unknown views and sorts', () => {
     const query = parseQuery('?e=items&v=hologram&s=vibes', iRadarSchema)
-    expect(query.view).toBe('cards')
+    expect(query.view).toBe('table')
     expect(query.sort).toBe('updated')
   })
 
@@ -130,7 +154,13 @@ describe('serializeQuery', () => {
   it('writes the entity filter, and drops it again when lifted', () => {
     const scoped = parseQuery('?e=items', iRadarSchema)
     expect(serializeQuery(scoped, iRadarSchema)).toBe('?e=items')
-    expect(serializeQuery({ ...scoped, entity: null }, iRadarSchema)).toBe('')
+    expect(serializeQuery({ ...scoped, entity: null, view: 'cards' }, iRadarSchema)).toBe('')
+  })
+
+  it('omits a type\'s table, and spells out its cards', () => {
+    const items = parseQuery('?e=items', iRadarSchema)
+    expect(serializeQuery({ ...items, view: 'table' }, iRadarSchema)).toBe('?e=items')
+    expect(serializeQuery({ ...items, view: 'cards' }, iRadarSchema)).toBe('?e=items&v=cards')
   })
 
   it('keeps readable separators in facet values', () => {
@@ -158,16 +188,16 @@ describe('serializeQuery', () => {
   })
 
   it('honours caller-supplied defaults when deciding what to omit', () => {
-    const defaults = { landing: 'entity' as const, entity: 'items', view: 'table' as const }
+    const defaults = { landing: 'entity' as const, entity: 'items', entityView: 'list' as const }
     const query = parseQuery('', iRadarSchema, defaults)
     expect(serializeQuery(query, iRadarSchema, defaults)).toBe('')
     // Without those defaults the same query is not the default any more.
-    expect(serializeQuery(query, iRadarSchema)).toBe('?e=items&v=table')
+    expect(serializeQuery(query, iRadarSchema)).toBe('?e=items&v=list')
   })
 
   it('spells out the whole corpus when the default is an entity', () => {
     const defaults = { landing: 'entity' as const, entity: 'items' }
-    const everything = { ...parseQuery('', iRadarSchema, defaults), entity: null }
+    const everything = { ...parseQuery('', iRadarSchema, defaults), entity: null, view: 'cards' as const }
     expect(serializeQuery(everything, iRadarSchema, defaults)).toBe(`?e=${ENTITY_ALL}`)
   })
 })
@@ -211,6 +241,7 @@ describe('round trip', () => {
     '',
     '?v=cards',
     '?e=items&v=table&s=metric1&d=asc',
+    '?e=items&v=cards',
     '?e=items&v=list&p=7',
     '?e=items&f_kind=page&p=2',
     '?e=items&f_kind=page,feed&f_rank=10..90&f_seen=1',

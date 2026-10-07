@@ -23,6 +23,7 @@ import {
   isPristineQuery,
   reconcileFacets,
   sortsFor,
+  viewAcross,
 } from '../query/schema'
 import type { SummaryTerm } from '../query/summary'
 import { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from '../query/summary'
@@ -171,6 +172,7 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     if ((next?.key ?? null) === query.value.entity) return {}
     return {
       entity: next?.key ?? null,
+      view: viewAcross(query.value.view, query.value.entity, next?.key ?? null, defaults.value),
       sort: findSort(next, query.value.sort, schema.value).key,
       facets: emptyFacetState(next),
     }
@@ -260,13 +262,17 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
       })
     },
     clearFilters() {
-      commit({ entity: null, expr: '', facets: emptyFacetState(null) }, primaryMode())
+      commit({ ...entityPatch(null), expr: '', facets: emptyFacetState(null) }, primaryMode())
     },
     reset() {
       navigate(defaultQuery(schema.value, defaults.value), primaryMode())
     },
     hrefFor(patch) {
       const next = { ...query.value, ...patch }
+      // A link to another type lands in the view choosing that type would.
+      if ('entity' in patch && !('view' in patch)) {
+        next.view = viewAcross(query.value.view, query.value.entity, next.entity, defaults.value)
+      }
       // The same rule the mutations follow, so a link built for a change goes
       // exactly where clicking through to that change would have gone.
       next.page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)

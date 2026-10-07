@@ -6,7 +6,15 @@ import type {
   ShellQuery,
   ShellQueryDefaults,
 } from '../types'
-import { defaultQuery, emptyFacetValue, findEntity, findSort, isViewKind, reconcileFacets } from './schema'
+import {
+  defaultQuery,
+  defaultViewFor,
+  emptyFacetValue,
+  findEntity,
+  findSort,
+  isViewKind,
+  reconcileFacets,
+} from './schema'
 
 /** Query-string keys the shell owns. Anything else in the URL is left alone. */
 export const PARAM_ENTITY = 'e'
@@ -164,7 +172,10 @@ export function parseQuery(
   const entity = entityKey === ENTITY_ALL ? null : findEntity(schema, entityKey)
 
   const viewParam = params.get(PARAM_VIEW)
-  const view = viewParam && isViewKind(decodeValue(viewParam)) ? decodeValue(viewParam) : base.view
+  const view =
+    viewParam && isViewKind(decodeValue(viewParam))
+      ? decodeValue(viewParam)
+      : defaultViewFor(entity?.key ?? null, defaults)
 
   const sortParam = params.get(PARAM_SORT)
   const sort = findSort(entity, sortParam ? decodeValue(sortParam) : defaults.sort, schema)
@@ -222,7 +233,7 @@ export function serializeQuery(
     // of the parameter — which is what keeps the home screen's URL empty.
     put(PARAM_ENTITY, entityKey ?? ENTITY_ALL)
   }
-  if (query.view !== base.view) put(PARAM_VIEW, query.view)
+  if (query.view !== defaultViewFor(entityKey, defaults)) put(PARAM_VIEW, query.view)
   if (query.sort !== base.sort) put(PARAM_SORT, query.sort)
   if (query.dir !== base.dir) put(PARAM_DIR, query.dir)
   if (query.expr.trim() !== '') put(PARAM_EXPR, query.expr)

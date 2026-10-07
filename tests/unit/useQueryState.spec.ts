@@ -85,10 +85,52 @@ describe('useQueryState — the entity filter', () => {
   })
 
   it('clearEntity does the same', () => {
-    const { state, adapter } = setup('?e=logs&v=table')
+    const { state, adapter } = setup('?e=logs&v=list')
     state.clearEntity()
-    expect(adapter.search.value).toBe('?v=table')
+    expect(adapter.search.value).toBe('?v=list')
     expect(state.entity.value).toBeNull()
+  })
+
+  /*
+   * The view a URL leaves out is the default *for what it shows* — cards across types, a table
+   * within one — so moving between the two moves a view nobody chose along with it. A view
+   * somebody did choose is theirs, and survives the move.
+   */
+  it('opens a type chosen from the home screen as its table', () => {
+    const { state, adapter } = setup('')
+    state.setEntity('items')
+    expect(adapter.search.value).toBe('?e=items')
+    expect(state.query.value.view).toBe('table')
+  })
+
+  it('returns to cards when a type left at its table is lifted', () => {
+    const { state, adapter } = setup('?e=items')
+    state.clearEntity()
+    expect(adapter.search.value).toBe('')
+    expect(state.query.value.view).toBe('cards')
+  })
+
+  it('keeps a view somebody chose across a change of type', () => {
+    const { state, adapter } = setup('?e=items&v=list')
+    state.setEntity('logs')
+    expect(adapter.search.value).toBe('?e=logs&v=list')
+
+    const cards = setup('?e=items&v=cards')
+    cards.state.setEntity('logs')
+    expect(cards.adapter.search.value).toBe('?e=logs&v=cards')
+  })
+
+  it('opens a metric drill from the home screen as a table of what it counts', () => {
+    const { state, adapter } = setup('')
+    state.narrow('search:"s1"', 'items')
+    expect(state.query.value.view).toBe('table')
+    expect(adapter.search.value).toBe('?e=items&q=search:%22s1%22')
+  })
+
+  it('builds the same href for a type that choosing it would go to', () => {
+    const { state } = setup('')
+    expect(state.hrefFor({ entity: 'items' })).toBe('/?e=items')
+    expect(setup('?e=items').state.hrefFor({ entity: null })).toBe('/')
   })
 
   it('carries the entity term ahead of that entity’s own facets', () => {
@@ -227,9 +269,9 @@ describe('useQueryState — reading and writing the URL', () => {
   })
 
   it('clears the entity, the expression and every facet, keeping view and sort', () => {
-    const { state, adapter } = setup('?e=items&v=table&s=metric1&f_kind=page&q=release')
+    const { state, adapter } = setup('?e=items&v=list&s=metric1&f_kind=page&q=release')
     state.clearFilters()
-    expect(adapter.search.value).toBe('?v=table&s=metric1')
+    expect(adapter.search.value).toBe('?v=list&s=metric1')
     expect(state.isEverything.value).toBe(true)
     expect(state.isPristine.value).toBe(true)
   })

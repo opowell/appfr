@@ -58,9 +58,9 @@ test.describe('Query panel — the facets of the type in force', () => {
     await pickEntity(page, 'Searches')
 
     await expect(page.locator('.dc-facet__label')).toHaveText(['State', 'Schedule', 'Results'])
-    // One type's records rather than a card per type.
+    // One type's records rather than a card per type: a table of them.
     await expect(page.locator('.dc-types')).toHaveCount(0)
-    await expect(page.locator('.dc-card').first()).toBeVisible()
+    await expect(page.locator('.dc-table')).toBeVisible()
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
   })
 

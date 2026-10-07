@@ -18,6 +18,36 @@ import { VIEW_KINDS } from '../types'
  * there are, and its most recently updated few.
  */
 export const DEFAULT_VIEW: ViewKind = 'cards'
+
+/** Table: what one type's records, every row of them the same columns, are drawn as. */
+export const DEFAULT_ENTITY_VIEW: ViewKind = 'table'
+
+/**
+ * The view a query leaves unsaid — so the one its URL omits — which depends on
+ * whether it names a type: {@link DEFAULT_VIEW} across them, and
+ * {@link DEFAULT_ENTITY_VIEW} within one.
+ */
+export function defaultViewFor(entity: string | null, defaults: ShellQueryDefaults = {}): ViewKind {
+  const asked = (view: ViewKind | undefined) => (view && isViewKind(view) ? view : undefined)
+  if (entity === null) return asked(defaults.view) ?? DEFAULT_VIEW
+  // A host landing on a type has always named the view it lands in as `view`.
+  const landing = defaults.landing === 'entity' ? asked(defaults.view) : undefined
+  return asked(defaults.entityView) ?? landing ?? DEFAULT_ENTITY_VIEW
+}
+
+/**
+ * The view a change of type lands in. A view left at its default was nobody's
+ * choice, so it becomes the default of where the query is going; one somebody
+ * chose is theirs, and goes with them.
+ */
+export function viewAcross(
+  view: ViewKind,
+  from: string | null,
+  to: string | null,
+  defaults: ShellQueryDefaults = {},
+): ViewKind {
+  return view === defaultViewFor(from, defaults) ? defaultViewFor(to, defaults) : view
+}
 export const DEFAULT_SORT = 'updated'
 
 export function isViewKind(value: unknown): value is ViewKind {
@@ -209,7 +239,7 @@ export function defaultQuery(schema: DomainSchema, defaults: ShellQueryDefaults 
   const entity = landsOnEntity ? focusEntity(schema, defaults) : null
   return {
     entity: entity?.key ?? null,
-    view: defaults.view && isViewKind(defaults.view) ? defaults.view : DEFAULT_VIEW,
+    view: defaultViewFor(entity?.key ?? null, defaults),
     sort: findSort(entity, defaults.sort).key,
     dir: defaults.dir === 'asc' ? 'asc' : 'desc',
     expr: '',

@@ -72,9 +72,20 @@ const narrowed = computed(() => !shell.isPristine.value || Boolean(shell.within.
  */
 const previews = computed(() =>
   found.value.filter(
-    (preview) => !preview.pinned && (preview.rows.length > 0 || preview.entity.create),
+    (preview) => !preview.pinned && (preview.total > 0 || preview.entity.create),
   ),
 )
+
+/**
+ * No rows asked for, so a card is its heading and nothing under it: the type,
+ * its count and the way into its list. A screen of those is a row of buttons
+ * rather than a column of panels, so they wrap at the width of a name.
+ *
+ * Which types are drawn is read off the count rather than the rows for that
+ * reason — with none fetched, a type holding nothing and a type holding
+ * thousands come back alike.
+ */
+const headsOnly = computed(() => shell.previewsPerType.value <= 0)
 </script>
 
 <template>
@@ -86,6 +97,7 @@ const previews = computed(() =>
   <div
     class="dc-types"
     :data-dc-pending="pending ? 'true' : 'false'"
+    :data-dc-heads-only="headsOnly ? 'true' : 'false'"
   >
     <slot name="before" />
 
@@ -119,7 +131,7 @@ const previews = computed(() =>
       v-for="preview in previews"
       :key="preview.entity.key"
       class="dc-type"
-      :data-dc-empty="preview.rows.length ? 'false' : 'true'"
+      :data-dc-empty="preview.total ? 'false' : 'true'"
     >
       <button
         type="button"
@@ -136,7 +148,7 @@ const previews = computed(() =>
       </button>
 
       <p
-        v-if="!preview.rows.length"
+        v-if="!preview.total"
         class="dc-type__empty"
       >
         {{ narrowed ? 'No matches' : 'Nothing here yet' }}
@@ -228,6 +240,22 @@ const previews = computed(() =>
  */
 .dc-types > * {
   align-self: stretch;
+}
+
+/*
+ * A card that is only its heading is a name and a number, which a 420px track
+ * leaves stranded in the left of a wide box. Narrow enough that a laptop holds
+ * five or six of them across, wide enough for a type name and a count in the
+ * thousands beside it.
+ */
+.dc-types[data-dc-heads-only='true'] {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+/* And each its own height. Stretched, a row holding one type that offers a
+   button left every heading beside it over the empty band that button took. */
+.dc-types[data-dc-heads-only='true'] > * {
+  align-self: start;
 }
 
 .dc-types[data-dc-pending='true'] {

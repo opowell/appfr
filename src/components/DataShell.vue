@@ -79,7 +79,8 @@ const props = withDefaults(
     limit?: number
     /**
      * Rows shown inside each type's card on the home screen — the most
-     * recently updated few, under the current sort.
+     * recently updated few, under the current sort. `0` draws each card as its
+     * heading alone, the type and its count, in narrower columns that wrap.
      */
     previewsPerType?: number
     /** Restricts the offered result views. */

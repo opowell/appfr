@@ -207,6 +207,60 @@ test.describe('Home — cards across schemas', () => {
   })
 })
 
+test.describe('Home — heads only', () => {
+  const HEADS_ONLY = 'shell-data-shell--home-heads-only'
+
+  /** The x of every card, collapsed to how many distinct columns they start in. */
+  const columns = (page: import('@playwright/test').Page) =>
+    page
+      .locator('.dc-type')
+      .evaluateAll((nodes) => new Set(nodes.map((node) => node.getBoundingClientRect().left)).size)
+
+  test('every type is still a card, in schema order', async ({ page }) => {
+    await gotoStory(page, HEADS_ONLY)
+    await expect(page.locator('.dc-type__name')).toHaveText(
+      iRadarSchema.entities.map((entity) => entity.label),
+    )
+  })
+
+  test('a card is its name and count, with nothing under them', async ({ page }) => {
+    await gotoStory(page, HEADS_ONLY)
+    await expect(page.locator('.dc-type').first()).toBeVisible()
+    await expect(page.locator('.dc-type__row')).toHaveCount(0)
+    await expect(page.locator('.dc-type__empty')).toHaveCount(0)
+    for (const entity of iRadarSchema.entities) {
+      await expect(card(page, entity.label).locator('.dc-type__count')).toHaveText(entity.count)
+    }
+  })
+
+  test('the cards wrap into more columns than the cards with rows do', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await expect(page.locator('.dc-type').first()).toBeVisible()
+    const withRows = await columns(page)
+
+    await gotoStory(page, HEADS_ONLY)
+    await expect(page.locator('.dc-type').first()).toBeVisible()
+    expect(await columns(page)).toBeGreaterThan(withRows)
+  })
+
+  test('a card’s heading still filters to its type', async ({ page }) => {
+    await gotoStory(page, HEADS_ONLY)
+    const [first] = iRadarSchema.entities
+    await card(page, first!.label).locator('.dc-type__head').click()
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', first!.key)
+  })
+
+  test('a type holding nothing is dropped unless it offers to make one', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--home-heads-only-creatable')
+    const searches = card(page, 'Searches')
+    await expect(searches.locator('.dc-type__new')).toBeVisible()
+    await expect(searches.locator('.dc-type__row')).toHaveCount(0)
+    // A type with matches keeps its card, still without rows.
+    await expect(card(page, 'Items')).toBeVisible()
+    await expect(card(page, 'Items').locator('.dc-type__row')).toHaveCount(0)
+  })
+})
+
 test.describe('Home — narrow', () => {
   test.use({ viewport: { width: 480, height: 900 } })
 

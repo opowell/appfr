@@ -71,6 +71,24 @@ describe('useEntityPreviews', () => {
     for (const preview of state.previews.value) expect(preview.rows).toHaveLength(5)
   })
 
+  it('a limit of 0 shows no rows, but asks the source for one rather than for all', () => {
+    const inner = createMockDataSource({ seed: 'iRadar' })
+    const limits: number[] = []
+    const source: DataSource = {
+      query: (request: QueryRequest) => {
+        limits.push(request.limit)
+        return inner.query(request) as QueryResult
+      },
+    }
+    const { state } = setup('?q=recall', { source, limit: 0 })
+    expect(limits.length).toBe(iRadarSchema.entities.length)
+    expect(limits.every((limit) => limit === 1)).toBe(true)
+    for (const preview of state.previews.value) expect(preview.rows).toHaveLength(0)
+    // The counts are still the counts, so a type is still told apart from an empty one.
+    expect(state.previews.value.some((preview) => preview.total > 0)).toBe(true)
+    expect(state.previews.value.some((preview) => preview.total === 0)).toBe(true)
+  })
+
   it('reports the published population while the query is untouched', () => {
     const byKey = new Map(setup().state.previews.value.map((p) => [p.entity.key, p.count]))
     expect(byKey.get('searches')).toBe('38')

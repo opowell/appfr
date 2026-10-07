@@ -109,6 +109,9 @@ export const HostPanelSection = story({
 /** More of each type per card. */
 export const HomeDeeperCards = story({ previewsPerType: 6 })
 
+/** None of each type per card: the name and the count, wrapped. */
+export const HomeHeadsOnly = story({ previewsPerType: 0 })
+
 /* ------------------------------------------------ a type you can make more of */
 
 /** iRadar, with two of its types made from the shell and the rest not. */
@@ -149,6 +152,9 @@ export const HomeCreatable = creatable({})
  * most: a card that would otherwise be a dead end says what to do about it.
  */
 export const HomeCreatableEmpty = creatable({ search: '?q=recall' })
+
+/** Heads-only cards keep the empty type that offers the button, and it stays under the count. */
+export const HomeHeadsOnlyCreatable = creatable({ previewsPerType: 0, search: '?q=recall' })
 
 /* ------------------------------------------- what can be done with the records */
 

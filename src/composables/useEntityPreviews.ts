@@ -38,7 +38,11 @@ export interface UseEntityPreviewsOptions {
   schema: ComputedRef<DomainSchema>
   query: ComputedRef<ShellQuery>
   entities: ComputedRef<EntitySchema[]>
-  /** Rows to show inside each type's card. */
+  /**
+   * Rows to show inside each type's card. `0` shows none — each card is then
+   * its type and its count — rather than meaning *no limit*, as it does to a
+   * source.
+   */
   limit: ComputedRef<number>
   /**
    * An expression every card is read inside — see {@link UseResultsOptions.within}.
@@ -78,9 +82,9 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
     expr: string,
   ): EntityPreview => ({
     entity,
-    rows: result.rows.map((row, index) =>
-      presentRow(row, index, entity, options.isPinned(row.id)),
-    ),
+    rows: options.limit.value > 0
+      ? result.rows.map((row, index) => presentRow(row, index, entity, options.isPinned(row.id)))
+      : [],
     total: result.total,
     count: pristine ? entity.count : String(result.total),
     pinned: namesItsOnlyRow(schema, result, expr),
@@ -111,7 +115,13 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
         query: { ...query, entity: entity.key, expr, facets: emptyFacetState(entity), page: 1 },
         schema,
         entity,
-        limit,
+        /*
+         * One row where none are shown, not none: to a source a limit of 0 is
+         * no limit, which would fetch every record of every type to draw a
+         * count. The one row is still read — it is what says whether the type
+         * holds nothing but the record the query named.
+         */
+        limit: Math.max(limit, 1),
         offset: 0,
       }),
     }))

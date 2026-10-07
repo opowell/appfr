@@ -469,7 +469,18 @@ export interface ShellQueryDefaults {
      * itself select an entity — see {@link ShellQueryDefaults.landing}.
      */
     entity?: string;
+    /**
+     * The view an empty URL opens in: the home screen's, cards unless set — or,
+     * with `landing: 'entity'`, the landing type's too, unless
+     * {@link ShellQueryDefaults.entityView} says otherwise.
+     */
     view?: ViewKind;
+    /**
+     * The view one type's records open in when the URL names none. A table
+     * unless set: one type's rows share their columns, which is what a table is
+     * for, where a card per type is what the whole corpus is for.
+     */
+    entityView?: ViewKind;
     sort?: string;
     dir?: SortDirection;
     /**

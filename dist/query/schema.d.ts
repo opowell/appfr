@@ -5,6 +5,20 @@ import type { ColumnDef, DomainSchema, EntitySchema, FacetDef, FacetState, Facet
  * there are, and its most recently updated few.
  */
 export declare const DEFAULT_VIEW: ViewKind;
+/** Table: what one type's records, every row of them the same columns, are drawn as. */
+export declare const DEFAULT_ENTITY_VIEW: ViewKind;
+/**
+ * The view a query leaves unsaid — so the one its URL omits — which depends on
+ * whether it names a type: {@link DEFAULT_VIEW} across them, and
+ * {@link DEFAULT_ENTITY_VIEW} within one.
+ */
+export declare function defaultViewFor(entity: string | null, defaults?: ShellQueryDefaults): ViewKind;
+/**
+ * The view a change of type lands in. A view left at its default was nobody's
+ * choice, so it becomes the default of where the query is going; one somebody
+ * chose is theirs, and goes with them.
+ */
+export declare function viewAcross(view: ViewKind, from: string | null, to: string | null, defaults?: ShellQueryDefaults): ViewKind;
 export declare const DEFAULT_SORT = "updated";
 export declare function isViewKind(value: unknown): value is ViewKind;
 /**

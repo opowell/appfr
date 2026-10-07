@@ -338,7 +338,9 @@ test.describe('Pressing a row with ⌥ held', () => {
  * the query stands on one of them, and the mark is what says which.
  */
 test.describe('A row the query names', () => {
-  const marks = (page: Page) => page.locator('.dc-standing')
+  /* The sign lit in a list row's `+ · −`, the dot being the row the query says nothing of. */
+  const marks = (page: Page) =>
+    page.locator('.dc-list__standing [data-dc-active="true"]:not([data-dc-standing="none"])')
 
   test('wears a + where the query narrows to it, and nothing elsewhere', async ({ page }) => {
     await gotoStory(page, HOME)
@@ -359,12 +361,12 @@ test.describe('A row the query names', () => {
     await expect(listRows(page).filter({ has: marks(page) }).locator('.dc-list__primary')).toHaveText(name)
   })
 
-  test('lifts the term when the mark is pressed, and stays where it is', async ({ page }) => {
+  test('lifts the term when its dot is pressed, and stays where it is', async ({ page }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const before = await listRows(page).count()
     await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
     expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
-    await marks(page).click()
+    await listRows(page).first().locator('.dc-list__standing [data-dc-standing="none"]').click()
     expect(queryOf(page)).toBeNull()
     expect(entityOf(page)).toBe('sets')
     await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')

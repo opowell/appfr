@@ -6,7 +6,7 @@ import { usePresentedRows } from '../../composables/usePresentedRows'
 import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
-import QueryMark from './QueryMark.vue'
+import RowStanding from './RowStanding.vue'
 import ScopeMark from './ScopeMark.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -36,6 +36,13 @@ const showEntity = computed(() => shell.isEverything.value)
         :row="entry.row"
         :selected="entry.selected"
         :name="entry.parts.identity"
+      />
+      <!-- Where the query stands on the record, and the way to change that
+           without a key: `+` narrows to it, `−` leaves it out, `·` lifts
+           either. In front of the name, as the table has it. -->
+      <RowStanding
+        class="dc-list__standing"
+        :entry="entry"
       />
       <!-- The name opens the record and the metrics narrow to it, so the two
            are siblings rather than one button around everything: a count that
@@ -71,7 +78,6 @@ const showEntity = computed(() => shell.isEverything.value)
           v-if="entry.parts.state"
           :status="entry.parts.state"
         />
-        <QueryMark :entry="entry" />
         <ScopeMark :entry="entry" />
         <PinStar
           v-if="shell.pinnable.value"
@@ -97,13 +103,14 @@ const showEntity = computed(() => shell.isEverything.value)
   background: var(--dc-bg-1);
 }
 
-/* The tick takes the row's leading gutter, and the button beside it gives up
-   the padding it was holding that gutter with. */
-.dc-list__tick {
+/* The tick and the standing control take the row's leading gutter, and the
+   link beside them gives up the padding it was holding that gutter with. */
+.dc-list__tick,
+.dc-list__standing:first-child {
   margin-left: 16px;
 }
 
-.dc-list__row:has(.dc-list__tick) .dc-list__open {
+.dc-list__row:has(.dc-list__tick, .dc-list__standing) .dc-list__open {
   padding-left: 10px;
 }
 

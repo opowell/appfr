@@ -136,3 +136,31 @@ test.describe('The head of the standing column', () => {
     await expect(litInHead(page)).toHaveAttribute('data-dc-standing', 'out')
   })
 })
+
+/*
+ * The same control on a list row and a card, so leaving a record out takes no
+ * key: ⌥-click does it from the name, but nothing on screen says so.
+ */
+test.describe('The standing control on lists and cards', () => {
+  const HOME = 'shell-data-shell--home-drillable'
+
+  for (const [view, row, control] of [
+    ['list', '.dc-list__row', '.dc-list__standing'],
+    ['cards', '.dc-card', '.dc-row-standing'],
+  ] as const) {
+    test(`leaves a record out from a ${view} row, and takes it back`, async ({ page }) => {
+      await gotoStory(page, HOME, `&e=sets&v=${view}`)
+      const first = page.locator(row).first()
+      await first.locator(`${control} [data-dc-standing="out"]`).click()
+      expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
+      expect(entityOf(page)).toBe('sets')
+      await expect(first.locator(`${control} ${LIT}`)).toHaveAttribute('data-dc-standing', 'out')
+      await first.locator(`${control} [data-dc-standing="in"]`).click()
+      // Turned round rather than added beside, and quoted only where it has to be.
+      expect(queryOf(page)).toMatch(/^set:"?sets_\d+"?$/)
+      await first.locator(`${control} [data-dc-standing="none"]`).click()
+      expect(queryOf(page)).toBeNull()
+    })
+  }
+})
+

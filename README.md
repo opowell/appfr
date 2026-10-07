@@ -787,8 +787,14 @@ fades under the pointer, the way a part on the bar does, and the `→` turns
 green, or red the moment ⌥ is held over it — the colour of the mark the press
 would leave on the row.
 
-**The table has a column for it.** A table has room a card does not, so
-there every row of a type that can be named wears the same three-way control
+**A list row and a card carry the control too.** Leaving a record out by a
+key nobody has been told about is a feature nobody finds, so a list row (in
+front of its name) and a card (beside its state) carry the same `+ · −` the
+table has — `RowStanding`, the control wired to one row — and that lit sign is
+their mark of where the query stands. ⌥-click on the name still does the `−`.
+The glance rows on a type's card and the preview pane keep the quieter mark.
+
+**The table has a column for it.** Every row of a table whose type can be named wears the same three-way control
 — `+` narrows to the record, `·` says nothing about it, `−` leaves it out —
 lit where the query stands, in a column of its own after the ticks and before
 the first column the schema declared. At its head is the same control over

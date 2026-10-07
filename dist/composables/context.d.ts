@@ -104,7 +104,7 @@ export interface ShellContext extends QueryState {
      * which is every row of a type that declares no `scope`, and every row at
      * all under `rowPress: 'open'`.
      *
-     * With `exclude` — the press made with ⌘ held, read by {@link pressOptions}
+     * With `exclude` — the press made with ⌥ held, read by {@link pressOptions}
      * — the same row is left *out* of the query instead, and the screen stays
      * where it is: taking one record out of a list is a refinement of that
      * list, not a move to another. Reported the same way where it would have
@@ -140,6 +140,15 @@ export interface ShellContext extends QueryState {
      * is listed rather than narrowed to.
      */
     drill(row: ShellRow, entity: EntitySchema | null, options?: PressOptions): void;
+    /**
+     * Where pressing the row would go, as a browser `href` — null where the
+     * press goes nowhere of the shell's (it is reported, or the type declares no
+     * scope). A view puts it on the row's link, which is what makes ⌘-click,
+     * ⇧-click and a middle click open it elsewhere as on any other link.
+     */
+    pressHref(row: ShellRow): string | null;
+    /** The same for {@link ShellContext.drill}: a metric's, or the `→`'s. */
+    drillHref(row: ShellRow, entity: EntitySchema | null): string | null;
 }
 export declare const SHELL_CONTEXT_KEY: InjectionKey<ShellContext>;
 /** The parts of the context that are the header's search box — see {@link ShellContext.draft}. */

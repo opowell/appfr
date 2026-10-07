@@ -90,12 +90,19 @@ export declare function liftTerm(expr: string, term: string | null): string;
  */
 export declare function withStanding(expr: string, term: string | null, standing: TermStanding | null): string;
 /**
- * The options a pointer press carries — the one place the modifier is read, so
- * every view agrees about which key it is. ⌘ on a Mac and Ctrl elsewhere are
- * the same key in the same place, and both are read everywhere, so a keyboard
- * on the wrong machine still works. ⇧ is the browser's own: Shift on a link
- * opens it in a new window, so Shift on a press opens where it leads in a new
- * tab — and held with ⌘, the record left out, over there.
+ * Whether a press on a link is the browser's to handle: ⌘/Ctrl opens it in a
+ * new tab, ⇧ in a new window, and any button but the main one is the
+ * browser's too. A press that leads somewhere is a real link (`PressLink`),
+ * so those keep doing exactly what they do on every other link.
+ */
+export declare function isBrowserPress(event: MouseEvent): boolean;
+/**
+ * The options a press of the shell's own carries — the one place its modifier
+ * is read, so every view agrees about which key it is.
+ *
+ * ⌥ (Alt) leaves the record out: the one modifier a link has no use for of its
+ * own, ⌘/Ctrl and ⇧ being the browser's (see {@link isBrowserPress}). Alt-click
+ * on a link would download it, which the press stops.
  */
 export declare function pressOptions(event: MouseEvent | KeyboardEvent): PressOptions;
 /**

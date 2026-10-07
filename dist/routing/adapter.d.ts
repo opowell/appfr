@@ -14,12 +14,12 @@ export interface RouteAdapter {
     /** Navigate, replacing the current history entry. */
     replace(search: string): void;
     /**
-     * Opens a search in a new browser tab, leaving this one where it is — what a
-     * press made with Shift held means (see `pressOptions`). Optional: an adapter
-     * without it has nowhere else to open anything, and the press navigates here
-     * instead.
+     * The `href` the browser would load for a search — what a press that leads
+     * somewhere puts on its link, so ⌘/Ctrl-click, Shift-click, a middle click
+     * and *Open link in new tab* all do what they do on any other link.
+     * Optional: without it a link is the path and the search as they stand.
      */
-    open?(search: string): void;
+    href?(search: string): string;
     /** Release any listeners. Called on unmount for adapters the shell created. */
     dispose?(): void;
 }

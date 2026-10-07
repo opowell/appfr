@@ -15,8 +15,8 @@ export interface RouterLike {
     replace(to: string): unknown;
     /**
      * Turns a location into the `href` the browser would load for it — under hash
-     * history, `#/` and all. What opening a query in a new tab needs, and present
-     * on every real `Router`; without it a new tab gets the path as it stands.
+     * history, `#/` and all. What a link needs, and present on every real
+     * `Router`; without it a link is the path as it stands.
      */
     resolve?(to: string): {
         href: string;

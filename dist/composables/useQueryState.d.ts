@@ -2,11 +2,7 @@ import type { ComputedRef, MaybeRefOrGetter } from 'vue';
 import type { DomainSchema, EntitySchema, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
 import type { RouteAdapter } from '../routing/adapter';
 import type { SummaryTerm } from '../query/summary';
-/**
- * How a change reaches the address bar: a new history entry, the current one
- * rewritten, or — `open` — a new browser tab, this one left where it was.
- */
-export type NavigationMode = 'push' | 'replace' | 'open';
+export type NavigationMode = 'push' | 'replace';
 export interface UseQueryStateOptions {
     schema: MaybeRefOrGetter<DomainSchema>;
     adapter: RouteAdapter;
@@ -46,11 +42,10 @@ export interface QueryState {
     /** True when no entity filter is applied — every entity is in the results. */
     isEverything: ComputedRef<boolean>;
     hasFacets: ComputedRef<boolean>;
-    /**
-     * Filters to one entity, or back to the whole corpus with `null`. `open`
-     * lists it in a new tab instead.
-     */
-    setEntity(key: string | null, mode?: NavigationMode): void;
+    /** Filters to one entity, or back to the whole corpus with `null`. */
+    setEntity(key: string | null): void;
+    /** The browser `href` {@link QueryState.setEntity} would navigate to. */
+    entityHref(key: string | null): string;
     /** Clears the entity filter — back to everything. */
     clearEntity(): void;
     setView(view: ViewKind): void;
@@ -77,7 +72,9 @@ export interface QueryState {
      *
      * Returns whether it navigated, as {@link QueryState.setExpression} does.
      */
-    narrow(expr: string, entityKey: string | null, view?: ViewKind, mode?: NavigationMode): boolean;
+    narrow(expr: string, entityKey: string | null, view?: ViewKind): boolean;
+    /** The browser `href` {@link QueryState.narrow} would navigate to. */
+    narrowHref(expr: string, entityKey: string | null, view?: ViewKind): string;
     /**
      * Moves to a page of the current results, 1-based and clamped there. What
      * the last page is depends on a count this composable has no sight of — the

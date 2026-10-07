@@ -53,7 +53,7 @@ A card's header filters the results to that type; a row opens that record.
 `previewsPerType` sets how many rows each card shows (default 3), and each card
 is queried on its own, so a quiet type still shows its latest rather than being
 crowded out of a global top-N. `0` makes each card just its heading — the type
-and its count — and wraps them in narrow columns, for a corpus whose types are
+and its count, no `create` button — and wraps them in narrow columns, for a corpus whose types are
 read by how many there are rather than by their latest few.
 
 Entity is a filter, not a mode. There is no separate logs screen and no
@@ -1190,7 +1190,7 @@ an empty box lifts the last part on the row, whichever kind it is.
 | `route` | `RouteAdapter` | injected, else History API | How the query reaches the URL. |
 | `defaults` | `ShellQueryDefaults` | home, `cards`, `updated`, `desc` | Fallbacks when the URL omits a field. `landing: 'entity'` opens on one entity's list instead of home. |
 | `within` | `string` | — | An expression the whole shell is read inside — its scope, held here rather than in the URL. See [a shell about one record](#a-shell-about-one-record). |
-| `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. `0` draws only each card's heading (name and count), in narrower wrapping columns. |
+| `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. `0` draws only each card's heading (name and count, no `create` button), in narrower wrapping columns. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
 | `pagesNote` | `string` | — | What the count is short of, in your words — `first 1,200 of 30,200 lots`. Goes under the pager's hover text, and keeps the pager up on a single page. See [paging through the results](#paging-through-the-results). |
 | `views` | `ViewKind[]` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. |

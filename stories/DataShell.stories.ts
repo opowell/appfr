@@ -153,7 +153,7 @@ export const HomeCreatable = creatable({})
  */
 export const HomeCreatableEmpty = creatable({ search: '?q=recall' })
 
-/** Heads-only cards keep the empty type that offers the button, and it stays under the count. */
+/** Heads-only cards offer no button, so a type holding nothing is dropped even where it names one. */
 export const HomeHeadsOnlyCreatable = creatable({ previewsPerType: 0, search: '?q=recall' })
 
 /* ------------------------------------------- what can be done with the records */

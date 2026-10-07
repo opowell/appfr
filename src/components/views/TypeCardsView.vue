@@ -70,12 +70,6 @@ const narrowed = computed(() => !shell.isPristine.value || Boolean(shell.within.
  * emptiness; a pinned card has a record in it and nothing to say about, and
  * `RecordActions` offers the same button on the type's own list a press away.
  */
-const previews = computed(() =>
-  found.value.filter(
-    (preview) => !preview.pinned && (preview.total > 0 || preview.entity.create),
-  ),
-)
-
 /**
  * No rows asked for, so a card is its heading and nothing under it: the type,
  * its count and the way into its list. A screen of those is a row of buttons
@@ -84,8 +78,19 @@ const previews = computed(() =>
  * Which types are drawn is read off the count rather than the rows for that
  * reason — with none fetched, a type holding nothing and a type holding
  * thousands come back alike.
+ *
+ * The `create` button goes too: under a heading alone it is the one thing in
+ * the card that is not the type, and the type's own list offers it on its bar
+ * a press away. With it goes the reason to keep an empty card.
  */
 const headsOnly = computed(() => shell.previewsPerType.value <= 0)
+
+const previews = computed(() =>
+  found.value.filter(
+    (preview) =>
+      !preview.pinned && (preview.total > 0 || (!headsOnly.value && preview.entity.create)),
+  ),
+)
 </script>
 
 <template>
@@ -198,7 +203,7 @@ const headsOnly = computed(() => shell.previewsPerType.value <= 0)
            what comes after the ones there are, and an empty card is then the
            card that most obviously offers it. -->
       <button
-        v-if="preview.entity.create"
+        v-if="preview.entity.create && !headsOnly"
         type="button"
         class="dc-type__new"
         @click="shell.create(preview.entity)"
@@ -250,12 +255,6 @@ const headsOnly = computed(() => shell.previewsPerType.value <= 0)
  */
 .dc-types[data-dc-heads-only='true'] {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-}
-
-/* And each its own height. Stretched, a row holding one type that offers a
-   button left every heading beside it over the empty band that button took. */
-.dc-types[data-dc-heads-only='true'] > * {
-  align-self: start;
 }
 
 .dc-types[data-dc-pending='true'] {

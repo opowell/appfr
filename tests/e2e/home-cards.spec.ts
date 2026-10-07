@@ -250,14 +250,14 @@ test.describe('Home — heads only', () => {
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', first!.key)
   })
 
-  test('a type holding nothing is dropped unless it offers to make one', async ({ page }) => {
+  test('a card offers no button, and a type holding nothing is dropped', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-heads-only-creatable')
-    const searches = card(page, 'Searches')
-    await expect(searches.locator('.dc-type__new')).toBeVisible()
-    await expect(searches.locator('.dc-type__row')).toHaveCount(0)
-    // A type with matches keeps its card, still without rows.
+    // A type with matches keeps its card, without rows or the button it names.
     await expect(card(page, 'Items')).toBeVisible()
-    await expect(card(page, 'Items').locator('.dc-type__row')).toHaveCount(0)
+    await expect(page.locator('.dc-type__row')).toHaveCount(0)
+    await expect(page.locator('.dc-type__new')).toHaveCount(0)
+    // Nothing in Searches mentions the search, and its button no longer keeps it.
+    await expect(card(page, 'Searches')).toHaveCount(0)
   })
 })
 

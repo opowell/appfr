@@ -8,7 +8,7 @@ import type { DomainSchema, EntitySchema, PressOptions, ShellRow } from '../type
  * wrong. These are those three lines.
  */
 /**
- * The expression term that narrows to one record — `host:"www.myzillertal.at"`.
+ * The expression term that narrows to one record — `host="www.myzillertal.at"`.
  *
  * Null when the row's entity declares no {@link EntitySchema.scope}: nothing
  * carries this record's id, so a term naming it would match every row that has
@@ -18,6 +18,11 @@ import type { DomainSchema, EntitySchema, PressOptions, ShellRow } from '../type
  *
  * Always quoted. An id is opaque — a spec path, a URL, a name with a space in
  * it — and the tokenizer strips the quotes before the term is read.
+ *
+ * Always `=`, never `:`. An id names one record, and ids nest: `:` asks "does
+ * this contain it", so `test:"ticket-3.0/x.spec.ts"` also reached
+ * `pre-ticket-3.0/x.spec.ts`, and narrowing to one record quietly brought its
+ * namesake's rows along. `=` asks for the id itself, per entry of a list.
  */
 export declare function scopeTerm(entity: EntitySchema | null | undefined, row: ShellRow): string | null;
 /**

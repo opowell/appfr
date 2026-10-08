@@ -6,6 +6,7 @@ const RESTRICTED = 'shell-data-shell--restricted-views'
 const UNOFFERED_LINK = 'shell-data-shell--restricted-views-unoffered-link'
 const SINGLE = 'shell-data-shell--single-view'
 const SINGLE_UNOFFERED_LINK = 'shell-data-shell--single-view-unoffered-link'
+const SINGLE_HOME_UNOFFERED_LINK = 'shell-data-shell--single-view-home-unoffered-link'
 
 /** What the header's View chooser is offering, in the order it offers them. */
 async function viewOptions(page: Page) {
@@ -52,6 +53,13 @@ test.describe('Views — a host offering one has no chooser', () => {
     await expect(page.locator('.dc-table')).toBeVisible()
     await expect(page.locator('.dc-list')).toHaveCount(0)
     await expect(page.locator('.dc-header__view-select')).toHaveCount(0)
+  })
+
+  test('across every type, that link draws a card per type', async ({ page }) => {
+    await gotoStory(page, SINGLE_HOME_UNOFFERED_LINK)
+    await expect(page.locator('.dc-types')).toBeVisible()
+    await expect(page.locator('.dc-table')).toHaveCount(0)
+    await expect(page.locator('.dc-card')).toHaveCount(0)
   })
 })
 

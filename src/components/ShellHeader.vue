@@ -418,7 +418,7 @@ const page = computed(() => shell.liveQuery.value.page)
 const paged = computed(
   () =>
     (shell.pageCount.value > 1 || Boolean(props.pagesNote)) &&
-    !isTypeCardsQuery(shell.query.value),
+    !isTypeCardsQuery(shell.query.value, props.views),
 )
 
 /**

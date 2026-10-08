@@ -215,9 +215,12 @@ export function isEntityScoped(query: ShellQuery): boolean {
  * with no entity filter, which is the home screen. Those cards run their own
  * per-entity queries, so the shell's single result set is not what is on
  * screen and nothing pages through it.
+ *
+ * `offered` is the host's `views`: the view read is the one drawn, so a link
+ * naming a view the host withheld is the home screen wherever it draws cards.
  */
-export function isTypeCardsQuery(query: ShellQuery): boolean {
-  return query.entity === null && query.view === 'cards'
+export function isTypeCardsQuery(query: ShellQuery, offered?: ViewKind[]): boolean {
+  return query.entity === null && resolveView(query.view, offered) === 'cards'
 }
 
 /**

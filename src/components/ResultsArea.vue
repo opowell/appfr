@@ -49,7 +49,7 @@ const VIEWS: Record<ViewKind, Component> = {
  * are one card per record; across every entity — the home screen — a card per
  * record would be a wall of mixed things, so it is a card per type instead.
  */
-const isTypeCards = computed(() => isTypeCardsQuery(shell.query.value))
+const isTypeCards = computed(() => isTypeCardsQuery(shell.query.value, props.views))
 
 const kind = computed<ViewKind>(() => resolveView(shell.query.value.view, props.views))
 

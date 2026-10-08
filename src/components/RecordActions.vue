@@ -35,7 +35,7 @@ const entity = computed(() => shell.entity.value)
  * nothing on that screen a tick or a delete would be about. Every other view
  * is rows.
  */
-const records = computed(() => !isTypeCardsQuery(shell.query.value))
+const records = computed(() => !isTypeCardsQuery(shell.query.value, props.views))
 
 const selecting = computed(() => records.value && shell.selectable.value)
 

@@ -649,6 +649,16 @@ export const SingleViewUnofferedLink = story({
   views: ['table'],
 })
 
+/**
+ * And across every type, a link naming a view this shell does not offer: it
+ * is the home screen's card per type, as `cards` draws it there — not a card
+ * per record of the mixed result set.
+ */
+export const SingleViewHomeUnofferedLink = story({
+  search: '?v=table',
+  views: ['cards'],
+})
+
 /** Ascending order, to show the direction control taking effect. */
 export const SortedByNameAscending = story({ search: '?e=searches&v=list&s=name&d=asc' })
 

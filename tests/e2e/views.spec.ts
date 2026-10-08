@@ -4,6 +4,8 @@ import { chooseView, gotoStory, openPick, pickOptions, viewSelect } from './stor
 
 const RESTRICTED = 'shell-data-shell--restricted-views'
 const UNOFFERED_LINK = 'shell-data-shell--restricted-views-unoffered-link'
+const SINGLE = 'shell-data-shell--single-view'
+const SINGLE_UNOFFERED_LINK = 'shell-data-shell--single-view-unoffered-link'
 
 /** What the header's View chooser is offering, in the order it offers them. */
 async function viewOptions(page: Page) {
@@ -35,6 +37,21 @@ test.describe('Views — a host may offer fewer than seven', () => {
   test('the chooser still offers that host’s set from the fallback', async ({ page }) => {
     await gotoStory(page, UNOFFERED_LINK)
     await expect(await viewOptions(page)).toHaveText(['List', 'Table'])
+  })
+})
+
+test.describe('Views — a host offering one has no chooser', () => {
+  test('the bar carries no View control', async ({ page }) => {
+    await gotoStory(page, SINGLE)
+    await expect(page.locator('.dc-table')).toBeVisible()
+    await expect(page.locator('.dc-header__view-select')).toHaveCount(0)
+  })
+
+  test('a link naming another view still draws the one on offer', async ({ page }) => {
+    await gotoStory(page, SINGLE_UNOFFERED_LINK)
+    await expect(page.locator('.dc-table')).toBeVisible()
+    await expect(page.locator('.dc-list')).toHaveCount(0)
+    await expect(page.locator('.dc-header__view-select')).toHaveCount(0)
   })
 })
 

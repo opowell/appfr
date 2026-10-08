@@ -633,6 +633,22 @@ export const RestrictedViewsUnofferedLink = story({
   views: ['list', 'table'],
 })
 
+/**
+ * One view on offer is no choice, so the bar carries no View control — the
+ * host has said how these are drawn. A host that draws a type's list one way
+ * and the corpus another passes `views` per screen.
+ */
+export const SingleView = story({
+  search: '?e=searches',
+  views: ['table'],
+})
+
+/** A link naming another view, to a shell offering one: it draws that one. */
+export const SingleViewUnofferedLink = story({
+  search: '?e=searches&v=list',
+  views: ['table'],
+})
+
 /** Ascending order, to show the direction control taking effect. */
 export const SortedByNameAscending = story({ search: '?e=searches&v=list&s=name&d=asc' })
 

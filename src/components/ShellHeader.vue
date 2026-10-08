@@ -169,6 +169,14 @@ const viewOptions = computed<{ key: ViewKind; label: string }[]>(() =>
 const view = computed(() => resolveView(shell.query.value.view, props.views))
 
 /**
+ * Whether there is a choice to offer. A host offering one view has said how
+ * the results are drawn — and a host may say it per screen, passing `views`
+ * as the query changes — so a chooser of one would be a label posing as a
+ * control.
+ */
+const showViews = computed(() => viewOptions.value.length > 1)
+
+/**
  * Whether the list of types is worth a control of its own.
  *
  * Only while a type is filtered to: the chooser is then the way to another
@@ -554,12 +562,13 @@ function abandonTyped(event: Event): void {
           @update:model-value="chooseEntity"
         />
 
-        <!-- And how they are drawn, always: it is a part of the query, so it
-             is on the bar whatever else is. What they are ordered by is not
-             here, because the table's own headings offer it with the column
-             on screen under them, and the bar would be the same choice in
-             the abstract. -->
+        <!-- And how they are drawn, wherever the host offers more than one
+             way: it is a part of the query, so it is on the bar whatever else
+             is. What they are ordered by is not here, because the table's own
+             headings offer it with the column on screen under them, and the
+             bar would be the same choice in the abstract. -->
         <PickControl
+          v-if="showViews"
           class="dc-header__pick dc-header__view-select"
           label="View"
           :model-value="view"

@@ -84,8 +84,11 @@ export declare function isEntityScoped(query: ShellQuery): boolean;
  * with no entity filter, which is the home screen. Those cards run their own
  * per-entity queries, so the shell's single result set is not what is on
  * screen and nothing pages through it.
+ *
+ * `offered` is the host's `views`: the view read is the one drawn, so a link
+ * naming a view the host withheld is the home screen wherever it draws cards.
  */
-export declare function isTypeCardsQuery(query: ShellQuery): boolean;
+export declare function isTypeCardsQuery(query: ShellQuery, offered?: ViewKind[]): boolean;
 /**
  * How many pages of `limit` rows `total` rows come to. Always at least one:
  * an empty result set is one empty page, not none.

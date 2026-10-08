@@ -48,7 +48,7 @@ type __VLS_Props = {
      * heading alone, the type and its count, in narrower columns that wrap.
      */
     previewsPerType?: number;
-    /** Restricts the offered result views. */
+    /** Restricts the offered result views. One on offer leaves the bar without a View chooser. */
     views?: ViewKind[];
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string;

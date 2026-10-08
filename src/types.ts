@@ -393,6 +393,16 @@ export interface EntitySchema {
    */
   delete?: string
   /**
+   * Anything else that is done to the ticked records — running them,
+   * exporting them, sending them somewhere — named by the type the way
+   * `duplicate` and `delete` are. Each is a button on the bar, between the
+   * copy and the delete, and offers the ticks the same way.
+   *
+   * Reported as `operate(key, selection)`, and carried out by nobody but the
+   * host: the shell knows these by name only.
+   */
+  operations?: SelectionOperation[]
+  /**
    * The field every other record carries this one's id in — `'host'` for a
    * tenant whose specs, profiles and runs each name the host they belong to.
    *
@@ -589,6 +599,16 @@ export interface ShellRow {
  * the ticked rows of the page on screen. A host that needs the rest reads them
  * back by id, being the only side that can.
  */
+/**
+ * One of {@link EntitySchema.operations}: what the host calls it, and the
+ * words on its button. The key is what comes back with the press, so a label
+ * can change without the host's handler having to.
+ */
+export interface SelectionOperation {
+  key: string
+  label: string
+}
+
 export interface Selection {
   /** Every ticked id, across every page a tick was made on. */
   ids: string[]

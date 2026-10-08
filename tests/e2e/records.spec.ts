@@ -13,6 +13,7 @@ const TABLE = 'shell-data-shell--entity-actions-table'
 const GRID = 'shell-data-shell--entity-actions-grid'
 const PAGED = 'shell-data-shell--entity-actions-paged'
 const CREATE_ONLY = 'shell-data-shell--entity-actions-create-only'
+const OPERATIONS = 'shell-data-shell--entity-actions-operations'
 const SELECTABLE = 'shell-data-shell--selectable-rows'
 const HOME = 'shell-data-shell--home'
 const ENTITY = 'shell-data-shell--entity-list'
@@ -185,6 +186,38 @@ test.describe('Records — the operations are requests', () => {
     await expect(asked(page)).toHaveText('asked for a new Searches')
     // Still listing searches: the button neither opened nor navigated.
     await expect(page.locator('.dc-list')).toBeVisible()
+  })
+})
+
+test.describe('Records — a type’s own operations', () => {
+  test('are on the bar in the order named, and offer the ticks alone', async ({ page }) => {
+    await gotoStory(page, OPERATIONS)
+    await expect(ops(page)).toHaveText(['Run…', 'Export'])
+    const rows = await listRows(page).count()
+    expect(rows).toBeGreaterThan(0)
+    await expect(rowTicks(page)).toHaveCount(rows)
+  })
+
+  test('are off with nothing ticked, and count the ticks once there are some', async ({ page }) => {
+    await gotoStory(page, OPERATIONS)
+    await expect(op(page, 'Run…')).toBeDisabled()
+    await rowTicks(page).first().click()
+    await expect(op(page, 'Run… 1')).toBeEnabled()
+    await expect(op(page, 'Export 1')).toBeEnabled()
+  })
+
+  test('each reports its key with the selection, and the shell does nothing else', async ({ page }) => {
+    await gotoStory(page, OPERATIONS)
+    const before = await listRows(page).count()
+    await rowTicks(page).nth(0).click()
+    await rowTicks(page).nth(1).click()
+
+    await op(page, 'Run… 2').click()
+    await expect(asked(page)).toHaveText('asked to run 2')
+    await op(page, 'Export 2').click()
+    await expect(asked(page)).toHaveText('asked to export 2')
+    await expect(listRows(page)).toHaveCount(before)
+    await expect(readout(page)).toHaveText('2 selected')
   })
 })
 

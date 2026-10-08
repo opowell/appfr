@@ -7,7 +7,7 @@ import PageTick from './views/PageTick.vue'
 
 /**
  * What can be done with the records of the type being listed: make one, tick
- * some, and copy or delete what is ticked.
+ * some, and copy, delete or otherwise operate on what is ticked.
  *
  * The bar over the results rather than a menu on each row, because three of
  * the four are about a *set* of records — and the fourth, making one, is what
@@ -54,7 +54,12 @@ const offered = computed(
   () =>
     records.value &&
     (selecting.value ||
-      Boolean(entity.value?.create || entity.value?.duplicate || entity.value?.delete)),
+      Boolean(
+        entity.value?.create ||
+          entity.value?.duplicate ||
+          entity.value?.delete ||
+          entity.value?.operations?.length,
+      )),
 )
 
 /* ---------------------------------------------------------- what is ticked */
@@ -151,6 +156,20 @@ function opLabel(label: string): string {
         @click="shell.duplicate()"
       >
         {{ opLabel(entity.duplicate) }}
+      </button>
+
+      <!-- The type's own words for anything else it does to a selection,
+           between the copy and the one that cannot be taken back. -->
+      <button
+        v-for="operation in entity?.operations ?? []"
+        :key="operation.key"
+        type="button"
+        class="dc-actions__op"
+        :data-dc-operation="operation.key"
+        :disabled="!count"
+        @click="shell.operate(operation.key)"
+      >
+        {{ opLabel(operation.label) }}
       </button>
 
       <button

@@ -190,6 +190,9 @@ const managed = (args: ShellStoryArgs): Story =>
     onDelete: (selection) => {
       acted.value = `asked to delete ${selection.ids.length}`
     },
+    onOperate: (key, selection) => {
+      acted.value = `asked to ${key} ${selection.ids.length}`
+    },
     slots: {
       actions: () => h('span', { class: 'sb-asked dc-mono' }, acted.value),
     },
@@ -213,6 +216,29 @@ export const EntityActions = managed({ search: '?e=searches&v=list' })
 
 /** The same bar over the same records as a table, where the tick leads. */
 export const EntityActionsTable = managed({ search: '?e=searches&v=table' })
+
+/**
+ * A type whose only words for a selection are its own — `operations` — and
+ * none of the three the shell knows by name. They still put the ticks on the
+ * rows, and each is reported by its key with the selection it is for.
+ */
+export const EntityActionsOperations = managed({
+  search: '?e=searches&v=list',
+  schema: {
+    ...iRadarSchema,
+    entities: iRadarSchema.entities.map((entity) =>
+      entity.key === 'searches'
+        ? {
+            ...entity,
+            operations: [
+              { key: 'run', label: 'Run…' },
+              { key: 'export', label: 'Export' },
+            ],
+          }
+        : entity,
+    ),
+  },
+})
 
 /**
  * And over tiles, where a tick sits in the corner of the picture. Ticks are of

@@ -335,6 +335,7 @@ export type {
   RangeFacet,
   RecordStatus,
   Selection,
+  SelectionOperation,
   ShellAlign,
   ShellQuery,
   ShellQueryDefaults,

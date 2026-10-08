@@ -186,6 +186,11 @@ const emit = defineEmits<{
   duplicate: [selection: Selection]
   delete: [selection: Selection]
   /**
+   * One of the entity's own `operations` was asked for, by its key. Reported
+   * as the two above are, and nothing else happens.
+   */
+  operate: [key: string, selection: Selection]
+  /**
    * Narrowing to one record was asked for: from the affordance an entity's
    * `scope` puts on its rows, or from a metric its `drills` named an entity
    * for. `entity` is what to list afterwards, null when the row itself was
@@ -363,7 +368,7 @@ function togglePin(row: ShellRow) {
 const selectable = computed(() => {
   if (props.selectable === true) return true
   const entity = query.entity.value
-  return Boolean(entity?.duplicate || entity?.delete)
+  return Boolean(entity?.duplicate || entity?.delete || entity?.operations?.length)
 })
 
 const selectedIds = computed(() => new Set(selected.value))
@@ -521,6 +526,7 @@ const shell = provideShellContext({
   create: (entity) => emit('create', entity),
   duplicate: () => emit('duplicate', selection.value),
   delete: () => emit('delete', selection.value),
+  operate: (key) => emit('operate', key, selection.value),
   drill,
 })
 

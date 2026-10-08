@@ -1,7 +1,7 @@
 import type { ViewKind } from '../types';
 /**
  * What can be done with the records of the type being listed: make one, tick
- * some, and copy or delete what is ticked.
+ * some, and copy, delete or otherwise operate on what is ticked.
  *
  * The bar over the results rather than a menu on each row, because three of
  * the four are about a *set* of records — and the fourth, making one, is what

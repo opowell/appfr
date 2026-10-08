@@ -127,6 +127,11 @@ export interface ShellContext extends QueryState {
     duplicate(): void;
     delete(): void;
     /**
+     * Any other of the type's own {@link EntitySchema.operations}, by its key —
+     * reported the same way, with the selection it is for.
+     */
+    operate(key: string): void;
+    /**
      * Narrowing to one record — from the affordance {@link EntitySchema.scope}
      * offers on its rows, or from a metric {@link EntitySchema.drills} named an
      * entity for. `entity` is what to list afterwards, and null when the press

@@ -182,6 +182,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     create: (entity: EntitySchema) => any;
     duplicate: (selection: Selection) => any;
     delete: (selection: Selection) => any;
+    operate: (key: string, selection: Selection) => any;
     drill: (row: ShellRow, entity: EntitySchema | null, options: PressOptions) => any;
     "query-change": (query: ShellQuery) => any;
     "toggle-pin": (row: ShellRow) => any;
@@ -193,6 +194,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     onCreate?: ((entity: EntitySchema) => any) | undefined;
     onDuplicate?: ((selection: Selection) => any) | undefined;
     onDelete?: ((selection: Selection) => any) | undefined;
+    onOperate?: ((key: string, selection: Selection) => any) | undefined;
     onDrill?: ((row: ShellRow, entity: EntitySchema | null, options: PressOptions) => any) | undefined;
     "onQuery-change"?: ((query: ShellQuery) => any) | undefined;
     "onToggle-pin"?: ((row: ShellRow) => any) | undefined;

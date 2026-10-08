@@ -55,6 +55,8 @@ export type { PaneContext } from './composables/paneMenu';
 export { useLayoutRoute } from './composables/useLayoutRoute';
 export type { LayoutRoute, UseLayoutRouteOptions } from './composables/useLayoutRoute';
 export { decodeLayout, encodeLayout } from './window/codec';
+export { openPopOut, popOutRect } from './window/popOut';
+export type { PopOutRect } from './window/popOut';
 export { ENTITY_ALL, FACET_PREFIX, PARAM_DIR, PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_SORT, PARAM_VIEW, parseQuery, serializeQuery, } from './query/codec';
 export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, DEFAULT_ENTITY_VIEW, defaultViewFor, viewAcross, defaultQuery, emptyFacetState, emptyFacetValue, findEntity, findSort, focusEntity, hasActiveFacets, isEntityScoped, isFacetActive, isPristineQuery, isTypeCardsQuery, isViewKind, reconcileFacets, resolveView, RESULT_FIELDS, sortsFor, VIEW_LABELS, } from './query/schema';
 export { cellFull, cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, EMPTY_CELL, roleColumn, roleColumns, rowKey, } from './query/columns';

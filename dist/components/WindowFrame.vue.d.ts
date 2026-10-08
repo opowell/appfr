@@ -46,6 +46,25 @@ type __VLS_Props = {
      * appended, or something else entirely.
      */
     paneMenu?: (panel: WindowPanelDef, items: MenuItemDef[]) => MenuItemDef[];
+    /**
+     * Where a panel pops out to: the address of a page showing that panel and
+     * nothing else (`useLayoutRoute`'s `popOutHref` is one). A panel it gives
+     * an address for has *Pop out to new window* in its menu, which opens that
+     * address in a browser window of its own, the size of the pane, and emits
+     * `panel-pop-out`. `null` or nothing leaves a panel where it is.
+     *
+     * The window does not take the panel out of itself: a host that wants it
+     * gone once it is open elsewhere — a panel in two windows is two copies of
+     * it — drops it from `panels` in answer to the event.
+     */
+    popOut?: (panel: WindowPanelDef) => string | null | undefined;
+    /**
+     * Holds the panels the layout names and no others. A window ordinarily puts
+     * every one of `panels` somewhere, adding any the layout leaves out; one
+     * popped out of another for a single panel (`useLayoutRoute`'s `solo`)
+     * would get back everything it was popped out *from*.
+     */
+    solo?: boolean;
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string;
     /** Design tokens set on the window element — `{ '--dc-surface': '#101418' }`. */
@@ -119,6 +138,10 @@ declare const _default: import("vue").DefineComponent<__VLS_PublicProps, {
         minimized: boolean;
     }) => any;
     "panel-close": (panel: string) => any;
+    "panel-pop-out": (popped: {
+        panel: string;
+        href: string;
+    }) => any;
     "update:layout": (value: WindowNode | null) => any;
     "update:views": (value: Record<string, string>) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_PublicProps> & Readonly<{
@@ -141,6 +164,10 @@ declare const _default: import("vue").DefineComponent<__VLS_PublicProps, {
         minimized: boolean;
     }) => any) | undefined;
     "onPanel-close"?: ((panel: string) => any) | undefined;
+    "onPanel-pop-out"?: ((popped: {
+        panel: string;
+        href: string;
+    }) => any) | undefined;
     "onUpdate:layout"?: ((value: WindowNode | null) => any) | undefined;
     "onUpdate:views"?: ((value: Record<string, string>) => any) | undefined;
 }>, {
@@ -151,5 +178,6 @@ declare const _default: import("vue").DefineComponent<__VLS_PublicProps, {
     closable: boolean;
     minPanelSize: number;
     spaceNames: boolean;
+    solo: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export default _default;

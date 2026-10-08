@@ -1,4 +1,4 @@
-import type { MaybeRefOrGetter, Ref } from 'vue';
+import type { ComputedRef, MaybeRefOrGetter, Ref } from 'vue';
 import type { RouteAdapter } from '../routing/adapter';
 import type { WindowNode } from '../window/types';
 export interface UseLayoutRouteOptions {
@@ -25,10 +25,32 @@ export interface UseLayoutRouteOptions {
      * rewrites its address that fast.
      */
     delay?: number;
+    /**
+     * The query parameter that marks a window popped out of another, holding
+     * nothing but the panel it was popped out for. `solo` by default.
+     */
+    soloParam?: string;
 }
 export interface LayoutRoute {
     /** Writes a change still waiting out {@link UseLayoutRouteOptions.delay} now. */
     flush(): void;
+    /**
+     * The address of this page opened on one panel and nothing else: no panels
+     * beside it, no space around it, and no bar over it — the browser window it
+     * opens in is what names it. The rest of the URL is kept as it is, so what
+     * the panel was showing it shows there too.
+     *
+     * It is the URL for {@link openPopOut}, or for `WindowFrame`'s `popOut`, and
+     * the window it opens is {@link solo}.
+     */
+    popOutHref(panel: string): string;
+    /**
+     * Whether this window was popped out of another — opened at a
+     * {@link popOutHref} — and so holds only the panels its layout names. Pass it
+     * to `WindowFrame`'s `solo`: a window that adds the host's other panels back
+     * beside the one it was opened for is the whole window again.
+     */
+    solo: ComputedRef<boolean>;
 }
 /**
  * Holds a window's layout in the URL: which panels are open, how they are

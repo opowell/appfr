@@ -80,7 +80,7 @@ describe('withoutOwnScope', () => {
 
 describe('recordTerm', () => {
   it('is scopeTerm for a record named by its id alone', () => {
-    expect(recordTerm(categories, 'categories_10007')).toBe('category:"categories_10007"')
+    expect(recordTerm(categories, 'categories_10007')).toBe('category="categories_10007"')
     expect(recordTerm(categories, 'categories_10007')).toBe(scopeTerm(categories, row()))
   })
 
@@ -91,7 +91,7 @@ describe('recordTerm', () => {
 
 describe('scopeTerm', () => {
   it('names the field the entity declares, quoting the id', () => {
-    expect(scopeTerm(categories, row())).toBe('category:"categories_10007"')
+    expect(scopeTerm(categories, row())).toBe('category="categories_10007"')
   })
 
   it('is null for an entity that declares no scope', () => {
@@ -101,11 +101,11 @@ describe('scopeTerm', () => {
 
   it('quotes an id that would otherwise tokenize as several terms', () => {
     const term = scopeTerm(categories, row({ id: 'ticket 3.0/booking.spec.ts' }))
-    expect(term).toBe('category:"ticket 3.0/booking.spec.ts"')
+    expect(term).toBe('category="ticket 3.0/booking.spec.ts"')
   })
 
   it('resolves the entity out of the schema', () => {
-    expect(scopeTermFor(legoSchema, row())).toBe('category:"categories_10007"')
+    expect(scopeTermFor(legoSchema, row())).toBe('category="categories_10007"')
     expect(scopeTermFor(legoSchema, row({ entityKey: 'inventories' }))).toBeNull()
   })
 })
@@ -175,7 +175,7 @@ describe('addTerm', () => {
 describe('excludingTerm', () => {
   it('is the scope term with a dash in front of it', () => {
     expect(excludingTerm('category:"categories_10007"')).toBe('-category:"categories_10007"')
-    expect(excludingTerm(scopeTerm(categories, row()))).toBe('-category:"categories_10007"')
+    expect(excludingTerm(scopeTerm(categories, row()))).toBe('-category="categories_10007"')
   })
 
   it('is null for null, as a row with no scope gives', () => {
@@ -270,17 +270,17 @@ describe('withStanding', () => {
   const term = scopeTerm(categories, row())
 
   it('narrows to the record, turning a term that left it out', () => {
-    expect(withStanding('theme:space', term, 'in')).toBe('theme:space category:"categories_10007"')
+    expect(withStanding('theme:space', term, 'in')).toBe('theme:space category="categories_10007"')
     // Rewritten through the formatter, which quotes only where it has to.
     expect(withStanding('-category:"categories_10007"', term, 'in')).toBe(
-      'category:categories_10007',
+      'category=categories_10007',
     )
   })
 
   it('leaves the record out, turning a term that narrowed to it', () => {
-    expect(withStanding('theme:space', term, 'out')).toBe('theme:space -category:"categories_10007"')
+    expect(withStanding('theme:space', term, 'out')).toBe('theme:space -category="categories_10007"')
     expect(withStanding('category:"categories_10007"', term, 'out')).toBe(
-      '-category:categories_10007',
+      '-category=categories_10007',
     )
   })
 
@@ -303,13 +303,13 @@ describe('withStanding', () => {
 describe('drillExpression', () => {
   it('narrows an existing query rather than replacing it', () => {
     const query = { ...defaultQuery(legoSchema), expr: 'theme:space' }
-    expect(drillExpression(legoSchema, query, row())).toBe('theme:space category:"categories_10007"')
+    expect(drillExpression(legoSchema, query, row())).toBe('theme:space category="categories_10007"')
   })
 
   it('leaves the row out instead when the press says so', () => {
     const query = { ...defaultQuery(legoSchema), expr: 'theme:space' }
     expect(drillExpression(legoSchema, query, row(), { exclude: true })).toBe(
-      'theme:space -category:"categories_10007"',
+      'theme:space -category="categories_10007"',
     )
   })
 
@@ -376,5 +376,20 @@ describe('a drilled query, against the mock source', () => {
         for (const field of scopes) expect(generated.fields[field]).toBeTruthy()
       }
     }
+  })
+})
+
+describe('a record term', () => {
+  const categories = legoSchema.entities.find((entity) => entity.key === 'categories')!
+
+  it('names the record and no record whose id merely holds it', () => {
+    // `=` reads each id whole, so `ticket-3.0/x` does not reach `pre-ticket-3.0/x`.
+    expect(recordTerm(categories, 'ticket-3.0/x.spec.ts')).toBe('category="ticket-3.0/x.spec.ts"')
+  })
+
+  it('is recognised in the spelling a query held before, so a bookmark still reads as naming it', () => {
+    const term = recordTerm(categories, 'categories_10007')
+    expect(termStanding('category:"categories_10007"', term)).toBe('in')
+    expect(addTerm('category:"categories_10007"', term)).toBe('category:"categories_10007"')
   })
 })

@@ -91,7 +91,7 @@ test.describe('A metric that counts something listable', () => {
   test('narrows to that type, scoped to the record pressed', async ({ page }) => {
     await gotoStory(page, TABLE)
     await page.locator('.dc-table__row').first().locator('.dc-drill').first().click()
-    expect(queryOf(page)).toMatch(/^set:"sets_\d+"$/)
+    expect(queryOf(page)).toMatch(/^set="sets_\d+"$/)
     expect(entityOf(page)).toBe('pieces')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'pieces')
     // A metric names the type it is going to a list of, so it keeps the view it was drawn in.
@@ -141,7 +141,7 @@ test.describe('Pressing a row', () => {
   test('narrows every card at once, without picking a type', async ({ page }) => {
     await gotoStory(page, HOME)
     await press(page, 'Sets')
-    expect(queryOf(page)).toMatch(/^set:"sets_\d+"$/)
+    expect(queryOf(page)).toMatch(/^set="sets_\d+"$/)
     expect(entityOf(page)).toBeNull()
     await expect(page.locator('.dc-types')).toBeVisible()
   })
@@ -224,7 +224,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const href = await page.locator('.dc-list__open').first().getAttribute('href')
     const linked = new URL(href!, page.url()).searchParams.get('q')
-    expect(linked).toMatch(/^set:"sets_\d+"$/)
+    expect(linked).toMatch(/^set="sets_\d+"$/)
     await page.locator('.dc-list__open').first().click()
     expect(queryOf(page)).toBe(linked)
   })
@@ -247,7 +247,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     const tab = await opened
     await tab.waitForLoadState('domcontentloaded')
     const url = new URL(tab.url())
-    expect(url.searchParams.get('q')).toMatch(/^set:"sets_\d+"$/)
+    expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
     expect(url.searchParams.get('e')).toBeNull()
     expect(page.url()).toBe(before)
   })
@@ -258,7 +258,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     const opened = context.waitForEvent('page')
     await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Shift'] })
     const url = new URL((await opened).url())
-    expect(url.searchParams.get('q')).toMatch(/^set:"sets_\d+"$/)
+    expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
     expect(url.searchParams.get('e')).toBe('pieces')
     expect(page.url()).toBe(before)
   })
@@ -269,7 +269,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     const opened = context.waitForEvent('page')
     await page.locator('.dc-table__row').first().locator('td').last().click({ modifiers: ['Meta'] })
     const url = new URL((await opened).url())
-    expect(url.searchParams.get('q')).toMatch(/^set:"sets_\d+"$/)
+    expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
     expect(page.url()).toBe(before)
   })
 
@@ -295,7 +295,7 @@ test.describe('Pressing a row with ⌥ held', () => {
     const before = await listRows(page).count()
     const name = await page.locator('.dc-list__primary').first().innerText()
     await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
-    expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
+    expect(queryOf(page)).toMatch(/^-set="sets_\d+"$/)
     // Where it was: the same type, the same view — and the same rows. The
     // term leaves that set's pieces, colors and inventories out; the list of
     // sets is where that set is put out and taken back, so it stays in it.
@@ -326,7 +326,7 @@ test.describe('Pressing a row with ⌥ held', () => {
     await gotoStory(page, HOME)
     await press(page, 'Sets')
     const narrowed = queryOf(page)
-    expect(narrowed).toMatch(/^set:"sets_\d+"$/)
+    expect(narrowed).toMatch(/^set="sets_\d+"$/)
     await listType(page, 'sets')
     await chooseView(page, 'list')
     await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
@@ -337,7 +337,7 @@ test.describe('Pressing a row with ⌥ held', () => {
   test('leaves a metric pivoting to what it counts, minus the record', async ({ page }) => {
     await gotoStory(page, TABLE)
     await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Alt'] })
-    expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
+    expect(queryOf(page)).toMatch(/^-set="sets_\d+"$/)
     expect(entityOf(page)).toBe('pieces')
   })
 })
@@ -375,7 +375,7 @@ test.describe('A row the query names', () => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const before = await listRows(page).count()
     await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
-    expect(queryOf(page)).toMatch(/^-set:"sets_\d+"$/)
+    expect(queryOf(page)).toMatch(/^-set="sets_\d+"$/)
     await listRows(page).first().locator('.dc-list__standing [data-dc-standing="none"]').click()
     expect(queryOf(page)).toBeNull()
     expect(entityOf(page)).toBe('sets')
@@ -470,7 +470,7 @@ test.describe('A narrowed query', () => {
     // Rewritten from what it parsed to, which is where the second spelling
     // comes from: the quotes the → wrote are not in it any more.
     expect(lifted).not.toBe(scoped)
-    expect(lifted).toMatch(/^set:sets_\d+$/)
+    expect(lifted).toMatch(/^set=sets_\d+$/)
 
     await pressAgain(page, 'sets', name)
     expect(queryOf(page)).toBe(lifted)
@@ -509,7 +509,7 @@ test.describe('A shell whose rows open instead', () => {
   test('and that → narrows without opening anything', async ({ page }) => {
     await gotoStory(page, OPENS)
     await card(page, 'Sets').locator('.dc-scope').first().click()
-    expect(queryOf(page)).toMatch(/^set:"sets_\d+"$/)
+    expect(queryOf(page)).toMatch(/^set="sets_\d+"$/)
     await expect(page.locator('.sb-asked')).toHaveText('nothing opened yet')
   })
 })

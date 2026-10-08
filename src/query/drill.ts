@@ -1,5 +1,6 @@
 import type { DomainSchema, EntitySchema, PressOptions, ShellRow } from '../types'
-import { formatExpression, oppositeTerm, parseExpression, sameTerm } from '../data/expression'
+import type { FieldTerm, Term } from '../data/expression'
+import { formatExpression, negateTerm, parseExpression, sameTerm } from '../data/expression'
 
 /**
  * Turning a `drill` into an expression.
@@ -11,7 +12,7 @@ import { formatExpression, oppositeTerm, parseExpression, sameTerm } from '../da
  */
 
 /**
- * The expression term that narrows to one record — `host:"www.myzillertal.at"`.
+ * The expression term that narrows to one record — `host="www.myzillertal.at"`.
  *
  * Null when the row's entity declares no {@link EntitySchema.scope}: nothing
  * carries this record's id, so a term naming it would match every row that has
@@ -21,6 +22,11 @@ import { formatExpression, oppositeTerm, parseExpression, sameTerm } from '../da
  *
  * Always quoted. An id is opaque — a spec path, a URL, a name with a space in
  * it — and the tokenizer strips the quotes before the term is read.
+ *
+ * Always `=`, never `:`. An id names one record, and ids nest: `:` asks "does
+ * this contain it", so `test:"ticket-3.0/x.spec.ts"` also reached
+ * `pre-ticket-3.0/x.spec.ts`, and narrowing to one record quietly brought its
+ * namesake's rows along. `=` asks for the id itself, per entry of a list.
  */
 export function scopeTerm(entity: EntitySchema | null | undefined, row: ShellRow): string | null {
   return recordTerm(entity, row.id)
@@ -33,7 +39,27 @@ export function scopeTerm(entity: EntitySchema | null | undefined, row: ShellRow
 export function recordTerm(entity: EntitySchema | null | undefined, id: string): string | null {
   const field = entity?.scope
   if (!field) return null
-  return `${field}:"${id.replace(/"/g, '')}"`
+  return `${field}="${id.replace(/"/g, '')}"`
+}
+
+/**
+ * Whether two terms name the same record, and with the same sign.
+ *
+ * A record term is `field="id"` now and was `field:"id"` before, and a query
+ * in a bookmark, or written by a host, still says it the old way. Both name the
+ * record, so the moves on a record — add it, lift it, read where the query
+ * stands on it — treat the two spellings as one. Anything else compares as
+ * {@link sameTerm} compares it.
+ */
+function sameReference(one: Term, other: Term): boolean {
+  if (one.kind !== 'field' || other.kind !== 'field') return sameTerm(one, other)
+  const names = (term: FieldTerm) => term.comparator === ':' || term.comparator === '='
+  return sameTerm(one, { ...other, comparator: names(one) && names(other) ? one.comparator : other.comparator })
+}
+
+/** The same record, said the other way round. */
+function oppositeReference(one: Term, other: Term): boolean {
+  return sameReference(one, negateTerm(other))
 }
 
 /** The same, resolving the row's entity out of the schema first. */
@@ -66,13 +92,13 @@ export function addTerm(expr: string, term: string | null): string {
   const [added] = parseExpression(term).flat()
   if (!added) return current
   const groups = parseExpression(current)
-  const has = groups.some((group) => group.some((existing) => sameTerm(existing, added)))
+  const has = groups.some((group) => group.some((existing) => sameReference(existing, added)))
   if (has) return current
-  const opposed = groups.some((group) => group.some((existing) => oppositeTerm(existing, added)))
+  const opposed = groups.some((group) => group.some((existing) => oppositeReference(existing, added)))
   if (!opposed) return `${current} ${term}`
   return formatExpression(
     groups.map((group) =>
-      group.map((existing) => (oppositeTerm(existing, added) ? added : existing)),
+      group.map((existing) => (oppositeReference(existing, added) ? added : existing)),
     ),
   )
 }
@@ -113,8 +139,8 @@ export function termStanding(expr: string, term: string | null): TermStanding | 
   const [wanted] = parseExpression(term).flat()
   if (!wanted) return null
   const terms = parseExpression(expr).flat()
-  if (terms.some((existing) => sameTerm(existing, wanted))) return wanted.negated ? 'out' : 'in'
-  if (terms.some((existing) => oppositeTerm(existing, wanted))) return wanted.negated ? 'in' : 'out'
+  if (terms.some((existing) => sameReference(existing, wanted))) return wanted.negated ? 'out' : 'in'
+  if (terms.some((existing) => oppositeReference(existing, wanted))) return wanted.negated ? 'in' : 'out'
   return null
 }
 
@@ -134,7 +160,7 @@ export function liftTerm(expr: string, term: string | null): string {
   if (!wanted) return expr
   const groups = parseExpression(expr)
   const kept = groups.map((group) =>
-    group.filter((existing) => !sameTerm(existing, wanted) && !oppositeTerm(existing, wanted)),
+    group.filter((existing) => !sameReference(existing, wanted) && !oppositeReference(existing, wanted)),
   )
   if (kept.every((group, at) => group.length === groups[at]?.length)) return expr
   return formatExpression(kept)

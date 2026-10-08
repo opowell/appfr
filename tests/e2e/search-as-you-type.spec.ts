@@ -134,7 +134,7 @@ test.describe('Search box — a press on what it found', () => {
     // is the record alone rather than the record and the word that found it.
     await expect(page.locator('.dc-types')).toBeVisible()
     await expect(searchBox(page)).toHaveValue('')
-    expect(shellParams(page.url()).q).toMatch(/^set:"sets_\d+"$/)
+    expect(shellParams(page.url()).q).toMatch(/^set="sets_\d+"$/)
   })
 })
 

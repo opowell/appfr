@@ -151,7 +151,7 @@ describe('useRecordNames', () => {
 
     const request = asked.mock.calls[0]![0]
     expect(request.entity?.key).toBe('sets')
-    expect(request.query.expr).toBe('set:"sets_10007"')
+    expect(request.query.expr).toBe('set="sets_10007"')
     // A window rather than one row: the term matches on a substring, so the
     // first row back is not necessarily the record it names.
     expect(request.limit).toBeGreaterThan(1)

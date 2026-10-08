@@ -746,7 +746,7 @@ new tab; a file opens in an editor) can leave `rowPress` alone and handle
 
 **A press with ⌥ (Alt) held leaves the record out instead.** Every press
 that narrows — a row, the `→`, a metric, a card's preview row — writes
-`-host:"www.example.com"` rather than `host:"www.example.com"` when the
+`-host="www.example.com"` rather than `host="www.example.com"` when the
 modifier is down, and the screen stays where it is: taking one record out of a
 list is a refinement of that list, not a move to another, so the type and the
 view are kept, and only a metric still pivots to what it counts. A press on a
@@ -836,8 +836,8 @@ results area, and they are the whole of what applying a drill takes:
 ```ts
 import { drillExpression, scopedEntity, scopeTermFor } from 'header-content-layout'
 
-scopeTermFor(schema, row)              // 'host:"www.example.com"', or null
-excludingTerm(scopeTermFor(schema, row))  // '-host:"www.example.com"', or null
+scopeTermFor(schema, row)              // 'host="www.example.com"', or null
+excludingTerm(scopeTermFor(schema, row))  // '-host="www.example.com"', or null
 drillExpression(schema, query, row)    // the expression with that term added
 drillExpression(schema, query, row, { exclude: true })  // …or with the record left out
 scopedEntity(schema, 'host')           // the entity `host` points at — the inverse
@@ -1164,16 +1164,25 @@ header looks that record up and says which one it is, keeping the id it was
 written with:
 
 ```
-set:"sets_10007"      as written by a drill, and as it stays in the URL
+set="sets_10007"      as written by a drill, and as it stays in the URL
 set:Yellow Castle (sets_10007)      as the header reads it back
 ```
 
+**A drill's term is exact.** It is `=`, not `:`, because ids nest and `:`
+matches by containment: `test:"ticket-3.0/x.spec.ts"` is true of
+`pre-ticket-3.0/x.spec.ts` too, so narrowing to one record used to bring its
+namesake's rows along. `=` compares each id whole, entry by entry in a list.
+A query still holding the old `field:"id"` spelling — a bookmark, a host
+writing its own — is read as naming the same record by `addTerm`,
+`termStanding`, `liftTerm` and `withStanding`; it keeps its own containment
+match until one of them rewrites it.
+
 The lookup is the drill's own term run back against the type it points at —
 one query, cached for as long as the shell is up — so a source that already
-answers `set:"sets_10007"` needs nothing new to be readable. It does not name
-what that query *returns*, though: nothing in this language matches exactly, so
-`set:"sets_1000"` is true of `sets_10007` as well, and the record is the row
-that **has** the id rather than the first row back. A window of rows is what
+answers `set="sets_10007"` needs nothing new to be readable. The record is
+still picked out as the row that **has** the id rather than the first row back,
+since a source that ignores the `=` — or a term in the old `:` spelling —
+returns every row the id is part of. A window of rows is what
 the lookup asks for and the record is picked out of it; an id that is part of
 more ids than that keeps showing as an id, and so does one no row carries.
 
@@ -1194,8 +1203,8 @@ and `withoutTerm` are exported for a host doing the same thing itself, as are
 `summaryTerms(query, entity)` for the list and `removeTerm(term)` for the press.
 
 That rewriting is why `addTerm` compares terms rather than text: `scopeTerm`
-always quotes and a rewrite quotes only where it has to, so `host:"a.example"`
-and `host:a.example` are the same constraint written twice. Drilling into a
+always quotes and a rewrite quotes only where it has to, so `host="a.example"`
+and `host=a.example` are the same constraint written twice. Drilling into a
 record after lifting any other part of the query adds nothing the second time.
 
 A query too long for the bar scrolls rather than wraps, and the row hides its

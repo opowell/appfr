@@ -356,6 +356,15 @@ export interface EntitySchema {
   key: string
   label: string
   /**
+   * What one of these *is*, in a sentence — `'A saved query and the items it
+   * has found'`. Drawn under the type's name on its card on the home screen,
+   * for the reader who has not met the type before; a label is a noun, and a
+   * noun of this domain's is not always one the reader knows.
+   *
+   * Left out, the card is its name and count as before.
+   */
+  description?: string
+  /**
    * Total population, pre-formatted for display (e.g. `'9,988'`) — the shell's
    * own `formatCount` is what it uses for the live counts beside these, so a
    * host with nothing else in mind should format with that. A host that writes

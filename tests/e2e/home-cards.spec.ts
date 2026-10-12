@@ -207,6 +207,38 @@ test.describe('Home — cards across schemas', () => {
   })
 })
 
+test.describe('Home — what a type is', () => {
+  const DESCRIBED = 'shell-data-shell--home-described'
+  const HEADS_ONLY_DESCRIBED = 'shell-data-shell--home-heads-only-described'
+
+  test('a type with a description says it on its card', async ({ page }) => {
+    await gotoStory(page, DESCRIBED)
+    await expect(card(page, 'Searches').locator('.dc-type__description')).toHaveText(
+      'A saved query, and the items it has found so far.',
+    )
+  })
+
+  test('a type without one is drawn as before', async ({ page }) => {
+    await gotoStory(page, DESCRIBED)
+    await expect(card(page, 'Logs')).toBeVisible()
+    await expect(card(page, 'Logs').locator('.dc-type__description')).toHaveCount(0)
+  })
+
+  test('sits under the name, on a line of its own', async ({ page }) => {
+    await gotoStory(page, HEADS_ONLY_DESCRIBED)
+    const head = card(page, 'Items')
+    const name = await head.locator('.dc-type__name').boundingBox()
+    const description = await head.locator('.dc-type__description').boundingBox()
+    expect(name && description && description.y >= name.y + name.height - 1).toBe(true)
+  })
+
+  test('is part of the head, so pressing it filters to the type', async ({ page }) => {
+    await gotoStory(page, HEADS_ONLY_DESCRIBED)
+    await card(page, 'Scrapers').locator('.dc-type__description').click()
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'scrapers')
+  })
+})
+
 test.describe('Home — heads only', () => {
   const HEADS_ONLY = 'shell-data-shell--home-heads-only'
 

@@ -155,6 +155,13 @@ const previews = computed(() =>
           aria-hidden="true"
         >→</span>
         <span class="dc-type__sr">Show only {{ preview.entity.label.toLowerCase() }}</span>
+        <!-- In the head rather than under it, so the whole of what says what
+             the type is also leads to it — and on a screen of heads alone,
+             the card stays one button. -->
+        <span
+          v-if="preview.entity.description"
+          class="dc-type__description"
+        >{{ preview.entity.description }}</span>
       </PressLink>
 
       <p
@@ -301,6 +308,7 @@ const previews = computed(() =>
 
 .dc-type__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 10px;
   padding: 14px 16px;
@@ -335,6 +343,17 @@ const previews = computed(() =>
 .dc-type__head:hover .dc-type__go,
 .dc-type__head:focus-visible .dc-type__go {
   opacity: 1;
+}
+
+/* A line of its own under the name, the count and the arrow — the head wraps
+   for it — and as quiet as the count, being said to the reader once rather
+   than read every visit. */
+.dc-type__description {
+  flex-basis: 100%;
+  margin-top: -4px;
+  color: var(--dc-fg-3);
+  font-size: var(--dc-text-meta);
+  line-height: 1.4;
 }
 
 .dc-type__sr {

@@ -156,6 +156,35 @@ export const HomeCreatableEmpty = creatable({ search: '?q=recall' })
 /** Heads-only cards offer no button, so a type holding nothing is dropped even where it names one. */
 export const HomeHeadsOnlyCreatable = creatable({ previewsPerType: 0, search: '?q=recall' })
 
+/* ------------------------------------------------------ what a type is, said */
+
+/**
+ * iRadar, with a sentence on what three of its types are and the rest left
+ * without one — a description is optional, and a card without one is as it
+ * always was.
+ */
+const describedSchema: DomainSchema = {
+  ...iRadarSchema,
+  entities: iRadarSchema.entities.map((entity) => {
+    if (entity.key === 'searches') {
+      return { ...entity, description: 'A saved query, and the items it has found so far.' }
+    }
+    if (entity.key === 'items') {
+      return { ...entity, description: 'One listing a search turned up, as last scraped.' }
+    }
+    if (entity.key === 'scrapers') {
+      return { ...entity, description: 'What fetches listings from one marketplace.' }
+    }
+    return entity
+  }),
+}
+
+/** `description` on an entity is a line under its name on its card. */
+export const HomeDescribed = story({ schema: describedSchema })
+
+/** And on a screen of heads alone, where it is most of what the card says. */
+export const HomeHeadsOnlyDescribed = story({ schema: describedSchema, previewsPerType: 0 })
+
 /* ------------------------------------------- what can be done with the records */
 
 /**

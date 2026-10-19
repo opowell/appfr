@@ -43,6 +43,8 @@ export interface WindowContext {
     minPanelSize: ComputedRef<number>;
     /** Whether a strip that is a named space says that name beside its tabs. */
     spaceNames: ComputedRef<boolean>;
+    /** Whether the space at the root of the window draws its bar and border. */
+    rootBar: ComputedRef<boolean>;
     /** The panel most recently focused or clicked into. */
     focused: Ref<string | null>;
     /** The panel being dragged, or `null` when nothing is in flight. */

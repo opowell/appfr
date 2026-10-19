@@ -41,6 +41,17 @@ type __VLS_Props = {
      */
     spaceNames?: boolean;
     /**
+     * Whether the space at the root of the window draws a bar and a border of
+     * its own.
+     *
+     * The root is the whole window, so its bar names a thing the application
+     * around it already names — and the border around it is a second frame
+     * just inside the window's. Off, the panes sit straight in the window, and
+     * how the root is shown is the host's to offer instead: `rootMenu`, exposed,
+     * is the menu that bar would have had, for a menu bar to carry.
+     */
+    rootBar?: boolean;
+    /**
      * Extends or replaces the menu a pane offers, given the items it would
      * have had: the content's own, then the window's. Return them with yours
      * appended, or something else entirely.
@@ -112,6 +123,11 @@ declare const _default: import("vue").DefineComponent<__VLS_PublicProps, {
      * whose space fixed its view, or took its bar away, is switched at all.
      */
     setView: typeof setView;
+    /**
+     * The menu of the space at the root: how the whole window is shown. For a
+     * host's menu bar, when `rootBar` takes away the bar it was on.
+     */
+    rootMenu: import("vue").ComputedRef<MenuItemDef[]>;
     /** Brings a floating frame to the front of its stack. */
     raise: typeof raise;
     /** Fills the float with a window, or puts it back where it was. */
@@ -178,6 +194,7 @@ declare const _default: import("vue").DefineComponent<__VLS_PublicProps, {
     closable: boolean;
     minPanelSize: number;
     spaceNames: boolean;
+    rootBar: boolean;
     solo: boolean;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export default _default;

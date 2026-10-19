@@ -2228,6 +2228,10 @@ else: a `Close` item would sit in a menu opened from the header the cross is
 already in. A panel can opt in or out on its own with `closable` in its
 definition.
 
+A pane of tabs has **Close all** in its menu, under the tabs' heading, since no
+button does that. It sends `panel-close` once for each panel on the strip that
+may be closed, and is left out when none may.
+
 Closing is a **request**. The window emits `panel-close` and does nothing else:
 `panels` belongs to the host, so dropping the panel from it is what actually
 removes it, after which the layout reconciles around the gap.

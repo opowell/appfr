@@ -2167,6 +2167,35 @@ Both compose, with each other and with the builders:
 headless(fixedView(panelNode('items')))
 ```
 
+### The root in a menu bar
+
+The space at the root is the whole window, so its bar names what the
+application around it already names, and its border is a second frame just
+inside the window's. `:root-bar="false"` draws neither: the panes sit straight
+in the window. That is a prop rather than `headless` on the node because the
+root is rebuilt as panels come and go — a lone pane gets a row around it, a row
+of one becomes its pane — and the prop holds through every one of them.
+
+How the root is shown is then the host's to offer, and the window hands over
+the menu that bar would have had: the exposed `rootMenu`, the four ways the
+root can be shown with the one in force ticked — or, when the root is a strip of
+tabs, the items its tabs' heading offers in a pane's menu. It is a list of
+`MenuItemDef`s, ready for a `<MenuBar>`:
+
+```vue
+<script setup lang="ts">
+const frame = ref<InstanceType<typeof WindowFrame> | null>(null)
+const menus = computed(() => [
+  { label: 'Window', items: [{ label: 'Arrange', items: frame.value?.rootMenu ?? [] }] },
+])
+</script>
+
+<template>
+  <MenuBar :menus="menus" />
+  <WindowFrame ref="frame" :panels="panels" :root-bar="false" />
+</template>
+```
+
 ### Items the content registers
 
 Not everything that belongs in a pane's menu is the window's to know. How a
@@ -2493,6 +2522,7 @@ or a test without going near the DOM.
 | `closable` | `boolean` | `false` | Gives every panel a close button, which asks the host to drop it. |
 | `menu` | `boolean` | `true` | Whether the *window's* own menu items are offered — how a space is shown, a pane's tabs, its close. Items the content registered stay either way. |
 | `spaceNames` | `boolean` | `true` | Whether a strip that *is* a named space says that name beside its tabs. Off, the name is kept in the layout and said on the bar of every other shape. |
+| `rootBar` | `boolean` | `true` | Whether the space at the root draws a bar and a border. Off, the panes sit straight in the window and the root's menu is the exposed `rootMenu`, for a menu bar. |
 | `paneMenu` | `(panel, items) => items` | — | Extends or replaces that menu, given the items it would have had: the content's own, then the window's. |
 | `accent`, `tokens`, `theme` | | | The same three the shell takes. |
 
@@ -2510,8 +2540,9 @@ perform the same move a drag would, `select(panel)` to bring a tab to the top,
 `float(panel, near, rect)` to lift a panel onto a float as a window,
 `setRect(panel, rect)` to place a floating window, `setView(panel, view)` to put
 a panel on one of its views, `raise(panel)` to bring one to the front,
-`toggleMaximize(panel)` to fill the float with it, and `toggleMinimize(panel)`
-to roll it up.
+`toggleMaximize(panel)` to fill the float with it, `toggleMinimize(panel)`
+to roll it up, and `rootMenu`, the menu of the space at the root, for a host's
+menu bar when `rootBar` is off.
 
 ## Menus
 

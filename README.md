@@ -2167,6 +2167,17 @@ Both compose, with each other and with the builders:
 headless(fixedView(panelNode('items')))
 ```
 
+A strip drawn without a bar draws no tabs, so it keeps a pane of tabs put in
+it as a pane, drawing its own strip, where an ordinary strip takes that pane's
+tabs as its own; and a row, a column or a desktop on top of it draws its own
+bar. That is how a host keeps *windows* apart and switches between them itself:
+a headless strip whose tabs are each a window — a pane of tabs, a pane of one,
+a grid — with the host's menu stepping between them.
+
+```ts
+headless(group([group(['browse', 'app']), panelNode('session')], 'session'))
+```
+
 ### The root in a menu bar
 
 The space at the root is the whole window, so its bar names what the
@@ -2179,7 +2190,8 @@ of one becomes its pane — and the prop holds through every one of them.
 How the root is shown is then the host's to offer, and the window hands over
 the menu that bar would have had: the exposed `rootMenu`, the four ways the
 root can be shown with the one in force ticked — or, when the root is a strip of
-tabs, the items its tabs' heading offers in a pane's menu. It is a list of
+tabs, the items its tabs' heading offers in a pane's menu, a strip of windows
+whose tabs are all spaces included. It is a list of
 `MenuItemDef`s, ready for a `<MenuBar>`:
 
 ```vue
@@ -2499,6 +2511,8 @@ The operations behind all of this are exported and pure — `movePanel`,
 `floatPanel`, `dropIntoSpace`, `setFrameRect`, `raiseFrame`, `frameOf`,
 `clampRect`, `resizeRect`,
 `setSplitDirection`, `collapseToTabs`, `collapseSpace`, `toFloat`, `toTiled`,
+`spreadTabs`, `floatTabs`, and `spreadTabsAt`, `floatTabsAt` for a strip named
+by its path (one whose tabs are all spaces has no panel tab to be named by),
 `nodeTitle`, `frontPanel`, `activeTab`, `isPanelTab`, `panelTabs`, `tabPanels`,
 `headless`, `fixedView`, `spaceChrome`,
 `maximizeFrame`, `toggleMaximized`, `isMaximized`, `minimizeFrame`,

@@ -356,6 +356,14 @@ export declare function collapseToTabs(layout: WindowNode, id: string): WindowNo
  */
 export declare function spreadTabs(layout: WindowNode, id: string, direction: SplitDirection): WindowNode;
 /**
+ * `spreadTabs`, for the strip at a path rather than the one a panel is a tab of.
+ *
+ * A strip whose tabs are all spaces — windows, say, each a pane or a grid of its
+ * own — has no panel tab to be found by: every panel on it is a tab of a pane
+ * inside it. Its place in the tree still names it.
+ */
+export declare function spreadTabsAt(layout: WindowNode, path: readonly number[], direction: SplitDirection): WindowNode;
+/**
  * Turns the tabs of a pane's group into windows of their own.
  *
  * A group that *is* a window on a float becomes several windows on that same
@@ -365,6 +373,12 @@ export declare function spreadTabs(layout: WindowNode, id: string, direction: Sp
  * into a desktop.
  */
 export declare function floatTabs(layout: WindowNode, id: string, rect?: Partial<FloatRect>): WindowNode;
+/**
+ * `floatTabs`, for the strip at a path rather than the one a panel is a tab of —
+ * see `spreadTabsAt`. A strip that is a window's whole content becomes windows
+ * on that same desktop, as there.
+ */
+export declare function floatTabsAt(layout: WindowNode, path: readonly number[], rect?: Partial<FloatRect>): WindowNode;
 /**
  * The windows a split's panes were, put back where they were — or cascaded, if
  * this split never was a desktop and so has nowhere to put them back to.

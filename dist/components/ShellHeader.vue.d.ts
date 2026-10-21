@@ -11,6 +11,8 @@ type __VLS_Props = {
     hideCount?: boolean;
     /** Views to offer, when the host restricts them. Defaults to all six. */
     views?: ViewKind[];
+    /** Where the list of types is a control on the bar — see `showTypes`. */
+    typeChooser?: 'scoped' | 'always';
     /**
      * What the count is short of, in the host's words — `first 1,200 of 30,200
      * lots`. Said where the count is, which is the pager's hover text, rather

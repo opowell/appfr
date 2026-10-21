@@ -50,6 +50,13 @@ type __VLS_Props = {
     previewsPerType?: number;
     /** Restricts the offered result views. One on offer leaves the bar without a View chooser. */
     views?: ViewKind[];
+    /**
+     * Where the bar offers the list of types. `scoped`, the default, only
+     * while one is filtered to — on `Everything` the home screen's cards are
+     * each headed by their type already. `always` keeps it on `Everything`
+     * too, for a home screen that opens as records rather than as type cards.
+     */
+    typeChooser?: 'scoped' | 'always';
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string;
     /**
@@ -204,6 +211,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
 }>, {
     limit: number;
     previewsPerType: number;
+    typeChooser: "scoped" | "always";
     theme: ShellTheme;
     matchWidth: ShellWidthMatch;
     headAlign: ShellAlign;

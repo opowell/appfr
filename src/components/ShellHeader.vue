@@ -24,6 +24,8 @@ const props = defineProps<{
   hideCount?: boolean
   /** Views to offer, when the host restricts them. Defaults to all six. */
   views?: ViewKind[]
+  /** Where the list of types is a control on the bar — see `showTypes`. */
+  typeChooser?: 'scoped' | 'always'
   /**
    * What the count is short of, in the host's words — `first 1,200 of 30,200
    * lots`. Said where the count is, which is the pager's hover text, rather
@@ -179,14 +181,19 @@ const showViews = computed(() => viewOptions.value.length > 1)
 /**
  * Whether the list of types is worth a control of its own.
  *
- * Only while a type is filtered to: the chooser is then the way to another
- * type, and the way back out to `Everything`. On `Everything` itself the
- * content is what offers the types — each card on the home screen is headed
- * by its own, and the rows of a mixed list each say theirs — so a chooser on
- * the bar would be the same choice offered twice, and the query panel still
- * holds it for anyone who wants it as a control.
+ * By default only while a type is filtered to: the chooser is then the way to
+ * another type, and the way back out to `Everything`. On `Everything` itself
+ * the content is what offers the types — each card on the home screen is
+ * headed by its own, and the rows of a mixed list each say theirs — so a
+ * chooser on the bar would be the same choice offered twice, and the query
+ * panel still holds it for anyone who wants it as a control.
+ *
+ * `typeChooser: 'always'` keeps it on `Everything` too, for a host whose home
+ * screen opens on the records rather than on a card per type: there a row
+ * saying its type is no way to pick one, and the bar is where the choice is
+ * looked for.
  */
-const showTypes = computed(() => shell.query.value.entity !== null)
+const showTypes = computed(() => props.typeChooser === 'always' || shell.query.value.entity !== null)
 
 function chooseView(key: string): void {
   shell.setView(key as ViewKind)

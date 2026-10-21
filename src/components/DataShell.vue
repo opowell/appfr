@@ -86,6 +86,13 @@ const props = withDefaults(
     previewsPerType?: number
     /** Restricts the offered result views. One on offer leaves the bar without a View chooser. */
     views?: ViewKind[]
+    /**
+     * Where the bar offers the list of types. `scoped`, the default, only
+     * while one is filtered to — on `Everything` the home screen's cards are
+     * each headed by their type already. `always` keeps it on `Everything`
+     * too, for a home screen that opens as records rather than as type cards.
+     */
+    typeChooser?: 'scoped' | 'always'
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string
     /**
@@ -161,6 +168,7 @@ const props = withDefaults(
     rowPress: 'narrow',
     limit: 50,
     previewsPerType: 3,
+    typeChooser: 'scoped',
     theme: 'minimal',
     matchWidth: 'grow',
     headAlign: 'center',
@@ -564,6 +572,7 @@ defineExpose({
         :expanded="panelOpen"
         :panel-id="panelId"
         :views="views"
+        :type-chooser="typeChooser"
         :pages-note="pagesNote"
         @toggle="panelOpen = !panelOpen"
       >

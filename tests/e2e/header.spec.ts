@@ -47,6 +47,17 @@ test.describe('Header — the query as it stands', () => {
     await expect(viewSelect(page)).toHaveCount(1)
   })
 
+  test('keeps the list of types on the bar at home, where the host asks for it always', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--home-type-chooser')
+    // A table of records names no type a press away, so the bar does — with
+    // `Everything` as the one in force.
+    await expect(scopeSelect(page)).toHaveCount(1)
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', '')
+    await openPick(page, scopeSelect(page), 'Type')
+    await pickOptions(page, 'Type').filter({ hasText: 'Searches' }).click()
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
+  })
+
   test('describes the home screen by what it is showing', async ({ page }) => {
     await gotoStory(page, HOME)
     // How they are drawn is the second of the two choosers, beside the scope.

@@ -413,6 +413,12 @@ export const HomeAsList = story({ search: '?v=list' })
 /** Home in the table view, which gains an Entity column across kinds. */
 export const HomeAsTable = story({ search: '?v=table' })
 
+/**
+ * Home opening on that table, with the list of types kept on the bar: no card
+ * on screen offers a type, so the bar does — `Everything` among them.
+ */
+export const HomeTypeChooser = story({ search: '?v=table', typeChooser: 'always' })
+
 /** Home in the preview view, reading the whole corpus one record at a time. */
 export const HomeAsPreview = story({ search: '?v=preview' })
 

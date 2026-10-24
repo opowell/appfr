@@ -515,6 +515,33 @@ export const PictureCards = story({
   search: '?e=pieces&v=cards',
 })
 
+/**
+ * Picture cards with a few figures under the name.
+ *
+ * A column naming a `cardLabel` puts its value on the card too, after that
+ * short label — here the colours a piece comes in and the sets it is in, with
+ * the column's own label on hover. A wall of things to pick from, where the
+ * figures that tell them apart need not wait for the table.
+ */
+const CARD_LABELS: Record<string, string> = { metric1: 'C', metric2: 'S' }
+export const PictureCardsWithFacts = story({
+  schema: {
+    ...legoSchema,
+    entities: legoSchema.entities.map((entity) =>
+      entity.key === 'pieces'
+        ? {
+            ...entity,
+            card: 'picture' as const,
+            columns: entity.columns!.map((column) =>
+              column.key && CARD_LABELS[column.key] ? { ...column, cardLabel: CARD_LABELS[column.key] } : column,
+            ),
+          }
+        : entity,
+    ),
+  },
+  search: '?e=pieces&v=cards',
+})
+
 export const PicturedGrid = story({
   schema: legoSchema,
   search: '?e=pieces&v=grid',

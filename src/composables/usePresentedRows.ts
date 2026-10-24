@@ -23,6 +23,19 @@ export interface RowMetric {
 }
 
 /**
+ * One figure a card shows under its name — a column that names a
+ * {@link ColumnDef.cardLabel}, with the row's words for it.
+ */
+export interface RowFact {
+  column: ColumnDef
+  /** The short label: `A`. */
+  label: string
+  /** What hovering it says: the column's label and its hint. */
+  title: string
+  text: string
+}
+
+/**
  * The parts a view that is not a table is made of.
  *
  * A card, a tile, a link row and a preview pane are an identity, a reference,
@@ -36,6 +49,8 @@ export interface RowParts {
   reference: string
   /** The metric columns, in the order the schema declared them. */
   metrics: RowMetric[]
+  /** The columns that name a card label and have a value here, in order. */
+  facts: RowFact[]
   state: RecordStatus | null
   /** The date, formatted the way every view formats it. */
   updated: string
@@ -98,6 +113,9 @@ function pictureSrc(column: ColumnDef | undefined, row: ShellRow): string | null
   return typeof value === 'string' && value.trim() ? value : null
 }
 
+/** A value no card should show a label over: nothing, or nothing but spaces. */
+const isBlank = (value: unknown) => value == null || (typeof value === 'string' && !value.trim())
+
 /** Resolves the roles a view reads, from the columns of the row's own type. */
 export function presentParts(row: ShellRow, columns: ColumnDef[]): RowParts {
   const state = roleColumn(columns, 'state')
@@ -111,6 +129,14 @@ export function presentParts(row: ShellRow, columns: ColumnDef[]): RowParts {
       label: column.label ?? '',
       text: cellText(column, row),
     })),
+    facts: columns
+      .filter((column) => column.cardLabel && !isBlank(cellValue(column, row)))
+      .map((column) => ({
+        column,
+        label: column.cardLabel!,
+        title: [column.label, column.hint].filter(Boolean).join(' — '),
+        text: cellText(column, row),
+      })),
     state: state ? ((cellValue(state, row) as RecordStatus) ?? null) : null,
     updated: cellTextOf(roleColumn(columns, 'updated'), row),
     image: pictureSrc(roleColumn(columns, 'image'), row),

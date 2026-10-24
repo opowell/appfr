@@ -189,6 +189,19 @@ export interface ColumnDef {
      * that is the label again is a tooltip that costs a hover and says nothing.
      */
     hint?: string;
+    /**
+     * Puts the column on the record's card too, as this short label and the
+     * cell's words after it — `cardLabel: 'A'` on an Attack column reads `A 4`
+     * under the name. For the handful of figures that tell one record from the
+     * next at a glance (a unit's attack, defense and move; a part's weight),
+     * where a picture card would otherwise leave every number to the table.
+     *
+     * The card's line keeps the columns' order and shows the column's
+     * {@link ColumnDef.label} and {@link ColumnDef.hint} on hover. A row with
+     * nothing under the column has no fact there, rather than a label over a
+     * dash. Left out, the column is the table's alone.
+     */
+    cardLabel?: string;
     kind?: ColumnKind;
     /**
      * What this column is to the views that are not tables — see

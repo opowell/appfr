@@ -36,7 +36,7 @@ export type { ResultsState, UseResultsOptions } from './composables/useResults';
 export { DRAFT_DELAY, useDraft } from './composables/useDraft';
 export type { DraftState, UseDraftOptions } from './composables/useDraft';
 export { presentParts, presentRow, usePresentedRows } from './composables/usePresentedRows';
-export type { PresentedRow, RowMetric, RowParts } from './composables/usePresentedRows';
+export type { PresentedRow, RowFact, RowMetric, RowParts } from './composables/usePresentedRows';
 export { useColumns } from './composables/useColumns';
 export { useEntityPreviews } from './composables/useEntityPreviews';
 export { useEntityCounts } from './composables/useEntityCounts';

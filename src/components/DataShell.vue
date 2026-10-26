@@ -29,8 +29,7 @@ import type { RouteAdapter } from '../routing/adapter'
 import { ROUTE_ADAPTER_KEY } from '../routing/adapter'
 import { createHistoryAdapter } from '../routing/history'
 import { createMockDataSource } from '../data/mock'
-import { drillExpression, scopedEntity, scopeTermFor } from '../query/drill'
-import { parseExpression } from '../data/expression'
+import { drillExpression, recordsIn, scopeTermFor } from '../query/drill'
 import { provideShellContext } from '../composables/context'
 import { useQueryState } from '../composables/useQueryState'
 import type { NavigationMode } from '../composables/useQueryState'
@@ -415,20 +414,7 @@ watch(query.query, (value) => emit('query-change', value))
  * progress, and a record's own cards coming and going under each keystroke
  * would be the screen changing what it is about while it is being typed at.
  */
-const records = computed<NarrowedRecord[]>(() => {
-  const found: NarrowedRecord[] = []
-  const seen = new Set<string>()
-  for (const term of parseExpression(query.query.value.expr).flat()) {
-    if (term.kind !== 'field' || term.negated || !term.value) continue
-    const entity = scopedEntity(props.schema, term.field)
-    if (!entity) continue
-    const key = `${entity.key}:${term.value.toLowerCase()}`
-    if (seen.has(key)) continue
-    seen.add(key)
-    found.push({ entityKey: entity.key, id: term.value })
-  }
-  return found
-})
+const records = computed<NarrowedRecord[]>(() => recordsIn(props.schema, [query.query.value.expr]))
 
 /** Each record with its type, for the `record` slot and `recordCards`. */
 const recordEntries = computed(() =>

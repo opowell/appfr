@@ -1048,8 +1048,9 @@ router.push({ query: { ...route.query, ...narrowPatch(expr, term) } })  // what 
 them, which holds within a group: hand it over as the whole of a query, since
 ANDed on to one that already names a record on that field it widens rather
 than narrows. It is null rather than `''` for no ids, an empty expression being
-every row. `recordsIn` reads the terms the header puts names to — whatever
-their sign, deduped by type and id in the order written. `narrowPatch` adds the
+every row. `recordsIn` reads the terms the header puts names to — the
+positive ones, an excluded record being no record the screen is about — deduped
+by type and id in the order written; it is what the `record` slot is filled from. `narrowPatch` adds the
 term, drops the type and the page and writes the cards view (or the one you
 pass), with `undefined` for a parameter to take off.
 

@@ -128,9 +128,9 @@ describe('recordsIn', () => {
     expect(recordsIn(legoSchema, ['theme:space year>=1988 castle', ''])).toEqual([])
   })
 
-  it('counts a record left out as one the query names', () => {
-    expect(recordsIn(legoSchema, ['-set="sets_10007"'])).toEqual([
-      { entityKey: 'sets', id: 'sets_10007' },
+  it('leaves out a record the query excludes', () => {
+    expect(recordsIn(legoSchema, ['-set="sets_10007" set="sets_10014"'])).toEqual([
+      { entityKey: 'sets', id: 'sets_10014' },
     ])
   })
 })

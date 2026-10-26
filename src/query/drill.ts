@@ -1,4 +1,4 @@
-import type { DomainSchema, EntitySchema, PressOptions, ShellRow, ViewKind } from '../types'
+import type { DomainSchema, EntitySchema, NarrowedRecord, PressOptions, ShellRow, ViewKind } from '../types'
 import type { FieldTerm, Term } from '../data/expression'
 import { formatExpression, negateTerm, parseExpression, sameTerm } from '../data/expression'
 import { PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_VIEW } from './codec'
@@ -335,14 +335,8 @@ export function namedRecord(
   return entity ? { entity, id: value } : null
 }
 
-/** One record a query names: which type, and which of them. */
-export interface NarrowedRecord {
-  entityKey: string
-  id: string
-}
-
 /**
- * The records a set of expressions names, in the order they are written.
+ * The records a set of expressions narrows to, in the order they are written.
  *
  * A term whose field is some entity's `scope` is a term *about a record* —
  * that is what a scope declares — so this is the same reading the header
@@ -354,9 +348,9 @@ export interface NarrowedRecord {
  * across them, by type and by id whatever its case — the case is no
  * constraint in this language — keeping the first spelling written.
  *
- * Every such term counts, whatever its sign: `-host="x"` names the host too,
- * if only to leave it out. A caller that wants only the records the query
- * narrows *to* filters the expressions' negated terms out first.
+ * Only a positive term counts: `-host="x"` leaves the host out, which is not
+ * the screen being about it. (The header's pills weigh the sign themselves —
+ * they read {@link namedRecord}, which names the record either way.)
  */
 export function recordsIn(schema: DomainSchema, expressions: readonly string[]): NarrowedRecord[] {
   const found: NarrowedRecord[] = []
@@ -364,7 +358,7 @@ export function recordsIn(schema: DomainSchema, expressions: readonly string[]):
 
   for (const expression of expressions) {
     for (const term of parseExpression(expression).flat()) {
-      if (term.kind !== 'field') continue
+      if (term.kind !== 'field' || term.negated) continue
       const named = namedRecord(schema, term.field, term.value)
       if (!named) continue
       const key = `${named.entity.key}:${named.id.toLowerCase()}`

@@ -1289,6 +1289,42 @@ export const HostPage = story({
 })
 
 /**
+ * A page under the same bar that is **not** about the query — a coverage
+ * report on one crawl, with `pageQuery: 'detached'`. Its URL's parameters are
+ * the report's own (`/crawl-report?crawl=run-7&q=recall`): the bar reads the
+ * pristine corpus, `Everything`, rather than taking them for a query, and the
+ * first edit made to it — a word typed and Enter, a type chosen — goes back to
+ * the list at `/` with that edit applied.
+ *
+ * The host here is the test-ui's shape: one shell for every route, and a page
+ * under its bar wherever the path is not the list's.
+ */
+export const DetachedPage: Story = {
+  render: () => ({
+    setup() {
+      const adapter = createMemoryAdapter('?crawl=run-7&q=recall', '/crawl-report')
+      const crawl = computed(() => new URLSearchParams(adapter.search.value).get('crawl'))
+      return () =>
+        h('div', { class: 'sb-frame' }, [
+          h(
+            DataShell,
+            { schema: iRadarSchema, route: adapter, pageQuery: 'detached', limit: 12 },
+            adapter.path.value === '/'
+              ? {}
+              : {
+                  page: () =>
+                    h('section', { class: 'sb-host-page sb-detached-page', style: 'padding: 24px' }, [
+                      h('h2', null, `Coverage report — ${crawl.value}`),
+                      h('p', { class: 'dc-mono sb-host-page__location' }, `${adapter.path.value}${adapter.search.value}`),
+                    ]),
+                },
+          ),
+        ])
+    },
+  }),
+}
+
+/**
  * The header's search box given a resting fill and edge through three tokens
  * — `--dc-search-fill`, `--dc-search-border` and `--dc-search-placeholder` —
  * for a dark surface where a bare box is a faint smudge in an empty bar.

@@ -54,6 +54,19 @@ function commitRange() {
   emit('update', { kind: 'range', min, max })
 }
 
+/**
+ * The cap a chips facet asks for, as a whole number of rows, or null for none
+ * — see {@link ChipsFacet.maxRows}. Nothing below one is a cap anyone meant.
+ */
+const maxRows = computed<number | null>(() => {
+  if (props.facet.kind !== 'chips' || props.facet.maxRows === undefined) return null
+  const rows = Math.floor(props.facet.maxRows)
+  return Number.isFinite(rows) && rows >= 1 ? rows : null
+})
+
+/** Which end a chip's value is cut at, if it is — see {@link ChipsFacet.truncate}. */
+const truncate = computed(() => (props.facet.kind === 'chips' ? props.facet.truncate : undefined))
+
 function flip() {
   if (props.value.kind !== 'toggle') return
   emit('update', { kind: 'toggle', on: !props.value.on })
@@ -73,6 +86,9 @@ function flip() {
         class="dc-facet__chips"
         role="group"
         :aria-labelledby="`dc-facet-${facet.key}`"
+        :data-dc-max-rows="maxRows ?? undefined"
+        :data-dc-truncate="truncate"
+        :style="maxRows ? { '--dc-facet-rows': maxRows } : undefined"
       >
         <button
           v-for="option in facet.options"
@@ -81,6 +97,7 @@ function flip() {
           class="dc-chip"
           :aria-pressed="selected.has(option)"
           :data-dc-active="selected.has(option) ? 'true' : 'false'"
+          :title="truncate ? option : undefined"
           @click="toggleChip(option)"
         >
           {{ option }}
@@ -198,6 +215,107 @@ function flip() {
   background: var(--dc-accent-bg);
   border-color: var(--dc-accent-dim);
   color: var(--dc-accent);
+}
+
+/*
+ * A facet capped at a number of rows (`maxRows`) scrolls past them.
+ *
+ * The height is a whole number of chips, so the cut falls between two rows
+ * rather than through one. A chip is a line of its text, 4px of padding above
+ * and below and a 1px border each side; rows are 5px apart. The line is read
+ * as `1lh` of this box, which is set in the chip's own type for exactly that
+ * — the chips set theirs, so the box's own is not drawn anywhere — and so the
+ * cap follows a theme or a token that changes the type.
+ */
+.dc-facet__chips[data-dc-max-rows] {
+  max-height: calc(
+    var(--dc-facet-rows) * (1lh + 10px) + (var(--dc-facet-rows) - 1) * 5px
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-family: var(--dc-mono);
+  font-size: var(--dc-text-code);
+}
+
+/*
+ * And the cut says that it is one.
+ *
+ * A cap that hides options silently is worse than a tall panel: twenty hosts
+ * would read as six. Overlay scrollbars are invisible until the pointer is in
+ * the box, so the edge with more behind it is softened instead. Which edge
+ * that is is the scroll position, so it comes from a scroll timeline — and a
+ * facet that fits has no scrollable overflow, so no timeline, so no fade: both
+ * lengths stay at the 0 they are registered with, and a gradient 0px long is
+ * not a gradient at all.
+ *
+ * Only where motion is welcome: under `reduce` the shell caps every animation
+ * at 0.01ms, which on a timeline puts all of it on the first pixel of scroll.
+ */
+@property --dc-facet-cue-top {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --dc-facet-cue-bottom {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes dc-facet-cue {
+  from {
+    --dc-facet-cue-top: 0px;
+    --dc-facet-cue-bottom: 22px;
+  }
+
+  to {
+    --dc-facet-cue-top: 22px;
+    --dc-facet-cue-bottom: 0px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dc-facet__chips[data-dc-max-rows] {
+    mask-image:
+      linear-gradient(to bottom, transparent, #000 var(--dc-facet-cue-top)),
+      linear-gradient(to top, transparent, #000 var(--dc-facet-cue-bottom));
+    mask-composite: intersect;
+    animation: dc-facet-cue linear both;
+    animation-timeline: scroll(self);
+  }
+}
+
+/*
+ * One line per chip (`truncate`), never wider than the facet, ellipsised at
+ * the end the facet names — the whole value on hover.
+ */
+.dc-facet__chips[data-dc-truncate] {
+  min-width: 0;
+}
+
+.dc-facet__chips[data-dc-truncate] .dc-chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Cut at the start, the chip is set right to left, which is all that moves
+ * the ellipsis to the head of the value; the text is still one left-to-right
+ * run. The marks either side keep it one: a `/` at the end of a URL is
+ * neutral, and in a right-to-left line a neutral at the edge goes with the
+ * line rather than the text — it would be drawn at the far end. Between two
+ * left-to-right marks it is part of the run it was written in.
+ */
+.dc-facet__chips[data-dc-truncate='start'] .dc-chip {
+  direction: rtl;
+}
+
+.dc-facet__chips[data-dc-truncate='start'] .dc-chip::before,
+.dc-facet__chips[data-dc-truncate='start'] .dc-chip::after {
+  content: '\200E';
 }
 
 .dc-facet__range {

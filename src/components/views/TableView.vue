@@ -16,6 +16,7 @@ import {
   columnTruncates,
 } from '../../query/columns'
 import ColumnCell from './ColumnCell.vue'
+import OpenMark from './OpenMark.vue'
 import ScopeMark from './ScopeMark.vue'
 import StandingControl from './StandingControl.vue'
 import PageTick from './PageTick.vue'
@@ -63,10 +64,20 @@ function headerTitle(column: ColumnDef): string | undefined {
   return [column.hint, line].filter(Boolean).join('\n') || undefined
 }
 
-/** The column that asked for the `→` beside its value, if one did. */
-const marked = computed<ColumnDef | undefined>(() =>
-  columns.value.find((column) => column.scope),
-)
+/**
+ * The column that asked for the `→` beside its value, if one did — and the
+ * `↗` with it. Where none asked and a type on screen lives somewhere else
+ * ({@link EntitySchema.href}), the column that opens the record carries the
+ * marks instead, as the name a card's marks sit beside does.
+ */
+const marked = computed<ColumnDef | undefined>(() => {
+  const asked = columns.value.find((column) => column.scope)
+  if (asked) return asked
+  const away = shell.entity.value
+    ? Boolean(shell.entity.value.href)
+    : shell.entities.value.some((entity) => entity.href)
+  return away ? columns.value.find((column) => column.activate) : undefined
+})
 
 /*
  * Where the query stands on each row — a column of its own, rather than a
@@ -352,6 +363,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
               :entry="entry"
             />
             <ScopeMark :entry="entry" />
+            <OpenMark :entry="entry" />
           </span>
           <ColumnCell
             v-else

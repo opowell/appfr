@@ -7,6 +7,7 @@ import StatusPill from '../StatusPill.vue'
 import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
 import RowStanding from './RowStanding.vue'
+import OpenMark from './OpenMark.vue'
 import ScopeMark from './ScopeMark.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -79,6 +80,7 @@ const showEntity = computed(() => shell.isEverything.value)
           :status="entry.parts.state"
         />
         <ScopeMark :entry="entry" />
+        <OpenMark :entry="entry" />
         <PinStar
           v-if="shell.pinnable.value"
           :row="entry.row"

@@ -1,9 +1,11 @@
-import { Comment, h, ref } from 'vue'
+import { Comment, computed, h, onBeforeUnmount, ref } from 'vue'
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import DataShell from '../src/components/DataShell.vue'
 import ShellCard from '../src/components/ShellCard.vue'
 import { iRadarSchema, legoSchema } from '../src/fixtures/schemas'
-import type { DomainSchema } from '../src/types'
+import type { DataSource, DomainSchema, EntitySchema, ShellRow } from '../src/types'
+import { createMemoryAdapter } from '../src/routing/memory'
+import { createMockDataSource } from '../src/data/mock'
 import {
   abbreviatedCountsSchema,
   abbreviatedCountsSource,
@@ -1149,4 +1151,188 @@ export const RecordPageEmptySlots = story({
       }),
     ],
   },
+})
+
+/* ------------------------------------------------- what a host can opt into */
+
+/**
+ * A host whose data is still on its way: a synchronous source over payloads
+ * that have not landed answers "no rows", truthfully, and the shell would
+ * believe it — correcting `?p=3` to page 1 before the rows that page names had
+ * arrived.
+ *
+ * With `loading` the results area says so instead, the pager stays off the bar
+ * and nothing is corrected from the count. The payloads land after a moment
+ * and the link's own page is what opens.
+ */
+export const LoadingKeepsThePage: Story = {
+  args: { search: '?e=searches&v=list&p=3', limit: 12 },
+  render: (storyArgs: ShellStoryArgs) => ({
+    setup() {
+      const adapter = createMemoryAdapter(storyArgs.search ?? '')
+      const mock = createMockDataSource({ seed: iRadarSchema.key })
+      const landed = ref(false)
+      const timer = setTimeout(() => {
+        landed.value = true
+      }, 800)
+      onBeforeUnmount(() => clearTimeout(timer))
+      // A new source when the payloads land, which is what re-runs the query.
+      const source = computed<DataSource>(() =>
+        landed.value ? mock : { query: () => ({ rows: [], total: 0, unfiltered: true }) },
+      )
+      return () =>
+        h('div', { class: 'sb-frame' }, [
+          h(DataShell, {
+            schema: iRadarSchema,
+            route: adapter,
+            source: source.value,
+            limit: storyArgs.limit,
+            loading: !landed.value,
+          }),
+        ])
+    },
+  }),
+}
+
+/**
+ * Cards of the host's own for each record the query narrows to, through the
+ * `record` slot — one per record, in the order the query names them, ahead of
+ * anything in `cards-before`. Lift the record's part off the bar and its card
+ * goes with it.
+ *
+ * The views are a function of the same reading: a type's list is a table, a
+ * screen about a record is cards, and everything else offers both.
+ */
+export const RecordSlot = story({
+  schema: legoSchema,
+  search: '?q=set%3D%22sets_10007%22%20OR%20set%3D%22sets_10404%22',
+  previewsPerType: 0,
+  views: ({ entity, records }) =>
+    entity ? ['table'] : records.length ? ['cards'] : ['table', 'cards'],
+  slots: {
+    record: ({ entity, id }: { entity: EntitySchema; id: string }) =>
+      h(ShellCard, { title: `${entity.label}: ${id}`, span: 'all', class: 'sb-record-card' }, {
+        default: () => h('p', { class: 'dc-mono' }, `What the host holds about ${id}.`),
+      }),
+  } as never,
+})
+
+/**
+ * The domain's mark in place of its name, through the `brand` slot. The name
+ * is still what a screen reader hears.
+ */
+export const BrandMark = story({
+  search: '?e=searches&v=list',
+  slots: {
+    brand: () =>
+      h('svg', { class: 'sb-brand', viewBox: '0 0 16 16', width: 18, height: 18, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }, [
+        h('circle', { cx: 8, cy: 8, r: 6 }),
+        h('path', { d: 'M8 4v4l3 2' }),
+      ]),
+  },
+})
+
+/** Items live at a URL of their own, and declare no scope — `href` on the type. */
+const linkedItemsSchema: DomainSchema = {
+  ...iRadarSchema,
+  entities: iRadarSchema.entities.map((entity) =>
+    entity.key === 'items'
+      ? { ...entity, href: (row: ShellRow) => `https://example.com/items/${encodeURIComponent(row.id)}` }
+      : entity,
+  ),
+}
+
+/**
+ * Rows that live somewhere. The type declares `href`, and no scope — a press
+ * on one is reported, so instead it opens the record where it lives, in a new
+ * tab, and `activate` is not emitted for it.
+ */
+export const LinkRows = story({ schema: linkedItemsSchema, search: '?e=items&v=list' })
+
+/** LEGO sets live at a URL too, and narrow on a press as well. */
+const linkedSetsSchema: DomainSchema = {
+  ...legoSchema,
+  entities: legoSchema.entities.map((entity) =>
+    entity.key === 'sets'
+      ? { ...entity, href: (row: ShellRow) => `https://example.com/sets/${encodeURIComponent(row.id)}` }
+      : entity,
+  ),
+}
+
+/**
+ * The same with a type that narrows on a press: the name goes on narrowing,
+ * and the way out to where the set lives is the `↗` beside it.
+ */
+export const LinkRowsThatNarrow = story({
+  schema: linkedSetsSchema,
+  defaults: { entity: 'sets', landing: 'entity', view: 'table' },
+})
+
+/**
+ * A page of the host's under the same bar, through the `page` slot — a form
+ * that acts on what the query matches. The header still shows the query and
+ * still edits it; it offers no pager and no View chooser, and the type's
+ * operations stay off, there being no rows under it. The `p=3` in the link is
+ * left as it was.
+ */
+export const HostPage = story({
+  search: '?e=searches&v=list&q=recall&p=3',
+  limit: 12,
+  slots: {
+    page: ({ query }: { query: { expr: string; entity: string | null } }) =>
+      h('form', { class: 'sb-host-page', style: 'padding: 24px', onSubmit: (event: Event) => event.preventDefault() }, [
+        h('h2', null, 'Run every match'),
+        h('p', { class: 'dc-mono sb-host-page__query' }, `e=${query.entity ?? ''} q=${query.expr}`),
+        h('button', { type: 'submit' }, 'Start'),
+      ]),
+  } as never,
+})
+
+/**
+ * The header's search box given a resting fill and edge through three tokens
+ * — `--dc-search-fill`, `--dc-search-border` and `--dc-search-placeholder` —
+ * for a dark surface where a bare box is a faint smudge in an empty bar.
+ */
+export const SearchFieldTokens = story({
+  theme: 'dark',
+  search: '?e=searches&v=list',
+  tokens: {
+    '--dc-search-fill': 'var(--dc-bg-1)',
+    '--dc-search-border': 'var(--dc-line)',
+    '--dc-search-placeholder': 'var(--dc-fg-2)',
+  },
+})
+
+/** Every URL the tool has run against, which grows with the data. */
+const TARGETS = Array.from(
+  { length: 30 },
+  (_, at) =>
+    `https://shop.example.com/en/pages/a-long-shared-path/that-says-nothing/target-${String(at + 1).padStart(2, '0')}/`,
+)
+
+const longFacetsSchema: DomainSchema = {
+  ...iRadarSchema,
+  entities: iRadarSchema.entities.map((entity) =>
+    entity.key === 'searches'
+      ? {
+          ...entity,
+          facets: [
+            ...entity.facets,
+            { kind: 'chips', key: 'target', label: 'Target', options: TARGETS, maxRows: 3, truncate: 'start' },
+          ],
+        }
+      : entity,
+  ),
+}
+
+/**
+ * A facet whose options grow with the data, capped at three rows of chips
+ * (`maxRows`) and cut at the start of each (`truncate: 'start'`): the rows
+ * scroll, the edge with more behind it fades, and each chip is one line
+ * ending in the part of the URL that tells it apart.
+ */
+export const LongChipsFacet = story({
+  schema: longFacetsSchema,
+  search: '?e=searches&v=list',
+  open: true,
 })

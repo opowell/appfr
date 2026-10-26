@@ -10,6 +10,7 @@ import PinStar from './PinStar.vue'
 import RowPicture from './RowPicture.vue'
 import QueryMark from './QueryMark.vue'
 import RowStanding from './RowStanding.vue'
+import OpenMark from './OpenMark.vue'
 import ScopeMark from './ScopeMark.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -66,6 +67,7 @@ const allPictures = computed(() => rows.value.length > 0 && rows.value.every(isP
             :entry="entry"
           />
           <ScopeMark :entry="entry" />
+          <OpenMark :entry="entry" />
           <PinStar
             v-if="shell.pinnable.value"
             :row="entry.row"

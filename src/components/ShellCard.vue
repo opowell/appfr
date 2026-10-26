@@ -26,6 +26,26 @@ const props = withDefaults(defineProps<{
   /** The card's heading. Left out where the `head` slot says it instead. */
   title?: string
   /**
+   * What the card is *about*, where that is a record rather than a section:
+   * its name, set as a title is, over the {@link reference} that says which
+   * one it is. The head a record's own card wears, which every host with a
+   * page about one record was otherwise writing out by hand.
+   *
+   * Takes the place of {@link title} in the head when both are given — a
+   * card is headed by one thing, and a name is the more particular of the
+   * two — and names the fold toggle in its place too. {@link count} stays
+   * beside it either way. The `head` slot still replaces the lot.
+   */
+  name?: string
+  /**
+   * The line under the {@link name}: an id, a path, a URL — whatever tells
+   * this record from another with the same name. Set in the mono face, muted,
+   * and free to break anywhere, since a path has nowhere else to break and
+   * must not push the head's aside off the card. Drawn only under a `name`;
+   * the `reference` slot says it instead where it is a link.
+   */
+  reference?: string
+  /**
    * The number beside the heading, as a type card carries its population.
    * A string, so it is formatted the way the host formats its own counts.
    */
@@ -97,6 +117,11 @@ const style = computed(() => (props.span === 'all' ? { gridColumn: '1 / -1' } : 
 const slots = defineSlots<{
   /** The whole head, replacing the title and count. */
   head?: () => unknown
+  /**
+   * The line under the `name`, where it is more than text — a link to the
+   * record's own home, say. Read only where `name` is set.
+   */
+  reference?: () => unknown
   /** The right end of the head — a link, a badge, a button. */
   aside?: () => unknown
   /** The card's content. */
@@ -131,10 +156,16 @@ function drawn(nodes: VNode[]): boolean {
   })
 }
 
-const hasHead = computed(() => Boolean(props.title) || hasAside.value || filled(slots.head))
+const hasHead = computed(
+  () => Boolean(props.title) || Boolean(props.name) || hasAside.value || filled(slots.head),
+)
 const hasAside = computed(() => filled(slots.aside))
 const hasBody = computed(() => filled(slots.default))
 const hasFoot = computed(() => filled(slots.foot))
+/** Under a name only: a reference with no name over it is a stray id. */
+const hasReference = computed(
+  () => Boolean(props.name) && (Boolean(props.reference) || filled(slots.reference)),
+)
 
 /* ---------------------------------------------------------------- folding */
 
@@ -243,10 +274,27 @@ function pressHead(event: MouseEvent): void {
           viewBox="0 0 10 10"
           aria-hidden="true"
         ><path d="M2 3.5 5 6.5 8 3.5" /></svg>
-        <span class="dc-shell-card__sr">{{ title || 'Card' }}</span>
+        <span class="dc-shell-card__sr">{{ name || title || 'Card' }}</span>
       </button>
       <slot name="head">
-        <h2 class="dc-shell-card__title">
+        <div
+          v-if="name"
+          class="dc-shell-card__identity"
+        >
+          <h2 class="dc-shell-card__title dc-shell-card__name">
+            {{ name }}
+          </h2>
+          <span
+            v-if="hasReference"
+            class="dc-shell-card__ref dc-mono"
+          >
+            <slot name="reference">{{ reference }}</slot>
+          </span>
+        </div>
+        <h2
+          v-else
+          class="dc-shell-card__title"
+        >
           {{ title }}
         </h2>
         <span
@@ -393,6 +441,28 @@ function pressHead(event: MouseEvent): void {
   font-weight: var(--dc-weight-semibold);
   letter-spacing: var(--dc-tracking-tight);
   color: var(--dc-fg-0);
+}
+
+/* A record's name over its reference — one column, so the reference wraps
+   under the name rather than beside it. Kept out of the template as a
+   comment, which a development build would put in every card's head. */
+.dc-shell-card__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dc-shell-card__ref {
+  font-size: var(--dc-text-micro);
+  color: var(--dc-fg-3);
+  overflow-wrap: anywhere;
+}
+
+/* A link in the reference's place reads as the reference first: the same
+   face and colour. Whatever else marks a link is the host's stylesheet's. */
+.dc-shell-card__ref :deep(a) {
+  color: inherit;
 }
 
 .dc-shell-card__count {

@@ -19,6 +19,16 @@ export { default as MenuButton } from './components/MenuButton.vue'
 export { default as MenuList } from './components/MenuList.vue'
 export { default as StatusPill } from './components/StatusPill.vue'
 
+/* Content: what goes inside a card of the host's — and the layers over it. */
+export { default as ShellFacts } from './components/ShellFacts.vue'
+export { default as ShellFact } from './components/ShellFact.vue'
+export { default as StatusCounts } from './components/StatusCounts.vue'
+export { default as ShellCode } from './components/ShellCode.vue'
+export { default as CopyButton } from './components/CopyButton.vue'
+export { default as ShellLog } from './components/ShellLog.vue'
+export { default as ShellDialog } from './components/ShellDialog.vue'
+export { default as ShellToasts } from './components/ShellToasts.vue'
+
 /* Window */
 export { default as WindowFrame } from './components/WindowFrame.vue'
 /* `WindowNode.vue`, the recursive node renderer, `WindowFloat.vue`, one frame
@@ -66,6 +76,8 @@ export type {
   UseEntityPreviewsOptions,
 } from './composables/useEntityPreviews'
 export type { EntityCount, EntityCountsState, UseEntityCountsOptions } from './composables/useEntityCounts'
+export { TOAST_ERROR_MS, TOAST_MS, useToasts } from './composables/useToasts'
+export type { Toast, ToastKind, ToastsState } from './composables/useToasts'
 
 /* Window model */
 export {
@@ -311,6 +323,7 @@ export { fnv1a, formatCount, formatDate, formatMetric, formatOrdinal } from './d
 export {
   COLUMN_BREAKPOINTS,
   COLUMN_ROLES,
+  PILL_TONES,
   RECORD_STATUSES,
   SHELL_THEMES,
   VIEW_KINDS,
@@ -329,6 +342,8 @@ export type {
   FacetDef,
   FacetState,
   FacetValue,
+  LogChunk,
+  PillTone,
   PressOptions,
   QueryRequest,
   QueryResult,
@@ -339,6 +354,8 @@ export type {
   Selection,
   SelectionOperation,
   ShellAlign,
+  ShellFactItem,
+  ShellFactValue,
   ShellQuery,
   ShellQueryDefaults,
   ShellRow,
@@ -346,6 +363,7 @@ export type {
   ShellWidthMatch,
   SortDef,
   SortDirection,
+  StatusCount,
   StreamingDataSource,
   SyncDataSource,
   ToggleFacet,

@@ -27,7 +27,9 @@
       "import": "./dist/nuxt.js"
     },
     "./style.css": "./dist/style.css",
-    "./dist/style.css": "./dist/style.css"
+    "./dist/style.css": "./dist/style.css",
+    "./controls.css": "./dist/controls.css",
+    "./dist/controls.css": "./dist/controls.css"
   },
   "scripts": {
     "build": "vite build && vue-tsc -p tsconfig.build.json --emitDeclarationOnly",

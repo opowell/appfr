@@ -4,6 +4,7 @@ import SegmentedControl from '../src/components/SegmentedControl.vue'
 import StatusPill from '../src/components/StatusPill.vue'
 import { RECORD_STATUSES } from '../src/types'
 import { partSurface, statefulFacet } from './helpers'
+import { dialogDemo, pillTones, recordPage } from './content'
 
 const meta = {
   title: 'Parts / Controls',
@@ -103,4 +104,32 @@ export const ToggleFacet: Story = {
       { kind: 'toggle', key: 'seen', label: 'Seen', text: 'Hide items already seen' },
       { kind: 'toggle', on: false },
     ),
+}
+
+/**
+ * A page about one run, made of the content parts: a card headed by the
+ * record's name over its reference, its facts, a table of results with a pill
+ * apiece, an error, a source to copy and a log that follows its tail — with
+ * `controls.css` dressing the host's own buttons, fields and table.
+ */
+export const RecordContent: Story = {
+  render: () => recordPage(),
+}
+
+/** The same page in the minimal theme, where the tones resolve to ink. */
+export const RecordContentMinimal: Story = {
+  render: () => recordPage('minimal'),
+}
+
+/** Every tone a pill comes in, words of a host's own, and a row of counts. */
+export const PillTonesAndCounts: Story = {
+  render: pillTones,
+}
+
+/**
+ * A dialog opened from a dark shell, and the toast it raises — both drawn in
+ * `body`, outside the shell, and both in its theme.
+ */
+export const DialogAndToasts: Story = {
+  render: dialogDemo,
 }

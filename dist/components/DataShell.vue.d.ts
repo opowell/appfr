@@ -80,6 +80,28 @@ type __VLS_Props = {
      */
     loading?: boolean;
     /**
+     * Whether a `page` is about the query. Read only while one is provided.
+     *
+     * `shell`, the default, is a page whose input the query is — a form that
+     * runs every spec the query matches: the bar reads the URL the page is
+     * on, and an edit to it stays on that page, narrowing what it acts on.
+     *
+     * `detached` is a page that is about something else — a form making a
+     * new record, a report on one run — and only shares the bar. Its URL's
+     * parameters are the page's own (`?crawl=…`), not a query, so the bar
+     * reads the pristine one, `Everything`; and the first edit to it is a way
+     * back to the list — it navigates to {@link listPath} with that edit
+     * applied, pushing, so Back returns to the page.
+     */
+    pageQuery?: 'shell' | 'detached';
+    /**
+     * Where a detached page's first edit to the bar lands — the path the
+     * list is at. `/` unless it says otherwise: the root of a vue-router app
+     * (its `base` and hash are the router's to add) and of a memory adapter.
+     * A shell mounted below the root under the History API says its own.
+     */
+    listPath?: string;
+    /**
      * A card set of the host's own per record the query narrows to, by the
      * record's type — `{ tests: TestCards }` — rendered as `<component :is
      * :id>` where the `record` slot would be. The shorthand for a slot that
@@ -229,9 +251,11 @@ type __VLS_Slots = {
      * the type's operations are not offered over it; and nothing corrects the
      * URL's page from a count. Provide it conditionally — `<template v-if="…"
      * #page>` — and the shell is the list again the moment it is not.
+     *
+     * A page that is not about the query at all says so with `pageQuery`.
      */
     page?: (props: {
-        /** The committed query, as the URL has it. */
+        /** The committed query, as the URL has it — pristine on a detached page. */
         query: ShellQuery;
     }) => unknown;
     /** Replaces the entire results area. */
@@ -300,6 +324,8 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     previewsPerType: number;
     typeChooser: "scoped" | "always";
     loading: boolean;
+    pageQuery: "shell" | "detached";
+    listPath: string;
     theme: ShellTheme;
     matchWidth: ShellWidthMatch;
     headAlign: ShellAlign;

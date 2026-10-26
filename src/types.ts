@@ -52,6 +52,52 @@ export type RecordStatus = 'ok' | 'running' | 'queued' | 'review' | 'failed'
 
 export const RECORD_STATUSES = ['ok', 'running', 'queued', 'review', 'failed'] as const
 
+/**
+ * The colours a {@link RecordStatus} pill comes in, offered by name for words
+ * that are not statuses — a spec's `crawler-generated`, a run's `passed`. The
+ * five statuses keep their own colours (`queued` has none, as ever); `neutral`
+ * is that same no-colour said on purpose, and `accent` is the shell's own,
+ * the one a running record wears.
+ */
+export type PillTone = RecordStatus | 'neutral' | 'accent'
+
+export const PILL_TONES = [...RECORD_STATUSES, 'neutral', 'accent'] as const
+
+/**
+ * A value in a `<ShellFacts>` grid: text, a number, or a list drawn a line
+ * per entry. Nothing, `''` or an empty list is drawn as the shell's dash.
+ */
+export type ShellFactValue = string | number | null | undefined | readonly (string | number)[]
+
+/** One fact in a `<ShellFacts>` grid's `items`. */
+export interface ShellFactItem {
+  label: string
+  value?: ShellFactValue
+  /** The value's tooltip — the exact figure behind a rounded one, say. */
+  title?: string
+  /** Takes a whole row of the grid, for a value a column would wrap. */
+  wide?: boolean
+}
+
+/**
+ * What a `<ShellLog>`'s `fetchChunk(offset)` answers with: the text written
+ * after `offset`, and the offset that text ends at — where the next read
+ * starts.
+ */
+export interface LogChunk {
+  chunk: string
+  offset: number
+}
+
+/** One count in a `<StatusCounts>` row: `3 passed`, in the tone it is. */
+export interface StatusCount {
+  /** The word after the number. */
+  label: string
+  count: number
+  /** Its colour, as a pill's — `neutral` where left out. */
+  tone?: PillTone
+}
+
 export type SortDirection = 'asc' | 'desc'
 
 /**

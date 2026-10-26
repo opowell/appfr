@@ -1,11 +1,43 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import vue from '@vitejs/plugin-vue'
+import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 
 const entry = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 
+/**
+ * `controls.css`, shipped beside `style.css` as a file of its own.
+ *
+ * It cannot go through the bundle the way the components' styles do: every
+ * stylesheet a module imports is collected into the one `style.css`
+ * (`cssCodeSplit` is off, and has to be for that file to be whole), and this
+ * one must stay out of it — it styles elements by tag, and is only for a host
+ * that asks for it. Nothing imports it, so it is copied across as it is,
+ * comments and all, which is also what lets a reader see why each rule is
+ * there. Only for the library build: the stories and the tests have no `dist`.
+ */
+function controlsStylesheet(): Plugin {
+  let library = false
+  return {
+    name: 'header-content-layout:controls-css',
+    apply: 'build',
+    configResolved(config) {
+      library = Boolean(config.build.lib)
+    },
+    generateBundle() {
+      if (!library) return
+      this.emitFile({
+        type: 'asset',
+        fileName: 'controls.css',
+        source: readFileSync(entry('./src/style/controls.css'), 'utf8'),
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), controlsStylesheet()],
   resolve: {
     alias: {
       'header-content-layout/fixtures': entry('./src/fixtures/index.ts'),

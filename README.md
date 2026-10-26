@@ -1141,8 +1141,9 @@ is what makes one look like the cards it sits among; the shell's own card chrome
 is scoped CSS a host cannot reach. Its props are `title`, `count`, `span`
 (`'all'`, for a card a share of a row would cut short — a record's own heading,
 a block of source, a wide table), `flush` for content that draws its own edges,
-`muted`, and `collapsible`, `collapsed` and `defaultCollapsed` (below); its
-slots are `head`, `aside`, the default body and `foot`. Nothing in it reads the shell's context, so it works anywhere inside a
+`muted`, `name` and `reference` (below), and `collapsible`, `collapsed` and
+`defaultCollapsed` (further down); its slots are `head`, `aside`, the default
+body, `foot` and `reference`. Nothing in it reads the shell's context, so it works anywhere inside a
 `.dc-shell` element — including a page of your own with no query at all:
 
 ```vue
@@ -1150,6 +1151,34 @@ slots are `head`, `aside`, the default body and `foot`. Nothing in it reads the 
   <ShellCard title="New run">…</ShellCard>
 </div>
 ```
+
+The card a record's page leads with is headed by the record itself: its name,
+and under it whatever tells it from another of the same name — an id, a path,
+a URL. `name` and `reference` are that head, so it need not be written out in
+the `head` slot:
+
+```vue
+<ShellCard :name="spec.title" :reference="spec.file" span="all">
+  <template #aside><button @click="duplicate">Duplicate</button></template>
+</ShellCard>
+
+<!-- A reference that is a link: the slot says it instead. -->
+<ShellCard :name="tenant.id">
+  <template #reference><a :href="tenant.baseUrl">{{ tenant.baseUrl }}</a></template>
+</ShellCard>
+```
+
+```
+┌── Pays with a voucher ────────────────────── [failed] [Duplicate] ──┐
+│   tests/specs/flow-2.spec.ts                                        │
+```
+
+The name is set as a title is; the reference is mono, muted, and breaks
+anywhere, since a path has nowhere else to break and must not push the aside
+off the card. `name` takes the place of `title` where both are given — a card
+is headed by one thing, and the name is the more particular — and names the
+fold toggle in its place too; `count` stays beside it either way, and the
+`head` slot still replaces the lot. A `reference` with no `name` is not drawn.
 
 A page of cards about one record is a page some of which the reader wants out
 of the way — the source, once it has been read; the metadata nobody asked
@@ -1279,6 +1308,242 @@ const views = ({ entity, records }: ViewsContext): ViewKind[] =>
 A type's own list is a table; a screen about a record is cards alone, its own
 cards being drawn there and nowhere else; and the corpus offers both. One view
 on offer is what takes the chooser off the bar.
+
+### What goes in a card
+
+A page about one record is mostly a host's own content in those cards — the
+record's facts, a table of what it said, its source, its log — and the same
+handful of pieces turn up on every such page. These are those pieces. Each is
+a plain component with no context to read, styled in the shell's tokens, so
+it takes the theme wherever it is put inside a `.dc-shell`.
+
+#### Facts
+
+`<ShellFacts>` is a record's metadata, as a grid of labels over values: as
+many columns as fit at `min` (`200px` by default), so a full-width card on a
+desktop holds five and the same card on a phone one. It is a `<dl>` — a `div`
+per fact, holding its `dt` and `dd` — with small labels in the caps a theme
+sets small labels in, and mono values that may break anywhere.
+
+```vue
+<ShellFacts :items="[
+  { label: 'Started', value: fmtDate(run.startedAt) },
+  { label: 'Size', value: fmtBytes(spec.bytes), title: `${spec.bytes} bytes` },
+  { label: 'Recorded URLs', value: spec.flowUrls },   /* a line apiece */
+  { label: 'Finished', value: run.finishedAt },       /* null: drawn as — */
+]">
+  <!-- A fact that is more than text: the label and the value are slots. -->
+  <ShellFact wide>
+    <template #label>Command <CopyButton :text="run.command" /></template>
+    <ShellCode :code="run.command" :max-height="96" />
+  </ShellFact>
+</ShellFacts>
+```
+
+| `ShellFactItem` | Type | Notes |
+| --- | --- | --- |
+| `label` | `string` | |
+| `value` | `string \| number \| null \| (string \| number)[]` | A list is a line per entry. Nothing, `''` or `[]` is the shell's `—`. |
+| `title` | `string` | The value's tooltip. |
+| `wide` | `boolean` | Takes the whole row, for a command line or a sentence. |
+
+`<ShellFact>` takes the same four as props, plus a `label` slot and a default
+slot for the value. The items come first, then the children.
+
+#### Pills and counts
+
+`<StatusPill>` was a record's status and nothing else. It now also takes a
+`label` — the words, in place of the status's own — and a `tone`, the colour
+chosen outright, so a word that is not a status can wear the pill without
+pretending to be one. `status` may be left out wherever one of the other two
+is given:
+
+```vue
+<StatusPill status="failed" />                              <!-- as ever -->
+<StatusPill status="ok" label="passed" />                   <!-- a run's word for ok -->
+<StatusPill tone="accent" label="crawler-generated" />
+<StatusPill tone="review" label="live — no profile" />
+<StatusPill tone="neutral" label="hand-written" />
+```
+
+The tones are the five statuses — `ok`, `running`, `review`, `failed` and
+`queued`, each in the colour that status has always had — plus `neutral`,
+which is `queued`'s no-colour said on purpose, and `accent`, which is the
+shell's own and the one a running record wears. `PillTone` and `PILL_TONES`
+are exported. A tone given beside a status wins.
+
+`<StatusCounts>` is what a run came to, in the space of a table cell —
+`12 passed · 1 failed · 2 skipped`, each count in its tone:
+
+```vue
+<StatusCounts :counts="[
+  { label: 'passed', count: stats.passed, tone: 'ok' },
+  { label: 'failed', count: stats.failed, tone: 'failed' },
+  { label: 'flaky', count: stats.flaky, tone: 'review' },
+  { label: 'skipped', count: stats.skipped },              /* neutral */
+  { label: 'running', count: stats.running, tone: 'running' },
+]" />
+```
+
+Words rather than a pill apiece, since six pills in a cell is a cell made of
+chrome. A count of nothing is left out, and a row with nothing to count is
+`empty` (`—`). The counts are a list rather than a map from tone to number
+because two of them can share a colour, and the order is the host's.
+
+#### Code, and copying it
+
+`<ShellCode>` is a block of code or machine text — a spec's source, an
+error, a command line:
+
+```vue
+<ShellCard title="Source" span="all" flush>
+  <ShellCode :code="spec.source" :max-height="460" copy @error="toastError" />
+</ShellCard>
+
+<ShellCard title="Error" flush>
+  <ShellCode :code="result.error" tone="danger" />
+</ShellCard>
+```
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `code` | `string` | — | The text. The default slot gives it instead. |
+| `maxHeight` | `string \| number` | — | The tallest it grows before it scrolls in place — with `overscroll-behavior: contain`, so reading to its end does not start scrolling the page. A number is pixels. |
+| `copy` | `boolean` | `false` | A copy button in its top right corner. |
+| `copyLabel` | `string` | `'Copy to clipboard'` | The button's tooltip and accessible name. |
+| `wrap` | `boolean` | `true` | Long lines wrap. Off for text whose columns mean something. |
+| `tone` | `'danger'` | — | A red rule down its side and a red tint, for an error. |
+
+It emits `copied` and `error` from the button. In a `flush` card body it *is*
+the body — no border, no corner, no margin — and anywhere else it is an inset
+box with a hairline round it.
+
+`<CopyButton>` is that button on its own, for text shown somewhere a block
+would be too much — beside a fact's label, say. `text` is a string, or a
+function for text only known at the press; `label` names it. It shows a tick
+for a moment once the text is on the clipboard and emits `copied`; where the
+clipboard refuses — an insecure origin, a permission denied — it emits `error`
+with the reason and shows nothing, since how a failure is told is the host's.
+
+#### A log that is still being written
+
+`<ShellLog>` is a run's output while the run is going: it reads only what it
+has not read yet, and follows the tail the way a terminal does — until the
+reader scrolls up, so reading back through a failure is not yanked away by the
+next chunk. Scrolling back to the end picks the tail up again.
+
+```vue
+<script setup lang="ts">
+const log = ref<InstanceType<typeof ShellLog> | null>(null)
+// On whatever beat the host already polls the run on:
+await log.value?.poll()
+</script>
+
+<template>
+  <ShellCard title="Output" span="all" flush>
+    <ShellLog ref="log" :fetch-chunk="(offset) => api.runLog(id, offset)" strip-ansi />
+  </ShellCard>
+</template>
+```
+
+`fetchChunk(offset)` answers with `{ chunk, offset }` (`LogChunk`): the text
+written after `offset`, and where it ends. When to ask is the host's, through
+the exposed `poll()`; a poll while one is in flight is that one, rather than a
+second read of the same text. `reset()` forgets what was read. `stripAnsi`
+takes out a terminal's colour codes, which in a page are not colour but
+`[31m` in the middle of a line. `maxHeight` is `460px` unless given — a log
+has to scroll inside something to have a tail to follow. It is drawn as
+`<ShellCode>` is, flush card bodies and all.
+
+### Dialogs and toasts
+
+`<ShellDialog>` is a modal: a question the page waits on.
+
+```vue
+<ShellDialog v-model:open="deleting" title="Delete 3 tests?">
+  <p>This removes the specs and their fixtures.</p>
+  <template #actions>
+    <button @click="deleting = false">Cancel</button>
+    <button class="danger" @click="remove">Delete</button>
+  </template>
+</ShellDialog>
+```
+
+It is teleported to `body` (`to` moves it), so no card's or shell's
+`overflow` clips it, and it renders nothing at all while closed — no hidden
+backdrop to swallow clicks. `open` is `true` unless given, so it can as well be
+put up with a `v-if` on it. Escape and a press on the backdrop ask to close it,
+with `close` and `update:open`; only the dialog on top hears Escape, and a drag
+that starts inside the panel and ends on the backdrop is not a press of it.
+Opening puts the focus on the first thing in it that takes focus — or on the
+one marked `autofocus` — and closing gives the focus back where it was. It
+does not trap the focus.
+
+Being in `body` puts it outside every `.dc-shell`, where the tokens are. So it
+is a `.dc-shell` of its own, as `<MenuBar>` is, and dresses itself as the shell
+it was opened from: that shell's `data-dc-theme`, and the tokens set on that
+shell's element — which is where `DataShell`'s `tokens` and `accent` go. A
+stylesheet rule of the host's on `.dc-shell` reaches it for nothing. Its own
+`theme`, `accent` and `tokens` props win over what it finds, and are what
+there is for a dialog opened from outside any shell; with none, it is the
+minimal theme.
+
+Toasts are short messages in a corner that go away on their own. `useToasts()`
+is one stack for the whole app — a toast raised in a dialog survives the
+dialog — and `<ShellToasts>` draws it; mount that once, anywhere:
+
+```ts
+const { toast, toastError } = useToasts()
+toast('Saved')                         // 'ok', up for TOAST_MS (4.5s)
+try { await api.save() } catch (error) {
+  toastError(error)                    // 'err', up for TOAST_ERROR_MS (9s)
+}
+```
+
+```vue
+<ShellToasts theme="dark" />
+```
+
+`toastError` takes anything thrown: an `Error`'s message, or the thing said as
+a string. `dismiss(id)` takes one down early, and `toasts` is the stack itself
+for a host drawing its own. `<ShellToasts>` is teleported and dressed exactly
+as the dialog is; written outside any shell, which is usual, it takes its
+`theme`, `accent` and `tokens` from its props. The stack is a polite live
+region, and an error toast is an alert.
+
+### Controls of your own
+
+The shell draws its own controls in scoped CSS, so a host's `<button>` in one
+of its cards is the browser's grey box beside the shell's token-coloured ones.
+`controls.css` is the sheet that closes that gap — opt in, and imported after
+`style.css`:
+
+```ts
+import 'header-content-layout/style.css'
+import 'header-content-layout/controls.css'
+```
+
+```vue
+<button class="primary">Run</button>     <!-- filled with the accent -->
+<button>Duplicate</button>
+<button class="danger">Delete</button>   <!-- drawn in the danger colour -->
+<button class="link">Open</button>       <!-- reads as a link -->
+<select>…</select> <input type="text"> <textarea /> <table>…</table>
+<p class="dc-hint">What a choice will do.</p>
+<p class="dc-hint dc-hint--warn">Leaves each browser window open.</p>
+<p class="dc-hint dc-hint--danger">The server said no.</p>
+```
+
+It styles buttons, `select`, text-like inputs, `textarea`, a plain `table`
+and `.dc-hint` inside a `.dc-shell` — which a `<ShellDialog>` is — in the
+shell's tokens, so they follow the theme. It never touches the shell's own
+controls: everything the shell draws carries a `dc-` class, and an element
+with one is left alone (so a host element can opt out the same way). Every
+rule is in `:where()` and carries no specificity, so any rule of the host's
+beats it — except the variants' text colours, which have to match
+`style.css`'s `.dc-shell button { color: inherit }` and so are at that weight;
+loading this second is what lets them win. `style.css` does not import it, so
+nothing changes for a host that does not.
 
 ### A facet a row holds several of
 

@@ -150,11 +150,11 @@ export function formatPercent(share: number | null | undefined): string {
 }
 
 /**
- * Text without the terminal's colour codes. A tool that writes for a terminal
+ * Text without the terminal's control sequences, colour codes among them. A tool that writes for a terminal
  * — a test runner's errors, a build's log — puts `\x1b[31m` in its messages,
  * and on a page that is not red but `[31m` in the middle of the text.
  */
 export function stripAnsi(text: string): string {
   // eslint-disable-next-line no-control-regex
-  return text.replace(/\x1b\[[0-9;]*m/g, '')
+  return text.replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, '')
 }

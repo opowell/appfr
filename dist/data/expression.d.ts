@@ -1,4 +1,4 @@
-import type { ColumnDef, EntitySchema, ShellRow } from '../types';
+import type { ColumnDef, DomainSchema, EntitySchema, ShellRow } from '../types';
 /**
  * A minimal query language for the expression field: whitespace-separated
  * terms, ANDed together, with `OR` splitting alternatives.
@@ -95,8 +95,17 @@ export declare function columnShortcutOf(column: ColumnDef, entity: EntitySchema
  * as satisfied when any one of them is. A half-typed one among them is
  * satisfied on its own, as it is anywhere, so a set holding one is satisfied
  * whatever the rest say — the same reading a half-typed term gets alone.
+ *
+ * `schema` is optional, and only read for {@link DomainSchema.strictScopes}:
+ * where that is set, a term on a join key — some entity's `scope` — is a
+ * mismatch for a row that does not carry the field, rather than the
+ * constraint-on-nothing an unknown field is everywhere else. Left out, or
+ * with the flag unset, every term reads exactly as it did before there was a
+ * flag. It is the schema rather than a flag of its own because the schema is
+ * what says which fields are join keys, and what every source already has in
+ * hand: it is on the {@link QueryRequest}.
  */
-export declare function matchesExpression(expression: Expression, row: ShellRow, entity: EntitySchema): boolean;
+export declare function matchesExpression(expression: Expression, row: ShellRow, entity: EntitySchema, schema?: DomainSchema | null): boolean;
 /**
  * One term, written back as the source that parses to it.
  *

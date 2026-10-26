@@ -19,10 +19,28 @@ type __VLS_Props = {
      * than on the bar beside it.
      */
     pagesNote?: string;
+    /**
+     * Leave the pager off the bar — while the results are not yet the data
+     * (`loading` on `DataShell`), or under a page of the host's, where there
+     * is nothing to page.
+     */
+    hidePages?: boolean;
+    /**
+     * Leave the View chooser off the bar, under a page of the host's: how the
+     * results are drawn means nothing where they are not.
+     */
+    hideViews?: boolean;
 };
-declare var __VLS_17: {};
-type __VLS_Slots = {} & {
-    actions?: (props: typeof __VLS_17) => any;
+type __VLS_Slots = {
+    /** Extra controls at the right end of the bar. */
+    actions?: () => unknown;
+    /**
+     * The domain's mark, drawn in place of its name — see `brand` on
+     * `DataShell`. The name stays the bar's accessible text.
+     */
+    brand?: (props: {
+        label: string;
+    }) => unknown;
 };
 declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     toggle: () => any;

@@ -1,6 +1,18 @@
-import type { EntitySchema, FacetState, ShellRow, SyncDataSource } from '../types';
+import type { EntitySchema, ShellRow, SyncDataSource } from '../types';
+export { matchesFacets } from './apply';
 /** Tile backgrounds for the grid view, cycled by row hash. */
 export declare const MOCK_TINTS: readonly ["oklch(0.36 0.06 240)", "oklch(0.34 0.07 290)", "oklch(0.36 0.06 160)", "oklch(0.38 0.06 80)", "oklch(0.35 0.07 30)", "oklch(0.34 0.05 200)"];
+/**
+ * A tile colour for a record, the same one every time: one of
+ * {@link MOCK_TINTS}, picked by a hash of the id.
+ *
+ * For a host whose records have no colour of their own but whose grid view
+ * wants its tiles told apart — the palette the mock draws with, so a real
+ * corpus and a generated one look like the same shell. Stable across runs
+ * and across sorts, since it reads nothing but the id; nothing fills it in
+ * for you, so a `tint` column holds it only where a source puts it there.
+ */
+export declare function tintFor(id: string): string;
 export interface MockSourceOptions {
     /** Rows generated per entity. Defaults to 48. */
     population?: number;
@@ -26,8 +38,6 @@ export interface MockSourceOptions {
  * inventing vocabulary the schema did not supply.
  */
 export declare function generateRows(entity: EntitySchema, options?: MockSourceOptions): ShellRow[];
-/** Applies the facet state to a row. Neutral facets never exclude anything. */
-export declare function matchesFacets(row: ShellRow, facets: FacetState): boolean;
 /**
  * An in-memory {@link SyncDataSource} over generated rows. It filters, sorts and
  * pages for real, so stories and tests exercise the same code paths a live

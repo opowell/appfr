@@ -154,6 +154,16 @@ export interface ShellContext extends QueryState {
     pressHref(row: ShellRow): string | null;
     /** The same for {@link ShellContext.drill}: a metric's, or the `→`'s. */
     drillHref(row: ShellRow, entity: EntitySchema | null): string | null;
+    /**
+     * Where the row's record lives outside the shell — what its type's
+     * {@link EntitySchema.href} says of it — or null. Where a press on the row
+     * is not the narrowing, {@link ShellContext.pressHref} is this already;
+     * where it is, the `↗` beside the name is the way there.
+     *
+     * Optional, so a context a host built before there was any such thing is
+     * still one: without it no record lives anywhere else.
+     */
+    recordHref?(row: ShellRow): string | null;
 }
 export declare const SHELL_CONTEXT_KEY: InjectionKey<ShellContext>;
 /** The parts of the context that are the header's search box — see {@link ShellContext.draft}. */

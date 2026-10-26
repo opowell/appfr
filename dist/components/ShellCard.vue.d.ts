@@ -2,6 +2,26 @@ type __VLS_Props = {
     /** The card's heading. Left out where the `head` slot says it instead. */
     title?: string;
     /**
+     * What the card is *about*, where that is a record rather than a section:
+     * its name, set as a title is, over the {@link reference} that says which
+     * one it is. The head a record's own card wears, which every host with a
+     * page about one record was otherwise writing out by hand.
+     *
+     * Takes the place of {@link title} in the head when both are given — a
+     * card is headed by one thing, and a name is the more particular of the
+     * two — and names the fold toggle in its place too. {@link count} stays
+     * beside it either way. The `head` slot still replaces the lot.
+     */
+    name?: string;
+    /**
+     * The line under the {@link name}: an id, a path, a URL — whatever tells
+     * this record from another with the same name. Set in the mono face, muted,
+     * and free to break anywhere, since a path has nowhere else to break and
+     * must not push the head's aside off the card. Drawn only under a `name`;
+     * the `reference` slot says it instead where it is a link.
+     */
+    reference?: string;
+    /**
      * The number beside the heading, as a type card carries its population.
      * A string, so it is formatted the way the host formats its own counts.
      */
@@ -53,6 +73,11 @@ type __VLS_Props = {
 type __VLS_Slots = {
     /** The whole head, replacing the title and count. */
     head?: () => unknown;
+    /**
+     * The line under the `name`, where it is more than text — a link to the
+     * record's own home, say. Read only where `name` is set.
+     */
+    reference?: () => unknown;
     /** The right end of the head — a link, a badge, a button. */
     aside?: () => unknown;
     /** The card's content. */

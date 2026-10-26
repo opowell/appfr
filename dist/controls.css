@@ -1,0 +1,203 @@
+/**
+ * The browser's own controls, dressed as the shell's — opt in.
+ *
+ *   import 'header-content-layout/style.css'
+ *   import 'header-content-layout/controls.css'
+ *
+ * A page about one record is mostly the host's markup in the shell's cards:
+ * a form that starts a run, a table of what it said, the buttons that act on
+ * it. The shell draws its own controls in scoped CSS a host cannot reach, so
+ * without this a host's `<button>` beside one of the shell's is the browser's
+ * grey box beside a token-coloured one, and every host writes the same sheet
+ * to close the gap. This is that sheet, in the shell's tokens, so it follows
+ * the theme the way the shell's own controls do.
+ *
+ * It is a file of its own and `style.css` does not import it: it styles
+ * elements by *tag*, and a shell dropped into a page that already styles its
+ * buttons must not have them restyled by importing the shell. Nothing here
+ * applies until it is imported.
+ *
+ * Inside a `.dc-shell` only — which a `<ShellDialog>` and a `<ShellToasts>`
+ * stack are, teleported as they are — and never to the shell's own controls:
+ * every element the shell draws carries a `dc-` class, and anything carrying
+ * one is left alone. (A host element given a `dc-` class of its own, `dc-mono`
+ * say, opts out with it.)
+ *
+ * Every rule is inside `:where()`, so it carries no specificity at all and any
+ * rule of the host's beats it, wherever the host's sheet loads. One block
+ * cannot be: `style.css` says `.dc-shell button { color: inherit }`, and a
+ * variant's colour has to beat that or a primary button is ink on accent. It
+ * is at exactly that rule's weight, so it wins by coming later — import this
+ * after `style.css` — and still loses to anything of the host's with a class.
+ */
+
+/* ---------------------------------------------------------------- buttons */
+
+:where(.dc-shell) :where(button:not([class*='dc-'])) {
+  padding: 6px 12px;
+  border: 1px solid var(--dc-line);
+  border-radius: var(--dc-radius-sm);
+  background: var(--dc-bg-2);
+  font-size: var(--dc-text-body);
+  line-height: var(--dc-leading-tight);
+  cursor: pointer;
+}
+
+:where(.dc-shell) :where(button:not([class*='dc-']):hover:not(:disabled)) {
+  background: var(--dc-bg-3);
+}
+
+:where(.dc-shell) :where(button:not([class*='dc-']):disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* The one thing the form is for. Filled with the accent, as the query
+   panel's Run is. */
+:where(.dc-shell) :where(button.primary:not([class*='dc-'])) {
+  border-color: var(--dc-accent);
+  background: var(--dc-accent);
+  font-weight: var(--dc-weight-semibold);
+}
+
+:where(.dc-shell) :where(button.primary:not([class*='dc-']):hover:not(:disabled)) {
+  background: var(--dc-accent);
+  filter: brightness(1.08);
+}
+
+/* What cannot be undone: drawn in the danger colour rather than filled with
+   it, so it is never the loudest thing on the page. */
+:where(.dc-shell) :where(button.danger:not([class*='dc-'])) {
+  border-color: color-mix(in oklab, var(--dc-danger), var(--dc-surface) 45%);
+}
+
+:where(.dc-shell) :where(button.danger:not([class*='dc-']):hover:not(:disabled)) {
+  background: var(--dc-danger-bg);
+}
+
+/* A button that reads as a link: an action in a sentence, or one of a row of
+   quiet ones. */
+:where(.dc-shell) :where(button.link:not([class*='dc-'])) {
+  padding: 2px 4px;
+  border: none;
+  background: none;
+}
+
+:where(.dc-shell) :where(button.link:not([class*='dc-']):hover:not(:disabled)) {
+  background: none;
+  text-decoration: underline;
+}
+
+/* The colours, at the weight of `.dc-shell button` — see the top of the file. */
+.dc-shell button:where(.primary:not([class*='dc-'])) {
+  color: var(--dc-accent-contrast);
+}
+
+.dc-shell button:where(.danger:not([class*='dc-'])) {
+  color: var(--dc-danger);
+}
+
+.dc-shell button:where(.link:not([class*='dc-'])) {
+  color: var(--dc-accent);
+}
+
+/* ----------------------------------------------------------------- fields */
+
+:where(.dc-shell)
+  :where(
+    select:not([class*='dc-']),
+    textarea:not([class*='dc-']),
+    input:not([class*='dc-']):is(
+        :not([type]),
+        [type='text'],
+        [type='search'],
+        [type='email'],
+        [type='url'],
+        [type='tel'],
+        [type='password'],
+        [type='number'],
+        [type='date'],
+        [type='datetime-local'],
+        [type='time']
+      )
+  ) {
+  padding: 6px 8px;
+  border: 1px solid var(--dc-line);
+  border-radius: var(--dc-radius-sm);
+  background: var(--dc-bg-2);
+  color: var(--dc-fg-0);
+  font: inherit;
+  font-size: var(--dc-text-body);
+}
+
+:where(.dc-shell) :where(select:not([class*='dc-']):disabled) {
+  opacity: 0.5;
+}
+
+:where(.dc-shell) :where(input:not([class*='dc-'])::placeholder, textarea:not([class*='dc-'])::placeholder) {
+  color: var(--dc-fg-3);
+}
+
+/* Most of what is typed into a textarea here is a list of URLs or a block of
+   config, which line up in mono. */
+:where(.dc-shell) :where(textarea:not([class*='dc-'])) {
+  font-family: var(--dc-mono);
+  font-size: var(--dc-text-code);
+  line-height: var(--dc-leading-input);
+}
+
+/* ----------------------------------------------------------------- tables */
+
+/* A table of the host's — a run's results in a card. The shell's own table
+   view is a `.dc-table`, and keeps its own look. */
+:where(.dc-shell) :where(table:not([class*='dc-'])) {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+:where(.dc-shell) :where(table:not([class*='dc-'])) :where(th) {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--dc-line);
+  font-size: var(--dc-text-micro);
+  font-weight: var(--dc-weight-semibold);
+  color: var(--dc-fg-2);
+  text-align: left;
+  text-transform: var(--dc-caps);
+  letter-spacing: var(--dc-tracking-caps);
+  white-space: nowrap;
+}
+
+:where(.dc-shell) :where(table:not([class*='dc-'])) :where(td) {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--dc-bg-3);
+  vertical-align: top;
+}
+
+/* No rule under the last row: in a flush card it would sit on the card's own
+   bottom edge, a hairline doubled. */
+:where(.dc-shell) :where(table:not([class*='dc-'])) :where(tbody tr:last-child td) {
+  border-bottom: none;
+}
+
+:where(.dc-shell) :where(table:not([class*='dc-'])) :where(tbody tr:hover) {
+  background: var(--dc-bg-2);
+}
+
+/* ------------------------------------------------------------------ hints */
+
+/* A sentence about the controls around it: what a choice will do, why one is
+   disabled. Quiet unless it is a warning or an error. */
+:where(.dc-shell) :where(.dc-hint) {
+  margin: 10px 0 0;
+  font-size: var(--dc-text-meta);
+  color: var(--dc-fg-2);
+}
+
+:where(.dc-shell) :where(.dc-hint--warn) {
+  color: var(--dc-warn);
+}
+
+:where(.dc-shell) :where(.dc-hint--danger) {
+  color: var(--dc-danger);
+  overflow-wrap: anywhere;
+}

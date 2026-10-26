@@ -21,13 +21,21 @@ export function createHistoryAdapter(): RouteAdapter {
 
   if (hasWindow) window.addEventListener('popstate', sync)
 
-  const navigate = (next: string, mode: 'push' | 'replace') => {
+  /*
+   * The hash belongs to the page it is on, so it is kept on a change of query
+   * and left behind on a move to another path.
+   */
+  const navigate = (next: string, mode: 'push' | 'replace', to?: string) => {
     const normalized = normalizeSearch(next)
     if (!hasWindow) {
       search.value = normalized
+      if (to !== undefined) path.value = to
       return
     }
-    const target = `${window.location.pathname}${normalized}${window.location.hash}`
+    const target =
+      to === undefined || to === window.location.pathname
+        ? `${window.location.pathname}${normalized}${window.location.hash}`
+        : `${to}${normalized}`
     if (mode === 'push') window.history.pushState(window.history.state, '', target)
     else window.history.replaceState(window.history.state, '', target)
     // pushState/replaceState do not fire popstate, so mirror the write.
@@ -38,12 +46,13 @@ export function createHistoryAdapter(): RouteAdapter {
   return {
     search,
     path,
-    href(next) {
-      if (!hasWindow) return `${path.value}${normalizeSearch(next)}`
+    href(next, to) {
+      if (!hasWindow) return `${to ?? path.value}${normalizeSearch(next)}`
+      if (to !== undefined && to !== window.location.pathname) return `${to}${normalizeSearch(next)}`
       return `${window.location.pathname}${normalizeSearch(next)}${window.location.hash}`
     },
-    push: (next) => navigate(next, 'push'),
-    replace: (next) => navigate(next, 'replace'),
+    push: (next, to) => navigate(next, 'push', to),
+    replace: (next, to) => navigate(next, 'replace', to),
     dispose: () => {
       if (hasWindow) window.removeEventListener('popstate', sync)
     },

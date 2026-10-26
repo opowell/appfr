@@ -52,6 +52,52 @@ export type RecordStatus = 'ok' | 'running' | 'queued' | 'review' | 'failed'
 
 export const RECORD_STATUSES = ['ok', 'running', 'queued', 'review', 'failed'] as const
 
+/**
+ * The colours a {@link RecordStatus} pill comes in, offered by name for words
+ * that are not statuses — a spec's `crawler-generated`, a run's `passed`. The
+ * five statuses keep their own colours (`queued` has none, as ever); `neutral`
+ * is that same no-colour said on purpose, and `accent` is the shell's own,
+ * the one a running record wears.
+ */
+export type PillTone = RecordStatus | 'neutral' | 'accent'
+
+export const PILL_TONES = [...RECORD_STATUSES, 'neutral', 'accent'] as const
+
+/**
+ * A value in a `<ShellFacts>` grid: text, a number, or a list drawn a line
+ * per entry. Nothing, `''` or an empty list is drawn as the shell's dash.
+ */
+export type ShellFactValue = string | number | null | undefined | readonly (string | number)[]
+
+/** One fact in a `<ShellFacts>` grid's `items`. */
+export interface ShellFactItem {
+  label: string
+  value?: ShellFactValue
+  /** The value's tooltip — the exact figure behind a rounded one, say. */
+  title?: string
+  /** Takes a whole row of the grid, for a value a column would wrap. */
+  wide?: boolean
+}
+
+/**
+ * What a `<ShellLog>`'s `fetchChunk(offset)` answers with: the text written
+ * after `offset`, and the offset that text ends at — where the next read
+ * starts.
+ */
+export interface LogChunk {
+  chunk: string
+  offset: number
+}
+
+/** One count in a `<StatusCounts>` row: `3 passed`, in the tone it is. */
+export interface StatusCount {
+  /** The word after the number. */
+  label: string
+  count: number
+  /** Its colour, as a pill's — `neutral` where left out. */
+  tone?: PillTone
+}
+
 export type SortDirection = 'asc' | 'desc'
 
 /**
@@ -80,6 +126,27 @@ export interface ChipsFacet {
    * and is what the mock source generates against.
    */
   multiple?: boolean
+  /**
+   * The most rows of chips the facet shows before it scrolls — for a facet
+   * whose options grow with the data (every host a tool has run against,
+   * every target URL), where the tallest facet would otherwise set the height
+   * of the whole panel and push the rest of it off the screen.
+   *
+   * The cut falls between two rows rather than through one: the height is a
+   * whole number of chips, worked out from the chip's own type size, so it
+   * follows a theme or a token that changes it. And the cut says that it is
+   * one — the edge with more behind it fades, from a scroll timeline, where
+   * motion is welcome. Left out, the facet is as tall as its chips.
+   */
+  maxRows?: number
+  /**
+   * One line per chip, ellipsised where it would be wider than the facet,
+   * the whole value on hover. `end` cuts the tail, as text usually is; `start`
+   * cuts the head instead, for values that share a long beginning and differ
+   * at the end — URLs on one host, paths under one root — where the head is
+   * the part that says nothing. Left out, a chip wraps as it always has.
+   */
+  truncate?: 'end' | 'start'
 }
 
 /** A numeric window. Either bound may be left open. */
@@ -242,6 +309,19 @@ export interface ColumnDef {
    * that is the label again is a tooltip that costs a hover and says nothing.
    */
   hint?: string
+  /**
+   * Puts the column on the record's card too, as this short label and the
+   * cell's words after it — `cardLabel: 'A'` on an Attack column reads `A 4`
+   * under the name. For the handful of figures that tell one record from the
+   * next at a glance (a unit's attack, defense and move; a part's weight),
+   * where a picture card would otherwise leave every number to the table.
+   *
+   * The card's line keeps the columns' order and shows the column's
+   * {@link ColumnDef.label} and {@link ColumnDef.hint} on hover. A row with
+   * nothing under the column has no fact there, rather than a label over a
+   * dash. Left out, the column is the table's alone.
+   */
+  cardLabel?: string
   kind?: ColumnKind
   /**
    * What this column is to the views that are not tables — see
@@ -443,6 +523,29 @@ export interface EntitySchema {
    */
   keepsScope?: boolean
   /**
+   * Where a record of this type lives outside the shell — a page of the
+   * host's, a site it points at — or null for a record that lives nowhere
+   * else. `row => row.id` for a type whose records *are* URLs.
+   *
+   * What it does depends on what a press on the row already means, because a
+   * press is one thing and a record that is somewhere is another:
+   *
+   * - Where the press is *reported* — `rowPress: 'open'`, or a type that
+   *   declares no {@link EntitySchema.scope} — the record opens there instead
+   *   of being reported: the row's name is a link to it, a plain press opens
+   *   it in a new tab, and `activate` is not emitted for it. The host that
+   *   would only have called `window.open` in its handler need not have one.
+   * - Where the press *narrows* — the default, on a type with a scope — it
+   *   goes on narrowing, and the record's way out is a `↗` beside the name
+   *   instead: the same place the `→` stands when the roles are the other way
+   *   round.
+   *
+   * On the entity rather than on a column because a press belongs to the
+   * row: every view reads it through the same one place, cards and tiles and
+   * previews included, and none of those is made of columns.
+   */
+  href?: (row: ShellRow) => string | null | undefined
+  /**
    * Seed pairs of `[identity, reference]` the mock source expands into rows,
    * filling the rest of each row from what the columns say it holds.
    */
@@ -481,6 +584,33 @@ export interface EntitySchema {
 /** What a card of a type is made of — see {@link EntitySchema.card}. */
 export type CardKind = 'record' | 'picture'
 
+/**
+ * One record a query narrows to: which type, and which of them. Read off the
+ * query's terms — a positive term on a field some type declares as its
+ * {@link EntitySchema.scope} names a record of that type.
+ */
+export interface NarrowedRecord {
+  /** {@link EntitySchema.key} of the type the record is one of. */
+  entityKey: string
+  /** The id as the term wrote it. */
+  id: string
+}
+
+/** What a `views` function is asked with — see {@link ViewsOption}. */
+export interface ViewsContext {
+  /** The type being listed, or null across every type. */
+  entity: EntitySchema | null
+  /** The records the committed query narrows to, in the order it names them. */
+  records: NarrowedRecord[]
+}
+
+/**
+ * The views a shell offers: a fixed list, or a list worked out per screen
+ * from what the query is about — `['table']` inside a type, `['cards']` on a
+ * record, both across everything.
+ */
+export type ViewsOption = ViewKind[] | ((context: ViewsContext) => ViewKind[])
+
 export interface DomainSchema {
   key: string
   label: string
@@ -513,6 +643,26 @@ export interface DomainSchema {
    * line in its own would be the same fault again, spread wider.
    */
   formatCount?: (value: number) => string
+  /**
+   * Whether a term on a join key — some entity's {@link EntitySchema.scope} —
+   * leaves out a row that does not carry that field at all.
+   *
+   * Unset, it does not. An unresolvable field *matches* in the expression
+   * language, which is what keeps a half-typed term from emptying the screen,
+   * and a join key is a field like any other there: a row of a type that
+   * never heard of `host` comes through `host="example.com"` unfiltered. The
+   * cure has been for every row to carry every join key, an empty list where
+   * the join does not apply — which a host has to remember for each type it
+   * adds, and which a narrowed screen punishes silently when it forgets.
+   *
+   * Set, a row without the field is not one the term names, so it is out —
+   * and kept by `-host="example.com"`, which is the same fact turned round.
+   * Only the scope fields are held to it: everything else that does not
+   * resolve still constrains nothing, half-typed or not. Read by
+   * `matchesExpression` when the schema is handed to it, which the memory
+   * and mock sources both do.
+   */
+  strictScopes?: boolean
 }
 
 /* ------------------------------------------------------------------- query */

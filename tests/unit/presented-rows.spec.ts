@@ -74,3 +74,33 @@ describe('the picture a card and a tile draw', () => {
     expect(parts.tint).toBe('oklch(0.36 0.06 240)')
   })
 })
+
+describe('the figures a card shows under its name', () => {
+  const stats: ColumnDef[] = [
+    { key: 'primary', role: 'identity' },
+    { key: 'attack', label: 'Attack', hint: 'How hard it hits', cardLabel: 'A' },
+    { key: 'shape', label: 'Shape' },
+    { key: 'move', label: 'Move', cardLabel: 'M', format: (value) => `${value} cells` },
+  ]
+
+  it('are the columns naming a card label, in their order, in the cell’s words', () => {
+    const facts = presentParts(row({ attack: 4, shape: 'brick', move: 2 }), stats).facts
+    expect(facts.map((f) => [f.label, f.text])).toEqual([['A', '4'], ['M', '2 cells']])
+  })
+
+  it('say the column’s label and hint on hover', () => {
+    const titles = presentParts(row({ attack: 4, move: 2 }), stats).facts.map((f) => f.title)
+    expect(titles).toEqual(['Attack — How hard it hits', 'Move'])
+  })
+
+  it('leave out a column this row has nothing under, rather than label a dash', () => {
+    expect(presentParts(row({ move: 2 }), stats).facts.map((f) => f.label)).toEqual(['M'])
+    expect(presentParts(row({ attack: '', move: null }), stats).facts).toEqual([])
+    // Zero is a value: a unit that does not attack still says so.
+    expect(presentParts(row({ attack: 0 }), stats).facts.map((f) => f.text)).toEqual(['0'])
+  })
+
+  it('are none for a type that names no card label', () => {
+    expect(presentParts(row(), pieces.columns!).facts).toEqual([])
+  })
+})

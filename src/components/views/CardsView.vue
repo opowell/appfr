@@ -10,6 +10,7 @@ import PinStar from './PinStar.vue'
 import RowPicture from './RowPicture.vue'
 import QueryMark from './QueryMark.vue'
 import RowStanding from './RowStanding.vue'
+import OpenMark from './OpenMark.vue'
 import ScopeMark from './ScopeMark.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -66,6 +67,7 @@ const allPictures = computed(() => rows.value.length > 0 && rows.value.every(isP
             :entry="entry"
           />
           <ScopeMark :entry="entry" />
+          <OpenMark :entry="entry" />
           <PinStar
             v-if="shell.pinnable.value"
             :row="entry.row"
@@ -94,6 +96,19 @@ const allPictures = computed(() => rows.value.length > 0 && rows.value.every(isP
             v-if="!isPicture(entry)"
             class="dc-card__secondary dc-mono"
           >{{ entry.parts.reference }}</span>
+          <!-- The figures the type puts on its cards (`cardLabel`): short
+               labels, the full ones on hover. -->
+          <span
+            v-if="entry.parts.facts.length"
+            class="dc-card__facts dc-mono"
+          >
+            <span
+              v-for="fact in entry.parts.facts"
+              :key="fact.column.key ?? fact.label"
+              class="dc-card__fact"
+              :title="fact.title || undefined"
+            ><span class="dc-card__fact-label">{{ fact.label }}</span> {{ fact.text }}</span>
+          </span>
         </span>
       </PressLink>
       <!-- Each number under its own heading: a card has the room a table row
@@ -263,6 +278,22 @@ const allPictures = computed(() => rows.value.length > 0 && rows.value.every(isP
   font-size: var(--dc-text-micro);
   color: var(--dc-fg-3);
   word-break: break-all;
+}
+
+.dc-card__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-size: var(--dc-text-micro);
+  color: var(--dc-fg-1);
+}
+
+.dc-card__fact {
+  white-space: nowrap;
+}
+
+.dc-card__fact-label {
+  color: var(--dc-fg-3);
 }
 
 .dc-card__metrics {

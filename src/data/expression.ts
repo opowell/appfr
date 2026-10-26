@@ -1,4 +1,4 @@
-import type { ColumnDef, ColumnRole, EntitySchema, ShellRow } from '../types'
+import type { ColumnDef, ColumnRole, DomainSchema, EntitySchema, ShellRow } from '../types'
 import { cellValue, roleColumn, roleColumns } from '../query/columns'
 
 /**
@@ -343,7 +343,12 @@ function sameText(actual: string, wanted: string): boolean {
  * are not a match turned round either, which is why they are told apart from
  * both here rather than folded into `true`.
  */
-function termOutcome(term: Term, row: ShellRow, entity: EntitySchema): boolean | null {
+function termOutcome(
+  term: Term,
+  row: ShellRow,
+  entity: EntitySchema,
+  strict: ReadonlySet<string> | null,
+): boolean | null {
   if (term.kind === 'text') {
     // The identity and the reference: what a bare word is looking for, in
     // whichever columns this type gave those roles to.
@@ -356,7 +361,9 @@ function termOutcome(term: Term, row: ShellRow, entity: EntitySchema): boolean |
   }
 
   const actual = resolveField(term.field, row, entity)
-  if (actual === undefined) return null // unknown field: not a constraint
+  // Unknown field: not a constraint — unless it is a join key the schema has
+  // asked to be held to, which a row that never heard of it does not answer.
+  if (actual === undefined) return strict?.has(term.field) ? false : null
 
   // A multi-valued facet answers to each of its values on its own. Nothing
   // there is a number, so a comparison against one constrains nothing.
@@ -395,8 +402,13 @@ function termOutcome(term: Term, row: ShellRow, entity: EntitySchema): boolean |
 }
 
 /** The outcome as a constraint: a term that asks nothing is satisfied, and a `-` turns the rest. */
-function matchesTerm(term: Term, row: ShellRow, entity: EntitySchema): boolean {
-  const outcome = termOutcome(term, row, entity)
+function matchesTerm(
+  term: Term,
+  row: ShellRow,
+  entity: EntitySchema,
+  strict: ReadonlySet<string> | null,
+): boolean {
+  const outcome = termOutcome(term, row, entity, strict)
   if (outcome === null) return true
   return term.negated ? !outcome : outcome
 }
@@ -433,27 +445,63 @@ function names(term: Term): term is FieldTerm {
   )
 }
 
+/** The join keys of each schema that asked for them to be held to, lowercased. */
+const strictFieldsOf = new WeakMap<DomainSchema, ReadonlySet<string>>()
+
+/**
+ * The fields a row has to carry for a term on them to pass it: every entity's
+ * {@link EntitySchema.scope}, where the schema sets
+ * {@link DomainSchema.strictScopes} — and none at all where it does not, or
+ * where no schema was handed over, which is the reading this language has
+ * always had.
+ */
+function strictFields(schema: DomainSchema | null | undefined): ReadonlySet<string> | null {
+  if (!schema?.strictScopes) return null
+  let fields = strictFieldsOf.get(schema)
+  if (!fields) {
+    fields = new Set(
+      schema.entities.flatMap((entity) => (entity.scope ? [entity.scope.toLowerCase()] : [])),
+    )
+    strictFieldsOf.set(schema, fields)
+  }
+  return fields
+}
+
 /**
  * True when the row satisfies at least one `OR` group in full — every term
  * of it, except that the naming terms on one field (see {@link names}) count
  * as satisfied when any one of them is. A half-typed one among them is
  * satisfied on its own, as it is anywhere, so a set holding one is satisfied
  * whatever the rest say — the same reading a half-typed term gets alone.
+ *
+ * `schema` is optional, and only read for {@link DomainSchema.strictScopes}:
+ * where that is set, a term on a join key — some entity's `scope` — is a
+ * mismatch for a row that does not carry the field, rather than the
+ * constraint-on-nothing an unknown field is everywhere else. Left out, or
+ * with the flag unset, every term reads exactly as it did before there was a
+ * flag. It is the schema rather than a flag of its own because the schema is
+ * what says which fields are join keys, and what every source already has in
+ * hand: it is on the {@link QueryRequest}.
  */
 export function matchesExpression(
   expression: Expression,
   row: ShellRow,
   entity: EntitySchema,
+  schema?: DomainSchema | null,
 ): boolean {
   if (!expression.length) return true
+  const strict = strictFields(schema)
   return expression.some((group) => {
     const named = new Map<string, boolean>()
     for (const term of group) {
       if (!names(term)) continue
-      named.set(term.field, (named.get(term.field) ?? false) || matchesTerm(term, row, entity))
+      named.set(
+        term.field,
+        (named.get(term.field) ?? false) || matchesTerm(term, row, entity, strict),
+      )
     }
     return group.every((term) =>
-      names(term) ? named.get(term.field) === true : matchesTerm(term, row, entity),
+      names(term) ? named.get(term.field) === true : matchesTerm(term, row, entity, strict),
     )
   })
 }

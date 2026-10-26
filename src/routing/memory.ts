@@ -20,14 +20,16 @@ export function createMemoryAdapter(initialSearch = '', initialPath = '/'): Memo
     search,
     path,
     history,
-    href(next) {
-      return `${path.value}${normalizeSearch(next)}`
+    href(next, to) {
+      return `${to ?? path.value}${normalizeSearch(next)}`
     },
-    push(next) {
+    push(next, to) {
+      if (to !== undefined) path.value = to
       search.value = normalizeSearch(next)
       history.push(`${path.value}${search.value}`)
     },
-    replace(next) {
+    replace(next, to) {
+      if (to !== undefined) path.value = to
       search.value = normalizeSearch(next)
       history[history.length - 1] = `${path.value}${search.value}`
     },

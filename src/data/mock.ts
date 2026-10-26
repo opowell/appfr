@@ -3,7 +3,6 @@ import type {
   DomainSchema,
   EntitySchema,
   FacetDef,
-  FacetState,
   QueryRequest,
   QueryResult,
   RecordStatus,
@@ -11,10 +10,15 @@ import type {
   SyncDataSource,
 } from '../types'
 import { RECORD_STATUSES } from '../types'
-import { columnsForSort, findSort } from '../query/schema'
-import { cellValue } from '../query/columns'
-import { matchesExpression, parseExpression } from './expression'
+import { applyQuery } from './apply'
 import { fnv1a } from './format'
+
+/*
+ * Applying a query to rows in memory — the facets, the expression, the sort and
+ * the page — is shared with `createMemoryDataSource`, and lives in `apply.ts`.
+ * `matchesFacets` went with it, and is still exported from here.
+ */
+export { matchesFacets } from './apply'
 
 /** Tile backgrounds for the grid view, cycled by row hash. */
 export const MOCK_TINTS = [
@@ -25,6 +29,20 @@ export const MOCK_TINTS = [
   'oklch(0.35 0.07 30)',
   'oklch(0.34 0.05 200)',
 ] as const
+
+/**
+ * A tile colour for a record, the same one every time: one of
+ * {@link MOCK_TINTS}, picked by a hash of the id.
+ *
+ * For a host whose records have no colour of their own but whose grid view
+ * wants its tiles told apart — the palette the mock draws with, so a real
+ * corpus and a generated one look like the same shell. Stable across runs
+ * and across sorts, since it reads nothing but the id; nothing fills it in
+ * for you, so a `tint` column holds it only where a source puts it there.
+ */
+export function tintFor(id: string): string {
+  return MOCK_TINTS[fnv1a(id) % MOCK_TINTS.length] as string
+}
 
 export interface MockSourceOptions {
   /** Rows generated per entity. Defaults to 48. */
@@ -223,67 +241,6 @@ export function generateRows(
   return rows
 }
 
-/** Applies the facet state to a row. Neutral facets never exclude anything. */
-export function matchesFacets(row: ShellRow, facets: FacetState): boolean {
-  for (const [key, value] of Object.entries(facets)) {
-    const actual = row.fields[key]
-    switch (value.kind) {
-      case 'chips': {
-        if (!value.selected.length) break
-        // The chips of one facet are an OR, so a row holding several values is
-        // in the set when any one of them is selected.
-        if (Array.isArray(actual)) {
-          if (!actual.some((entry) => value.selected.includes(String(entry)))) return false
-          break
-        }
-        if (typeof actual !== 'string' || !value.selected.includes(actual)) return false
-        break
-      }
-      case 'range': {
-        if (value.min === null && value.max === null) break
-        const numeric = typeof actual === 'number' ? actual : Number(actual)
-        if (!Number.isFinite(numeric)) return false
-        if (value.min !== null && numeric < value.min) return false
-        if (value.max !== null && numeric > value.max) return false
-        break
-      }
-      case 'toggle': {
-        if (!value.on) break
-        if (actual !== true) return false
-        break
-      }
-    }
-  }
-  return true
-}
-
-/**
- * Orders rows by a sort key, resolving it through the column that offers it.
- *
- * How to compare comes from what the column *says* it holds rather than from
- * what its values look like: `Date.parse` will read "Firmware release notes ·
- * rev 2" as a date in February 2001, so a sniffing comparator sorts a corpus
- * of names into nonsense. Numbers descend, dates run newest first, and text
- * goes Z→A so that reversing the direction reads A→Z.
- */
-function comparatorFor(columns: ColumnDef[], sortKey: string) {
-  const column = columns.find((candidate) => candidate.sort === sortKey)
-  if (!column) return () => 0
-
-  const kind = column.kind ?? 'text'
-  const numeric = kind === 'number' || column.role === 'metric'
-  const dated = kind === 'date' || column.role === 'updated'
-
-  return (a: ShellRow, b: ShellRow): number => {
-    const left = cellValue(column, a)
-    const right = cellValue(column, b)
-
-    if (numeric) return Number(right ?? 0) - Number(left ?? 0)
-    if (dated) return Date.parse(String(right ?? '')) - Date.parse(String(left ?? ''))
-    return String(right ?? '').localeCompare(String(left ?? ''))
-  }
-}
-
 /**
  * An in-memory {@link SyncDataSource} over generated rows. It filters, sorts and
  * pages for real, so stories and tests exercise the same code paths a live
@@ -310,35 +267,13 @@ export function createMockDataSource(options: MockSourceOptions = {}): SyncDataS
   }
 
   return {
-    query({ query, schema, entity, limit, offset }: QueryRequest): QueryResult {
-      const expression = parseExpression(query.expr)
-
-      // No entity selected means the whole corpus. Logs and settings are
-      // entities like any other, so they are in it until a filter says not.
-      const scope = entity ? [entity] : schema.entities
-      const population: ShellRow[] = []
-      const matched: ShellRow[] = []
-
-      for (const candidate of scope) {
-        for (const row of rowsFor(candidate, schema)) {
-          population.push(row)
-          // Per-entity facets only apply when that entity is the one selected.
-          const passesFacets = entity ? matchesFacets(row, query.facets) : true
-          if (passesFacets && matchesExpression(expression, row, candidate)) matched.push(row)
-        }
-      }
-
-      const sort = findSort(entity, query.sort, schema)
-      const sorted = matched.sort(comparatorFor(columnsForSort(entity, schema), sort.key))
-      if (query.dir === 'asc') sorted.reverse()
-
-      return {
-        // One page out of the middle. `total` stays the whole match, which is
-        // what the shell counts pages with.
-        rows: sorted.slice(offset, offset + limit),
-        total: matched.length,
-        unfiltered: matched.length === population.length,
-      }
+    query(request: QueryRequest): QueryResult {
+      // Generated rows always carry their dates, and a `limit` of 0 is a page
+      // of nothing — both as this source has always read them.
+      return applyQuery(request, (entity) => rowsFor(entity, request.schema), {
+        undatedLast: false,
+        zeroIsAll: false,
+      })
     },
   }
 }

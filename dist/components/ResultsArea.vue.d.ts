@@ -6,6 +6,13 @@ type __VLS_Props = {
      * first that is, rather than a view with no way back to it in the panel.
      */
     views?: ViewKind[];
+    /**
+     * Whether what the source answers is not yet the data — see `loading` on
+     * `DataShell`. Said in place of everything else, the per-type cards
+     * included: they run queries of their own against the same source, and
+     * would each say "nothing here yet" of data that has not arrived.
+     */
+    loading?: boolean;
 };
 /**
  * Passed straight through to the per-type cards, which is the one view they

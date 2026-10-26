@@ -4,7 +4,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import { normalizeSearch } from '../../src/routing/adapter'
 import { createHistoryAdapter } from '../../src/routing/history'
 import { createMemoryAdapter } from '../../src/routing/memory'
-import { createVueRouterAdapter } from '../../src/routing/vueRouter'
+import { createVueRouterAdapter, entityRedirect, recordRedirect } from '../../src/routing/vueRouter'
 
 describe('normalizeSearch', () => {
   it.each([
@@ -158,5 +158,55 @@ describe('vue-router adapter', () => {
     const adapter = createVueRouterAdapter(router)
     expect(adapter.search.value).toBe('?v=links')
     adapter.dispose?.()
+  })
+})
+
+describe('vue-router redirects', () => {
+  const Blank = { render: () => h('div') }
+
+  /*
+   * A real router, so the helpers are checked against the `redirect` vue-router
+   * actually calls them as — the type as well as the landing.
+   */
+  const makeRouter = () =>
+    createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: Blank },
+        { path: '/tests', redirect: entityRedirect('tests') },
+        { path: '/tests/:id', redirect: recordRedirect('test', 'id') },
+        { path: '/app/tenants/:host', redirect: recordRedirect('host', 'host', '/app') },
+        { path: '/app', component: Blank },
+      ],
+    })
+
+  it('lands a record’s permalink on the shell, narrowed to it', async () => {
+    const router = makeRouter()
+    await router.push(`/tests/${encodeURIComponent('ticket-3.0/x.spec.ts')}`)
+    expect(router.currentRoute.value.path).toBe('/')
+    expect(router.currentRoute.value.query).toEqual({ q: 'test="ticket-3.0/x.spec.ts"' })
+  })
+
+  it('keeps the query it arrived with, and ANDs the term on to its expression once', async () => {
+    const router = makeRouter()
+    await router.push('/tests/a.spec?e=runs&q=status%3Afailed')
+    expect(router.currentRoute.value.query).toEqual({ e: 'runs', q: 'status:failed test="a.spec"' })
+
+    await router.push('/tests/a.spec?q=test%3D%22a.spec%22')
+    expect(router.currentRoute.value.query.q).toBe('test="a.spec"')
+  })
+
+  it('drops a quote that would end the term early, and lands where it is told', async () => {
+    const router = makeRouter()
+    await router.push('/app/tenants/a%22b')
+    expect(router.currentRoute.value.path).toBe('/app')
+    expect(router.currentRoute.value.query.q).toBe('host="ab"')
+  })
+
+  it('lands a type’s old list address on the shell listing it', async () => {
+    const router = makeRouter()
+    await router.push('/tests?q=checkout')
+    expect(router.currentRoute.value.path).toBe('/')
+    expect(router.currentRoute.value.query).toEqual({ q: 'checkout', e: 'tests' })
   })
 })

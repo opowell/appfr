@@ -7,11 +7,13 @@
  */
 import '../style/tokens.css'
 
-import { computed, inject, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
+import { computed, inject, nextTick, onBeforeUnmount, onBeforeUpdate, ref, useId, watch } from 'vue'
+import type { Component } from 'vue'
 import type {
   DataSource,
   DomainSchema,
   EntitySchema,
+  NarrowedRecord,
   PressOptions,
   Selection,
   ShellAlign,
@@ -21,13 +23,16 @@ import type {
   ShellTheme,
   ShellWidthMatch,
   ViewKind,
+  ViewsOption,
 } from '../types'
 import type { RouteAdapter } from '../routing/adapter'
 import { ROUTE_ADAPTER_KEY } from '../routing/adapter'
 import { createHistoryAdapter } from '../routing/history'
+import { detachableAdapter } from '../routing/detached'
 import { createMockDataSource } from '../data/mock'
-import { drillExpression, scopeTermFor } from '../query/drill'
+import { drillExpression, recordsIn, scopeTermFor } from '../query/drill'
 import { provideShellContext } from '../composables/context'
+import { provideShellOwnTheme } from '../composables/useLayerTheme'
 import { useQueryState } from '../composables/useQueryState'
 import type { NavigationMode } from '../composables/useQueryState'
 import { useResults } from '../composables/useResults'
@@ -84,8 +89,73 @@ const props = withDefaults(
      * heading alone, the type and its count, in narrower columns that wrap.
      */
     previewsPerType?: number
-    /** Restricts the offered result views. One on offer leaves the bar without a View chooser. */
-    views?: ViewKind[]
+    /**
+     * Restricts the offered result views. One on offer leaves the bar without
+     * a View chooser.
+     *
+     * Or a function of what the query is about, for a host whose screens each
+     * want their own — asked again whenever the type in force or the records
+     * the query narrows to change, with both: `({ entity, records }) =>
+     * entity ? ['table'] : records.length ? ['cards'] : ['table', 'cards']`.
+     * It saves the host reading the query back out of the URL to decide, and
+     * the shell has already read it.
+     */
+    views?: ViewsOption
+    /**
+     * Whether what the source answers is not yet the data: the host's
+     * payloads are still on their way, and a synchronous source over none of
+     * them says, truthfully, "no rows, nought of nought".
+     *
+     * The shell believes a count — it corrects a page past the end of the
+     * results to the last page there is — so a link to `?p=7` opened before
+     * the rows had landed would be rewritten to page 1, and the rows it named
+     * never seen. While this is true the results area says it is loading
+     * rather than what matched, and nothing is corrected from a count; when
+     * it turns false the shell reads the URL against the results as if it had
+     * only just been mounted, and corrects then if there is anything to.
+     *
+     * The header stays up the whole time, so the query can still be read and
+     * edited — what it cannot yet say is how many matched, so the pager is off
+     * the bar until it can.
+     */
+    loading?: boolean
+    /**
+     * Whether a `page` is about the query. Read only while one is provided.
+     *
+     * `shell`, the default, is a page whose input the query is — a form that
+     * runs every spec the query matches: the bar reads the URL the page is
+     * on, and an edit to it stays on that page, narrowing what it acts on.
+     *
+     * `detached` is a page that is about something else — a form making a
+     * new record, a report on one run — and only shares the bar. Its URL's
+     * parameters are the page's own (`?crawl=…`), not a query, so the bar
+     * reads the pristine one, `Everything`; and the first edit to it is a way
+     * back to the list — it navigates to {@link listPath} with that edit
+     * applied, pushing, so Back returns to the page.
+     */
+    pageQuery?: 'shell' | 'detached'
+    /**
+     * Where a detached page's first edit to the bar lands — the path the
+     * list is at. `/` unless it says otherwise: the root of a vue-router app
+     * (its `base` and hash are the router's to add) and of a memory adapter.
+     * A shell mounted below the root under the History API says its own.
+     */
+    listPath?: string
+    /**
+     * A card set of the host's own per record the query narrows to, by the
+     * record's type — `{ tests: TestCards }` — rendered as `<component :is
+     * :id>` where the `record` slot would be. The shorthand for a slot that
+     * would only look the component up; a type with no entry here has no
+     * cards of its own. The slot wins where both are given.
+     */
+    recordCards?: Record<string, Component>
+    /**
+     * Where the bar offers the list of types. `scoped`, the default, only
+     * while one is filtered to — on `Everything` the home screen's cards are
+     * each headed by their type already. `always` keeps it on `Everything`
+     * too, for a home screen that opens as records rather than as type cards.
+     */
+    typeChooser?: 'scoped' | 'always'
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string
     /**
@@ -159,8 +229,12 @@ const props = withDefaults(
   }>(),
   {
     rowPress: 'narrow',
+    loading: false,
+    pageQuery: 'shell',
+    listPath: '/',
     limit: 50,
     previewsPerType: 3,
+    typeChooser: 'scoped',
     theme: 'minimal',
     matchWidth: 'grow',
     headAlign: 'center',
@@ -218,6 +292,19 @@ const slots = defineSlots<{
   /** Extra controls at the right end of the header bar. */
   actions?: () => unknown
   /**
+   * The domain's mark at the left end of the bar, drawn in place of its name
+   * — a logo, an icon. The name stays the bar's accessible text, read out
+   * where the mark is drawn, so the label is still the one place the name is
+   * written; the mark itself is hidden from assistive technology.
+   *
+   * A mark rather than a control: the whole bar is the query panel's toggle,
+   * and a link inside it would be a second press on the same surface.
+   */
+  brand?: (props: {
+    /** {@link DomainSchema.label}, for a mark that wants to say it too. */
+    label: string
+  }) => unknown
+  /**
    * A section of your own at the end of the query panel — for the controls
    * that belong to the application rather than to the query, which the header
    * bar would otherwise have to carry beside the summary it is there to show.
@@ -235,6 +322,40 @@ const slots = defineSlots<{
    */
   'cards-before'?: () => unknown
   'cards-after'?: () => unknown
+  /**
+   * Cards of the host's own about each record the query narrows to — once
+   * per record, in the order the query names them, before `cards-before`.
+   *
+   * A record named in the query is what the screen is *about*: pressing a
+   * row puts its term there, and lifting the term takes it away. The per-type
+   * cards say what the corpus holds of it; what no type holds — the form that
+   * acts on it, its metadata, its log — is the host's, and this is where it
+   * goes, so a record's cards follow the query rather than a route. A record
+   * is a positive term on a field some type declares as its `scope`;
+   * repeated names count once, case aside.
+   *
+   * Only on the per-type screen, as `cards-before` is.
+   */
+  record?: (props: { entity: EntitySchema; id: string }) => unknown
+  /**
+   * A page of the host's own in place of the results, under the same header
+   * — for the screens of an application that are not lists (a form, a
+   * report) but are still about the query: the header shows it, and editing
+   * it there edits it here.
+   *
+   * Unlike `results`, which is handed the rows to draw in its own way, a page
+   * is not a drawing of the rows: the bar carries no pager and no View
+   * chooser, there being nothing under it to page or to draw differently;
+   * the type's operations are not offered over it; and nothing corrects the
+   * URL's page from a count. Provide it conditionally — `<template v-if="…"
+   * #page>` — and the shell is the list again the moment it is not.
+   *
+   * A page that is not about the query at all says so with `pageQuery`.
+   */
+  page?: (props: {
+    /** The committed query, as the URL has it — pristine on a detached page. */
+    query: ShellQuery
+  }) => unknown
   /** Replaces the entire results area. */
   results?: (props: {
     /** The current page of rows, not the whole result. */
@@ -250,6 +371,8 @@ const slots = defineSlots<{
      */
     query: ShellQuery
     pending: boolean
+    /** The `loading` prop: what the source answers is not yet the data. */
+    loading: boolean
   }) => unknown
 }>()
 
@@ -265,6 +388,27 @@ const adapter: RouteAdapter = props.route ?? injectedAdapter ?? (ownedAdapter as
 
 onBeforeUnmount(() => ownedAdapter?.dispose?.())
 
+/**
+ * Whether the area under the bar is a page of the host's — see the `page`
+ * slot. A ref brought up to date before each render rather than a computed,
+ * because a slot passed conditionally comes and goes with the parent's render
+ * and nothing reactive says so; the correction below watches this.
+ */
+const hasPage = ref(Boolean(slots.page))
+onBeforeUpdate(() => {
+  hasPage.value = Boolean(slots.page)
+})
+
+/**
+ * The adapter the query is read through: the host's own, or — under a page
+ * that is not about the query — one standing apart from the URL, reading the
+ * pristine query and writing its first change to the list. See `pageQuery`.
+ */
+const queryAdapter = detachableAdapter(adapter, {
+  detached: () => hasPage.value && props.pageQuery === 'detached',
+  path: () => props.listPath,
+})
+
 /* ------------------------------------------------------------------- state */
 
 const fallbackSource = computed<DataSource>(() => createMockDataSource({ seed: props.schema.key }))
@@ -272,7 +416,7 @@ const source = computed<DataSource>(() => props.source ?? fallbackSource.value)
 
 const query = useQueryState({
   schema: () => props.schema,
-  adapter,
+  adapter: queryAdapter,
   defaults: () => props.defaults,
   navigationMode: () => props.navigationMode,
   facetNavigationMode: () => props.facetNavigationMode,
@@ -303,6 +447,58 @@ const results = useResults({
 
 watch(query.query, (value) => emit('query-change', value))
 
+/* ----------------------------------------------------------------- records */
+
+/**
+ * The records the committed query narrows to, in the order it names them.
+ *
+ * A positive term whose field is some type's `scope` is a term *about a
+ * record* — that is what a scope declares, and it is the reading the header
+ * takes to put a name to the id in a pill. A negated one leaves the record
+ * out, which is not the screen being about it; every other term is a
+ * constraint on a value and names nothing. The same record named twice — in
+ * two alternatives, or in two cases — is one record.
+ *
+ * The committed query rather than the live one: a draft is a search in
+ * progress, and a record's own cards coming and going under each keystroke
+ * would be the screen changing what it is about while it is being typed at.
+ */
+const records = computed<NarrowedRecord[]>(() => recordsIn(props.schema, [query.query.value.expr]))
+
+/** Each record with its type, for the `record` slot and `recordCards`. */
+const recordEntries = computed(() =>
+  records.value.flatMap((record) => {
+    const entity = props.schema.entities.find((candidate) => candidate.key === record.entityKey)
+    return entity ? [{ ...record, entity }] : []
+  }),
+)
+
+/**
+ * The records there are cards of the host's own for: every one, for the slot,
+ * and those of the types the map names, for the map. A function rather than a
+ * computed, because whether a slot was passed is read off the render and is
+ * not something a computed can watch.
+ */
+function cardedRecords() {
+  if (slots.record) return recordEntries.value
+  const cards = props.recordCards
+  if (!cards) return []
+  return recordEntries.value.filter((record) => cards[record.entityKey])
+}
+
+/* ------------------------------------------------------------------ views */
+
+/**
+ * The views on offer, as every part reads them: the host's list as it is, or
+ * what its function says of this screen. Asked afresh only when the type or
+ * the records change, being all the function is told.
+ */
+const offeredViews = computed<ViewKind[] | undefined>(() => {
+  const offered = props.views
+  if (typeof offered !== 'function') return offered
+  return offered({ entity: query.entity.value, records: records.value })
+})
+
 /*
  * A page past the end of the results — a bookmark to a query that has since
  * shrunk, or a hand-edited URL — lands on the last page there is. The codec
@@ -313,12 +509,18 @@ watch(query.query, (value) => emit('query-change', value))
  * back to the page that was corrected and forward again.
  */
 watch(
-  [results.pageCount, results.pending, query.query, draft.drafting],
+  [results.pageCount, results.pending, query.query, draft.drafting, () => props.loading, hasPage],
   () => {
     // A draft's pages are the draft's: the count is of its results, not of
     // the query's, and correcting the URL by it would write a page the query
     // never had — on a keystroke, which is the one thing a draft never does.
     if (results.pending.value || draft.drafting.value) return
+    // Nor while the source is not yet answering with the data (`loading`):
+    // its count is of nothing, and the page in the URL is the one the data
+    // will have. Watched, so the correction is made when it lands — the
+    // same as on a mount. A page of the host's pages nothing, so the URL's
+    // page is left for the list to read when it is back.
+    if (props.loading || hasPage.value) return
     const last = results.pageCount.value
     if (query.query.value.page > last) query.setPage(last, 'replace')
   },
@@ -461,6 +663,17 @@ function drill(row: ShellRow, entity: EntitySchema | null, options: PressOptions
 
 /* ----------------------------------------------------------------- context */
 
+/** Whether a press on the row narrows to it — the default, for a type with a scope. */
+function narrowsHere(row: ShellRow): boolean {
+  return props.rowPress === 'narrow' && scopeTermFor(props.schema, row) !== null
+}
+
+/** Where the row's record lives outside the shell — see `EntitySchema.href`. */
+function recordHref(row: ShellRow): string | null {
+  const entity = props.schema.entities.find((candidate) => candidate.key === row.entityKey)
+  return entity?.href?.(row) || null
+}
+
 const shell = provideShellContext({
   ...query,
   draft: draft.text,
@@ -505,16 +718,24 @@ const shell = provideShellContext({
    * knowing which of the two it is: they all call this.
    */
   activate: (row, options = {}) => {
-    if (props.rowPress === 'narrow' && scopeTermFor(props.schema, row)) {
+    if (narrowsHere(row)) {
       drill(row, null, options)
+      return
+    }
+    // A record that lives somewhere opens there rather than being reported —
+    // beside the shell, which keeps the reader's place in it.
+    const away = recordHref(row)
+    if (away) {
+      window.open(away, '_blank', 'noopener')
       return
     }
     emit('activate', row)
   },
   pressHref: (row) =>
-    props.rowPress === 'narrow' && scopeTermFor(props.schema, row)
+    narrowsHere(row)
       ? query.narrowHref(drillExpression(props.schema, query.query.value, row), null, 'cards')
-      : null,
+      : recordHref(row),
+  recordHref,
   drillHref: (row, entity) =>
     scopeTermFor(props.schema, row)
       ? query.narrowHref(
@@ -529,6 +750,10 @@ const shell = provideShellContext({
   operate: (key) => emit('operate', key, selection.value),
   drill,
 })
+
+/* The layers it opens — dialogs, toasts, popovers — are drawn in `body`, and
+   dress as this shell by asking for it. */
+provideShellOwnTheme({ theme: () => props.theme, accent: () => props.accent, tokens: () => props.tokens })
 
 /*
  * Inline so it beats the stylesheet without the host needing a selector that
@@ -563,10 +788,22 @@ defineExpose({
         ref="headerRef"
         :expanded="panelOpen"
         :panel-id="panelId"
-        :views="views"
+        :views="offeredViews"
+        :type-chooser="typeChooser"
         :pages-note="pagesNote"
+        :hide-pages="loading || hasPage"
+        :hide-views="hasPage"
         @toggle="panelOpen = !panelOpen"
       >
+        <template
+          v-if="slots.brand"
+          #brand="brandProps"
+        >
+          <slot
+            name="brand"
+            v-bind="brandProps"
+          />
+        </template>
         <template
           v-if="slots.actions"
           #actions
@@ -598,13 +835,30 @@ defineExpose({
       </template>
     </div>
 
+
+    <!-- A page of the host's, under the same bar: not a drawing of the rows,
+         so none of what acts on them is offered over it. -->
+    <div
+      v-if="slots.page"
+      class="dc-shell__page"
+    >
+      <slot
+        name="page"
+        :query="shell.query.value"
+      />
+    </div>
+
     <!-- What can be done with the records of the type being listed, over the
          records themselves and under the query that found them. It renders
          nothing where the type offers nothing, and stays put while the results
          scroll. -->
-    <RecordActions :views="views" />
+    <RecordActions
+      v-if="!slots.page"
+      :views="offeredViews"
+    />
 
     <slot
+      v-if="!slots.page"
       name="results"
       :rows="shell.rows.value"
       :total="shell.total.value"
@@ -612,12 +866,34 @@ defineExpose({
       :page-count="shell.pageCount.value"
       :query="shell.liveQuery.value"
       :pending="shell.pending.value"
+      :loading="loading"
     >
-      <ResultsArea :views="views">
+      <ResultsArea
+        :views="offeredViews"
+        :loading="loading"
+      >
         <template
-          v-if="slots['cards-before']"
+          v-if="slots['cards-before'] || cardedRecords().length"
           #cards-before
         >
+          <!-- The records the query is about, before anything else the host
+               puts among the cards: the screen is about them first. -->
+          <template
+            v-for="record in cardedRecords()"
+            :key="`${record.entityKey}:${record.id}`"
+          >
+            <slot
+              v-if="slots.record"
+              :id="record.id"
+              name="record"
+              :entity="record.entity"
+            />
+            <component
+              :is="recordCards?.[record.entityKey]"
+              v-else
+              :id="record.id"
+            />
+          </template>
           <slot name="cards-before" />
         </template>
         <template
@@ -632,6 +908,17 @@ defineExpose({
 </template>
 
 <style scoped>
+/*
+ * A host's page takes the room the results would have, and scrolls in it the
+ * way they do — the bar staying put above it.
+ */
+.dc-shell__page {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
 .dc-shell__head {
   position: relative;
   z-index: 30;

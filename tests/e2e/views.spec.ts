@@ -130,6 +130,22 @@ test.describe('Views — the picture a type has, where it has one', () => {
     await expect(page.locator('.dc-card__open .dc-card__image').first()).toBeVisible()
   })
 
+  test('a picture card carries the figures its type names a card label for', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--picture-cards-with-facts')
+    const fact = page.locator('.dc-card--picture .dc-card__fact').first()
+    await expect(fact).toBeVisible()
+    await expect(fact).toHaveText(/^C \S+/)
+    await expect(fact).toHaveAttribute('title', 'Colors')
+    // Inside the press, like the name it is under.
+    await expect(page.locator('.dc-card__open .dc-card__facts').first()).toBeVisible()
+  })
+
+  test('a picture card without card labels is its picture and name alone', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--picture-cards')
+    expect(await page.locator('.dc-card--picture').count()).toBeGreaterThan(0)
+    await expect(page.locator('.dc-card__facts')).toHaveCount(0)
+  })
+
   /*
    * A source that does not load is the same nothing as a source that was never
    * there. A catalogue's pictures are somebody else's files, so this is what a

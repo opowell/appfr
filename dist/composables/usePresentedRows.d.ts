@@ -10,6 +10,18 @@ export interface RowMetric {
     text: string;
 }
 /**
+ * One figure a card shows under its name — a column that names a
+ * {@link ColumnDef.cardLabel}, with the row's words for it.
+ */
+export interface RowFact {
+    column: ColumnDef;
+    /** The short label: `A`. */
+    label: string;
+    /** What hovering it says: the column's label and its hint. */
+    title: string;
+    text: string;
+}
+/**
  * The parts a view that is not a table is made of.
  *
  * A card, a tile, a link row and a preview pane are an identity, a reference,
@@ -23,6 +35,8 @@ export interface RowParts {
     reference: string;
     /** The metric columns, in the order the schema declared them. */
     metrics: RowMetric[];
+    /** The columns that name a card label and have a value here, in order. */
+    facts: RowFact[];
     state: RecordStatus | null;
     /** The date, formatted the way every view formats it. */
     updated: string;

@@ -1,5 +1,6 @@
 import '../style/tokens.css';
-import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewKind } from '../types';
+import type { Component } from 'vue';
+import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewsOption } from '../types';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
 type __VLS_Props = {
@@ -48,8 +49,73 @@ type __VLS_Props = {
      * heading alone, the type and its count, in narrower columns that wrap.
      */
     previewsPerType?: number;
-    /** Restricts the offered result views. One on offer leaves the bar without a View chooser. */
-    views?: ViewKind[];
+    /**
+     * Restricts the offered result views. One on offer leaves the bar without
+     * a View chooser.
+     *
+     * Or a function of what the query is about, for a host whose screens each
+     * want their own — asked again whenever the type in force or the records
+     * the query narrows to change, with both: `({ entity, records }) =>
+     * entity ? ['table'] : records.length ? ['cards'] : ['table', 'cards']`.
+     * It saves the host reading the query back out of the URL to decide, and
+     * the shell has already read it.
+     */
+    views?: ViewsOption;
+    /**
+     * Whether what the source answers is not yet the data: the host's
+     * payloads are still on their way, and a synchronous source over none of
+     * them says, truthfully, "no rows, nought of nought".
+     *
+     * The shell believes a count — it corrects a page past the end of the
+     * results to the last page there is — so a link to `?p=7` opened before
+     * the rows had landed would be rewritten to page 1, and the rows it named
+     * never seen. While this is true the results area says it is loading
+     * rather than what matched, and nothing is corrected from a count; when
+     * it turns false the shell reads the URL against the results as if it had
+     * only just been mounted, and corrects then if there is anything to.
+     *
+     * The header stays up the whole time, so the query can still be read and
+     * edited — what it cannot yet say is how many matched, so the pager is off
+     * the bar until it can.
+     */
+    loading?: boolean;
+    /**
+     * Whether a `page` is about the query. Read only while one is provided.
+     *
+     * `shell`, the default, is a page whose input the query is — a form that
+     * runs every spec the query matches: the bar reads the URL the page is
+     * on, and an edit to it stays on that page, narrowing what it acts on.
+     *
+     * `detached` is a page that is about something else — a form making a
+     * new record, a report on one run — and only shares the bar. Its URL's
+     * parameters are the page's own (`?crawl=…`), not a query, so the bar
+     * reads the pristine one, `Everything`; and the first edit to it is a way
+     * back to the list — it navigates to {@link listPath} with that edit
+     * applied, pushing, so Back returns to the page.
+     */
+    pageQuery?: 'shell' | 'detached';
+    /**
+     * Where a detached page's first edit to the bar lands — the path the
+     * list is at. `/` unless it says otherwise: the root of a vue-router app
+     * (its `base` and hash are the router's to add) and of a memory adapter.
+     * A shell mounted below the root under the History API says its own.
+     */
+    listPath?: string;
+    /**
+     * A card set of the host's own per record the query narrows to, by the
+     * record's type — `{ tests: TestCards }` — rendered as `<component :is
+     * :id>` where the `record` slot would be. The shorthand for a slot that
+     * would only look the component up; a type with no entry here has no
+     * cards of its own. The slot wins where both are given.
+     */
+    recordCards?: Record<string, Component>;
+    /**
+     * Where the bar offers the list of types. `scoped`, the default, only
+     * while one is filtered to — on `Everything` the home screen's cards are
+     * each headed by their type already. `always` keeps it on `Everything`
+     * too, for a home screen that opens as records rather than as type cards.
+     */
+    typeChooser?: 'scoped' | 'always';
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string;
     /**
@@ -125,6 +191,19 @@ type __VLS_Slots = {
     /** Extra controls at the right end of the header bar. */
     actions?: () => unknown;
     /**
+     * The domain's mark at the left end of the bar, drawn in place of its name
+     * — a logo, an icon. The name stays the bar's accessible text, read out
+     * where the mark is drawn, so the label is still the one place the name is
+     * written; the mark itself is hidden from assistive technology.
+     *
+     * A mark rather than a control: the whole bar is the query panel's toggle,
+     * and a link inside it would be a second press on the same surface.
+     */
+    brand?: (props: {
+        /** {@link DomainSchema.label}, for a mark that wants to say it too. */
+        label: string;
+    }) => unknown;
+    /**
      * A section of your own at the end of the query panel — for the controls
      * that belong to the application rather than to the query, which the header
      * bar would otherwise have to carry beside the summary it is there to show.
@@ -142,6 +221,43 @@ type __VLS_Slots = {
      */
     'cards-before'?: () => unknown;
     'cards-after'?: () => unknown;
+    /**
+     * Cards of the host's own about each record the query narrows to — once
+     * per record, in the order the query names them, before `cards-before`.
+     *
+     * A record named in the query is what the screen is *about*: pressing a
+     * row puts its term there, and lifting the term takes it away. The per-type
+     * cards say what the corpus holds of it; what no type holds — the form that
+     * acts on it, its metadata, its log — is the host's, and this is where it
+     * goes, so a record's cards follow the query rather than a route. A record
+     * is a positive term on a field some type declares as its `scope`;
+     * repeated names count once, case aside.
+     *
+     * Only on the per-type screen, as `cards-before` is.
+     */
+    record?: (props: {
+        entity: EntitySchema;
+        id: string;
+    }) => unknown;
+    /**
+     * A page of the host's own in place of the results, under the same header
+     * — for the screens of an application that are not lists (a form, a
+     * report) but are still about the query: the header shows it, and editing
+     * it there edits it here.
+     *
+     * Unlike `results`, which is handed the rows to draw in its own way, a page
+     * is not a drawing of the rows: the bar carries no pager and no View
+     * chooser, there being nothing under it to page or to draw differently;
+     * the type's operations are not offered over it; and nothing corrects the
+     * URL's page from a count. Provide it conditionally — `<template v-if="…"
+     * #page>` — and the shell is the list again the moment it is not.
+     *
+     * A page that is not about the query at all says so with `pageQuery`.
+     */
+    page?: (props: {
+        /** The committed query, as the URL has it — pristine on a detached page. */
+        query: ShellQuery;
+    }) => unknown;
     /** Replaces the entire results area. */
     results?: (props: {
         /** The current page of rows, not the whole result. */
@@ -157,6 +273,8 @@ type __VLS_Slots = {
          */
         query: ShellQuery;
         pending: boolean;
+        /** The `loading` prop: what the source answers is not yet the data. */
+        loading: boolean;
     }) => unknown;
 };
 declare function closePanel(): void;
@@ -204,6 +322,10 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
 }>, {
     limit: number;
     previewsPerType: number;
+    typeChooser: "scoped" | "always";
+    loading: boolean;
+    pageQuery: "shell" | "detached";
+    listPath: string;
     theme: ShellTheme;
     matchWidth: ShellWidthMatch;
     headAlign: ShellAlign;

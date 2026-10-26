@@ -247,6 +247,68 @@ This is the streaming Brickzuke's `addRow(item, index)` was reaching for —
 ref could not give it: rows that stop arriving when the query they belong to is
 gone, and a page whose size the table still decides.
 
+### Rows you already have
+
+An API that returns whole lists — no filtering, no paging — leaves the query
+to be applied in the page. `createMemoryDataSource(rows)` is that source: the
+expression, the facets, the sort and the page, by the same code the bundled
+mock runs, so every term reads exactly as it does there. It is synchronous,
+which the shell applies in the same tick — rows are on screen from the first
+render, and the pending state stays reserved for the fetch.
+
+```ts
+import { createMemoryDataSource, queryAll, useStableSchema } from 'header-content-layout'
+
+// A new array is a new source, and a new source is what re-runs the query.
+const source = computed(() => createMemoryDataSource(toRows(payloads.value)))
+
+// Every spec the query matches, not a page of them — what a "Run all" acts on.
+const specs = queryAll(source.value, { query, schema, entity: findEntity(schema, 'specs') })
+```
+
+Two things it reads differently from the mock, because its rows are real:
+
+- **A row with no date under a date sort goes last, in both directions.** A
+  column of `kind: 'date'` or `role: 'updated'` holding `''` or anything that
+  does not parse says nothing about where the row belongs — a host never
+  crawled, a spec never run — so it is held out of the sort rather than
+  floated to the top of an ascending list, where it would push the answers
+  off the first screen.
+- **A `limit` of 0 is no limit**, as the shell's own sink reads it. The mock
+  reads it as a page of nothing and goes on doing so, which is why `queryAll`
+  asks for a page no corpus reaches instead: that is every row to either.
+
+A schema built from that data has facets that are the data's — the values a
+chips facet offers, the ceiling of a range — and those are built from the rows
+too:
+
+```ts
+import { chipsFrom, rangeFrom, toggleFacet, usefulFacets } from 'header-content-layout'
+
+facets: usefulFacets([
+  chipsFrom(specRows, 'tag', 'Tags', { multiple: true }),  // every value held, A to Z
+  rangeFrom(specRows, 'cases', 'Cases'),                    // 0 to niceMax(the largest)
+  toggleFacet('failing', 'Failing', 'Only specs some run has failed'),
+]),
+```
+
+`usefulFacets` drops what cannot change the result — a chips facet with one
+option, a range from 0 to 0 — and `niceMax` is the rounding a range's ceiling
+gets, the next 1, 2 or 5 step, so the schema does not change every time a
+running duration ticks one second further.
+
+It still changes more often than it says anything new: a poll lands, a case
+flips, and the counts and options stand still. `useStableSchema(build)` re-runs
+`build` whenever what it reads changes and hands over the result only when it
+differs *by value* — `JSON.stringify`, or a `key` of your own — so the shell is
+not handed a new schema, and does not rebuild its query panel, for nothing.
+Functions in the schema, a column's `format` or `value`, are not part of that
+comparison: one that reads changing data should read it when called.
+
+```ts
+const schema = useStableSchema(() => buildSchema(payloads.value))
+```
+
 ## Routing
 
 The query is derived from the route's search string and written back on every
@@ -268,6 +330,42 @@ const route = createVueRouterAdapter(useRouter())
 // …or app-wide, and every shell picks it up.
 app.provide(ROUTE_ADAPTER_KEY, route)
 ```
+
+An adapter is a search string and a path: `search` and `path` are what it
+reads, and `push(search, path?)`, `replace(search, path?)` and
+`href(search, path?)` what it writes. The shell writes the search alone,
+which stays on the path it is on — except from [a page that is not about the
+query](#a-page-that-is-not-about-the-query), whose first edit goes to the
+list's path and names it. All three adapters take it: the History one leaves
+the page's hash behind on a move to another path, and the vue-router one
+navigates through the router (so its `base` and hash history apply). An
+adapter of your own that ignores the second argument stays where it is.
+
+### Permalinks to a record
+
+Where a press narrows, a record has no page of its own: the screen about it
+is the shell with its term in the query. Its address is then a way *into* the
+shell — and two vue-router `redirect` helpers build those:
+
+```ts
+import { entityRedirect, recordRedirect } from 'header-content-layout'
+
+const routes = [
+  { path: '/', component: ShellView },
+  // `/tests` → `/?e=tests`: a type's old list address.
+  { path: '/tests', redirect: entityRedirect('tests') },
+  // `/tests/:id` → `/?q=test="<id>"`: the record's own.
+  { path: '/tests/:id', redirect: recordRedirect('test', 'id') },
+]
+```
+
+`recordRedirect(scopeField, param)` writes the same term a press writes —
+`field="id"`, quoted — so a record reached by its address reads, and lifts,
+exactly like one reached from a list. The query the address arrived with is
+kept and the term ANDed on to its expression, once however often the link is
+followed, so `/tests/x?e=runs` lands on that record's runs. `entityRedirect`
+keeps it too, so `/tests?q=checkout` lands on the same search. Both take the
+path the shell is mounted at as a last argument, `/` unless you say.
 
 ### What the URL looks like
 
@@ -299,6 +397,21 @@ Changing the entity, view, sort, committed expression or page **pushes** a
 history entry — those are destinations worth coming back to. Nudging a facet
 **replaces**, because one entry per chip click makes the back button useless.
 Both are configurable via `navigationMode` and `facetNavigationMode`.
+
+### The URL outside the shell
+
+A redirect, a guard or a page beside the shell has the router's query object
+in hand rather than the adapter's search string. `searchFromQuery(route.query)`
+is that object as the search `parseQuery` reads — a repeated parameter kept,
+a `null` one dropped — and `readExpression(search)` is the expression alone,
+read without a schema, decoded exactly as `parseQuery` decodes it:
+
+```ts
+import { readExpression, searchFromQuery } from 'header-content-layout'
+
+const search = searchFromQuery(route.query)   // '?e=tests&q=host%3D%22a.example%22'
+readExpression(search)                        // 'host="a.example"'
+```
 
 ## Schemas
 
@@ -537,6 +650,57 @@ of the resolvers are exported for a host rendering its own views; `useColumns()`
 is the scope's set inside a shell, and `PresentedRow.parts` is a row with every
 role already resolved.
 
+#### Columns most types have
+
+Still nothing the shell falls back on — but a host writing several types'
+columns writes the same identity, date and state into each, and one type's
+table should not disagree with the card beside it. These are those columns as
+factories, over the field names the fixtures use, each taking a
+`Partial<ColumnDef>` last for whatever this type says differently:
+
+```ts
+import {
+  dateColumn, entityColumn, identityColumn, metricColumn, ordinalColumn,
+  referenceColumn, stateColumn, tintColumn, bytesCell,
+} from 'header-content-layout'
+
+columns: [
+  ordinalColumn(),                                         // #
+  identityColumn('Spec', { scope: true }),                 // primary — the → only where asked
+  referenceColumn('Path'),                                 // secondary
+  metricColumn('metric1', 'Cases', { drill: 'cases' }),
+  metricColumn('metric2', 'Size', { format: bytesCell }),
+  dateColumn('lastUpdated', 'Last updated', { role: 'updated', sort: 'updated' }),
+  stateColumn(),                                           // status
+  tintColumn(),
+]
+```
+
+| | |
+| --- | --- |
+| `ordinalColumn` / `stateColumn` / `tintColumn` / `pictureColumn` | the row's place; the pill (`status`); the tile's colour (`tint`); the picture (`picture`) |
+| `identityColumn(label)` / `referenceColumn(label)` | `primary`, opening the record and sorting by `name`; `secondary`, mono and muted |
+| `metricColumn(key, label)` / `dateColumn(key, label)` | a number or a date, sorted by its own key |
+| `entityColumn()` | the row's type, for the mixed set — `dc-table__entity` |
+| `facetColumn(key, label)` | a field of this type alone, under its facet's key |
+| `flagColumn(key, label, names)` | the true ones of a row's boolean fields, named: `crawled, recorded` |
+
+Each is a fresh object, so changing one set changes no other.
+
+**Formatting what a tool measures.** `formatBytes` (`28.0 kB`, decimal units),
+`formatDuration` from milliseconds (`640ms`, `12.4s`, `3m 7s`), `formatElapsed`
+from seconds (`1:42`), `formatPercent` from a share (`50%`), `formatDateTime`
+(a date and its time in the reader's locale, where `formatDate` is fixed and in
+UTC) and `stripAnsi` take the value they say and write `—` for a missing one.
+A cell holds whatever the row holds, so `bytesCell`, `durationCell`,
+`elapsedCell` and `percentCell` are the same as a column's `format`: anything
+in, a number held as text counted, and `EMPTY_CELL` for the rest — and for a
+size or a time of `0`, which in a column means nothing measured.
+
+`tintFor(id)` is a tile colour for a record that has none — one of
+`MOCK_TINTS`, by a hash of the id, so the same every time. Nothing fills it in
+for you; a `tint` field holds it where a source puts it.
+
 ### A type whose card is its picture
 
 A card is a record to read: its row number and state, its name and reference,
@@ -744,6 +908,30 @@ host whose leaves are the only records with somewhere to go (a URL opens in a
 new tab; a file opens in an editor) can leave `rowPress` alone and handle
 `activate` for exactly those.
 
+**A record that lives somewhere opens there.** A type whose records each have
+a page elsewhere — a site, a page of the host's — says where with `href`:
+
+```ts
+{ key: 'urls', label: 'URLs', scope: 'url', href: (row) => row.id, /* … */ }
+```
+
+What it does depends on what a press on the row already means:
+
+| The press | With `href` |
+| --- | --- |
+| is reported (`rowPress: 'open'`, or a type with no `scope`) | the row's name is a link to the record's page, a plain press opens it in a new tab, and `activate` is **not** emitted for it — a host that would only have called `window.open` in its handler need not have one |
+| narrows (the default, on a type with a `scope`) | it goes on narrowing, and a **↗** beside the name opens the record's page in a new tab — where the `→` stands when the roles are the other way round |
+
+It is on the type rather than on a column because a press belongs to the row:
+every view reads it through the one place a press is read, the cards, tiles
+and previews included, and none of those is made of columns. In a table the
+`↗` sits beside the column that asked for the `→` (`scope: true`), or else
+beside the one that opens the record (`activate: true`). A new tab rather
+than this one, because a page elsewhere is a detour from the query rather
+than a step in it; ⌘-click, a middle click and the context menu work on both
+links as on any other. `shell.recordHref(row)` is the URL, for a view of your
+own, and `<OpenMark :entry>` is the `↗`.
+
 **A press with ⌥ (Alt) held leaves the record out instead.** Every press
 that narrows — a row, the `→`, a metric, a card's preview row — writes
 `-host="www.example.com"` rather than `host="www.example.com"` when the
@@ -830,6 +1018,19 @@ The bundled mock source does this for you: it reads the `scope` fields off the
 schema and gives every generated row a membership in each, so a drill through
 generated data returns rows rather than nothing.
 
+**Or say so once, with `strictScopes: true`** on the schema. A term on a join
+key then leaves out a row that does not carry the field — and `-host="…"` keeps
+it, the same fact turned round — while every other unknown field still
+constrains nothing, half-typed or not. Off unless set, since a schema that
+pads its rows already gets this and one that relies on the old reading keeps
+it. `matchesExpression` reads it off a schema handed to it as a fourth
+argument; the memory and mock sources both hand theirs over, and a source of
+your own does the same:
+
+```ts
+matchesExpression(parseExpression(query.expr), row, entity, schema)
+```
+
 Two helpers are exported for a host building its own context or its own
 results area, and they are the whole of what applying a drill takes:
 
@@ -842,6 +1043,26 @@ drillExpression(schema, query, row)    // the expression with that term added
 drillExpression(schema, query, row, { exclude: true })  // …or with the record left out
 scopedEntity(schema, 'host')           // the entity `host` points at — the inverse
 ```
+
+And for a host that names records without a row in hand — a permalink, a
+record card, a selection handed to another page:
+
+```ts
+fieldTerm('host', 'www.example.com')   // 'host="www.example.com"' — what recordTerm writes
+idsExpression('test', ['a.ts', 'b.ts'])  // 'test="a.ts" test="b.ts"' — any of them; null for none
+recordsIn(schema, [readExpression(search)])  // [{ entityKey: 'tenants', id: 'www.example.com' }]
+router.push({ query: { ...route.query, ...narrowPatch(expr, term) } })  // what a press on the name does
+```
+
+`idsExpression` relies on two positive `=` terms on one field reading as any of
+them, which holds within a group: hand it over as the whole of a query, since
+ANDed on to one that already names a record on that field it widens rather
+than narrows. It is null rather than `''` for no ids, an empty expression being
+every row. `recordsIn` reads the terms the header puts names to — the
+positive ones, an excluded record being no record the screen is about — deduped
+by type and id in the order written; it is what the `record` slot is filled from. `narrowPatch` adds the
+term, drops the type and the page and writes the cards view (or the one you
+pass), with `undefined` for a parameter to take off.
 
 A scope key beats a column heading of the same name in the expression field: an
 entity heading its identity column *Category* and carrying a `category` join
@@ -930,8 +1151,9 @@ is what makes one look like the cards it sits among; the shell's own card chrome
 is scoped CSS a host cannot reach. Its props are `title`, `count`, `span`
 (`'all'`, for a card a share of a row would cut short — a record's own heading,
 a block of source, a wide table), `flush` for content that draws its own edges,
-`muted`, and `collapsible`, `collapsed` and `defaultCollapsed` (below); its
-slots are `head`, `aside`, the default body and `foot`. Nothing in it reads the shell's context, so it works anywhere inside a
+`muted`, `name` and `reference` (below), and `collapsible`, `collapsed` and
+`defaultCollapsed` (further down); its slots are `head`, `aside`, the default
+body, `foot` and `reference`. Nothing in it reads the shell's context, so it works anywhere inside a
 `.dc-shell` element — including a page of your own with no query at all:
 
 ```vue
@@ -939,6 +1161,34 @@ slots are `head`, `aside`, the default body and `foot`. Nothing in it reads the 
   <ShellCard title="New run">…</ShellCard>
 </div>
 ```
+
+The card a record's page leads with is headed by the record itself: its name,
+and under it whatever tells it from another of the same name — an id, a path,
+a URL. `name` and `reference` are that head, so it need not be written out in
+the `head` slot:
+
+```vue
+<ShellCard :name="spec.title" :reference="spec.file" span="all">
+  <template #aside><button @click="duplicate">Duplicate</button></template>
+</ShellCard>
+
+<!-- A reference that is a link: the slot says it instead. -->
+<ShellCard :name="tenant.id">
+  <template #reference><a :href="tenant.baseUrl">{{ tenant.baseUrl }}</a></template>
+</ShellCard>
+```
+
+```
+┌── Pays with a voucher ────────────────────── [failed] [Duplicate] ──┐
+│   tests/specs/flow-2.spec.ts                                        │
+```
+
+The name is set as a title is; the reference is mono, muted, and breaks
+anywhere, since a path has nowhere else to break and must not push the aside
+off the card. `name` takes the place of `title` where both are given — a card
+is headed by one thing, and the name is the more particular — and names the
+fold toggle in its place too; `count` stays beside it either way, and the
+`head` slot still replaces the lot. A `reference` with no `name` is not drawn.
 
 A page of cards about one record is a page some of which the reader wants out
 of the way — the source, once it has been read; the metadata nobody asked
@@ -1022,6 +1272,398 @@ them the same rule — a control over nothing is not worth its room:
   term. It reads the scope and the query as one expression, so a record's own
   page drops the card on the same terms as a query narrowed to it by hand.
 
+### Cards for the records the query names
+
+`within` is for a page that *is* one record. The other way a screen comes to be
+about a record is the one a press makes: the record's term in the query, put
+there by pressing its row and lifted by pressing its part on the bar. The
+`record` slot draws cards of your own for each record named that way — once
+per record, in the order the query names them, ahead of `cards-before`:
+
+```vue
+<DataShell :schema="schema" :views="views">
+  <template #record="{ entity, id }">
+    <component :is="CARD_SETS[entity.key]" :id="id" />
+  </template>
+</DataShell>
+```
+
+So a record's cards follow the query rather than a route: press a row and its
+cards arrive with its term, lift the term and they go, narrow to two records
+and both sets are on screen. A record is a positive term on a field some type
+declares as its `scope`; a negated one leaves the record out, which is not the
+screen being about it, and the same record written twice — in two cases, or in
+two alternatives — is one record. The committed query is what is read, not a
+draft in the box: the screen does not change what it is about under each
+keystroke. Like `cards-before`, the slot is drawn on the per-type screen only.
+
+Where the slot would only look a component up, `recordCards` is the shorthand —
+a component per type, rendered with the record's `id`; a type with no entry
+has no cards of its own, and the slot wins where both are given:
+
+```vue
+<DataShell :schema="schema" :record-cards="{ tests: TestCards, runs: RunCards }" />
+```
+
+`views` can follow the same reading. A function is asked with the type being
+listed and the records the query names, and offers what it returns — so a
+host need not read the query back out of the URL to decide what each screen
+draws:
+
+```ts
+const views = ({ entity, records }: ViewsContext): ViewKind[] =>
+  entity ? ['table'] : records.length ? ['cards'] : ['table', 'cards']
+```
+
+A type's own list is a table; a screen about a record is cards alone, its own
+cards being drawn there and nowhere else; and the corpus offers both. One view
+on offer is what takes the chooser off the bar.
+
+### What goes in a card
+
+A page about one record is mostly a host's own content in those cards — the
+record's facts, a table of what it said, its source, its log — and the same
+handful of pieces turn up on every such page. These are those pieces. Each is
+a plain component with no context to read, styled in the shell's tokens, so
+it takes the theme wherever it is put inside a `.dc-shell`.
+
+#### Facts
+
+`<ShellFacts>` is a record's metadata, as a grid of labels over values: as
+many columns as fit at `min` (`200px` by default), so a full-width card on a
+desktop holds five and the same card on a phone one. It is a `<dl>` — a `div`
+per fact, holding its `dt` and `dd` — with small labels in the caps a theme
+sets small labels in, and mono values that may break anywhere.
+
+```vue
+<ShellFacts :items="[
+  { label: 'Started', value: fmtDate(run.startedAt) },
+  { label: 'Size', value: fmtBytes(spec.bytes), title: `${spec.bytes} bytes` },
+  { label: 'Recorded URLs', value: spec.flowUrls },   /* a line apiece */
+  { label: 'Finished', value: run.finishedAt },       /* null: drawn as — */
+]">
+  <!-- A fact that is more than text: the label and the value are slots. -->
+  <ShellFact wide>
+    <template #label>Command <CopyButton :text="run.command" /></template>
+    <ShellCode :code="run.command" :max-height="96" />
+  </ShellFact>
+</ShellFacts>
+```
+
+| `ShellFactItem` | Type | Notes |
+| --- | --- | --- |
+| `label` | `string` | |
+| `value` | `string \| number \| null \| (string \| number)[]` | A list is a line per entry. Nothing, `''` or `[]` is the shell's `—`. |
+| `title` | `string` | The value's tooltip. |
+| `wide` | `boolean` | Takes the whole row, for a command line or a sentence. |
+
+`<ShellFact>` takes the same four as props, plus a `label` slot and a default
+slot for the value. The items come first, then the children.
+
+#### Pills and counts
+
+`<StatusPill>` was a record's status and nothing else. It now also takes a
+`label` — the words, in place of the status's own — and a `tone`, the colour
+chosen outright, so a word that is not a status can wear the pill without
+pretending to be one. `status` may be left out wherever one of the other two
+is given:
+
+```vue
+<StatusPill status="failed" />                              <!-- as ever -->
+<StatusPill status="ok" label="passed" />                   <!-- a run's word for ok -->
+<StatusPill tone="accent" label="crawler-generated" />
+<StatusPill tone="review" label="live — no profile" />
+<StatusPill tone="neutral" label="hand-written" />
+```
+
+The tones are the five statuses — `ok`, `running`, `review`, `failed` and
+`queued`, each in the colour that status has always had — plus `neutral`,
+which is `queued`'s no-colour said on purpose, and `accent`, which is the
+shell's own and the one a running record wears. `PillTone` and `PILL_TONES`
+are exported. A tone given beside a status wins.
+
+`<StatusCounts>` is what a run came to, in the space of a table cell —
+`12 passed · 1 failed · 2 skipped`, each count in its tone:
+
+```vue
+<StatusCounts :counts="[
+  { label: 'passed', count: stats.passed, tone: 'ok' },
+  { label: 'failed', count: stats.failed, tone: 'failed' },
+  { label: 'flaky', count: stats.flaky, tone: 'review' },
+  { label: 'skipped', count: stats.skipped },              /* neutral */
+  { label: 'running', count: stats.running, tone: 'running' },
+]" />
+```
+
+Words rather than a pill apiece, since six pills in a cell is a cell made of
+chrome. A count of nothing is left out, and a row with nothing to count is
+`empty` (`—`). The counts are a list rather than a map from tone to number
+because two of them can share a colour, and the order is the host's.
+
+#### Code, and copying it
+
+`<ShellCode>` is a block of code or machine text — a spec's source, an
+error, a command line:
+
+```vue
+<ShellCard title="Source" span="all" flush>
+  <ShellCode :code="spec.source" :max-height="460" copy @error="toastError" />
+</ShellCard>
+
+<ShellCard title="Error" flush>
+  <ShellCode :code="result.error" tone="danger" />
+</ShellCard>
+```
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `code` | `string` | — | The text. The default slot gives it instead. |
+| `maxHeight` | `string \| number` | — | The tallest it grows before it scrolls in place — with `overscroll-behavior: contain`, so reading to its end does not start scrolling the page. A number is pixels. |
+| `copy` | `boolean` | `false` | A copy button in its top right corner. |
+| `copyLabel` | `string` | `'Copy to clipboard'` | The button's tooltip and accessible name. |
+| `wrap` | `boolean` | `true` | Long lines wrap. Off for text whose columns mean something. |
+| `tone` | `'danger'` | — | A red rule down its side and a red tint, for an error. |
+
+It emits `copied` and `error` from the button. In a `flush` card body it *is*
+the body — no border, no corner, no margin — and anywhere else it is an inset
+box with a hairline round it.
+
+`<CopyButton>` is that button on its own, for text shown somewhere a block
+would be too much — beside a fact's label, say. `text` is a string, or a
+function for text only known at the press; `label` names it. It shows a tick
+for a moment once the text is on the clipboard and emits `copied`; where the
+clipboard refuses — an insecure origin, a permission denied — it emits `error`
+with the reason and shows nothing, since how a failure is told is the host's.
+
+#### A log that is still being written
+
+`<ShellLog>` is a run's output while the run is going: it reads only what it
+has not read yet, and follows the tail the way a terminal does — until the
+reader scrolls up, so reading back through a failure is not yanked away by the
+next chunk. Scrolling back to the end picks the tail up again.
+
+```vue
+<script setup lang="ts">
+const log = ref<InstanceType<typeof ShellLog> | null>(null)
+// On whatever beat the host already polls the run on:
+await log.value?.poll()
+</script>
+
+<template>
+  <ShellCard title="Output" span="all" flush>
+    <ShellLog ref="log" :fetch-chunk="(offset) => api.runLog(id, offset)" strip-ansi />
+  </ShellCard>
+</template>
+```
+
+`fetchChunk(offset)` answers with `{ chunk, offset }` (`LogChunk`): the text
+written after `offset`, and where it ends. When to ask is the host's, through
+the exposed `poll()`; a poll while one is in flight is that one, rather than a
+second read of the same text. `reset()` forgets what was read. `stripAnsi`
+takes out a terminal's colour codes, which in a page are not colour but
+`[31m` in the middle of a line. `maxHeight` is `460px` unless given — a log
+has to scroll inside something to have a tail to follow. It is drawn as
+`<ShellCode>` is, flush card bodies and all.
+
+### Dialogs and toasts
+
+`<ShellDialog>` is a modal: a question the page waits on.
+
+```vue
+<ShellDialog v-model:open="deleting" title="Delete 3 tests?">
+  <p>This removes the specs and their fixtures.</p>
+  <template #actions>
+    <button @click="deleting = false">Cancel</button>
+    <button class="danger" @click="remove">Delete</button>
+  </template>
+</ShellDialog>
+```
+
+It is teleported to `body` (`to` moves it), so no card's or shell's
+`overflow` clips it, and it renders nothing at all while closed — no hidden
+backdrop to swallow clicks. `open` is `true` unless given, so it can as well be
+put up with a `v-if` on it. Escape and a press on the backdrop ask to close it,
+with `close` and `update:open`; only the dialog on top hears Escape, and a drag
+that starts inside the panel and ends on the backdrop is not a press of it.
+Opening puts the focus on the first thing in it that takes focus — or on the
+one marked `autofocus` — and closing gives the focus back where it was. It
+does not trap the focus.
+
+The dialog's parts are public classes, for styling what goes in it:
+`.dc-dialog__panel` (the box), `.dc-dialog__title`, `.dc-dialog__body` (around
+the default slot) and `.dc-dialog__actions`. `panelClass` and `bodyClass` put
+classes of the host's on the panel and the body — anything a `class` binding
+takes — since a `class` on the component itself has no element to land on, the
+dialog being teleported.
+
+```vue
+<ShellDialog title="Delete 3 tests?" panel-class="wide-dialog" body-class="file-list">…</ShellDialog>
+```
+
+#### Which theme a layer wears
+
+Being in `body` puts a dialog outside every `.dc-shell`, where the tokens are.
+So it is a layer: an element that wears `class="dc-shell dc-layer"` — the
+shell's palette, its type, and every rule a host has written against
+`.dc-shell`, with `.dc-layer` giving back the shell's *layout*, none of which a
+layer wants (see below). Toasts and popovers are layers too. What it is
+dressed as, first match wins:
+
+1. **Its own `theme`, `accent` and `tokens` props**, field by field.
+2. **The nearest `DataShell` it is rendered inside**, as a component — the
+   shell's `theme`, `accent` and `tokens`, followed as they change.
+3. **The app's default**, set with `provideShellTheme` or the plugin.
+4. **The nearest `.dc-shell` element above it in the page** — that element's
+   `data-dc-theme` and the tokens on its `style`. This is what reaches a
+   `<div class="dc-shell" data-dc-theme="dark">` of the host's own.
+5. **The minimal theme.**
+
+Where 4 finds a `.dc-shell` of the host's *inside* the `DataShell` of 2, that
+one is the nearer and wins. A dialog written *beside* a shell rather than in
+it — a sibling of `<DataShell>`, or at the root of an app with the toasts — is
+neither a descendant of the shell nor inside it in the page, so the app's
+default is what dresses it:
+
+```ts
+// main.ts
+app.use(HeaderContentLayoutPlugin, { theme: 'dark', tokens: { '--dc-accent': '#6aa9ff' } })
+```
+
+```ts
+// or in the root component's setup — refs and getters are followed
+provideShellTheme({ theme: 'dark', tokens: () => palette.value })
+```
+
+Either sets only what layers fall back to: a shell is still themed by its own
+`theme` prop. A host stylesheet's rule on `.dc-shell` — `.dc-shell {
+--dc-surface: … }` — reaches every layer as it reaches every shell, being a rule
+on a class they all wear. `useLayerTheme(props)` is the resolution itself,
+exported for a host building a layer of its own; `SHELL_THEME_KEY` is what is
+provided.
+
+Toasts are short messages in a corner that go away on their own. `useToasts()`
+is one stack for the whole app — a toast raised in a dialog survives the
+dialog — and `<ShellToasts>` draws it; mount that once, anywhere:
+
+```ts
+const { toast, toastError } = useToasts()
+toast('Saved')                         // 'ok', up for TOAST_MS (4.5s)
+try { await api.save() } catch (error) {
+  toastError(error)                    // 'err', up for TOAST_ERROR_MS (9s)
+}
+```
+
+```vue
+<ShellToasts theme="dark" />
+```
+
+`toastError` takes anything thrown: an `Error`'s message, or the thing said as
+a string. `dismiss(id)` takes one down early, and `toasts` is the stack itself
+for a host drawing its own. `<ShellToasts>` is teleported and dressed exactly
+as the dialog is; written outside any shell, which is usual, it takes its
+`theme`, `accent` and `tokens` from its props or the app's default. The stack
+is a polite live region, and an error toast is an alert.
+
+#### Popovers, and layers of your own
+
+`<ShellPopover>` is a box of the host's own opened against a control — a
+multi-select's grid of toggles, a filter, a date picker; the shell's menus are
+a list of items, and this is for everything that is not.
+
+```vue
+<button ref="trigger" :aria-expanded="open" @click="open = !open">{{ summary }}</button>
+<ShellPopover
+  v-model:open="open"
+  :anchor="trigger"
+  :max-height="340"
+  class="tenant-picker"
+  role="dialog"
+  aria-label="Tenants"
+>
+  <input v-model="filter" type="search" placeholder="filter…" />
+  <button v-for="t in shown" :key="t.id" :aria-pressed="has(t)" @click="toggle(t)">{{ t.label }}</button>
+</ShellPopover>
+```
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `open` | `boolean` | `false` | `v-model:open`. A press outside it and its anchor, or Escape, emits `update:open` with `false` (and `close`). |
+| `anchor` | `HTMLElement \| null` | — | What it opens against. |
+| `side` | `'below' \| 'above'` | `'below'` | The side it opens on when that side has the room. |
+| `align` | `'start' \| 'end'` | `'start'` | Its left edge on the anchor's, or its right edge on the anchor's. |
+| `maxHeight` | `number` | — | The tallest it grows; the room on its side caps it too. |
+| `to` | `string \| HTMLElement` | `'body'` | Where it is drawn. |
+| `theme`, `accent`, `tokens` | | | As a dialog's, above. |
+
+It is teleported to `body` and placed with `position: fixed` from the anchor's
+box: below it, or above where below has less than 180px and above has more;
+at least as wide as the anchor and no wider than the window; never taller than
+the room its side has, the rest scrolling in place. Scrolling anything under it
+or resizing the window moves it with the anchor, and so does its own content
+changing size. Escape takes down the popover on top and nothing else — a
+popover in a dialog closes before the dialog does — and gives the focus back
+to the anchor if it was inside. A press inside a popover opened from inside
+this one counts as inside. Any attribute given to it — a class, a `role`, an
+`aria-label`, a `style` — lands on the box, and its look (surface, border,
+radius, shadow, `10px` of padding) is at no weight, so a class of the host's
+restyles it whichever sheet loads first. `placePopover(anchorRect, width,
+viewport, options)` is the placement arithmetic on its own.
+
+A layer of your own — anything else drawn in `body` that should look as
+though it belongs to the shell — is an element wearing `class="dc-shell
+dc-layer"` and a `data-dc-theme`. `.dc-layer` keeps the palette and gives back
+what `.dc-shell` says about layout: `display`, `flex`, `overflow`, the
+background — painted only if `--dc-layer-bg` is set — and above all
+`container-type`. The shell is a size container, and a size container is the
+containing block of its `position: fixed` descendants: a fixed element inside
+a `.dc-shell` is placed against the shell, not the window, which is why a
+layer is drawn in `body` and not teleported into the shell. `.dc-layer` is at
+the weight of `.dc-shell` itself, so any class of yours on the same element
+outranks it.
+
+### Controls of your own
+
+The shell draws its own controls in scoped CSS, so a host's `<button>` in one
+of its cards is the browser's grey box beside the shell's token-coloured ones.
+`controls.css` is the sheet that closes that gap — opt in, and imported after
+`style.css`:
+
+```ts
+import 'header-content-layout/style.css'
+import 'header-content-layout/controls.css'
+```
+
+```vue
+<button class="primary">Run</button>     <!-- filled with the accent -->
+<button>Duplicate</button>
+<button class="danger">Delete</button>   <!-- drawn in the danger colour -->
+<button class="link">Open</button>       <!-- reads as a link -->
+<select>…</select> <input type="text"> <textarea /> <table>…</table>
+<p class="dc-hint">What a choice will do.</p>
+<p class="dc-hint dc-hint--warn">Leaves each browser window open.</p>
+<p class="dc-hint dc-hint--danger">The server said no.</p>
+```
+
+It styles buttons, `select`, text-like inputs, `textarea`, a plain `table`
+and `.dc-hint` inside a `.dc-shell` — which a `<ShellDialog>` is — in the
+shell's tokens, so they follow the theme. It never touches the shell's own
+controls: everything the shell draws carries a `dc-` class, and an element
+with one is left alone (so a host element can opt out the same way). Every
+rule is in `:where()` and carries no specificity, so any rule of the host's
+beats it — except the variants' text colours, which have to match
+`style.css`'s `.dc-shell button { color: inherit }` and so are at that weight;
+loading this second is what lets them win. `style.css` does not import it, so
+nothing changes for a host that does not.
+
+The other side of carrying no weight: *any* plain rule of the host's on an
+element — a global `button { … }` or `select { … }` — beats it everywhere,
+including inside the shell. A host adopting `controls.css` has to remove its
+own global control styles, not layer this sheet under them.
+
+Inside a dialog's body it also sets out the two things a dialog usually says:
+a `ul` or `ol` is indented as a list, and a `label` is a row — a checkbox
+beside the sentence it answers. A card's body is left alone.
+
 ### A facet a row holds several of
 
 A chips facet is one value per row by default. Mark it `multiple` and a row may
@@ -1045,6 +1687,23 @@ Nothing else changes: the URL, the summary and the controls are the same, and
 filtering follows whatever the row holds — a source may return a list whether
 or not the schema declares one. The flag is what says so in the schema, and
 what the bundled mock source generates against.
+
+### A facet that grows with the data
+
+A chips facet whose options are the data's — every host a tool has run
+against, every target URL — grows with it, and the tallest facet sets the
+height of the panel. Two fields keep one in bounds:
+
+```ts
+{ kind: 'chips', key: 'target', label: 'Target', options: targets, maxRows: 6, truncate: 'start' }
+```
+
+| Field | Type | |
+| --- | --- | --- |
+| `maxRows` | `number` | The most rows of chips shown before the facet scrolls. The height is a whole number of chips, worked out from the chip's own type size, so the cut falls between two rows and follows a theme that changes the type. The edge with more behind it fades, from a scroll timeline, where motion is welcome. |
+| `truncate` | `'end' \| 'start'` | One line per chip, never wider than the facet, ellipsised — the whole value on hover. `start` cuts the head instead of the tail, for values that share a long beginning and differ at the end: URLs on one host, paths under one root. |
+
+Left out, a facet is as tall as its chips and a chip wraps, as before.
 
 ## The expression field
 
@@ -1076,7 +1735,8 @@ by heading, then the generic role names (`name`, `ref`, `status`, `updated`,
 `metric1`…). So a declared field is never shadowed by a heading or a
 convention that happens to read the same. An unrecognised field is ignored
 rather than treated as a mismatch, so a half-typed expression keeps showing
-results.
+results — except a join key under
+[`strictScopes`](#narrowing-to-one-record), which a row has to carry.
 
 A heading of more than one word is written run together and in any case —
 `priceratio<0.5` for **Price ratio** — or by its shortcut, the first letter of
@@ -1312,9 +1972,14 @@ own.
 | `defaults` | `ShellQueryDefaults` | home, `cards` (one type: `table`), `updated`, `desc` | Fallbacks when the URL omits a field. `landing: 'entity'` opens on one entity's list instead of home, in `view`. `entityView` is the view one type opens in. |
 | `within` | `string` | — | An expression the whole shell is read inside — its scope, held here rather than in the URL. See [a shell about one record](#a-shell-about-one-record). |
 | `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. `0` draws only each card's heading (name and count, no `create` button), in narrower wrapping columns. |
+| `typeChooser` | `'scoped' \| 'always'` | `'scoped'` | Where the bar offers the list of types. `scoped` only once one is filtered to, the home screen's cards naming the types already; `always` keeps it on `Everything` too, for a home screen that opens on records rather than on a card per type. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
 | `pagesNote` | `string` | — | What the count is short of, in your words — `first 1,200 of 30,200 lots`. Goes under the pager's hover text, and keeps the pager up on a single page. See [paging through the results](#paging-through-the-results). |
-| `views` | `ViewKind[]` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. With one on the list the bar carries no View chooser — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type). |
+| `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. With one on the list the bar carries no View chooser — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type), or a function of `{ entity, records }` and the shell works the screen out for you — see [cards for the records the query names](#cards-for-the-records-the-query-names). |
+| `loading` | `boolean` | `false` | The source's answers are not yet the data. The results area says *Loading…*, the pager is off the bar, and nothing is corrected from a count until it turns false — see [while the data is on its way](#while-the-data-is-on-its-way). |
+| `recordCards` | `Record<string, Component>` | — | A component per record the query names, by the record's type, given `id` — the shorthand for the `record` slot. See [cards for the records the query names](#cards-for-the-records-the-query-names). |
+| `pageQuery` | `'shell' \| 'detached'` | `'shell'` | Whether a `page` is about the query. `detached`: the bar reads the pristine query, not the page's URL, and its first edit goes to `listPath`. Read only while a `page` is provided — see [a page that is not about the query](#a-page-that-is-not-about-the-query). |
+| `listPath` | `string` | `'/'` | Where a detached page's first edit lands. |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all; `mono-size` is `inherit` with the type scale given up too, every word at the host's one size and one weight with only colour and opacity varying. |
@@ -1337,13 +2002,18 @@ updated, `toggle-pin(row)`, plus `update:open`, `update:pinned` and
 `update:selected`.
 
 **Slots** — `actions` for extra controls at the right of the header bar,
-`panel-section` for a section of your own at the end of the query panel,
-`cards-before` and `cards-after` for [cards of your own](#cards-of-your-own)
-above and below the card-per-type screen, and `results` to replace the content
-area entirely (receives `rows` — the current page of them — plus `total`,
-`offset`, `pageCount`, `query` and `pending`). That `query` is the one the rows
-answer, which is the committed query with whatever is being typed in the
-header's box ANDed on — see [the field it is edited in](#the-field-it-is-edited-in).
+`brand` for a mark in place of the domain's name at its left (see
+[a mark for the name](#a-mark-for-the-name)), `panel-section` for a section of
+your own at the end of the query panel, `cards-before` and `cards-after` for
+[cards of your own](#cards-of-your-own) above and below the card-per-type
+screen, `record` for cards about [each record the query
+names](#cards-for-the-records-the-query-names) (receives `entity` and `id`),
+`page` for [a page of your own](#a-page-of-your-own-under-the-bar) under the
+same bar (receives `query`), and `results` to replace the content area
+entirely (receives `rows` — the current page of them — plus `total`,
+`offset`, `pageCount`, `query`, `pending` and `loading`). That `query` is the
+one the rows answer, which is the committed query with whatever is being typed
+in the header's box ANDed on — see [the field it is edited in](#the-field-it-is-edited-in).
 
 `panel-section` is where an application's own commands go when they are not
 about the query — the header bar's width belongs to the summary it exists to
@@ -1362,6 +2032,129 @@ that matches its own:
   </template>
 </DataShell>
 ```
+
+### A mark for the name
+
+The domain's name at the left of the bar is text. The `brand` slot draws a
+mark in its place — a logo, an icon — and the name stays the bar's accessible
+text, read out where the mark is drawn, so `schema.label` is still the one
+place the name is written:
+
+```vue
+<DataShell :schema="schema">
+  <template #brand>
+    <svg viewBox="0 0 16 16" width="18" height="18">…</svg>
+  </template>
+</DataShell>
+```
+
+The mark is hidden from assistive technology, and it is a mark rather than a
+control: the whole bar is the query panel's toggle, so a link there would be a
+second press on the same surface. It takes the name's colour (`currentColor`)
+and goes where the name goes on a narrow shell. The slot is handed `label`,
+for a mark that wants to say the name too.
+
+### A page of your own under the bar
+
+Not every screen of an application is a list. A form that acts on what the
+query matches — run every spec it names, export every row — or a report about
+it is still *about the query*, and belongs under the same bar rather than
+under a second one of the application's own. The `page` slot is that: it
+takes the room the results would have, and the bar above it goes on showing
+the query and editing it.
+
+```vue
+<DataShell :schema="schema" :route="route">
+  <template v-if="$route.name === 'run-new'" #page="{ query }">
+    <RunForm :query="query" />
+  </template>
+</DataShell>
+```
+
+How it differs from `results`, which also replaces the content area: `results`
+is handed the rows and draws them its own way, so everything that acts on rows
+stays. A page is not a drawing of the rows, so under it
+
+- the bar carries **no pager and no View chooser** — there is nothing under it
+  to page through or to draw another way;
+- the type's [operations](#records-you-can-copy-and-delete) are **not offered**
+  over it — *Delete* over a form deletes nothing the reader can see;
+- **nothing corrects the URL's page** from a count, so `p` is where it was when
+  the slot goes and the list comes back.
+
+Provide it conditionally — `v-if` on the `<template>` — and the shell is the
+list again the moment it is not. The source still runs the query, which is what
+the count beside the type on the bar says: how many the page would act on.
+
+#### A page that is not about the query
+
+The run form above is about the query: its input *is* the query, and an edit
+on the bar narrows what it will run. Some pages only share the bar — a form
+making a new record, a report on one run. Their URL's parameters are their
+own (`/crawl-report/x?crawl=run-7`), and read as a query they would put
+pills on the bar that mean nothing. `pageQuery="detached"` says so:
+
+- the bar reads the **pristine query** — `Everything`, nothing narrowing it —
+  whatever the page's URL holds, and the page is handed that as its `query`;
+- the **first edit** to it — a word typed and Enter, a type chosen, an
+  expression run from the panel — is a way back to the list: it navigates to `listPath` (`/`
+  unless you say) with that edit applied, and pushes, so Back returns to the
+  page;
+- nothing is written while the reader only reads: the page's URL is the
+  page's.
+
+It is read only while a `page` is provided, so one shell can carry it for
+every route and it means nothing on the list itself.
+
+A recipe — one shell for every route, as an app with a form that runs the
+query, a form that makes a record and a report would have it:
+
+```ts
+// router.ts — every route renders the shell, so moving between them keeps it.
+const ShellView = () => import('./ShellView.vue')
+const routes = [
+  { path: '/', name: 'shell', component: ShellView },
+  { path: '/runs/new', name: 'run-new', component: ShellView },
+  { path: '/crawls/new', name: 'crawl-new', component: ShellView },
+  { path: '/crawl-report/:dir', name: 'crawl-report', component: ShellView },
+]
+```
+
+```vue
+<!-- ShellView.vue -->
+<script setup lang="ts">
+const router = useRouter()
+const route = createVueRouterAdapter(router)
+
+const PAGES = { 'run-new': RunStartView, 'crawl-new': CrawlStartView, 'crawl-report': CrawlReportView }
+/** The pages whose input is the query: the run form runs every spec it matches. */
+const ABOUT_THE_QUERY = new Set(['run-new'])
+
+const name = computed(() => String(router.currentRoute.value.name))
+const page = computed(() => PAGES[name.value] ?? null)
+</script>
+
+<template>
+  <DataShell
+    :schema="schema"
+    :route="route"
+    :page-query="ABOUT_THE_QUERY.has(name) ? 'shell' : 'detached'"
+  >
+    <template v-if="page" #page>
+      <component :is="page" v-bind="router.currentRoute.value.params" />
+    </template>
+  </DataShell>
+</template>
+```
+
+On `/runs/new?e=tests&q=checkout` the bar reads `Tests · checkout`, an edit
+stays on the form and narrows the run. On `/crawls/new` and
+`/crawl-report/x?crawl=run-7` it reads `Everything`, and typing `checkout`
+and Enter lands on `/?q=checkout`. No wrapping of the router in a
+`currentRoute` that pretends to be `/` is needed.
+
+`detachableAdapter(adapter, { detached, path })` is the adapter that does
+this, exported for a host wiring `useQueryState` to chrome of its own.
 
 ### One width for the bar and the panel
 
@@ -1445,6 +2238,26 @@ What this does on purpose:
   it qualifies is, and keeps the pager up on a single page so the line has
   somewhere to be.
 
+#### While the data is on its way
+
+A synchronous source over payloads that have not landed yet answers what it
+holds — no rows, nought of nought — and the shell believes a count: a link to
+`?p=7` opened before the rows it names had arrived would be corrected to page
+one, and the reader would never see them. `loading` is the host saying the
+answers are not yet the data:
+
+```vue
+<DataShell :schema="schema" :source="source" :loading="!ready" />
+```
+
+While it is true the results area says *Loading…* in place of anything it
+would otherwise draw, the pager is off the bar, and nothing is corrected from
+the count. The bar is up the whole time, so the query can be read and edited.
+When it turns false the shell reads the URL against the results as if it had
+only just been mounted: `p=7` stays where there are seven pages, and lands on
+the last page where there are fewer. It saves mounting the shell behind a
+`v-if` of your own, which is the same thing with the bar missing.
+
 A source is handed `offset` alongside `limit` and reports `total` for the whole
 match — see [wiring it to your data](#wiring-it-to-your-data). Building your
 own chrome instead? `useShellContext()` carries `limit`, `offset`, `pageCount`
@@ -1516,11 +2329,27 @@ state.setPage(3)        // paging, which any filter change returns to page 1
 state.hrefFor({ view: 'grid' })   // build a link without navigating
 ```
 
+`usePoll(tick, intervalMs)` keeps payloads fresh behind a source of your own:
+`tick` resolves to whether to go on, the next tick is scheduled only once the
+last has answered — a slow response never queues up overlapping requests —
+and it stops with the component it was made in. A tick that throws stops it;
+catch in `tick` and return `true` to poll through failures.
+
+```ts
+const poll = usePoll(async () => {
+  payload.value = await api.load()
+  return true
+}, 5000)
+onMounted(poll.start)  // poll.stop(), poll.polling
+```
+
 Also exported: `useResults` — which is what drives a source, streaming or not,
 and hands back `rows`, `total`, `pageCount`, `pending`, `error` and `refresh` —
 plus `useColumns` for the scope's column set, `usePresentedRows` for rows with
 every role already resolved into `parts`, `useRecordNames` for the names behind
-the ids a query narrows by, and `useShellContext`.
+the ids a query narrows by, `useStableSchema` for a schema rebuilt from live
+data (see [rows you already have](#rows-you-already-have)), and
+`useShellContext`.
 
 The context carries the selection as well — `selectable`, `selection`,
 `isSelected`, `toggleSelect`, `selectPage` and `clearSelection`, plus `create`,
@@ -2749,6 +3578,23 @@ are a whole theme:
 | `--dc-shadow`, `--dc-header-height` | — |
 | `--dc-header-width` | how wide the bar and panel are under `matchWidth="shrink"` |
 | `--dc-card-image`, `--dc-card-picture` | how large a record card's picture is drawn (64px), and how narrow a column of picture cards may be (160px) |
+
+And three a theme leaves unset, whose absence is the shell as it is: the
+header's search box is bare — no fill, no edge — with its placeholder in
+`--dc-fg-3`. On a dark surface that can leave an empty bar's *Search…* a faint
+smudge, and these give the box a resting fill and edge; focus still swaps in
+the accent edge.
+
+```vue
+<DataShell
+  theme="dark"
+  :tokens="{
+    '--dc-search-fill': 'var(--dc-bg-1)',
+    '--dc-search-border': 'var(--dc-line)',
+    '--dc-search-placeholder': 'var(--dc-fg-2)',
+  }"
+/>
+```
 
 ### Any single token
 

@@ -1,6 +1,7 @@
-import type { DomainSchema, EntitySchema, PressOptions, ShellRow } from '../types'
+import type { DomainSchema, EntitySchema, NarrowedRecord, PressOptions, ShellRow, ViewKind } from '../types'
 import type { FieldTerm, Term } from '../data/expression'
 import { formatExpression, negateTerm, parseExpression, sameTerm } from '../data/expression'
+import { PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_VIEW } from './codec'
 
 /**
  * Turning a `drill` into an expression.
@@ -39,7 +40,54 @@ export function scopeTerm(entity: EntitySchema | null | undefined, row: ShellRow
 export function recordTerm(entity: EntitySchema | null | undefined, id: string): string | null {
   const field = entity?.scope
   if (!field) return null
+  return fieldTerm(field, id)
+}
+
+/**
+ * The term that names one record by the field it is carried in —
+ * `test="ticket-3.0/x.spec.ts"` — for a caller that has the field in hand
+ * rather than the entity: a route that knows which field its type is narrowed
+ * by without assembling a schema first.
+ *
+ * Exactly what {@link recordTerm} writes, quoting and all, so a record reached
+ * by an address and one reached by a press land on the same URL and read —
+ * and lift — as one term. Quotes inside the id are dropped rather than
+ * escaped: there is no escape in this language, and a kept quote would end
+ * the value early.
+ */
+export function fieldTerm(field: string, id: string): string {
   return `${field}="${id.replace(/"/g, '')}"`
+}
+
+/**
+ * The expression naming exactly these records — what acting on a ticked set
+ * hands to a page that runs, exports or lists "what this query matches".
+ *
+ * Written on `target`: a field, or an entity whose {@link EntitySchema.scope}
+ * says which. One {@link fieldTerm} per id, spaced, which this language reads
+ * as *any of them* rather than all: two positive `=` terms on one field in one
+ * group are alternatives, since no row is two records at once — it is what
+ * the table's `+` over a page writes too.
+ *
+ * That reading belongs to the group, so ANDing this on to an expression that
+ * already names a record on the same field widens rather than narrows: the
+ * names land in one group and are all alternatives together. Hand it over as
+ * the whole of a query, as a selection is.
+ *
+ * Null where no expression can say it: an entity that declares no scope, or
+ * no ids — an empty expression is every row, the opposite of none. An id
+ * that is nothing once its quotes are dropped names nothing, and is skipped.
+ */
+export function idsExpression(
+  target: string | EntitySchema | null | undefined,
+  ids: readonly string[],
+): string | null {
+  const field = typeof target === 'string' ? target : target?.scope
+  if (!field) return null
+  const terms = ids
+    .filter((id) => id.replace(/"/g, '') !== '')
+    .map((id) => fieldTerm(field, id))
+  return terms.length ? terms.join(' ') : null
 }
 
 /**
@@ -265,4 +313,92 @@ export function scopedEntity(schema: DomainSchema, field: string): EntitySchema 
   // The parse lowercases a field it read; a schema declares one as it likes.
   const wanted = field.toLowerCase()
   return schema.entities.find((entity) => entity.scope?.toLowerCase() === wanted) ?? null
+}
+
+/**
+ * The record a `field` and `value` name, where the field is some entity's
+ * scope — `host` and `www.example.com` are a tenant — and null where it is
+ * not, or where either half is missing.
+ *
+ * The one reading of a term as a reference to a record, shared by the header,
+ * which puts a name to the id on a pill, and by {@link recordsIn}, which says
+ * what a query is about. The sign and the comparator are the caller's to
+ * weigh: `-host="x"` names the record as surely as `host="x"` does.
+ */
+export function namedRecord(
+  schema: DomainSchema,
+  field: string | undefined,
+  value: string | undefined,
+): { entity: EntitySchema; id: string } | null {
+  if (!field || !value) return null
+  const entity = scopedEntity(schema, field)
+  return entity ? { entity, id: value } : null
+}
+
+/**
+ * The records a set of expressions narrows to, in the order they are written.
+ *
+ * A term whose field is some entity's `scope` is a term *about a record* —
+ * that is what a scope declares — so this is the same reading the header
+ * takes to put a name to the id on a pill. Everything else in the query is an
+ * ordinary constraint on a value and names no record.
+ *
+ * Several expressions because the same screen can be read through more than
+ * one: the query, and a `within` the host reads the shell inside. Deduped
+ * across them, by type and by id whatever its case — the case is no
+ * constraint in this language — keeping the first spelling written.
+ *
+ * Only a positive term counts: `-host="x"` leaves the host out, which is not
+ * the screen being about it. (The header's pills weigh the sign themselves —
+ * they read {@link namedRecord}, which names the record either way.)
+ */
+export function recordsIn(schema: DomainSchema, expressions: readonly string[]): NarrowedRecord[] {
+  const found: NarrowedRecord[] = []
+  const seen = new Set<string>()
+
+  for (const expression of expressions) {
+    for (const term of parseExpression(expression).flat()) {
+      if (term.kind !== 'field' || term.negated) continue
+      const named = namedRecord(schema, term.field, term.value)
+      if (!named) continue
+      const key = `${named.entity.key}:${named.id.toLowerCase()}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      found.push({ entityKey: named.entity.key, id: named.id })
+    }
+  }
+  return found
+}
+
+/**
+ * Search parameters to write over the ones a URL already carries, where
+ * `undefined` takes one off — the shape `router.push({ query })` merges, and
+ * the shape {@link narrowPatch} returns.
+ */
+export type SearchPatch = Record<string, string | undefined>
+
+/**
+ * The URL change that narrows the whole result set to one record, from
+ * wherever the shell is now — what a press on a row's name does, for a
+ * record card, a permalink or a link of the host's own.
+ *
+ * `expr` is the expression the URL already carries, so one narrowing stacks
+ * on the last ({@link addTerm} — a term already there is not doubled, and one
+ * held the other way round is turned). The type comes off and the view is
+ * written rather than carried: in a list, one record is a one-row list of the
+ * row that was just pressed, which is the press going nowhere, and the card
+ * per type is where every type reports what it holds of the record. The page
+ * goes too — these are different rows, so the page someone was on is a
+ * position in a result set that no longer exists.
+ *
+ * `view` is cards unless said, as the shell's own press is.
+ */
+export function narrowPatch(expr: string, term: string | null, view: ViewKind = 'cards'): SearchPatch {
+  return {
+    // An expression with nothing in it is no parameter, as the shell writes it.
+    [PARAM_EXPR]: addTerm(expr, term) || undefined,
+    [PARAM_ENTITY]: undefined,
+    [PARAM_VIEW]: view,
+    [PARAM_PAGE]: undefined,
+  }
 }

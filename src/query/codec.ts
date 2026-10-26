@@ -256,3 +256,51 @@ export function serializeQuery(
   if (!all.length) return ''
   return `?${all.map(([key, value]) => (value === '' ? key : `${key}=${value}`)).join('&')}`
 }
+
+/**
+ * A route's query as the router hands it over: a repeated parameter is a
+ * list, and a parameter written with no value — `?flag` — is `null`. The
+ * shape of vue-router's `route.query`, without depending on it.
+ */
+export type RouteQuery = Record<string, string | null | (string | null)[] | undefined>
+
+/**
+ * A router's query object as the search string {@link parseQuery} reads.
+ *
+ * For code that has `route.query` in hand rather than the adapter's `search`
+ * — a redirect, a guard, a page beside the shell that reads its query. Every
+ * value of a repeated parameter is kept, in order; a `null` or `undefined` one
+ * says nothing and is left out.
+ *
+ * Written the way {@link serializeQuery} writes, leading `?` and all — the
+ * form a {@link RouteAdapter}'s `search` takes. The router may spell a value
+ * differently, and that does not matter: any spelling reads back the same, so
+ * a string from here, one from the adapter and one from `URLSearchParams` are
+ * one query to the codec.
+ */
+export function searchFromQuery(routeQuery: RouteQuery): string {
+  const pairs: string[] = []
+  for (const [key, value] of Object.entries(routeQuery)) {
+    for (const entry of Array.isArray(value) ? value : [value]) {
+      if (typeof entry !== 'string') continue
+      const name = encodeValue(key)
+      pairs.push(entry === '' ? name : `${name}=${encodeValue(entry)}`)
+    }
+  }
+  return pairs.length ? `?${pairs.join('&')}` : ''
+}
+
+/**
+ * The expression out of a search string — the `q` parameter, decoded, or `''`
+ * where there is none.
+ *
+ * Read without a schema, for code that only needs to know which records a
+ * URL names ({@link recordsIn}) and has no schema yet, or none it wants to
+ * parse the rest against. Exactly the `expr` {@link parseQuery} reads out of
+ * the same search, by the same decoding — including the last of a repeated
+ * parameter winning — so the two never disagree about what the query says.
+ */
+export function readExpression(search: string): string {
+  const raw = new Map(parsePairs(search)).get(PARAM_EXPR)
+  return raw === undefined ? '' : decodeValue(raw)
+}

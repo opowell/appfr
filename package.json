@@ -1,6 +1,6 @@
 {
   "name": "header-content-layout",
-  "version": "0.59.0",
+  "version": "0.62.0",
   "description": "Schema-driven data shell: a query header over a switchable results area, with the query held in the URL.",
   "license": "MIT",
   "type": "module",
@@ -27,7 +27,9 @@
       "import": "./dist/nuxt.js"
     },
     "./style.css": "./dist/style.css",
-    "./dist/style.css": "./dist/style.css"
+    "./dist/style.css": "./dist/style.css",
+    "./controls.css": "./dist/controls.css",
+    "./dist/controls.css": "./dist/controls.css"
   },
   "scripts": {
     "build": "vite build && vue-tsc -p tsconfig.build.json --emitDeclarationOnly",

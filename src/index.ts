@@ -19,6 +19,17 @@ export { default as MenuButton } from './components/MenuButton.vue'
 export { default as MenuList } from './components/MenuList.vue'
 export { default as StatusPill } from './components/StatusPill.vue'
 
+/* Content: what goes inside a card of the host's — and the layers over it. */
+export { default as ShellFacts } from './components/ShellFacts.vue'
+export { default as ShellFact } from './components/ShellFact.vue'
+export { default as StatusCounts } from './components/StatusCounts.vue'
+export { default as ShellCode } from './components/ShellCode.vue'
+export { default as CopyButton } from './components/CopyButton.vue'
+export { default as ShellLog } from './components/ShellLog.vue'
+export { default as ShellDialog } from './components/ShellDialog.vue'
+export { default as ShellToasts } from './components/ShellToasts.vue'
+export { default as ShellPopover } from './components/ShellPopover.vue'
+
 /* Window */
 export { default as WindowFrame } from './components/WindowFrame.vue'
 /* `WindowNode.vue`, the recursive node renderer, `WindowFloat.vue`, one frame
@@ -39,6 +50,7 @@ export { default as PreviewView } from './components/views/PreviewView.vue'
 export { default as PinStar } from './components/views/PinStar.vue'
 export { default as SelectTick } from './components/views/SelectTick.vue'
 export { default as ScopeMark } from './components/views/ScopeMark.vue'
+export { default as OpenMark } from './components/views/OpenMark.vue'
 export { default as QueryMark } from './components/views/QueryMark.vue'
 export { default as StandingControl } from './components/views/StandingControl.vue'
 export { default as MetricDrill } from './components/views/MetricDrill.vue'
@@ -54,18 +66,37 @@ export type { ResultsState, UseResultsOptions } from './composables/useResults'
 export { DRAFT_DELAY, useDraft } from './composables/useDraft'
 export type { DraftState, UseDraftOptions } from './composables/useDraft'
 export { presentParts, presentRow, usePresentedRows } from './composables/usePresentedRows'
-export type { PresentedRow, RowMetric, RowParts } from './composables/usePresentedRows'
+export type { PresentedRow, RowFact, RowMetric, RowParts } from './composables/usePresentedRows'
 export { useColumns } from './composables/useColumns'
 export { useEntityPreviews } from './composables/useEntityPreviews'
 export { useEntityCounts } from './composables/useEntityCounts'
 export { useRecordNames } from './composables/useRecordNames'
+export { usePoll } from './composables/usePoll'
+export type { PollState } from './composables/usePoll'
 export type { RecordNamesState, UseRecordNamesOptions } from './composables/useRecordNames'
+export { useStableSchema } from './composables/useStableSchema'
+export type { UseStableSchemaOptions } from './composables/useStableSchema'
 export type {
   EntityPreview,
   EntityPreviewsState,
   UseEntityPreviewsOptions,
 } from './composables/useEntityPreviews'
 export type { EntityCount, EntityCountsState, UseEntityCountsOptions } from './composables/useEntityCounts'
+export { TOAST_ERROR_MS, TOAST_MS, useToasts } from './composables/useToasts'
+export { provideShellTheme, SHELL_THEME_KEY, useLayerTheme } from './composables/useLayerTheme'
+export type {
+  LayerTheme,
+  LayerThemeProps,
+  ShellThemeInput,
+  ShellThemeSource,
+} from './composables/useLayerTheme'
+export { placePopover, POPOVER_FLIP_BELOW, POPOVER_GAP, POPOVER_MARGIN } from './menu/popover'
+export type {
+  PopoverAnchorRect,
+  PopoverPlacement,
+  PopoverPlacementOptions,
+} from './menu/popover'
+export type { Toast, ToastKind, ToastsState } from './composables/useToasts'
 
 /* Window model */
 export {
@@ -207,8 +238,11 @@ export {
   PARAM_SORT,
   PARAM_VIEW,
   parseQuery,
+  readExpression,
+  searchFromQuery,
   serializeQuery,
 } from './query/codec'
+export type { RouteQuery } from './query/codec'
 export {
   changesResults,
   countPages,
@@ -252,11 +286,33 @@ export {
   rowKey,
 } from './query/columns'
 export {
+  bytesCell,
+  dateColumn,
+  durationCell,
+  elapsedCell,
+  entityColumn,
+  facetColumn,
+  flagColumn,
+  identityColumn,
+  metricColumn,
+  ordinalColumn,
+  percentCell,
+  pictureColumn,
+  referenceColumn,
+  stateColumn,
+  tintColumn,
+} from './query/presets'
+export { chipsFrom, niceMax, rangeFrom, toggleFacet, usefulFacets } from './query/facets'
+export {
   addTerm,
   drillExpression,
   excludingTerm,
+  fieldTerm,
+  idsExpression,
   liftTerm,
+  narrowPatch,
   pressOptions,
+  recordsIn,
   recordTerm,
   scopedEntity,
   scopeTerm,
@@ -265,7 +321,7 @@ export {
   withoutOwnScope,
   withStanding,
 } from './query/drill'
-export type { TermStanding } from './query/drill'
+export type { SearchPatch, TermStanding } from './query/drill'
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary'
 export type { SummaryTerm } from './query/summary'
 
@@ -274,13 +330,17 @@ export { normalizeSearch, ROUTE_ADAPTER_KEY } from './routing/adapter'
 export type { RouteAdapter } from './routing/adapter'
 export { createHistoryAdapter } from './routing/history'
 export { createMemoryAdapter } from './routing/memory'
+export { detachableAdapter } from './routing/detached'
+export type { DetachableAdapterOptions } from './routing/detached'
 export type { MemoryAdapter } from './routing/memory'
-export { createVueRouterAdapter } from './routing/vueRouter'
-export type { RouterLike } from './routing/vueRouter'
+export { createVueRouterAdapter, entityRedirect, recordRedirect } from './routing/vueRouter'
+export type { RedirectFrom, RedirectTo, RouterLike } from './routing/vueRouter'
 
 /* Data */
-export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS } from './data/mock'
+export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS, tintFor } from './data/mock'
 export type { MockSourceOptions } from './data/mock'
+export { createMemoryDataSource, queryAll } from './data/memory'
+export type { QueryAllRequest } from './data/memory'
 export {
   andExpression,
   columnShortcut,
@@ -307,12 +367,25 @@ export type {
   Term,
   TextTerm,
 } from './data/expression'
-export { fnv1a, formatCount, formatDate, formatMetric, formatOrdinal } from './data/format'
+export {
+  fnv1a,
+  formatBytes,
+  formatCount,
+  formatDate,
+  formatDateTime,
+  formatDuration,
+  formatElapsed,
+  formatMetric,
+  formatOrdinal,
+  formatPercent,
+  stripAnsi,
+} from './data/format'
 
 /* Types */
 export {
   COLUMN_BREAKPOINTS,
   COLUMN_ROLES,
+  PILL_TONES,
   RECORD_STATUSES,
   SHELL_THEMES,
   VIEW_KINDS,
@@ -331,6 +404,9 @@ export type {
   FacetDef,
   FacetState,
   FacetValue,
+  LogChunk,
+  NarrowedRecord,
+  PillTone,
   PressOptions,
   QueryRequest,
   QueryResult,
@@ -341,6 +417,8 @@ export type {
   Selection,
   SelectionOperation,
   ShellAlign,
+  ShellFactItem,
+  ShellFactValue,
   ShellQuery,
   ShellQueryDefaults,
   ShellRow,
@@ -348,10 +426,13 @@ export type {
   ShellWidthMatch,
   SortDef,
   SortDirection,
+  StatusCount,
   StreamingDataSource,
   SyncDataSource,
   ToggleFacet,
   ViewKind,
+  ViewsContext,
+  ViewsOption,
 } from './types'
 
 export { default as HeaderContentLayoutPlugin } from './plugin'

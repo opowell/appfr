@@ -20,6 +20,13 @@ const props = defineProps<{
    * first that is, rather than a view with no way back to it in the panel.
    */
   views?: ViewKind[]
+  /**
+   * Whether what the source answers is not yet the data — see `loading` on
+   * `DataShell`. Said in place of everything else, the per-type cards
+   * included: they run queries of their own against the same source, and
+   * would each say "nothing here yet" of data that has not arrived.
+   */
+  loading?: boolean
 }>()
 
 const shell = useShellContext()
@@ -85,10 +92,20 @@ watch(
     class="dc-results"
     :data-dc-pending="shell.pending.value ? 'true' : 'false'"
   >
+    <!-- Before anything that reads the source, because nothing it answers is
+         the data yet. -->
+    <p
+      v-if="loading"
+      class="dc-results__state dc-results__state--loading"
+      aria-live="polite"
+    >
+      <span class="dc-results__detail">Loading…</span>
+    </p>
+
     <!-- First, because the per-type cards do not read the shell's own result
          set at all: each runs its own query and reports its own failure, and
          the cards a host put among them are not waiting on either. -->
-    <TypeCardsView v-if="isTypeCards">
+    <TypeCardsView v-else-if="isTypeCards">
       <template
         v-if="slots['cards-before']"
         #before

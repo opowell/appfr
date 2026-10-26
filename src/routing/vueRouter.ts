@@ -48,11 +48,11 @@ export function createVueRouterAdapter(router: RouterLike): RouteAdapter {
   return {
     search,
     path: path as RouteAdapter['path'],
-    push: (next) => router.push(`${path.value}${normalizeSearch(next)}`),
-    replace: (next) => router.replace(`${path.value}${normalizeSearch(next)}`),
-    href: (next) => {
-      const to = `${path.value}${normalizeSearch(next)}`
-      return router.resolve?.(to).href ?? to
+    push: (next, to) => router.push(`${to ?? path.value}${normalizeSearch(next)}`),
+    replace: (next, to) => router.replace(`${to ?? path.value}${normalizeSearch(next)}`),
+    href: (next, to) => {
+      const location = `${to ?? path.value}${normalizeSearch(next)}`
+      return router.resolve?.(location).href ?? location
     },
     dispose: stop,
   }

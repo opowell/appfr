@@ -217,3 +217,25 @@ test.describe('brand on a narrow shell', () => {
     await expect(page.locator('.dc-header__domain')).toBeHidden()
   })
 })
+
+test.describe('a page that is not about the query', () => {
+  const DETACHED = 'shell-data-shell--detached-page'
+
+  test('the bar reads Everything, not the page’s own parameters', async ({ page }) => {
+    await gotoStory(page, DETACHED)
+    await expect(page.locator('.sb-detached-page h2')).toHaveText('Coverage report — run-7')
+    await expect(page.locator('.sb-host-page__location')).toHaveText('/crawl-report?crawl=run-7&q=recall')
+    await expect(terms(page)).toHaveCount(0)
+    await expect(page.locator('.dc-results')).toHaveCount(0)
+  })
+
+  test('the first edit to the bar goes back to the list, with it applied', async ({ page }) => {
+    await gotoStory(page, DETACHED)
+    await searchBox(page).fill('digest')
+    await searchBox(page).press('Enter')
+
+    await expect(page.locator('.sb-detached-page')).toHaveCount(0)
+    await expect(page.locator('.dc-results')).toBeVisible()
+    await expect(terms(page)).toHaveText(['digest'])
+  })
+})

@@ -28,6 +28,7 @@ import type {
 import type { RouteAdapter } from '../routing/adapter'
 import { ROUTE_ADAPTER_KEY } from '../routing/adapter'
 import { createHistoryAdapter } from '../routing/history'
+import { detachableAdapter } from '../routing/detached'
 import { createMockDataSource } from '../data/mock'
 import { drillExpression, recordsIn, scopeTermFor } from '../query/drill'
 import { provideShellContext } from '../composables/context'
@@ -119,6 +120,28 @@ const props = withDefaults(
      */
     loading?: boolean
     /**
+     * Whether a `page` is about the query. Read only while one is provided.
+     *
+     * `shell`, the default, is a page whose input the query is — a form that
+     * runs every spec the query matches: the bar reads the URL the page is
+     * on, and an edit to it stays on that page, narrowing what it acts on.
+     *
+     * `detached` is a page that is about something else — a form making a
+     * new record, a report on one run — and only shares the bar. Its URL's
+     * parameters are the page's own (`?crawl=…`), not a query, so the bar
+     * reads the pristine one, `Everything`; and the first edit to it is a way
+     * back to the list — it navigates to {@link listPath} with that edit
+     * applied, pushing, so Back returns to the page.
+     */
+    pageQuery?: 'shell' | 'detached'
+    /**
+     * Where a detached page's first edit to the bar lands — the path the
+     * list is at. `/` unless it says otherwise: the root of a vue-router app
+     * (its `base` and hash are the router's to add) and of a memory adapter.
+     * A shell mounted below the root under the History API says its own.
+     */
+    listPath?: string
+    /**
      * A card set of the host's own per record the query narrows to, by the
      * record's type — `{ tests: TestCards }` — rendered as `<component :is
      * :id>` where the `record` slot would be. The shorthand for a slot that
@@ -207,6 +230,8 @@ const props = withDefaults(
   {
     rowPress: 'narrow',
     loading: false,
+    pageQuery: 'shell',
+    listPath: '/',
     limit: 50,
     previewsPerType: 3,
     typeChooser: 'scoped',
@@ -324,9 +349,11 @@ const slots = defineSlots<{
    * the type's operations are not offered over it; and nothing corrects the
    * URL's page from a count. Provide it conditionally — `<template v-if="…"
    * #page>` — and the shell is the list again the moment it is not.
+   *
+   * A page that is not about the query at all says so with `pageQuery`.
    */
   page?: (props: {
-    /** The committed query, as the URL has it. */
+    /** The committed query, as the URL has it — pristine on a detached page. */
     query: ShellQuery
   }) => unknown
   /** Replaces the entire results area. */
@@ -361,6 +388,27 @@ const adapter: RouteAdapter = props.route ?? injectedAdapter ?? (ownedAdapter as
 
 onBeforeUnmount(() => ownedAdapter?.dispose?.())
 
+/**
+ * Whether the area under the bar is a page of the host's — see the `page`
+ * slot. A ref brought up to date before each render rather than a computed,
+ * because a slot passed conditionally comes and goes with the parent's render
+ * and nothing reactive says so; the correction below watches this.
+ */
+const hasPage = ref(Boolean(slots.page))
+onBeforeUpdate(() => {
+  hasPage.value = Boolean(slots.page)
+})
+
+/**
+ * The adapter the query is read through: the host's own, or — under a page
+ * that is not about the query — one standing apart from the URL, reading the
+ * pristine query and writing its first change to the list. See `pageQuery`.
+ */
+const queryAdapter = detachableAdapter(adapter, {
+  detached: () => hasPage.value && props.pageQuery === 'detached',
+  path: () => props.listPath,
+})
+
 /* ------------------------------------------------------------------- state */
 
 const fallbackSource = computed<DataSource>(() => createMockDataSource({ seed: props.schema.key }))
@@ -368,7 +416,7 @@ const source = computed<DataSource>(() => props.source ?? fallbackSource.value)
 
 const query = useQueryState({
   schema: () => props.schema,
-  adapter,
+  adapter: queryAdapter,
   defaults: () => props.defaults,
   navigationMode: () => props.navigationMode,
   facetNavigationMode: () => props.facetNavigationMode,
@@ -449,19 +497,6 @@ const offeredViews = computed<ViewKind[] | undefined>(() => {
   const offered = props.views
   if (typeof offered !== 'function') return offered
   return offered({ entity: query.entity.value, records: records.value })
-})
-
-/* -------------------------------------------------------------------- page */
-
-/**
- * Whether the area under the bar is a page of the host's — see the `page`
- * slot. A ref brought up to date before each render rather than a computed,
- * because a slot passed conditionally comes and goes with the parent's render
- * and nothing reactive says so; the correction below watches this.
- */
-const hasPage = ref(Boolean(slots.page))
-onBeforeUpdate(() => {
-  hasPage.value = Boolean(slots.page)
 })
 
 /*

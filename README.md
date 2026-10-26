@@ -331,6 +331,16 @@ const route = createVueRouterAdapter(useRouter())
 app.provide(ROUTE_ADAPTER_KEY, route)
 ```
 
+An adapter is a search string and a path: `search` and `path` are what it
+reads, and `push(search, path?)`, `replace(search, path?)` and
+`href(search, path?)` what it writes. The shell writes the search alone,
+which stays on the path it is on — except from [a page that is not about the
+query](#a-page-that-is-not-about-the-query), whose first edit goes to the
+list's path and names it. All three adapters take it: the History one leaves
+the page's hash behind on a move to another path, and the vue-router one
+navigates through the router (so its `base` and hash history apply). An
+adapter of your own that ignores the second argument stays where it is.
+
 ### Permalinks to a record
 
 Where a press narrows, a record has no page of its own: the screen about it
@@ -1968,6 +1978,8 @@ own.
 | `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. With one on the list the bar carries no View chooser — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type), or a function of `{ entity, records }` and the shell works the screen out for you — see [cards for the records the query names](#cards-for-the-records-the-query-names). |
 | `loading` | `boolean` | `false` | The source's answers are not yet the data. The results area says *Loading…*, the pager is off the bar, and nothing is corrected from a count until it turns false — see [while the data is on its way](#while-the-data-is-on-its-way). |
 | `recordCards` | `Record<string, Component>` | — | A component per record the query names, by the record's type, given `id` — the shorthand for the `record` slot. See [cards for the records the query names](#cards-for-the-records-the-query-names). |
+| `pageQuery` | `'shell' \| 'detached'` | `'shell'` | Whether a `page` is about the query. `detached`: the bar reads the pristine query, not the page's URL, and its first edit goes to `listPath`. Read only while a `page` is provided — see [a page that is not about the query](#a-page-that-is-not-about-the-query). |
+| `listPath` | `string` | `'/'` | Where a detached page's first edit lands. |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all; `mono-size` is `inherit` with the type scale given up too, every word at the host's one size and one weight with only colour and opacity varying. |
@@ -2073,6 +2085,76 @@ stays. A page is not a drawing of the rows, so under it
 Provide it conditionally — `v-if` on the `<template>` — and the shell is the
 list again the moment it is not. The source still runs the query, which is what
 the count beside the type on the bar says: how many the page would act on.
+
+#### A page that is not about the query
+
+The run form above is about the query: its input *is* the query, and an edit
+on the bar narrows what it will run. Some pages only share the bar — a form
+making a new record, a report on one run. Their URL's parameters are their
+own (`/crawl-report/x?crawl=run-7`), and read as a query they would put
+pills on the bar that mean nothing. `pageQuery="detached"` says so:
+
+- the bar reads the **pristine query** — `Everything`, nothing narrowing it —
+  whatever the page's URL holds, and the page is handed that as its `query`;
+- the **first edit** to it — a word typed and Enter, a type chosen, an
+  expression run from the panel — is a way back to the list: it navigates to `listPath` (`/`
+  unless you say) with that edit applied, and pushes, so Back returns to the
+  page;
+- nothing is written while the reader only reads: the page's URL is the
+  page's.
+
+It is read only while a `page` is provided, so one shell can carry it for
+every route and it means nothing on the list itself.
+
+A recipe — one shell for every route, as an app with a form that runs the
+query, a form that makes a record and a report would have it:
+
+```ts
+// router.ts — every route renders the shell, so moving between them keeps it.
+const ShellView = () => import('./ShellView.vue')
+const routes = [
+  { path: '/', name: 'shell', component: ShellView },
+  { path: '/runs/new', name: 'run-new', component: ShellView },
+  { path: '/crawls/new', name: 'crawl-new', component: ShellView },
+  { path: '/crawl-report/:dir', name: 'crawl-report', component: ShellView },
+]
+```
+
+```vue
+<!-- ShellView.vue -->
+<script setup lang="ts">
+const router = useRouter()
+const route = createVueRouterAdapter(router)
+
+const PAGES = { 'run-new': RunStartView, 'crawl-new': CrawlStartView, 'crawl-report': CrawlReportView }
+/** The pages whose input is the query: the run form runs every spec it matches. */
+const ABOUT_THE_QUERY = new Set(['run-new'])
+
+const name = computed(() => String(router.currentRoute.value.name))
+const page = computed(() => PAGES[name.value] ?? null)
+</script>
+
+<template>
+  <DataShell
+    :schema="schema"
+    :route="route"
+    :page-query="ABOUT_THE_QUERY.has(name) ? 'shell' : 'detached'"
+  >
+    <template v-if="page" #page>
+      <component :is="page" v-bind="router.currentRoute.value.params" />
+    </template>
+  </DataShell>
+</template>
+```
+
+On `/runs/new?e=tests&q=checkout` the bar reads `Tests · checkout`, an edit
+stays on the form and narrows the run. On `/crawls/new` and
+`/crawl-report/x?crawl=run-7` it reads `Everything`, and typing `checkout`
+and Enter lands on `/?q=checkout`. No wrapping of the router in a
+`currentRoute` that pretends to be `/` is needed.
+
+`detachableAdapter(adapter, { detached, path })` is the adapter that does
+this, exported for a host wiring `useQueryState` to chrome of its own.
 
 ### One width for the bar and the panel
 

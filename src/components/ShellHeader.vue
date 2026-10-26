@@ -32,9 +32,30 @@ const props = defineProps<{
    * than on the bar beside it.
    */
   pagesNote?: string
+  /**
+   * Leave the pager off the bar — while the results are not yet the data
+   * (`loading` on `DataShell`), or under a page of the host's, where there
+   * is nothing to page.
+   */
+  hidePages?: boolean
+  /**
+   * Leave the View chooser off the bar, under a page of the host's: how the
+   * results are drawn means nothing where they are not.
+   */
+  hideViews?: boolean
 }>()
 
 const emit = defineEmits<{ toggle: [] }>()
+
+const slots = defineSlots<{
+  /** Extra controls at the right end of the bar. */
+  actions?: () => unknown
+  /**
+   * The domain's mark, drawn in place of its name — see `brand` on
+   * `DataShell`. The name stays the bar's accessible text.
+   */
+  brand?: (props: { label: string }) => unknown
+}>()
 
 const shell = useShellContext()
 
@@ -176,7 +197,7 @@ const view = computed(() => resolveView(shell.query.value.view, props.views))
  * as the query changes — so a chooser of one would be a label posing as a
  * control.
  */
-const showViews = computed(() => viewOptions.value.length > 1)
+const showViews = computed(() => !props.hideViews && viewOptions.value.length > 1)
 
 /**
  * Whether the list of types is worth a control of its own.
@@ -424,6 +445,7 @@ const page = computed(() => shell.liveQuery.value.page)
  */
 const paged = computed(
   () =>
+    !props.hidePages &&
     (shell.pageCount.value > 1 || Boolean(props.pagesNote)) &&
     !isTypeCardsQuery(shell.query.value, props.views),
 )
@@ -527,7 +549,28 @@ function abandonTyped(event: Event): void {
       class="dc-header__trigger"
       @click="pressBar"
     >
-      <span class="dc-header__domain">{{ domain.label }}</span>
+      <!-- A host's mark, where it has one: drawn for the eye and hidden from
+           assistive technology, which reads the name it stands for. -->
+      <span
+        v-if="slots.brand"
+        class="dc-header__domain"
+        data-dc-brand
+      >
+        <span
+          class="dc-header__brand"
+          aria-hidden="true"
+        >
+          <slot
+            name="brand"
+            :label="domain.label"
+          />
+        </span>
+        <span class="dc-header__sr">{{ domain.label }}</span>
+      </span>
+      <span
+        v-else
+        class="dc-header__domain"
+      >{{ domain.label }}</span>
 
       <!-- What the shell is read inside, where it is read inside anything: not
            a part of the query and not something to take off, so it sits before
@@ -704,7 +747,7 @@ function abandonTyped(event: Event): void {
     </nav>
 
     <div
-      v-if="$slots.actions"
+      v-if="slots.actions"
       class="dc-header__actions"
     >
       <slot name="actions" />
@@ -766,6 +809,14 @@ function abandonTyped(event: Event): void {
   font-size: var(--dc-text-body);
   font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-1);
+}
+
+/* A mark sits on the bar's centre line, as the name's text does; its size is
+   its own, and its colour the name's unless it says otherwise. */
+.dc-header__domain[data-dc-brand],
+.dc-header__brand {
+  display: inline-flex;
+  align-items: center;
 }
 
 .dc-header__query {
@@ -857,8 +908,12 @@ function abandonTyped(event: Event): void {
   flex: 1 1 auto;
   min-width: 8ch;
   padding: 3px 6px;
-  background: none;
-  border: 1px solid transparent;
+  /* Bare unless a host says otherwise — a dark surface can leave an empty
+     bare box a faint smudge, and a resting fill and edge make it read as a
+     field. The tokens are the host's and unset here; the fallbacks are the
+     box as it has always been. Focus still swaps in the accent edge. */
+  background: var(--dc-search-fill, none);
+  border: 1px solid var(--dc-search-border, transparent);
   border-radius: var(--dc-radius-sm);
   color: var(--dc-fg-1);
   font-size: var(--dc-text-code);
@@ -867,7 +922,7 @@ function abandonTyped(event: Event): void {
 }
 
 .dc-header__search::placeholder {
-  color: var(--dc-fg-3);
+  color: var(--dc-search-placeholder, var(--dc-fg-3));
 }
 
 .dc-header__search:focus-visible {
@@ -1074,7 +1129,8 @@ function abandonTyped(event: Event): void {
  * the domain is the one thing here that can go.
  */
 @container (max-width: 720px) {
-  .dc-header__domain {
+  .dc-header__domain,
+  .dc-header__domain[data-dc-brand] {
     display: none;
   }
 

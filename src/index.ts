@@ -39,6 +39,7 @@ export { default as PreviewView } from './components/views/PreviewView.vue'
 export { default as PinStar } from './components/views/PinStar.vue'
 export { default as SelectTick } from './components/views/SelectTick.vue'
 export { default as ScopeMark } from './components/views/ScopeMark.vue'
+export { default as OpenMark } from './components/views/OpenMark.vue'
 export { default as QueryMark } from './components/views/QueryMark.vue'
 export { default as StandingControl } from './components/views/StandingControl.vue'
 export { default as MetricDrill } from './components/views/MetricDrill.vue'
@@ -59,6 +60,8 @@ export { useColumns } from './composables/useColumns'
 export { useEntityPreviews } from './composables/useEntityPreviews'
 export { useEntityCounts } from './composables/useEntityCounts'
 export { useRecordNames } from './composables/useRecordNames'
+export { usePoll } from './composables/usePoll'
+export type { PollState } from './composables/usePoll'
 export type { RecordNamesState, UseRecordNamesOptions } from './composables/useRecordNames'
 export { useStableSchema } from './composables/useStableSchema'
 export type { UseStableSchemaOptions } from './composables/useStableSchema'
@@ -300,8 +303,8 @@ export type { RouteAdapter } from './routing/adapter'
 export { createHistoryAdapter } from './routing/history'
 export { createMemoryAdapter } from './routing/memory'
 export type { MemoryAdapter } from './routing/memory'
-export { createVueRouterAdapter } from './routing/vueRouter'
-export type { RouterLike } from './routing/vueRouter'
+export { createVueRouterAdapter, entityRedirect, recordRedirect } from './routing/vueRouter'
+export type { RedirectFrom, RedirectTo, RouterLike } from './routing/vueRouter'
 
 /* Data */
 export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS, tintFor } from './data/mock'
@@ -370,6 +373,7 @@ export type {
   FacetDef,
   FacetState,
   FacetValue,
+  NarrowedRecord,
   PressOptions,
   QueryRequest,
   QueryResult,
@@ -391,6 +395,8 @@ export type {
   SyncDataSource,
   ToggleFacet,
   ViewKind,
+  ViewsContext,
+  ViewsOption,
 } from './types'
 
 export { default as HeaderContentLayoutPlugin } from './plugin'

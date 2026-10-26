@@ -5,6 +5,7 @@ import PressLink from './PressLink.vue'
 import { useEntityPreviews } from '../../composables/useEntityPreviews'
 import MetricDrill from './MetricDrill.vue'
 import QueryMark from './QueryMark.vue'
+import OpenMark from './OpenMark.vue'
 import ScopeMark from './ScopeMark.vue'
 
 /**
@@ -208,6 +209,7 @@ const previews = computed(() =>
           >{{ entry.parts.updated }}</span>
           <QueryMark :entry="entry" />
           <ScopeMark :entry="entry" />
+          <OpenMark :entry="entry" />
         </span>
       </div>
 

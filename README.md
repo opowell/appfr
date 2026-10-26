@@ -331,6 +331,32 @@ const route = createVueRouterAdapter(useRouter())
 app.provide(ROUTE_ADAPTER_KEY, route)
 ```
 
+### Permalinks to a record
+
+Where a press narrows, a record has no page of its own: the screen about it
+is the shell with its term in the query. Its address is then a way *into* the
+shell — and two vue-router `redirect` helpers build those:
+
+```ts
+import { entityRedirect, recordRedirect } from 'header-content-layout'
+
+const routes = [
+  { path: '/', component: ShellView },
+  // `/tests` → `/?e=tests`: a type's old list address.
+  { path: '/tests', redirect: entityRedirect('tests') },
+  // `/tests/:id` → `/?q=test="<id>"`: the record's own.
+  { path: '/tests/:id', redirect: recordRedirect('test', 'id') },
+]
+```
+
+`recordRedirect(scopeField, param)` writes the same term a press writes —
+`field="id"`, quoted — so a record reached by its address reads, and lifts,
+exactly like one reached from a list. The query the address arrived with is
+kept and the term ANDed on to its expression, once however often the link is
+followed, so `/tests/x?e=runs` lands on that record's runs. `entityRedirect`
+keeps it too, so `/tests?q=checkout` lands on the same search. Both take the
+path the shell is mounted at as a last argument, `/` unless you say.
+
 ### What the URL looks like
 
 ```
@@ -872,6 +898,30 @@ host whose leaves are the only records with somewhere to go (a URL opens in a
 new tab; a file opens in an editor) can leave `rowPress` alone and handle
 `activate` for exactly those.
 
+**A record that lives somewhere opens there.** A type whose records each have
+a page elsewhere — a site, a page of the host's — says where with `href`:
+
+```ts
+{ key: 'urls', label: 'URLs', scope: 'url', href: (row) => row.id, /* … */ }
+```
+
+What it does depends on what a press on the row already means:
+
+| The press | With `href` |
+| --- | --- |
+| is reported (`rowPress: 'open'`, or a type with no `scope`) | the row's name is a link to the record's page, a plain press opens it in a new tab, and `activate` is **not** emitted for it — a host that would only have called `window.open` in its handler need not have one |
+| narrows (the default, on a type with a `scope`) | it goes on narrowing, and a **↗** beside the name opens the record's page in a new tab — where the `→` stands when the roles are the other way round |
+
+It is on the type rather than on a column because a press belongs to the row:
+every view reads it through the one place a press is read, the cards, tiles
+and previews included, and none of those is made of columns. In a table the
+`↗` sits beside the column that asked for the `→` (`scope: true`), or else
+beside the one that opens the record (`activate: true`). A new tab rather
+than this one, because a page elsewhere is a detour from the query rather
+than a step in it; ⌘-click, a middle click and the context menu work on both
+links as on any other. `shell.recordHref(row)` is the URL, for a view of your
+own, and `<OpenMark :entry>` is the `↗`.
+
 **A press with ⌥ (Alt) held leaves the record out instead.** Every press
 that narrows — a row, the `→`, a metric, a card's preview row — writes
 `-host="www.example.com"` rather than `host="www.example.com"` when the
@@ -1182,6 +1232,53 @@ them the same rule — a control over nothing is not worth its room:
   term. It reads the scope and the query as one expression, so a record's own
   page drops the card on the same terms as a query narrowed to it by hand.
 
+### Cards for the records the query names
+
+`within` is for a page that *is* one record. The other way a screen comes to be
+about a record is the one a press makes: the record's term in the query, put
+there by pressing its row and lifted by pressing its part on the bar. The
+`record` slot draws cards of your own for each record named that way — once
+per record, in the order the query names them, ahead of `cards-before`:
+
+```vue
+<DataShell :schema="schema" :views="views">
+  <template #record="{ entity, id }">
+    <component :is="CARD_SETS[entity.key]" :id="id" />
+  </template>
+</DataShell>
+```
+
+So a record's cards follow the query rather than a route: press a row and its
+cards arrive with its term, lift the term and they go, narrow to two records
+and both sets are on screen. A record is a positive term on a field some type
+declares as its `scope`; a negated one leaves the record out, which is not the
+screen being about it, and the same record written twice — in two cases, or in
+two alternatives — is one record. The committed query is what is read, not a
+draft in the box: the screen does not change what it is about under each
+keystroke. Like `cards-before`, the slot is drawn on the per-type screen only.
+
+Where the slot would only look a component up, `recordCards` is the shorthand —
+a component per type, rendered with the record's `id`; a type with no entry
+has no cards of its own, and the slot wins where both are given:
+
+```vue
+<DataShell :schema="schema" :record-cards="{ tests: TestCards, runs: RunCards }" />
+```
+
+`views` can follow the same reading. A function is asked with the type being
+listed and the records the query names, and offers what it returns — so a
+host need not read the query back out of the URL to decide what each screen
+draws:
+
+```ts
+const views = ({ entity, records }: ViewsContext): ViewKind[] =>
+  entity ? ['table'] : records.length ? ['cards'] : ['table', 'cards']
+```
+
+A type's own list is a table; a screen about a record is cards alone, its own
+cards being drawn there and nowhere else; and the corpus offers both. One view
+on offer is what takes the chooser off the bar.
+
 ### A facet a row holds several of
 
 A chips facet is one value per row by default. Mark it `multiple` and a row may
@@ -1205,6 +1302,23 @@ Nothing else changes: the URL, the summary and the controls are the same, and
 filtering follows whatever the row holds — a source may return a list whether
 or not the schema declares one. The flag is what says so in the schema, and
 what the bundled mock source generates against.
+
+### A facet that grows with the data
+
+A chips facet whose options are the data's — every host a tool has run
+against, every target URL — grows with it, and the tallest facet sets the
+height of the panel. Two fields keep one in bounds:
+
+```ts
+{ kind: 'chips', key: 'target', label: 'Target', options: targets, maxRows: 6, truncate: 'start' }
+```
+
+| Field | Type | |
+| --- | --- | --- |
+| `maxRows` | `number` | The most rows of chips shown before the facet scrolls. The height is a whole number of chips, worked out from the chip's own type size, so the cut falls between two rows and follows a theme that changes the type. The edge with more behind it fades, from a scroll timeline, where motion is welcome. |
+| `truncate` | `'end' \| 'start'` | One line per chip, never wider than the facet, ellipsised — the whole value on hover. `start` cuts the head instead of the tail, for values that share a long beginning and differ at the end: URLs on one host, paths under one root. |
+
+Left out, a facet is as tall as its chips and a chip wraps, as before.
 
 ## The expression field
 
@@ -1476,7 +1590,9 @@ own.
 | `typeChooser` | `'scoped' \| 'always'` | `'scoped'` | Where the bar offers the list of types. `scoped` only once one is filtered to, the home screen's cards naming the types already; `always` keeps it on `Everything` too, for a home screen that opens on records rather than on a card per type. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
 | `pagesNote` | `string` | — | What the count is short of, in your words — `first 1,200 of 30,200 lots`. Goes under the pager's hover text, and keeps the pager up on a single page. See [paging through the results](#paging-through-the-results). |
-| `views` | `ViewKind[]` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. With one on the list the bar carries no View chooser — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type). |
+| `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. With one on the list the bar carries no View chooser — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type), or a function of `{ entity, records }` and the shell works the screen out for you — see [cards for the records the query names](#cards-for-the-records-the-query-names). |
+| `loading` | `boolean` | `false` | The source's answers are not yet the data. The results area says *Loading…*, the pager is off the bar, and nothing is corrected from a count until it turns false — see [while the data is on its way](#while-the-data-is-on-its-way). |
+| `recordCards` | `Record<string, Component>` | — | A component per record the query names, by the record's type, given `id` — the shorthand for the `record` slot. See [cards for the records the query names](#cards-for-the-records-the-query-names). |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all; `mono-size` is `inherit` with the type scale given up too, every word at the host's one size and one weight with only colour and opacity varying. |
@@ -1499,13 +1615,18 @@ updated, `toggle-pin(row)`, plus `update:open`, `update:pinned` and
 `update:selected`.
 
 **Slots** — `actions` for extra controls at the right of the header bar,
-`panel-section` for a section of your own at the end of the query panel,
-`cards-before` and `cards-after` for [cards of your own](#cards-of-your-own)
-above and below the card-per-type screen, and `results` to replace the content
-area entirely (receives `rows` — the current page of them — plus `total`,
-`offset`, `pageCount`, `query` and `pending`). That `query` is the one the rows
-answer, which is the committed query with whatever is being typed in the
-header's box ANDed on — see [the field it is edited in](#the-field-it-is-edited-in).
+`brand` for a mark in place of the domain's name at its left (see
+[a mark for the name](#a-mark-for-the-name)), `panel-section` for a section of
+your own at the end of the query panel, `cards-before` and `cards-after` for
+[cards of your own](#cards-of-your-own) above and below the card-per-type
+screen, `record` for cards about [each record the query
+names](#cards-for-the-records-the-query-names) (receives `entity` and `id`),
+`page` for [a page of your own](#a-page-of-your-own-under-the-bar) under the
+same bar (receives `query`), and `results` to replace the content area
+entirely (receives `rows` — the current page of them — plus `total`,
+`offset`, `pageCount`, `query`, `pending` and `loading`). That `query` is the
+one the rows answer, which is the committed query with whatever is being typed
+in the header's box ANDed on — see [the field it is edited in](#the-field-it-is-edited-in).
 
 `panel-section` is where an application's own commands go when they are not
 about the query — the header bar's width belongs to the summary it exists to
@@ -1524,6 +1645,59 @@ that matches its own:
   </template>
 </DataShell>
 ```
+
+### A mark for the name
+
+The domain's name at the left of the bar is text. The `brand` slot draws a
+mark in its place — a logo, an icon — and the name stays the bar's accessible
+text, read out where the mark is drawn, so `schema.label` is still the one
+place the name is written:
+
+```vue
+<DataShell :schema="schema">
+  <template #brand>
+    <svg viewBox="0 0 16 16" width="18" height="18">…</svg>
+  </template>
+</DataShell>
+```
+
+The mark is hidden from assistive technology, and it is a mark rather than a
+control: the whole bar is the query panel's toggle, so a link there would be a
+second press on the same surface. It takes the name's colour (`currentColor`)
+and goes where the name goes on a narrow shell. The slot is handed `label`,
+for a mark that wants to say the name too.
+
+### A page of your own under the bar
+
+Not every screen of an application is a list. A form that acts on what the
+query matches — run every spec it names, export every row — or a report about
+it is still *about the query*, and belongs under the same bar rather than
+under a second one of the application's own. The `page` slot is that: it
+takes the room the results would have, and the bar above it goes on showing
+the query and editing it.
+
+```vue
+<DataShell :schema="schema" :route="route">
+  <template v-if="$route.name === 'run-new'" #page="{ query }">
+    <RunForm :query="query" />
+  </template>
+</DataShell>
+```
+
+How it differs from `results`, which also replaces the content area: `results`
+is handed the rows and draws them its own way, so everything that acts on rows
+stays. A page is not a drawing of the rows, so under it
+
+- the bar carries **no pager and no View chooser** — there is nothing under it
+  to page through or to draw another way;
+- the type's [operations](#records-you-can-copy-and-delete) are **not offered**
+  over it — *Delete* over a form deletes nothing the reader can see;
+- **nothing corrects the URL's page** from a count, so `p` is where it was when
+  the slot goes and the list comes back.
+
+Provide it conditionally — `v-if` on the `<template>` — and the shell is the
+list again the moment it is not. The source still runs the query, which is what
+the count beside the type on the bar says: how many the page would act on.
 
 ### One width for the bar and the panel
 
@@ -1607,6 +1781,26 @@ What this does on purpose:
   it qualifies is, and keeps the pager up on a single page so the line has
   somewhere to be.
 
+#### While the data is on its way
+
+A synchronous source over payloads that have not landed yet answers what it
+holds — no rows, nought of nought — and the shell believes a count: a link to
+`?p=7` opened before the rows it names had arrived would be corrected to page
+one, and the reader would never see them. `loading` is the host saying the
+answers are not yet the data:
+
+```vue
+<DataShell :schema="schema" :source="source" :loading="!ready" />
+```
+
+While it is true the results area says *Loading…* in place of anything it
+would otherwise draw, the pager is off the bar, and nothing is corrected from
+the count. The bar is up the whole time, so the query can be read and edited.
+When it turns false the shell reads the URL against the results as if it had
+only just been mounted: `p=7` stays where there are seven pages, and lands on
+the last page where there are fewer. It saves mounting the shell behind a
+`v-if` of your own, which is the same thing with the bar missing.
+
 A source is handed `offset` alongside `limit` and reports `total` for the whole
 match — see [wiring it to your data](#wiring-it-to-your-data). Building your
 own chrome instead? `useShellContext()` carries `limit`, `offset`, `pageCount`
@@ -1676,6 +1870,20 @@ state.clearEntity()     // back to everything
 state.toggleChip('state', 'running')
 state.setPage(3)        // paging, which any filter change returns to page 1
 state.hrefFor({ view: 'grid' })   // build a link without navigating
+```
+
+`usePoll(tick, intervalMs)` keeps payloads fresh behind a source of your own:
+`tick` resolves to whether to go on, the next tick is scheduled only once the
+last has answered — a slow response never queues up overlapping requests —
+and it stops with the component it was made in. A tick that throws stops it;
+catch in `tick` and return `true` to poll through failures.
+
+```ts
+const poll = usePoll(async () => {
+  payload.value = await api.load()
+  return true
+}, 5000)
+onMounted(poll.start)  // poll.stop(), poll.polling
 ```
 
 Also exported: `useResults` — which is what drives a source, streaming or not,
@@ -2899,6 +3107,23 @@ are a whole theme:
 | `--dc-shadow`, `--dc-header-height` | — |
 | `--dc-header-width` | how wide the bar and panel are under `matchWidth="shrink"` |
 | `--dc-card-image`, `--dc-card-picture` | how large a record card's picture is drawn (64px), and how narrow a column of picture cards may be (160px) |
+
+And three a theme leaves unset, whose absence is the shell as it is: the
+header's search box is bare — no fill, no edge — with its placeholder in
+`--dc-fg-3`. On a dark surface that can leave an empty bar's *Search…* a faint
+smudge, and these give the box a resting fill and edge; focus still swaps in
+the accent edge.
+
+```vue
+<DataShell
+  theme="dark"
+  :tokens="{
+    '--dc-search-fill': 'var(--dc-bg-1)',
+    '--dc-search-border': 'var(--dc-line)',
+    '--dc-search-placeholder': 'var(--dc-fg-2)',
+  }"
+/>
+```
 
 ### Any single token
 

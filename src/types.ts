@@ -526,6 +526,26 @@ export interface DomainSchema {
    * line in its own would be the same fault again, spread wider.
    */
   formatCount?: (value: number) => string
+  /**
+   * Whether a term on a join key — some entity's {@link EntitySchema.scope} —
+   * leaves out a row that does not carry that field at all.
+   *
+   * Unset, it does not. An unresolvable field *matches* in the expression
+   * language, which is what keeps a half-typed term from emptying the screen,
+   * and a join key is a field like any other there: a row of a type that
+   * never heard of `host` comes through `host="example.com"` unfiltered. The
+   * cure has been for every row to carry every join key, an empty list where
+   * the join does not apply — which a host has to remember for each type it
+   * adds, and which a narrowed screen punishes silently when it forgets.
+   *
+   * Set, a row without the field is not one the term names, so it is out —
+   * and kept by `-host="example.com"`, which is the same fact turned round.
+   * Only the scope fields are held to it: everything else that does not
+   * resolve still constrains nothing, half-typed or not. Read by
+   * `matchesExpression` when the schema is handed to it, which the memory
+   * and mock sources both do.
+   */
+  strictScopes?: boolean
 }
 
 /* ------------------------------------------------------------------- query */

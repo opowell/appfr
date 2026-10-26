@@ -60,6 +60,8 @@ export { useEntityPreviews } from './composables/useEntityPreviews'
 export { useEntityCounts } from './composables/useEntityCounts'
 export { useRecordNames } from './composables/useRecordNames'
 export type { RecordNamesState, UseRecordNamesOptions } from './composables/useRecordNames'
+export { useStableSchema } from './composables/useStableSchema'
+export type { UseStableSchemaOptions } from './composables/useStableSchema'
 export type {
   EntityPreview,
   EntityPreviewsState,
@@ -205,8 +207,11 @@ export {
   PARAM_SORT,
   PARAM_VIEW,
   parseQuery,
+  readExpression,
+  searchFromQuery,
   serializeQuery,
 } from './query/codec'
+export type { RouteQuery } from './query/codec'
 export {
   changesResults,
   countPages,
@@ -250,11 +255,33 @@ export {
   rowKey,
 } from './query/columns'
 export {
+  bytesCell,
+  dateColumn,
+  durationCell,
+  elapsedCell,
+  entityColumn,
+  facetColumn,
+  flagColumn,
+  identityColumn,
+  metricColumn,
+  ordinalColumn,
+  percentCell,
+  pictureColumn,
+  referenceColumn,
+  stateColumn,
+  tintColumn,
+} from './query/presets'
+export { chipsFrom, niceMax, rangeFrom, toggleFacet, usefulFacets } from './query/facets'
+export {
   addTerm,
   drillExpression,
   excludingTerm,
+  fieldTerm,
+  idsExpression,
   liftTerm,
+  narrowPatch,
   pressOptions,
+  recordsIn,
   recordTerm,
   scopedEntity,
   scopeTerm,
@@ -263,7 +290,7 @@ export {
   withoutOwnScope,
   withStanding,
 } from './query/drill'
-export type { TermStanding } from './query/drill'
+export type { NarrowedRecord, SearchPatch, TermStanding } from './query/drill'
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary'
 export type { SummaryTerm } from './query/summary'
 
@@ -277,8 +304,10 @@ export { createVueRouterAdapter } from './routing/vueRouter'
 export type { RouterLike } from './routing/vueRouter'
 
 /* Data */
-export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS } from './data/mock'
+export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS, tintFor } from './data/mock'
 export type { MockSourceOptions } from './data/mock'
+export { createMemoryDataSource, queryAll } from './data/memory'
+export type { QueryAllRequest } from './data/memory'
 export {
   andExpression,
   columnShortcut,
@@ -305,7 +334,19 @@ export type {
   Term,
   TextTerm,
 } from './data/expression'
-export { fnv1a, formatCount, formatDate, formatMetric, formatOrdinal } from './data/format'
+export {
+  fnv1a,
+  formatBytes,
+  formatCount,
+  formatDate,
+  formatDateTime,
+  formatDuration,
+  formatElapsed,
+  formatMetric,
+  formatOrdinal,
+  formatPercent,
+  stripAnsi,
+} from './data/format'
 
 /* Types */
 export {

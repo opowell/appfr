@@ -247,6 +247,68 @@ This is the streaming Brickzuke's `addRow(item, index)` was reaching for —
 ref could not give it: rows that stop arriving when the query they belong to is
 gone, and a page whose size the table still decides.
 
+### Rows you already have
+
+An API that returns whole lists — no filtering, no paging — leaves the query
+to be applied in the page. `createMemoryDataSource(rows)` is that source: the
+expression, the facets, the sort and the page, by the same code the bundled
+mock runs, so every term reads exactly as it does there. It is synchronous,
+which the shell applies in the same tick — rows are on screen from the first
+render, and the pending state stays reserved for the fetch.
+
+```ts
+import { createMemoryDataSource, queryAll, useStableSchema } from 'header-content-layout'
+
+// A new array is a new source, and a new source is what re-runs the query.
+const source = computed(() => createMemoryDataSource(toRows(payloads.value)))
+
+// Every spec the query matches, not a page of them — what a "Run all" acts on.
+const specs = queryAll(source.value, { query, schema, entity: findEntity(schema, 'specs') })
+```
+
+Two things it reads differently from the mock, because its rows are real:
+
+- **A row with no date under a date sort goes last, in both directions.** A
+  column of `kind: 'date'` or `role: 'updated'` holding `''` or anything that
+  does not parse says nothing about where the row belongs — a host never
+  crawled, a spec never run — so it is held out of the sort rather than
+  floated to the top of an ascending list, where it would push the answers
+  off the first screen.
+- **A `limit` of 0 is no limit**, as the shell's own sink reads it. The mock
+  reads it as a page of nothing and goes on doing so, which is why `queryAll`
+  asks for a page no corpus reaches instead: that is every row to either.
+
+A schema built from that data has facets that are the data's — the values a
+chips facet offers, the ceiling of a range — and those are built from the rows
+too:
+
+```ts
+import { chipsFrom, rangeFrom, toggleFacet, usefulFacets } from 'header-content-layout'
+
+facets: usefulFacets([
+  chipsFrom(specRows, 'tag', 'Tags', { multiple: true }),  // every value held, A to Z
+  rangeFrom(specRows, 'cases', 'Cases'),                    // 0 to niceMax(the largest)
+  toggleFacet('failing', 'Failing', 'Only specs some run has failed'),
+]),
+```
+
+`usefulFacets` drops what cannot change the result — a chips facet with one
+option, a range from 0 to 0 — and `niceMax` is the rounding a range's ceiling
+gets, the next 1, 2 or 5 step, so the schema does not change every time a
+running duration ticks one second further.
+
+It still changes more often than it says anything new: a poll lands, a case
+flips, and the counts and options stand still. `useStableSchema(build)` re-runs
+`build` whenever what it reads changes and hands over the result only when it
+differs *by value* — `JSON.stringify`, or a `key` of your own — so the shell is
+not handed a new schema, and does not rebuild its query panel, for nothing.
+Functions in the schema, a column's `format` or `value`, are not part of that
+comparison: one that reads changing data should read it when called.
+
+```ts
+const schema = useStableSchema(() => buildSchema(payloads.value))
+```
+
 ## Routing
 
 The query is derived from the route's search string and written back on every
@@ -299,6 +361,21 @@ Changing the entity, view, sort, committed expression or page **pushes** a
 history entry — those are destinations worth coming back to. Nudging a facet
 **replaces**, because one entry per chip click makes the back button useless.
 Both are configurable via `navigationMode` and `facetNavigationMode`.
+
+### The URL outside the shell
+
+A redirect, a guard or a page beside the shell has the router's query object
+in hand rather than the adapter's search string. `searchFromQuery(route.query)`
+is that object as the search `parseQuery` reads — a repeated parameter kept,
+a `null` one dropped — and `readExpression(search)` is the expression alone,
+read without a schema, decoded exactly as `parseQuery` decodes it:
+
+```ts
+import { readExpression, searchFromQuery } from 'header-content-layout'
+
+const search = searchFromQuery(route.query)   // '?e=tests&q=host%3D%22a.example%22'
+readExpression(search)                        // 'host="a.example"'
+```
 
 ## Schemas
 
@@ -536,6 +613,57 @@ results are already of one.
 of the resolvers are exported for a host rendering its own views; `useColumns()`
 is the scope's set inside a shell, and `PresentedRow.parts` is a row with every
 role already resolved.
+
+#### Columns most types have
+
+Still nothing the shell falls back on — but a host writing several types'
+columns writes the same identity, date and state into each, and one type's
+table should not disagree with the card beside it. These are those columns as
+factories, over the field names the fixtures use, each taking a
+`Partial<ColumnDef>` last for whatever this type says differently:
+
+```ts
+import {
+  dateColumn, entityColumn, identityColumn, metricColumn, ordinalColumn,
+  referenceColumn, stateColumn, tintColumn, bytesCell,
+} from 'header-content-layout'
+
+columns: [
+  ordinalColumn(),                                         // #
+  identityColumn('Spec', { scope: true }),                 // primary — the → only where asked
+  referenceColumn('Path'),                                 // secondary
+  metricColumn('metric1', 'Cases', { drill: 'cases' }),
+  metricColumn('metric2', 'Size', { format: bytesCell }),
+  dateColumn('lastUpdated', 'Last updated', { role: 'updated', sort: 'updated' }),
+  stateColumn(),                                           // status
+  tintColumn(),
+]
+```
+
+| | |
+| --- | --- |
+| `ordinalColumn` / `stateColumn` / `tintColumn` / `pictureColumn` | the row's place; the pill (`status`); the tile's colour (`tint`); the picture (`picture`) |
+| `identityColumn(label)` / `referenceColumn(label)` | `primary`, opening the record and sorting by `name`; `secondary`, mono and muted |
+| `metricColumn(key, label)` / `dateColumn(key, label)` | a number or a date, sorted by its own key |
+| `entityColumn()` | the row's type, for the mixed set — `dc-table__entity` |
+| `facetColumn(key, label)` | a field of this type alone, under its facet's key |
+| `flagColumn(key, label, names)` | the true ones of a row's boolean fields, named: `crawled, recorded` |
+
+Each is a fresh object, so changing one set changes no other.
+
+**Formatting what a tool measures.** `formatBytes` (`28.0 kB`, decimal units),
+`formatDuration` from milliseconds (`640ms`, `12.4s`, `3m 7s`), `formatElapsed`
+from seconds (`1:42`), `formatPercent` from a share (`50%`), `formatDateTime`
+(a date and its time in the reader's locale, where `formatDate` is fixed and in
+UTC) and `stripAnsi` take the value they say and write `—` for a missing one.
+A cell holds whatever the row holds, so `bytesCell`, `durationCell`,
+`elapsedCell` and `percentCell` are the same as a column's `format`: anything
+in, a number held as text counted, and `EMPTY_CELL` for the rest — and for a
+size or a time of `0`, which in a column means nothing measured.
+
+`tintFor(id)` is a tile colour for a record that has none — one of
+`MOCK_TINTS`, by a hash of the id, so the same every time. Nothing fills it in
+for you; a `tint` field holds it where a source puts it.
 
 ### A type whose card is its picture
 
@@ -830,6 +958,19 @@ The bundled mock source does this for you: it reads the `scope` fields off the
 schema and gives every generated row a membership in each, so a drill through
 generated data returns rows rather than nothing.
 
+**Or say so once, with `strictScopes: true`** on the schema. A term on a join
+key then leaves out a row that does not carry the field — and `-host="…"` keeps
+it, the same fact turned round — while every other unknown field still
+constrains nothing, half-typed or not. Off unless set, since a schema that
+pads its rows already gets this and one that relies on the old reading keeps
+it. `matchesExpression` reads it off a schema handed to it as a fourth
+argument; the memory and mock sources both hand theirs over, and a source of
+your own does the same:
+
+```ts
+matchesExpression(parseExpression(query.expr), row, entity, schema)
+```
+
 Two helpers are exported for a host building its own context or its own
 results area, and they are the whole of what applying a drill takes:
 
@@ -842,6 +983,25 @@ drillExpression(schema, query, row)    // the expression with that term added
 drillExpression(schema, query, row, { exclude: true })  // …or with the record left out
 scopedEntity(schema, 'host')           // the entity `host` points at — the inverse
 ```
+
+And for a host that names records without a row in hand — a permalink, a
+record card, a selection handed to another page:
+
+```ts
+fieldTerm('host', 'www.example.com')   // 'host="www.example.com"' — what recordTerm writes
+idsExpression('test', ['a.ts', 'b.ts'])  // 'test="a.ts" test="b.ts"' — any of them; null for none
+recordsIn(schema, [readExpression(search)])  // [{ entityKey: 'tenants', id: 'www.example.com' }]
+router.push({ query: { ...route.query, ...narrowPatch(expr, term) } })  // what a press on the name does
+```
+
+`idsExpression` relies on two positive `=` terms on one field reading as any of
+them, which holds within a group: hand it over as the whole of a query, since
+ANDed on to one that already names a record on that field it widens rather
+than narrows. It is null rather than `''` for no ids, an empty expression being
+every row. `recordsIn` reads the terms the header puts names to — whatever
+their sign, deduped by type and id in the order written. `narrowPatch` adds the
+term, drops the type and the page and writes the cards view (or the one you
+pass), with `undefined` for a parameter to take off.
 
 A scope key beats a column heading of the same name in the expression field: an
 entity heading its identity column *Category* and carrying a `category` join
@@ -1076,7 +1236,8 @@ by heading, then the generic role names (`name`, `ref`, `status`, `updated`,
 `metric1`…). So a declared field is never shadowed by a heading or a
 convention that happens to read the same. An unrecognised field is ignored
 rather than treated as a mismatch, so a half-typed expression keeps showing
-results.
+results — except a join key under
+[`strictScopes`](#narrowing-to-one-record), which a row has to carry.
 
 A heading of more than one word is written run together and in any case —
 `priceratio<0.5` for **Price ratio** — or by its shortcut, the first letter of
@@ -1521,7 +1682,9 @@ Also exported: `useResults` — which is what drives a source, streaming or not,
 and hands back `rows`, `total`, `pageCount`, `pending`, `error` and `refresh` —
 plus `useColumns` for the scope's column set, `usePresentedRows` for rows with
 every role already resolved into `parts`, `useRecordNames` for the names behind
-the ids a query narrows by, and `useShellContext`.
+the ids a query narrows by, `useStableSchema` for a schema rebuilt from live
+data (see [rows you already have](#rows-you-already-have)), and
+`useShellContext`.
 
 The context carries the selection as well — `selectable`, `selection`,
 `isSelected`, `toggleSelect`, `selectPage` and `clearSelection`, plus `create`,

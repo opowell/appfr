@@ -3,7 +3,7 @@ import type { ComputedRef, ShallowRef } from 'vue'
 import type { DataSource, DomainSchema, EntitySchema, QueryResult, ShellQuery, ShellRow } from '../types'
 import { emptyFacetState, findSort } from '../query/schema'
 import { cellTextOf, EMPTY_CELL, roleColumn } from '../query/columns'
-import { recordTerm, scopedEntity } from '../query/drill'
+import { namedRecord, recordTerm } from '../query/drill'
 import { EXPRESSION_TERM } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
 
@@ -98,9 +98,9 @@ export function useRecordNames(options: UseRecordNamesOptions): RecordNamesState
   const pending = new Set<string>()
 
   const referenceOf = (term: SummaryTerm): Reference | null => {
-    if (term.facetKey !== EXPRESSION_TERM || !term.field || !term.value) return null
-    const entity = scopedEntity(options.schema.value, term.field)
-    return entity ? { entity, id: term.value, key: `${entity.key}:${term.value}` } : null
+    if (term.facetKey !== EXPRESSION_TERM) return null
+    const named = namedRecord(options.schema.value, term.field, term.value)
+    return named ? { ...named, key: `${named.entity.key}:${named.id}` } : null
   }
 
   /** The rows of one type that a reference could be pointing at. */

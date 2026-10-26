@@ -1479,14 +1479,57 @@ Opening puts the focus on the first thing in it that takes focus — or on the
 one marked `autofocus` — and closing gives the focus back where it was. It
 does not trap the focus.
 
-Being in `body` puts it outside every `.dc-shell`, where the tokens are. So it
-is a `.dc-shell` of its own, as `<MenuBar>` is, and dresses itself as the shell
-it was opened from: that shell's `data-dc-theme`, and the tokens set on that
-shell's element — which is where `DataShell`'s `tokens` and `accent` go. A
-stylesheet rule of the host's on `.dc-shell` reaches it for nothing. Its own
-`theme`, `accent` and `tokens` props win over what it finds, and are what
-there is for a dialog opened from outside any shell; with none, it is the
-minimal theme.
+The dialog's parts are public classes, for styling what goes in it:
+`.dc-dialog__panel` (the box), `.dc-dialog__title`, `.dc-dialog__body` (around
+the default slot) and `.dc-dialog__actions`. `panelClass` and `bodyClass` put
+classes of the host's on the panel and the body — anything a `class` binding
+takes — since a `class` on the component itself has no element to land on, the
+dialog being teleported.
+
+```vue
+<ShellDialog title="Delete 3 tests?" panel-class="wide-dialog" body-class="file-list">…</ShellDialog>
+```
+
+#### Which theme a layer wears
+
+Being in `body` puts a dialog outside every `.dc-shell`, where the tokens are.
+So it is a layer: an element that wears `class="dc-shell dc-layer"` — the
+shell's palette, its type, and every rule a host has written against
+`.dc-shell`, with `.dc-layer` giving back the shell's *layout*, none of which a
+layer wants (see below). Toasts and popovers are layers too. What it is
+dressed as, first match wins:
+
+1. **Its own `theme`, `accent` and `tokens` props**, field by field.
+2. **The nearest `DataShell` it is rendered inside**, as a component — the
+   shell's `theme`, `accent` and `tokens`, followed as they change.
+3. **The app's default**, set with `provideShellTheme` or the plugin.
+4. **The nearest `.dc-shell` element above it in the page** — that element's
+   `data-dc-theme` and the tokens on its `style`. This is what reaches a
+   `<div class="dc-shell" data-dc-theme="dark">` of the host's own.
+5. **The minimal theme.**
+
+Where 4 finds a `.dc-shell` of the host's *inside* the `DataShell` of 2, that
+one is the nearer and wins. A dialog written *beside* a shell rather than in
+it — a sibling of `<DataShell>`, or at the root of an app with the toasts — is
+neither a descendant of the shell nor inside it in the page, so the app's
+default is what dresses it:
+
+```ts
+// main.ts
+app.use(HeaderContentLayoutPlugin, { theme: 'dark', tokens: { '--dc-accent': '#6aa9ff' } })
+```
+
+```ts
+// or in the root component's setup — refs and getters are followed
+provideShellTheme({ theme: 'dark', tokens: () => palette.value })
+```
+
+Either sets only what layers fall back to: a shell is still themed by its own
+`theme` prop. A host stylesheet's rule on `.dc-shell` — `.dc-shell {
+--dc-surface: … }` — reaches every layer as it reaches every shell, being a rule
+on a class they all wear. `useLayerTheme(props)` is the resolution itself,
+exported for a host building a layer of its own; `SHELL_THEME_KEY` is what is
+provided.
 
 Toasts are short messages in a corner that go away on their own. `useToasts()`
 is one stack for the whole app — a toast raised in a dialog survives the
@@ -1508,8 +1551,65 @@ try { await api.save() } catch (error) {
 a string. `dismiss(id)` takes one down early, and `toasts` is the stack itself
 for a host drawing its own. `<ShellToasts>` is teleported and dressed exactly
 as the dialog is; written outside any shell, which is usual, it takes its
-`theme`, `accent` and `tokens` from its props. The stack is a polite live
-region, and an error toast is an alert.
+`theme`, `accent` and `tokens` from its props or the app's default. The stack
+is a polite live region, and an error toast is an alert.
+
+#### Popovers, and layers of your own
+
+`<ShellPopover>` is a box of the host's own opened against a control — a
+multi-select's grid of toggles, a filter, a date picker; the shell's menus are
+a list of items, and this is for everything that is not.
+
+```vue
+<button ref="trigger" :aria-expanded="open" @click="open = !open">{{ summary }}</button>
+<ShellPopover
+  v-model:open="open"
+  :anchor="trigger"
+  :max-height="340"
+  class="tenant-picker"
+  role="dialog"
+  aria-label="Tenants"
+>
+  <input v-model="filter" type="search" placeholder="filter…" />
+  <button v-for="t in shown" :key="t.id" :aria-pressed="has(t)" @click="toggle(t)">{{ t.label }}</button>
+</ShellPopover>
+```
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `open` | `boolean` | `false` | `v-model:open`. A press outside it and its anchor, or Escape, emits `update:open` with `false` (and `close`). |
+| `anchor` | `HTMLElement \| null` | — | What it opens against. |
+| `side` | `'below' \| 'above'` | `'below'` | The side it opens on when that side has the room. |
+| `align` | `'start' \| 'end'` | `'start'` | Its left edge on the anchor's, or its right edge on the anchor's. |
+| `maxHeight` | `number` | — | The tallest it grows; the room on its side caps it too. |
+| `to` | `string \| HTMLElement` | `'body'` | Where it is drawn. |
+| `theme`, `accent`, `tokens` | | | As a dialog's, above. |
+
+It is teleported to `body` and placed with `position: fixed` from the anchor's
+box: below it, or above where below has less than 180px and above has more;
+at least as wide as the anchor and no wider than the window; never taller than
+the room its side has, the rest scrolling in place. Scrolling anything under it
+or resizing the window moves it with the anchor, and so does its own content
+changing size. Escape takes down the popover on top and nothing else — a
+popover in a dialog closes before the dialog does — and gives the focus back
+to the anchor if it was inside. A press inside a popover opened from inside
+this one counts as inside. Any attribute given to it — a class, a `role`, an
+`aria-label`, a `style` — lands on the box, and its look (surface, border,
+radius, shadow, `10px` of padding) is at no weight, so a class of the host's
+restyles it whichever sheet loads first. `placePopover(anchorRect, width,
+viewport, options)` is the placement arithmetic on its own.
+
+A layer of your own — anything else drawn in `body` that should look as
+though it belongs to the shell — is an element wearing `class="dc-shell
+dc-layer"` and a `data-dc-theme`. `.dc-layer` keeps the palette and gives back
+what `.dc-shell` says about layout: `display`, `flex`, `overflow`, the
+background — painted only if `--dc-layer-bg` is set — and above all
+`container-type`. The shell is a size container, and a size container is the
+containing block of its `position: fixed` descendants: a fixed element inside
+a `.dc-shell` is placed against the shell, not the window, which is why a
+layer is drawn in `body` and not teleported into the shell. `.dc-layer` is at
+the weight of `.dc-shell` itself, so any class of yours on the same element
+outranks it.
 
 ### Controls of your own
 
@@ -1544,6 +1644,15 @@ beats it — except the variants' text colours, which have to match
 `style.css`'s `.dc-shell button { color: inherit }` and so are at that weight;
 loading this second is what lets them win. `style.css` does not import it, so
 nothing changes for a host that does not.
+
+The other side of carrying no weight: *any* plain rule of the host's on an
+element — a global `button { … }` or `select { … }` — beats it everywhere,
+including inside the shell. A host adopting `controls.css` has to remove its
+own global control styles, not layer this sheet under them.
+
+Inside a dialog's body it also sets out the two things a dialog usually says:
+a `ul` or `ol` is indented as a list, and a `label` is a row — a checkbox
+beside the sentence it answers. A card's body is left alone.
 
 ### A facet a row holds several of
 

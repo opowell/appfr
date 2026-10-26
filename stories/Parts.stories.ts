@@ -5,6 +5,7 @@ import StatusPill from '../src/components/StatusPill.vue'
 import { RECORD_STATUSES } from '../src/types'
 import { partSurface, statefulFacet } from './helpers'
 import { dialogDemo, pillTones, recordPage } from './content'
+import { layersBeside } from './layers'
 
 const meta = {
   title: 'Parts / Controls',
@@ -132,4 +133,14 @@ export const PillTonesAndCounts: Story = {
  */
 export const DialogAndToasts: Story = {
   render: dialogDemo,
+}
+
+/**
+ * Layers beside a shell rather than inside it — a popover built on
+ * `<ShellPopover>`, one near the bottom of the page that opens upward, one in
+ * a dialog — dressed by the app's default theme, `provideShellTheme`: dark,
+ * beside a light shell.
+ */
+export const LayersBesideAShell: Story = {
+  render: layersBeside,
 }

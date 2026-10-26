@@ -19,6 +19,8 @@ import TableView from './components/views/TableView.vue'
 import TypeCardsView from './components/views/TypeCardsView.vue'
 import type { RouteAdapter } from './routing/adapter'
 import { ROUTE_ADAPTER_KEY } from './routing/adapter'
+import { provideShellTheme } from './composables/useLayerTheme'
+import type { ShellTheme } from './types'
 
 export interface HeaderContentLayoutOptions {
   /** Prefix for the globally registered component names. */
@@ -28,6 +30,16 @@ export interface HeaderContentLayoutOptions {
    * one here and individual shells need no `route` prop.
    */
   route?: RouteAdapter
+  /**
+   * The theme dialogs, toasts and popovers wear where nothing nearer says —
+   * one written beside a shell rather than inside it, or in no shell at all.
+   * Shells themselves are still themed by their own `theme` prop.
+   */
+  theme?: ShellTheme
+  /** The accent those layers wear, as `theme` above. */
+  accent?: string
+  /** Design tokens for those layers, as `theme` above. */
+  tokens?: Record<string, string>
 }
 
 const COMPONENTS = {
@@ -63,6 +75,9 @@ const plugin: Plugin<[HeaderContentLayoutOptions?]> = {
       app.component(`${prefix}${name}`, component)
     }
     if (options.route) app.provide(ROUTE_ADAPTER_KEY, options.route)
+    if (options.theme || options.accent || options.tokens) {
+      provideShellTheme({ theme: options.theme, accent: options.accent, tokens: options.tokens }, app)
+    }
   },
 }
 

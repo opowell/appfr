@@ -31,6 +31,7 @@ import { createHistoryAdapter } from '../routing/history'
 import { createMockDataSource } from '../data/mock'
 import { drillExpression, recordsIn, scopeTermFor } from '../query/drill'
 import { provideShellContext } from '../composables/context'
+import { provideShellOwnTheme } from '../composables/useLayerTheme'
 import { useQueryState } from '../composables/useQueryState'
 import type { NavigationMode } from '../composables/useQueryState'
 import { useResults } from '../composables/useResults'
@@ -714,6 +715,10 @@ const shell = provideShellContext({
   operate: (key) => emit('operate', key, selection.value),
   drill,
 })
+
+/* The layers it opens — dialogs, toasts, popovers — are drawn in `body`, and
+   dress as this shell by asking for it. */
+provideShellOwnTheme({ theme: () => props.theme, accent: () => props.accent, tokens: () => props.tokens })
 
 /*
  * Inline so it beats the stylesheet without the host needing a selector that

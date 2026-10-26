@@ -57,8 +57,18 @@ const props = withDefaults(defineProps<{
   accent?: string
   /** Design tokens, over those of the shell the dialog was opened from. */
   tokens?: Record<string, string>
+  /**
+   * Classes for the panel, the box the dialog is drawn in — a wider one, say.
+   * Anything a `class` binding takes. The dialog is teleported, so a class
+   * on the component itself has no element of the dialog's to land on.
+   */
+  panelClass?: string | string[] | Record<string, boolean>
+  /** Classes for the body, around the default slot — for what the host puts in it. */
+  bodyClass?: string | string[] | Record<string, boolean>
 }>(), {
   open: true,
+  panelClass: undefined,
+  bodyClass: undefined,
   title: undefined,
   label: undefined,
   to: 'body',
@@ -178,7 +188,7 @@ onBeforeUnmount(fall)
     :to="to"
   >
     <div
-      class="dc-shell dc-dialog"
+      class="dc-shell dc-layer dc-dialog"
       :data-dc-theme="theme"
       :style="style"
       @pointerdown="onPointerDown"
@@ -187,6 +197,7 @@ onBeforeUnmount(fall)
       <div
         ref="panel"
         class="dc-dialog__panel"
+        :class="panelClass"
         role="dialog"
         aria-modal="true"
         tabindex="-1"
@@ -200,7 +211,10 @@ onBeforeUnmount(fall)
         >
           {{ title }}
         </h2>
-        <div class="dc-dialog__body">
+        <div
+          class="dc-dialog__body"
+          :class="bodyClass"
+        >
           <slot />
         </div>
         <div
@@ -218,7 +232,8 @@ onBeforeUnmount(fall)
 /*
  * Two classes rather than one, as `<MenuBar>` has: `.dc-shell` brings the
  * palette, and also says "fill the box you are given" and paints the
- * surface, neither of which a backdrop wants.
+ * surface, neither of which a backdrop wants. `.dc-layer` gives most of that
+ * back already; this says it again at a weight no load order can undo.
  */
 .dc-dialog.dc-shell {
   position: fixed;

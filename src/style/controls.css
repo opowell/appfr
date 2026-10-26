@@ -17,8 +17,8 @@
  * buttons must not have them restyled by importing the shell. Nothing here
  * applies until it is imported.
  *
- * Inside a `.dc-shell` only — which a `<ShellDialog>` and a `<ShellToasts>`
- * stack are, teleported as they are — and never to the shell's own controls:
+ * Inside a `.dc-shell` only — which a `<ShellDialog>`, a `<ShellToasts>`
+ * stack and a `<ShellPopover>` are, teleported as they are — and never to the shell's own controls:
  * every element the shell draws carries a `dc-` class, and anything carrying
  * one is left alone. (A host element given a `dc-` class of its own, `dc-mono`
  * say, opts out with it.)
@@ -200,4 +200,25 @@
 :where(.dc-shell) :where(.dc-hint--danger) {
   color: var(--dc-danger);
   overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------- dialog prose */
+
+/*
+ * What a dialog says, as it is usually said: a list of what an action will
+ * take — the specs a delete removes — indented as a list, and a checkbox
+ * beside the sentence it answers rather than over it. Inside a dialog's body
+ * only, where the content is a short form and nothing else; a card's body is
+ * any shape a host likes, and is left alone.
+ */
+:where(.dc-shell .dc-dialog__body) :where(ul, ol) {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+:where(.dc-shell .dc-dialog__body) :where(label) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
 }

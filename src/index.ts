@@ -28,6 +28,7 @@ export { default as CopyButton } from './components/CopyButton.vue'
 export { default as ShellLog } from './components/ShellLog.vue'
 export { default as ShellDialog } from './components/ShellDialog.vue'
 export { default as ShellToasts } from './components/ShellToasts.vue'
+export { default as ShellPopover } from './components/ShellPopover.vue'
 
 /* Window */
 export { default as WindowFrame } from './components/WindowFrame.vue'
@@ -82,6 +83,19 @@ export type {
 } from './composables/useEntityPreviews'
 export type { EntityCount, EntityCountsState, UseEntityCountsOptions } from './composables/useEntityCounts'
 export { TOAST_ERROR_MS, TOAST_MS, useToasts } from './composables/useToasts'
+export { provideShellTheme, SHELL_THEME_KEY, useLayerTheme } from './composables/useLayerTheme'
+export type {
+  LayerTheme,
+  LayerThemeProps,
+  ShellThemeInput,
+  ShellThemeSource,
+} from './composables/useLayerTheme'
+export { placePopover, POPOVER_FLIP_BELOW, POPOVER_GAP, POPOVER_MARGIN } from './menu/popover'
+export type {
+  PopoverAnchorRect,
+  PopoverPlacement,
+  PopoverPlacementOptions,
+} from './menu/popover'
 export type { Toast, ToastKind, ToastsState } from './composables/useToasts'
 
 /* Window model */

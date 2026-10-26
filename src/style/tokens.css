@@ -614,6 +614,33 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * A layer: something drawn in `body`, outside every shell, that has to look
+ * as though it belongs to one — a dialog, a stack of toasts, a popover, or a
+ * host's own. It wears `class="dc-shell dc-layer"`: `.dc-shell` for the
+ * palette, the type and every host rule written against that class, and
+ * `.dc-layer` to give back what the rule above says about *layout*, none of
+ * which a layer wants. Above all `container-type`, which makes an element the
+ * containing block of its `position: fixed` descendants — a layer positioned
+ * against the window would be positioned against itself.
+ *
+ * In `:where()`, so it weighs what `.dc-shell` does and wins only by coming
+ * after it: any class of the host's on the same element outranks it.
+ *
+ * Unpainted unless `--dc-layer-bg` says otherwise — a stack of toasts is not
+ * a surface, its toasts are. A layer that is one surface (`<ShellPopover>`)
+ * sets the property rather than `background`, so that a host's `background`
+ * on its own class still wins whichever sheet loads first.
+ */
+.dc-shell:where(.dc-layer) {
+  display: block;
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+  container-type: normal;
+  background: var(--dc-layer-bg, transparent);
+}
+
 .dc-shell *,
 .dc-shell *::before,
 .dc-shell *::after {

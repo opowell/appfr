@@ -44,7 +44,7 @@ onMounted(adopt)
 <template>
   <Teleport :to="to">
     <div
-      class="dc-shell dc-toasts"
+      class="dc-shell dc-layer dc-toasts"
       :data-dc-theme="theme"
       :style="style"
       aria-live="polite"

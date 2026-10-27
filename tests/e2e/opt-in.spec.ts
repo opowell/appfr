@@ -74,11 +74,11 @@ test.describe('brand', () => {
     await expect(domain.locator('svg.sb-brand')).toBeVisible()
     await expect(domain.locator('.dc-header__brand')).toHaveAttribute('aria-hidden', 'true')
     await expect(domain).toHaveText('iRadar')
-    // Only the mark takes room, and the room its hover tint is drawn in: the
-    // name is visually hidden.
+    // Only the mark takes room, and the button's padding and edge around it:
+    // the name is visually hidden.
     const box = await domain.boundingBox()
     const mark = await domain.locator('svg.sb-brand').boundingBox()
-    expect(box!.width - mark!.width).toBeLessThanOrEqual(12)
+    expect(box!.width - mark!.width).toBeLessThanOrEqual(18)
   })
 
   test('without it the name is drawn as text, as it always was', async ({ page }) => {
@@ -157,13 +157,16 @@ test.describe('search field tokens', () => {
     expect(box).toEqual(expected)
   })
 
-  test('without them the box is bare, as it always was', async ({ page }) => {
+  test('without them the box is filled apart from the bar, with no edge', async ({ page }) => {
     await gotoStory(page, ENTITY_LIST)
     const box = await searchField(page).evaluate((element) => {
       const style = getComputedStyle(element)
-      return { fill: style.backgroundColor, border: style.borderTopColor, image: style.backgroundImage }
+      const bar = getComputedStyle(element.closest('.dc-header')!)
+      return { fill: style.backgroundColor, bar: bar.backgroundColor, border: style.borderTopColor }
     })
-    expect(box).toEqual({ fill: 'rgba(0, 0, 0, 0)', border: 'rgba(0, 0, 0, 0)', image: 'none' })
+    expect(box.fill).not.toBe('rgba(0, 0, 0, 0)')
+    expect(box.fill).not.toBe(box.bar)
+    expect(box.border).toBe('rgba(0, 0, 0, 0)')
   })
 })
 

@@ -706,32 +706,32 @@ function abandonTyped(event: Event): void {
   flex: 1;
   min-width: 0;
   margin-left: -8px;
-  padding: 6px 8px;
+  /* None on the right, where the field ends: the bar's own padding is the
+     margin there, and room of the row's own on top of it read as empty. */
+  padding: 6px 0 6px 8px;
   border-radius: var(--dc-radius);
 }
 
 /*
- * The name, and the way home. Set as the name always was rather than as a
- * button, being the domain's name first; the press shows itself only on the
- * way past, with room made for its tint that the margin takes back, so the
- * name does not move to make it.
+ * The name, and the way home: a button like any other, face and edge at rest,
+ * so that it reads as a press before the pointer finds it — `controls.css`'s
+ * button, held to the bar's height.
  */
 .dc-header__domain {
   flex: 0 0 auto;
-  margin: -3px -6px;
-  padding: 3px 6px;
-  border: none;
+  padding: 3px 8px;
+  border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
-  background: transparent;
+  background: var(--dc-bg-2);
   font: inherit;
   font-size: var(--dc-text-body);
-  font-weight: var(--dc-weight-semibold);
+  line-height: var(--dc-leading-tight);
   color: var(--dc-fg-1);
   cursor: pointer;
 }
 
 .dc-header__domain:hover {
-  background: var(--dc-bg-2);
+  background: var(--dc-bg-3);
 }
 
 /* A mark sits on the bar's centre line, as the name's text does; its size is
@@ -748,26 +748,23 @@ function abandonTyped(event: Event): void {
   flex: 1;
   gap: 6px;
   min-width: 0;
-  padding-left: 12px;
-  border-left: 1px solid var(--dc-line);
 }
 
 /*
  * The search field, with the parts in it. It takes the rest of the bar,
  * because what the query is is the longest thing on it.
  *
- * Bare unless a host says otherwise, so that an empty one is the rest of the
- * row rather than a widget on it. A dark surface can leave a bare field a
- * faint smudge, and a resting fill and edge make it read as one. The tokens
- * are the host's and unset here, and the fallbacks are the field as it has
- * always been. Focus anywhere in it swaps in the accent edge.
+ * Filled, so that it is a field on the bar rather than more of the bar, and
+ * the fill is what parts it from the name — no divider between them. A host
+ * sets its own fill and resting edge with the tokens; focus anywhere in it
+ * swaps in the accent edge and keeps the fill.
  */
 .dc-header__field {
   display: flex;
   flex: 1 1 auto;
   min-width: 12ch;
   padding: 0 3px;
-  background: var(--dc-search-fill, none);
+  background: var(--dc-search-fill, var(--dc-bg-1));
   border: 1px solid var(--dc-search-border, transparent);
   border-radius: var(--dc-radius-sm);
   cursor: text;
@@ -775,7 +772,6 @@ function abandonTyped(event: Event): void {
 
 .dc-header__field:focus-within {
   border-color: var(--dc-accent-dim);
-  background: var(--dc-bg-0);
 }
 
 .dc-header__terms {
@@ -920,8 +916,6 @@ function abandonTyped(event: Event): void {
   gap: 5px;
   flex: 0 1 auto;
   min-width: 0;
-  padding-left: 12px;
-  border-left: 1px solid var(--dc-line);
 }
 
 .dc-within {
@@ -962,9 +956,15 @@ function abandonTyped(event: Event): void {
   min-width: 0;
 }
 
+/* A host's `#actions` whose contents are all switched off is nothing, and
+   takes no room: not a box of nothing with the bar's gap before it. */
+.dc-header__actions:empty {
+  display: none;
+}
+
 /*
- * The same divider the query takes, so the bar reads as one row of instruments
- * rather than a summary with something stuck on the end.
+ * A divider, so the bar reads as one row of instruments rather than a summary
+ * with something stuck on the end.
  */
 .dc-header__pages {
   display: inline-flex;
@@ -1056,20 +1056,6 @@ function abandonTyped(event: Event): void {
   .dc-header__domain,
   .dc-header__domain[data-dc-brand] {
     display: none;
-  }
-
-  /* With the domain gone, whatever is first on the bar has nothing to its
-     left to be divided from — and the scope, where there is one, is what the
-     query is then divided from instead. */
-  .dc-header__within,
-  .dc-header__query {
-    padding-left: 0;
-    border-left: none;
-  }
-
-  .dc-header__within + .dc-header__query {
-    padding-left: 12px;
-    border-left: 1px solid var(--dc-line);
   }
 
   .dc-within {

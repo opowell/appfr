@@ -1997,7 +1997,8 @@ in the header's box ANDed on — see [the field it is edited in](#the-field-it-i
 
 ### A mark for the name
 
-The domain's name at the left of the bar is the way home: pressed, it returns
+The domain's name at the left of the bar is the way home, drawn as a button:
+pressed, it returns
 the shell to the schema's defaults, as `reset()` does — a step the back button
 undoes. The `brand` slot draws a
 mark in its place — a logo, an icon — and the name stays the bar's accessible
@@ -3523,10 +3524,9 @@ are a whole theme:
 | `--dc-card-image`, `--dc-card-picture` | how large a record card's picture is drawn (64px), and how narrow a column of picture cards may be (160px) |
 
 And three a theme leaves unset, whose absence is the shell as it is: the
-header's search box is bare — no fill, no edge — with its placeholder in
-`--dc-fg-3`. On a dark surface that can leave an empty bar's *Search…* a faint
-smudge, and these give the box a resting fill and edge; focus still swaps in
-the accent edge.
+header's search box is filled `--dc-bg-1`, with no resting edge and its
+placeholder in `--dc-fg-3`. These set the box's own fill and edge; focus still
+swaps in the accent edge.
 
 ```vue
 <DataShell

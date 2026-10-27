@@ -196,8 +196,10 @@ type __VLS_Slots = {
      * where the mark is drawn, so the label is still the one place the name is
      * written; the mark itself is hidden from assistive technology.
      *
-     * A mark rather than a control: the whole bar is the query panel's toggle,
-     * and a link inside it would be a second press on the same surface.
+     * Pressed, the name or the mark drawn for it goes home — the schema's
+     * defaults, as `reset` does — with or without a mark. A button and not a
+     * link, so the press is its own and not the query panel's, as every other
+     * control on the bar is.
      */
     brand?: (props: {
         /** {@link DomainSchema.label}, for a mark that wants to say it too. */

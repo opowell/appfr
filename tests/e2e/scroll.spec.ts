@@ -87,11 +87,17 @@ test.describe('Scrolling — a narrow screen', () => {
 
 /*
  * An overlay scrollbar is invisible until the pointer is over the results, so
- * the far edge with more behind it is faded, as the bar's is — and measured
+ * each edge with more behind it is faded, as the bar's is — and measured
  * rather than animated, so that it lets go once there is nothing behind it.
  */
-test.describe('Scrolling — the cue at the far edge', () => {
+test.describe('Scrolling — the cue at the edges', () => {
   const results = (page: Page) => page.locator('.dc-results')
+
+  const scrollResults = (page: Page, to: 'middle' | 'end') =>
+    results(page).evaluate((element, where) => {
+      const max = element.scrollHeight - element.clientHeight
+      element.scrollTop = where === 'end' ? max : max / 2
+    }, to)
 
   test('says there are more results below', async ({ page }) => {
     await gotoStory(page, CARDS)
@@ -99,14 +105,25 @@ test.describe('Scrolling — the cue at the far edge', () => {
     await expect(results(page)).toHaveCSS('mask-image', /linear-gradient/)
   })
 
-  test('stops saying it once the results are scrolled to the end', async ({ page }) => {
+  test('says which side the rest of them are on, as they are scrolled', async ({ page }) => {
     await gotoStory(page, CARDS)
-    await expect(results(page)).toHaveAttribute('data-dc-more', 'bottom')
+    await scrollResults(page, 'middle')
+    await expect(results(page)).toHaveAttribute('data-dc-more', 'top bottom')
+    await scrollResults(page, 'end')
+    await expect(results(page)).toHaveAttribute('data-dc-more', 'top')
+  })
+
+  test('says it of the sides too, when the results are wider than the box', async ({ page }) => {
+    await gotoStory(page, CARDS)
     await results(page).evaluate((element) => {
-      element.scrollTop = element.scrollHeight
+      ;(element.firstElementChild as HTMLElement).style.minWidth = '4000px'
     })
-    await expect(results(page)).toHaveAttribute('data-dc-more', '')
-    await expect(results(page)).toHaveCSS('mask-image', 'none')
+    await expect(results(page)).toHaveAttribute('data-dc-more', /\bright\b/)
+    await results(page).evaluate((element) => {
+      element.scrollLeft = element.scrollWidth
+    })
+    await expect(results(page)).toHaveAttribute('data-dc-more', /\bleft\b/)
+    await expect(results(page)).not.toHaveAttribute('data-dc-more', /\bright\b/)
   })
 
   test('says nothing at all when every result fits', async ({ page }) => {

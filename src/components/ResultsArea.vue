@@ -86,16 +86,13 @@ watch(
 )
 
 /**
- * Which of the far edges have results behind them — `bottom`, `right`,
- * `both`, or nothing at all — the way the bar says it of a query too long for
- * it. An overlay scrollbar is invisible until the pointer is over the results,
- * so a table cut off at a row boundary reads as the end of the table.
- *
- * The far edges only: the near ones are where a table's head and a host's
- * sticky columns are held, and a fade there would sit over them for as long as
- * the results are scrolled.
+ * Which edges have results behind them, as a list — `top right bottom left`,
+ * any of them, or nothing at all — the way the bar says it of a query too long
+ * for it. An overlay scrollbar is invisible until the pointer is over the
+ * results, so a table cut off at a row boundary reads as the end of the table,
+ * and one scrolled down reads as its start.
  */
-const more = ref<'' | 'bottom' | 'right' | 'both'>('')
+const more = ref('')
 
 /*
  * How much of each edge the scrollbars themselves take, so that the fade
@@ -111,9 +108,16 @@ function measureEdges(): void {
     return
   }
   // A fraction of a pixel is not somewhere anyone can scroll to.
-  const below = element.scrollHeight - element.clientHeight - element.scrollTop > 1
-  const right = element.scrollWidth - element.clientWidth - element.scrollLeft > 1
-  more.value = below && right ? 'both' : below ? 'bottom' : right ? 'right' : ''
+  const edges = {
+    top: element.scrollTop > 1,
+    right: element.scrollWidth - element.clientWidth - element.scrollLeft > 1,
+    bottom: element.scrollHeight - element.clientHeight - element.scrollTop > 1,
+    left: element.scrollLeft > 1,
+  }
+  more.value = Object.entries(edges)
+    .filter(([, behind]) => behind)
+    .map(([edge]) => edge)
+    .join(' ')
   gutters.value = {
     x: element.offsetHeight - element.clientHeight,
     y: element.offsetWidth - element.clientWidth,
@@ -276,62 +280,61 @@ onBeforeUnmount(() => {
 }
 
 /*
- * And the cut says that it is one: the far edge with results behind it is
+ * And the cut says that it is one: each edge with results behind it is
  * softened, as the bar's is.
  *
  * Drawn as what is taken away rather than what is kept — the whole box, less a
  * strip along each edge that has more behind it — because the strips stop at
  * the scrollbars, and a mask layer is transparent wherever it is not drawn:
- * kept-shapes intersected would take the scrollbars out with the results.
+ * kept-shapes intersected would take the scrollbars out with the results. An
+ * edge with nothing behind it has a strip 0px deep, which is not drawn at all.
  */
 .dc-results {
   --dc-results-cue: 32px;
+  --dc-results-cue-top: 0px;
+  --dc-results-cue-right: 0px;
+  --dc-results-cue-bottom: 0px;
+  --dc-results-cue-left: 0px;
 }
 
-.dc-results[data-dc-more='bottom'] {
-  mask-image:
-    linear-gradient(#000, #000),
-    linear-gradient(to top, #000, transparent);
-  mask-size:
-    100% 100%,
-    calc(100% - var(--dc-results-gutter-y)) var(--dc-results-cue);
-  mask-position:
-    0 0,
-    left 0 bottom var(--dc-results-gutter-x);
-  mask-repeat: no-repeat;
-  mask-composite: subtract;
+.dc-results[data-dc-more~='top'] {
+  --dc-results-cue-top: var(--dc-results-cue);
 }
 
-.dc-results[data-dc-more='right'] {
-  mask-image:
-    linear-gradient(#000, #000),
-    linear-gradient(to left, #000, transparent);
-  mask-size:
-    100% 100%,
-    var(--dc-results-cue) calc(100% - var(--dc-results-gutter-x));
-  mask-position:
-    0 0,
-    right var(--dc-results-gutter-y) top 0;
-  mask-repeat: no-repeat;
-  mask-composite: subtract;
+.dc-results[data-dc-more~='right'] {
+  --dc-results-cue-right: var(--dc-results-cue);
 }
 
-.dc-results[data-dc-more='both'] {
+.dc-results[data-dc-more~='bottom'] {
+  --dc-results-cue-bottom: var(--dc-results-cue);
+}
+
+.dc-results[data-dc-more~='left'] {
+  --dc-results-cue-left: var(--dc-results-cue);
+}
+
+.dc-results:not([data-dc-more='']) {
   mask-image:
     linear-gradient(#000, #000),
+    linear-gradient(to bottom, #000, transparent),
+    linear-gradient(to left, #000, transparent),
     linear-gradient(to top, #000, transparent),
-    linear-gradient(to left, #000, transparent);
+    linear-gradient(to right, #000, transparent);
   mask-size:
     100% 100%,
-    calc(100% - var(--dc-results-gutter-y)) var(--dc-results-cue),
-    var(--dc-results-cue) calc(100% - var(--dc-results-gutter-x));
+    calc(100% - var(--dc-results-gutter-y)) var(--dc-results-cue-top),
+    var(--dc-results-cue-right) calc(100% - var(--dc-results-gutter-x)),
+    calc(100% - var(--dc-results-gutter-y)) var(--dc-results-cue-bottom),
+    var(--dc-results-cue-left) calc(100% - var(--dc-results-gutter-x));
   mask-position:
     0 0,
+    left 0 top 0,
+    right var(--dc-results-gutter-y) top 0,
     left 0 bottom var(--dc-results-gutter-x),
-    right var(--dc-results-gutter-y) top 0;
+    left 0 top 0;
   mask-repeat: no-repeat;
-  /* The whole box less the two strips, which are added to each other first. */
-  mask-composite: subtract, add;
+  /* The whole box less the strips, which are added to each other first. */
+  mask-composite: subtract, add, add, add;
 }
 
 .dc-results__state {

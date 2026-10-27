@@ -2321,13 +2321,12 @@ secondary and the state are what is left, and they are what a row is for.
 
 The results scroll in a box of their own, and an overlay scrollbar is invisible
 until the pointer is over it — so a table cut off at a row boundary reads as
-the end of the table. The far edge with more behind it is faded instead, the
-way the bar's is, and the box says which in `data-dc-more` (`bottom`, `right`,
-`both`, or empty). The near edges never fade: they are where a table's head
-and a host's sticky columns are held. The fade stops short of a classic
-scrollbar rather than fading it too, and it is measured from the box and what
-is in it, so it lets go once the results are scrolled to the end or stop
-overflowing.
+the end of the table, and one scrolled down reads as its start. Each edge with
+more behind it is faded instead, the way the bar's is, and the box lists which
+in `data-dc-more` (any of `top right bottom left`, space-separated, or empty —
+match one with `~=`). The fade stops short of a classic scrollbar rather than
+fading it too, and it is measured from the box and what is in it, so each edge
+lets go once the results are scrolled to it or stop overflowing.
 
 ### Composables
 

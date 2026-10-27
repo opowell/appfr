@@ -67,7 +67,7 @@ describe('useRecordNames', () => {
   it('leaves a term that constrains a value rather than naming a record', () => {
     // `theme` is a facet of sets, not a type anything points at.
     const { labels } = setup('?e=sets&q=theme%3Acastle')
-    expect(labels()).toEqual(['entity:sets', 'theme:castle'])
+    expect(labels()).toEqual(['entity:sets', 'Theme:castle'])
   })
 
   it('leaves a bare word alone, having no field to resolve it under', () => {

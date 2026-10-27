@@ -137,7 +137,7 @@ describe('useQueryState — the entity filter', () => {
     const { state } = setup('?e=searches&q=state=running')
     expect(state.terms.value.map((term) => term.label)).toEqual([
       'entity:searches',
-      'state=running',
+      'State=running',
     ])
   })
 
@@ -245,11 +245,11 @@ describe('useQueryState — reading and writing the URL', () => {
   it('states a range term with the bound it actually has', () => {
     const { state } = setup('?e=items')
     state.setRange('rank', 20, 80)
-    expect(state.terms.value.map((t) => t.label)).toContain('20 ≤ rank ≤ 80')
+    expect(state.terms.value.map((t) => t.label)).toContain('20 ≤ Rank ≤ 80')
     state.setRange('rank', null, 80)
-    expect(state.terms.value.map((t) => t.label)).toContain('rank ≤ 80')
+    expect(state.terms.value.map((t) => t.label)).toContain('Rank ≤ 80')
     state.setRange('rank', 20, null)
-    expect(state.terms.value.map((t) => t.label)).toContain('rank ≥ 20')
+    expect(state.terms.value.map((t) => t.label)).toContain('Rank ≥ 20')
   })
 
   it('flips a toggle facet', () => {
@@ -293,8 +293,8 @@ describe('useQueryState — reading and writing the URL', () => {
     const { state, adapter } = setup('?e=searches&q=state=running+state=paused')
     expect(state.terms.value.map((t) => t.label)).toEqual([
       'entity:searches',
-      'state=running',
-      'state=paused',
+      'State=running',
+      'State=paused',
     ])
 
     state.removeTerm(state.terms.value[1]!)
@@ -591,8 +591,8 @@ describe('useQueryState — the parts a pill says', () => {
     expect(adapter.search.value).toBe('?e=i&q=s%3E5+l:3..')
     const parts = state.terms.value.filter((term) => term.facetKey === 'expr')
     expect(parts.map((term) => [term.label, term.address])).toEqual([
-      ['score > 5', 's>5'],
-      ['links ≥ 3', 'l:3..'],
+      ['Score > 5', 's>5'],
+      ['Links ≥ 3', 'l:3..'],
     ])
   })
 })

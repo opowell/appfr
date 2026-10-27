@@ -38,7 +38,7 @@ export interface SummaryTerm {
   negated?: boolean
   /**
    * For an expression term, the term as the address and the search box write
-   * it — `p:..5` where the label says `price ≤ 5`. What a reader types to say
+   * it — `p:..5` where the label says `Price ≤ 5`. What a reader types to say
    * it again, so it is what the pill says on hover.
    */
   address?: string
@@ -53,9 +53,9 @@ export const EXPRESSION_TERM = 'expr'
 const SYMBOLS: Partial<Record<string, string>> = { '>=': '≥', '<=': '≤', '>': '>', '<': '<' }
 
 /**
- * A term as a pill says it: the field under the name it has on screen, and a
- * range or a comparison in the signs it is read in — `price ≤ 5`,
- * `1 ≤ quantity ≤ 50`. A join key, a bare word and a field the entity does
+ * A term as a pill says it: the field under the name it has on screen, as it
+ * is written there, and a range or a comparison in the signs it is read in —
+ * `Price ≤ 5`, `1 ≤ Quantity ≤ 50`. A join key, a bare word and a field the entity does
  * not declare are said as they are written.
  */
 function describeTerm(
@@ -64,9 +64,8 @@ function describeTerm(
   schema: DomainSchema | null,
 ): string {
   if (term.kind !== 'field') return formatTerm(term)
-  const heading = fieldHeading(term.field, entity, schema)
-  if (heading === undefined) return formatTerm(term)
-  const name = heading.toLowerCase()
+  const name = fieldHeading(term.field, entity, schema)
+  if (name === undefined) return formatTerm(term)
   const sign = term.negated ? '-' : ''
   const range = isRangeTerm(term) ? rangeOf(term.value) : null
   if (range) {

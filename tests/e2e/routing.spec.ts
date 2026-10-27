@@ -67,7 +67,7 @@ test.describe('URL — the query is the route', () => {
     await searchBox(page).fill('state=paused')
     await searchBox(page).press('Enter')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
-    await expect(terms(page)).toHaveText(['state=running', 'state=paused'])
+    await expect(terms(page)).toHaveText(['State=running', 'State=paused'])
 
     expect(shellParams(page.url())).toEqual({ e: 's', q: 'state=running state=paused' })
     // The `=` is left literal rather than percent-encoded.
@@ -125,14 +125,14 @@ test.describe('URL — reload and history', () => {
     expect(shellParams(page.url())).toEqual(before)
     await expect(page.locator('.dc-table')).toBeVisible()
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
-    await expect(terms(page)).toHaveText(['state=running'])
+    await expect(terms(page)).toHaveText(['State=running'])
   })
 
   test('a pasted URL renders that query without any interaction', async ({ page }) => {
     await gotoStory(page, LIVE, '&e=i&v=grid&q=kind=pdf&s=l')
     await expect(page.locator('.dc-grid')).toBeVisible()
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'items')
-    await expect(terms(page)).toHaveText(['kind=pdf'])
+    await expect(terms(page)).toHaveText(['Kind=pdf'])
   })
 
   test('Back returns to the previous query', async ({ page }) => {

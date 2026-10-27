@@ -216,7 +216,7 @@ test.describe('Columns — as many as the schema declares', () => {
     // This story holds its query in memory rather than the address bar, so the
     // header's account of it is where the narrowing shows.
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'colors')
-    await expect(termBar(page)).toContainText('piece:')
+    await expect(termBar(page)).toContainText('Piece:')
   })
 
   test('heads a column with a button only where that sort is offered', async ({ page }) => {

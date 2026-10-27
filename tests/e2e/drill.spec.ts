@@ -154,7 +154,7 @@ test.describe('Pressing a row', () => {
     await gotoStory(page, HOME)
     await press(page, 'Sets')
     await expect(card(page, 'Sets')).toHaveCount(0)
-    await expect(termBar(page)).toContainText('set:')
+    await expect(termBar(page)).toContainText('Set:')
   })
 
   /*
@@ -176,8 +176,8 @@ test.describe('Pressing a row', () => {
     expect(queryOf(page)).toBe(narrowed)
     await expect(listRows(page)).toHaveCount(Number(count))
     await expect(page.locator('.dc-list__primary').first()).toHaveText(name)
-    await expect(terms(page).filter({ hasText: 'set:' })).toHaveClass(/dc-term--idle/)
-    await expect(terms(page).filter({ hasText: 'theme:' })).not.toHaveClass(/dc-term--idle/)
+    await expect(terms(page).filter({ hasText: 'Set:' })).toHaveClass(/dc-term--idle/)
+    await expect(terms(page).filter({ hasText: 'Theme:' })).not.toHaveClass(/dc-term--idle/)
   })
 
   test('applies the term again the moment another type is listed', async ({ page }) => {
@@ -187,7 +187,7 @@ test.describe('Pressing a row', () => {
     await listType(page, 'sets')
     await chooseScope(page, 'Pieces')
     expect(queryOf(page)).toBe(narrowed)
-    await expect(terms(page).filter({ hasText: 'set:' })).not.toHaveClass(/dc-term--idle/)
+    await expect(terms(page).filter({ hasText: 'Set:' })).not.toHaveClass(/dc-term--idle/)
   })
 
   /*
@@ -301,7 +301,7 @@ test.describe('Pressing a row with ⌥ held', () => {
     await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
     await expect(listRows(page)).toHaveCount(before)
     await expect(page.locator('.dc-list__primary').filter({ hasText: name })).toHaveCount(1)
-    await expect(terms(page).filter({ hasText: 'set:' })).toHaveClass(/dc-term--idle/)
+    await expect(terms(page).filter({ hasText: 'Set:' })).toHaveClass(/dc-term--idle/)
   })
 
   test('leaves the record out of every other type', async ({ page }) => {
@@ -310,14 +310,14 @@ test.describe('Pressing a row with ⌥ held', () => {
     const term = queryOf(page)!
     await chooseScope(page, 'Pieces')
     expect(queryOf(page)).toBe(term)
-    await expect(terms(page).filter({ hasText: 'set:' })).not.toHaveClass(/dc-term--idle/)
+    await expect(terms(page).filter({ hasText: 'Set:' })).not.toHaveClass(/dc-term--idle/)
   })
 
   test('says which record is out, on the bar, with its sign', async ({ page }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const name = await page.locator('.dc-list__primary').first().innerText()
     await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
-    await expect(termBar(page)).toContainText(`-set: ${name}`)
+    await expect(termBar(page)).toContainText(`-Set: ${name}`)
   })
 
   test('turns the term round on a record the query already narrows to', async ({ page }) => {
@@ -422,7 +422,7 @@ test.describe('A home screen that arrives already naming a record', () => {
     await gotoStory(page, NAMED)
     await listType(page, 'sets')
     await chooseView(page, 'list')
-    await expect(termBar(page)).toContainText('set:')
+    await expect(termBar(page)).toContainText('Set:')
     await expect(listRows(page).nth(1)).toBeVisible()
   })
 })
@@ -432,7 +432,7 @@ test.describe('A narrowed query', () => {
     await gotoStory(page, HOME)
     await press(page, 'Sets')
     expect(queryOf(page)).toMatch(/^set=/)
-    await expect(termBar(page)).toContainText('set:')
+    await expect(termBar(page)).toContainText('Set:')
     // Nobody typed it, so the box does not offer it back as text.
     await expect(searchBox(page)).toHaveValue('')
   })
@@ -459,7 +459,7 @@ test.describe('A narrowed query', () => {
     const scoped = queryOf(page)!
     expect(scoped).toContain('theme:space')
 
-    await terms(page).filter({ hasText: 'theme:space' }).click()
+    await terms(page).filter({ hasText: 'Theme:space' }).click()
     const lifted = queryOf(page)!
     // Rewritten from what it parsed to, which is where the second spelling
     // comes from: the quotes the → wrote are not in it any more.

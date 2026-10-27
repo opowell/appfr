@@ -107,9 +107,11 @@ const records = useRecordNames({
  * The word in front of a resolved part's name — the field it was written
  * with, or {@link EntitySchema.scopeLabel} where that field reads poorly on
  * its own (`id` naming an item is not a word a reader recognises; `item` is).
+ * Capitalised, as the parts naming a column say it the way its header does.
  */
 function fieldLabelOf(field: string): string {
-  return scopedEntity(domain.value, field)?.scopeLabel ?? field
+  const label = scopedEntity(domain.value, field)?.scopeLabel ?? field
+  return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
 /**

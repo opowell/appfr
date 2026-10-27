@@ -31,7 +31,7 @@ test.describe('within — the scope on the bar', () => {
 
   test('names the record it points at rather than only its id', async ({ page }) => {
     await gotoStory(page, RECORD)
-    await expect(scope(page)).toHaveText('set: Yellow Castle')
+    await expect(scope(page)).toHaveText('Set: Yellow Castle')
   })
 
   test('is not a term: there is nothing on the bar to lift it with', async ({ page }) => {

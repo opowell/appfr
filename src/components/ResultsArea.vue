@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { Component } from 'vue'
 import type { ViewKind } from '../types'
 import { useShellContext } from '../composables/context'
@@ -84,6 +84,86 @@ watch(
     if (scroller.value) scroller.value.scrollTop = 0
   },
 )
+
+/**
+ * Which of the far edges have results behind them — `bottom`, `right`,
+ * `both`, or nothing at all — the way the bar says it of a query too long for
+ * it. An overlay scrollbar is invisible until the pointer is over the results,
+ * so a table cut off at a row boundary reads as the end of the table.
+ *
+ * The far edges only: the near ones are where a table's head and a host's
+ * sticky columns are held, and a fade there would sit over them for as long as
+ * the results are scrolled.
+ */
+const more = ref<'' | 'bottom' | 'right' | 'both'>('')
+
+/*
+ * How much of each edge the scrollbars themselves take, so that the fade
+ * stops short of them: a classic scrollbar sits inside the box the mask is
+ * drawn on, and would otherwise fade with the results it scrolls.
+ */
+const gutters = ref({ x: 0, y: 0 })
+
+function measureEdges(): void {
+  const element = scroller.value
+  if (!element) {
+    more.value = ''
+    return
+  }
+  // A fraction of a pixel is not somewhere anyone can scroll to.
+  const below = element.scrollHeight - element.clientHeight - element.scrollTop > 1
+  const right = element.scrollWidth - element.clientWidth - element.scrollLeft > 1
+  more.value = below && right ? 'both' : below ? 'bottom' : right ? 'right' : ''
+  gutters.value = {
+    x: element.offsetHeight - element.clientHeight,
+    y: element.offsetWidth - element.clientWidth,
+  }
+}
+
+/*
+ * Measured rather than animated from a scroll timeline, for the reason the bar
+ * is: a timeline leaves its end state applied once the box stops overflowing.
+ * And the box is not all that changes it — rows arrive, a view is swapped for
+ * another, a picture loads — so what is inside it is watched too: the view's
+ * own root, whichever one that is at the time.
+ */
+let sizes: ResizeObserver | null = null
+let children: MutationObserver | null = null
+watch(
+  scroller,
+  (element, previous) => {
+    previous?.removeEventListener('scroll', measureEdges)
+    sizes?.disconnect()
+    children?.disconnect()
+    sizes = null
+    children = null
+    measureEdges()
+    if (!element) return
+    element.addEventListener('scroll', measureEdges, { passive: true })
+    if (typeof ResizeObserver === 'undefined') return
+    const resizes = new ResizeObserver(measureEdges)
+    const observe = () => {
+      resizes.disconnect()
+      resizes.observe(element)
+      for (const child of element.children) resizes.observe(child)
+    }
+    observe()
+    sizes = resizes
+    if (typeof MutationObserver === 'undefined') return
+    children = new MutationObserver(() => {
+      observe()
+      measureEdges()
+    })
+    children.observe(element, { childList: true })
+  },
+  { flush: 'post' },
+)
+
+onBeforeUnmount(() => {
+  scroller.value?.removeEventListener('scroll', measureEdges)
+  sizes?.disconnect()
+  children?.disconnect()
+})
 </script>
 
 <template>
@@ -91,6 +171,11 @@ watch(
     ref="scroller"
     class="dc-results"
     :data-dc-pending="shell.pending.value ? 'true' : 'false'"
+    :data-dc-more="more"
+    :style="{
+      '--dc-results-gutter-x': `${gutters.x}px`,
+      '--dc-results-gutter-y': `${gutters.y}px`,
+    }"
   >
     <!-- Before anything that reads the source, because nothing it answers is
          the data yet. -->
@@ -188,6 +273,65 @@ watch(
 
 .dc-results[data-dc-pending='true'] {
   opacity: 0.6;
+}
+
+/*
+ * And the cut says that it is one: the far edge with results behind it is
+ * softened, as the bar's is.
+ *
+ * Drawn as what is taken away rather than what is kept — the whole box, less a
+ * strip along each edge that has more behind it — because the strips stop at
+ * the scrollbars, and a mask layer is transparent wherever it is not drawn:
+ * kept-shapes intersected would take the scrollbars out with the results.
+ */
+.dc-results {
+  --dc-results-cue: 32px;
+}
+
+.dc-results[data-dc-more='bottom'] {
+  mask-image:
+    linear-gradient(#000, #000),
+    linear-gradient(to top, #000, transparent);
+  mask-size:
+    100% 100%,
+    calc(100% - var(--dc-results-gutter-y)) var(--dc-results-cue);
+  mask-position:
+    0 0,
+    left 0 bottom var(--dc-results-gutter-x);
+  mask-repeat: no-repeat;
+  mask-composite: subtract;
+}
+
+.dc-results[data-dc-more='right'] {
+  mask-image:
+    linear-gradient(#000, #000),
+    linear-gradient(to left, #000, transparent);
+  mask-size:
+    100% 100%,
+    var(--dc-results-cue) calc(100% - var(--dc-results-gutter-x));
+  mask-position:
+    0 0,
+    right var(--dc-results-gutter-y) top 0;
+  mask-repeat: no-repeat;
+  mask-composite: subtract;
+}
+
+.dc-results[data-dc-more='both'] {
+  mask-image:
+    linear-gradient(#000, #000),
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to left, #000, transparent);
+  mask-size:
+    100% 100%,
+    calc(100% - var(--dc-results-gutter-y)) var(--dc-results-cue),
+    var(--dc-results-cue) calc(100% - var(--dc-results-gutter-x));
+  mask-position:
+    0 0,
+    left 0 bottom var(--dc-results-gutter-x),
+    right var(--dc-results-gutter-y) top 0;
+  mask-repeat: no-repeat;
+  /* The whole box less the two strips, which are added to each other first. */
+  mask-composite: subtract, add;
 }
 
 .dc-results__state {

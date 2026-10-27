@@ -84,3 +84,44 @@ test.describe('Scrolling — a narrow screen', () => {
     expect(await scrollThePage(page)).toBe(0)
   })
 })
+
+/*
+ * An overlay scrollbar is invisible until the pointer is over the results, so
+ * the far edge with more behind it is faded, as the bar's is — and measured
+ * rather than animated, so that it lets go once there is nothing behind it.
+ */
+test.describe('Scrolling — the cue at the far edge', () => {
+  const results = (page: Page) => page.locator('.dc-results')
+
+  test('says there are more results below', async ({ page }) => {
+    await gotoStory(page, CARDS)
+    await expect(results(page)).toHaveAttribute('data-dc-more', 'bottom')
+    await expect(results(page)).toHaveCSS('mask-image', /linear-gradient/)
+  })
+
+  test('stops saying it once the results are scrolled to the end', async ({ page }) => {
+    await gotoStory(page, CARDS)
+    await expect(results(page)).toHaveAttribute('data-dc-more', 'bottom')
+    await results(page).evaluate((element) => {
+      element.scrollTop = element.scrollHeight
+    })
+    await expect(results(page)).toHaveAttribute('data-dc-more', '')
+    await expect(results(page)).toHaveCSS('mask-image', 'none')
+  })
+
+  test('says nothing at all when every result fits', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 4000 })
+    await gotoStory(page, CARDS)
+    expect(await resultsOverhang(page)).toBe(0)
+    await expect(results(page)).toHaveAttribute('data-dc-more', '')
+    await expect(results(page)).toHaveCSS('mask-image', 'none')
+  })
+
+  test('says it again once the screen is too short for them', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 4000 })
+    await gotoStory(page, CARDS)
+    await expect(results(page)).toHaveAttribute('data-dc-more', '')
+    await page.setViewportSize({ width: 1280, height: 400 })
+    await expect(results(page)).toHaveAttribute('data-dc-more', 'bottom')
+  })
+})

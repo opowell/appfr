@@ -2317,6 +2317,18 @@ set that is the metrics first, at the size the list view drops them too, then
 the kind, which the query itself usually says, then the date. The name, the
 secondary and the state are what is left, and they are what a row is for.
 
+### Where the results go on
+
+The results scroll in a box of their own, and an overlay scrollbar is invisible
+until the pointer is over it — so a table cut off at a row boundary reads as
+the end of the table. The far edge with more behind it is faded instead, the
+way the bar's is, and the box says which in `data-dc-more` (`bottom`, `right`,
+`both`, or empty). The near edges never fade: they are where a table's head
+and a host's sticky columns are held. The fade stops short of a classic
+scrollbar rather than fading it too, and it is measured from the box and what
+is in it, so it lets go once the results are scrolled to the end or stop
+overflowing.
+
 ### Composables
 
 `useQueryState` is the whole query model without any of the markup — useful if

@@ -237,7 +237,7 @@ export function useShellContext(): ShellContext {
   const context = inject(SHELL_CONTEXT_KEY, null)
   if (!context) {
     throw new Error(
-      '[header-content-layout] No shell context found. Render this component inside <DataShell>.',
+      '[appfr] No shell context found. Render this component inside <DataShell>.',
     )
   }
   return context

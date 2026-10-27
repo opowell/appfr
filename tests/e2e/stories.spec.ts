@@ -22,7 +22,7 @@ interface IndexEntry {
  */
 function shellFrame(page: Page, story: IndexEntry): Page | FrameLocator {
   return story.title.startsWith('No Build')
-    ? page.frameLocator('iframe[title="header-content-layout with no build step"]')
+    ? page.frameLocator('iframe[title="appfr with no build step"]')
     : page
 }
 

@@ -21,7 +21,7 @@ const NoBuildPage = defineComponent({
           // than leaving the previous run's checklist on screen.
           key: props.search,
           src: `/no-build/index.html${props.search}`,
-          title: 'header-content-layout with no build step',
+          title: 'appfr with no build step',
           style: 'flex:1; min-height:0; width:100%; border:0',
         }),
       ])
@@ -45,7 +45,7 @@ const meta = {
           'The host application is written as a real SFC. It is fetched as',
           '`.vue` *source* and compiled in the browser by vue3-sfc-loader, so',
           'the code in it is the same code you would write against a bundler —',
-          'bare `import` of `header-content-layout`, `<script setup>`, a scoped',
+          'bare `import` of `appfr`, `<script setup>`, a scoped',
           'style, a relative import of a second component.',
           '',
           'Both of the components a host mounts at its root are covered. The',

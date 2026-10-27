@@ -1,8 +1,8 @@
 /**
  * The browser's own controls, dressed as the shell's — opt in.
  *
- *   import 'header-content-layout/style.css'
- *   import 'header-content-layout/controls.css'
+ *   import 'appfr/style.css'
+ *   import 'appfr/controls.css'
  *
  * A page about one record is mostly the host's markup in the shell's cards:
  * a form that starts a run, a table of what it said, the buttons that act on

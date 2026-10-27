@@ -1,4 +1,4 @@
-# header-content-layout
+# appfr
 
 > **Pre-alpha.** Breaking changes go out freely, in any release, with no
 > deprecation period and no migration path. Pin an exact tag, and read the
@@ -101,7 +101,7 @@ A host that would rather open on one entity's list can say so:
 ## Install
 
 ```bash
-npm install header-content-layout
+npm install appfr
 ```
 
 `vue` is a peer dependency. `vue-router` and `@nuxt/kit` are optional peers,
@@ -111,10 +111,10 @@ needed only for the router adapter and the Nuxt module.
 
 ```vue
 <script setup lang="ts">
-import { DataShell } from 'header-content-layout'
-import { iRadarSchema } from 'header-content-layout/fixtures'
-import type { ShellRow } from 'header-content-layout'
-import 'header-content-layout/style.css'
+import { DataShell } from 'appfr'
+import { iRadarSchema } from 'appfr/fixtures'
+import type { ShellRow } from 'appfr'
+import 'appfr/style.css'
 
 function open(row: ShellRow) {
   console.log('open', row.id)
@@ -140,7 +140,7 @@ that arrives at once, and [`stream`](#results-that-arrive-over-time) for one
 that arrives over time.
 
 ```ts
-import type { DataSource } from 'header-content-layout'
+import type { DataSource } from 'appfr'
 
 const source: DataSource = {
   // `entity` is null on the home screen, where the query spans every entity in
@@ -188,7 +188,7 @@ another. A source can declare `stream` as well, and push rows in as it finds
 them:
 
 ```ts
-import type { StreamingDataSource } from 'header-content-layout'
+import type { StreamingDataSource } from 'appfr'
 
 const source: StreamingDataSource = {
   query: (request) => fetchPage(request),          // still needed — see below
@@ -261,7 +261,7 @@ which the shell applies in the same tick — rows are on screen from the first
 render, and the pending state stays reserved for the fetch.
 
 ```ts
-import { createMemoryDataSource, queryAll, useStableSchema } from 'header-content-layout'
+import { createMemoryDataSource, queryAll, useStableSchema } from 'appfr'
 
 // A new array is a new source, and a new source is what re-runs the query.
 const source = computed(() => createMemoryDataSource(toRows(payloads.value)))
@@ -287,7 +287,7 @@ chips facet offers, the ceiling of a range — and those are built from the rows
 too:
 
 ```ts
-import { chipsFrom, rangeFrom, toggleFacet, usefulFacets } from 'header-content-layout'
+import { chipsFrom, rangeFrom, toggleFacet, usefulFacets } from 'appfr'
 
 facets: usefulFacets([
   chipsFrom(specRows, 'tag', 'Tags', { multiple: true }),  // every value held, A to Z
@@ -326,7 +326,7 @@ reaches the URL is pluggable:
 | `createMemoryAdapter(search?)` | Tests and Storybook, where the address bar must stay untouched. |
 
 ```ts
-import { createVueRouterAdapter, ROUTE_ADAPTER_KEY } from 'header-content-layout'
+import { createVueRouterAdapter, ROUTE_ADAPTER_KEY } from 'appfr'
 import { useRouter } from 'vue-router'
 
 // Per shell…
@@ -352,7 +352,7 @@ is the shell with its term in the query. Its address is then a way *into* the
 shell — and two vue-router `redirect` helpers build those:
 
 ```ts
-import { entityRedirect, recordRedirect } from 'header-content-layout'
+import { entityRedirect, recordRedirect } from 'appfr'
 
 const routes = [
   { path: '/', component: ShellView },
@@ -431,7 +431,7 @@ shortcuts written out as `parseQuery` writes them; without, as the address
 has them, which still names every record, join keys never being shortened:
 
 ```ts
-import { readExpression, searchFromQuery } from 'header-content-layout'
+import { readExpression, searchFromQuery } from 'appfr'
 
 const search = searchFromQuery(route.query)   // '?e=tests&q=host%3D%22a.example%22'
 readExpression(search)                        // 'host="a.example"'
@@ -440,7 +440,7 @@ readExpression(search)                        // 'host="a.example"'
 ## Schemas
 
 ```ts
-import type { DomainSchema } from 'header-content-layout'
+import type { DomainSchema } from 'appfr'
 
 const schema: DomainSchema = {
   key: 'iRadar',
@@ -486,7 +486,7 @@ they are called, which of them is the name and which the state — is
 what lets one set of renderers serve every schema, and what lets records of
 different types share a result set.
 
-Four worked examples ship in `header-content-layout/fixtures`: `iRadarSchema`,
+Four worked examples ship in `appfr/fixtures`: `iRadarSchema`,
 `legoSchema`, `commerceSchema`, `battleSimSchema`. Each also gets `logsEntity`
 and `settingsEntity`, which are exported on their own and are entities like any
 other — no special casing anywhere in the shell. Each entity writes out its
@@ -686,7 +686,7 @@ factories, over the field names the fixtures use, each taking a
 import {
   dateColumn, entityColumn, identityColumn, metricColumn, ordinalColumn,
   referenceColumn, stateColumn, tintColumn, bytesCell,
-} from 'header-content-layout'
+} from 'appfr'
 
 columns: [
   ordinalColumn(),                                         // #
@@ -1059,7 +1059,7 @@ Two helpers are exported for a host building its own context or its own
 results area, and they are the whole of what applying a drill takes:
 
 ```ts
-import { drillExpression, scopedEntity, scopeTermFor } from 'header-content-layout'
+import { drillExpression, scopedEntity, scopeTermFor } from 'appfr'
 
 scopeTermFor(schema, row)              // 'host="www.example.com"', or null
 excludingTerm(scopeTermFor(schema, row))  // '-host="www.example.com"', or null
@@ -1653,8 +1653,8 @@ of its cards is the browser's grey box beside the shell's token-coloured ones.
 `style.css`:
 
 ```ts
-import 'header-content-layout/style.css'
-import 'header-content-layout/controls.css'
+import 'appfr/style.css'
+import 'appfr/controls.css'
 ```
 
 ```vue
@@ -2347,8 +2347,8 @@ beside a pane without losing the windows on it (see **Tabs**).
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import { WindowFrame, group, panelNode, row } from 'header-content-layout'
-import type { WindowNode, WindowPanelDef } from 'header-content-layout'
+import { WindowFrame, group, panelNode, row } from 'appfr'
+import type { WindowNode, WindowPanelDef } from 'appfr'
 
 const panels: WindowPanelDef[] = [
   {
@@ -2509,7 +2509,7 @@ tab to take a name from, and the window in front of it is the wrong one to
 borrow: it changes every time one is touched.
 
 ```ts
-import { cascade, float, frame, group, panelNode } from 'header-content-layout'
+import { cascade, float, frame, group, panelNode } from 'appfr'
 
 const layout = ref<WindowNode>(
   float(
@@ -2897,7 +2897,7 @@ its button goes too; on a pane of tabs it is the four again, and the items
 about the tabs stay.
 
 ```ts
-import { fixedView, headless } from 'header-content-layout'
+import { fixedView, headless } from 'appfr'
 
 fixedView(row([panelNode('items'), sidebar])) // a row, and only ever a row
 fixedView(panelNode('items'))                 // on one view, and no choice
@@ -2991,7 +2991,7 @@ declares to say so on its behalf. So the content says it itself:
 
 ```vue
 <script setup lang="ts">
-import { usePaneMenu, VIEW_KINDS } from 'header-content-layout'
+import { usePaneMenu, VIEW_KINDS } from 'appfr'
 
 const LABELS = { list: 'List', cards: 'Cards', grid: 'Grid', images: 'Images', table: 'Table', links: 'Links', preview: 'Preview' }
 const view = ref('table')
@@ -3235,7 +3235,7 @@ link someone was sent — opens the window as it was left: which panels are
 open, how they are split and sized, and which tab is on top.
 
 ```ts
-import { createHistoryAdapter, panelNode, ROUTE_ADAPTER_KEY, row, useLayoutRoute } from 'header-content-layout'
+import { createHistoryAdapter, panelNode, ROUTE_ADAPTER_KEY, row, useLayoutRoute } from 'appfr'
 
 const route = createHistoryAdapter()
 provide(ROUTE_ADAPTER_KEY, route) // the DataShell in the window shares it
@@ -3339,8 +3339,8 @@ row of names, each opening a menu of any depth.
 
 ```vue
 <script setup lang="ts">
-import { MenuBar } from 'header-content-layout'
-import type { MenuItemDef } from 'header-content-layout'
+import { MenuBar } from 'appfr'
+import type { MenuItemDef } from 'appfr'
 
 const menus: MenuItemDef[] = [
   {
@@ -3628,16 +3628,16 @@ import map and load them:
   {
     "imports": {
       "vue": "https://unpkg.com/vue@3/dist/vue.runtime.esm-browser.prod.js",
-      "header-content-layout": "/dist/index.js",
-      "header-content-layout/fixtures": "/dist/fixtures.js"
+      "appfr": "/dist/index.js",
+      "appfr/fixtures": "/dist/fixtures.js"
     }
   }
 </script>
 
 <script type="module">
   import { createApp, h } from 'vue'
-  import { DataShell } from 'header-content-layout'
-  import { iRadarSchema } from 'header-content-layout/fixtures'
+  import { DataShell } from 'appfr'
+  import { iRadarSchema } from 'appfr/fixtures'
 
   createApp(() => h(DataShell, { schema: iRadarSchema })).mount('#app')
 </script>
@@ -3657,7 +3657,7 @@ the same bare imports of the shell you would write against a bundler:
 const options = {
   // What the loader must not go and fetch. The shell has to be handed the very
   // Vue the page is running, not a second copy of it.
-  moduleCache: { vue: Vue, 'header-content-layout': shell },
+  moduleCache: { vue: Vue, appfr: shell },
 
   async getFile(url) {
     const response = await fetch(url)
@@ -3702,7 +3702,7 @@ which removes an artifact so you can watch the checks fail.
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['header-content-layout/nuxt'],
+  modules: ['appfr/nuxt'],
 })
 ```
 

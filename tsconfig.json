@@ -20,8 +20,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "header-content-layout": ["./src/index.ts"],
-      "header-content-layout/fixtures": ["./src/fixtures/index.ts"]
+      "appfr": ["./src/index.ts"],
+      "appfr/fixtures": ["./src/fixtures/index.ts"]
     }
   },
   "include": [

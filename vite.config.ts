@@ -20,7 +20,7 @@ const entry = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 function controlsStylesheet(): Plugin {
   let library = false
   return {
-    name: 'header-content-layout:controls-css',
+    name: 'appfr:controls-css',
     apply: 'build',
     configResolved(config) {
       library = Boolean(config.build.lib)
@@ -40,8 +40,8 @@ export default defineConfig({
   plugins: [vue(), controlsStylesheet()],
   resolve: {
     alias: {
-      'header-content-layout/fixtures': entry('./src/fixtures/index.ts'),
-      'header-content-layout': entry('./src/index.ts'),
+      'appfr/fixtures': entry('./src/fixtures/index.ts'),
+      appfr: entry('./src/index.ts'),
     },
   },
   build: {

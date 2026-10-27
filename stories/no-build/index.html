@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>header-content-layout, with no build step</title>
+    <title>appfr, with no build step</title>
 
     <!--
       There is no bundler, no transform and no install step behind this page.
@@ -20,7 +20,7 @@
 
         vue     https://unpkg.com/vue@3/dist/vue.runtime.esm-browser.prod.js
         loader  https://unpkg.com/vue3-sfc-loader@0.9/dist/vue3-sfc-loader.esm.js
-        shell   https://unpkg.com/header-content-layout/dist/index.js
+        shell   https://unpkg.com/appfr/dist/index.js
 
       It needs a server — ES modules and `fetch` do not work from `file:`.
       Any static one will do: `npx serve`, `python3 -m http.server`, nginx.
@@ -44,8 +44,8 @@
       {
         "imports": {
           "vue": "/vendor/vue/vue.runtime.esm-browser.prod.js",
-          "header-content-layout": "/dist/index.js",
-          "header-content-layout/fixtures": "/dist/fixtures.js"
+          "appfr": "/dist/index.js",
+          "appfr/fixtures": "/dist/fixtures.js"
         }
       }
     </script>
@@ -296,14 +296,14 @@
       })
 
       await check('shell', 'dist/index.js imports as an ES module', async () => {
-        shell = await import('header-content-layout')
+        shell = await import('appfr')
         if (!shell.DataShell || typeof shell.createMockDataSource !== 'function')
           throw new Error('the bundle loaded but does not export the shell')
         return `${Object.keys(shell).length} named exports, reached by bare specifier`
       })
 
       await check('fixtures', 'so does the fixtures subpath', async () => {
-        fixtures = await import('header-content-layout/fixtures')
+        fixtures = await import('appfr/fixtures')
         return `schemas: ${Object.keys(fixtures.schemas).join(', ')}`
       })
 
@@ -320,8 +320,8 @@
       const options = {
         moduleCache: {
           vue: Vue,
-          'header-content-layout': shell,
-          'header-content-layout/fixtures': fixtures,
+          appfr: shell,
+          'appfr/fixtures': fixtures,
         },
         /*
          * How one file's import names another. Bare specifiers are module

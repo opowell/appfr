@@ -40,13 +40,13 @@ const COMPONENTS = [
  * ```ts
  * // nuxt.config.ts
  * export default defineNuxtConfig({
- *   modules: ['header-content-layout/nuxt'],
+ *   modules: ['appfr/nuxt'],
  * })
  * ```
  */
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: 'header-content-layout',
+    name: 'appfr',
     configKey: 'dataShell',
     compatibility: { nuxt: '>=3.0.0' },
   },
@@ -56,23 +56,23 @@ export default defineNuxtModule<ModuleOptions>({
   },
   setup(options: ModuleOptions, nuxt: { options: { css: string[] } }) {
     if (options.css !== false) {
-      nuxt.options.css.push('header-content-layout/style.css')
+      nuxt.options.css.push('appfr/style.css')
     }
 
     for (const name of COMPONENTS) {
       addComponent({
         name: `${options.prefix ?? ''}${name}`,
         export: name,
-        filePath: 'header-content-layout',
+        filePath: 'appfr',
       })
     }
 
     if (options.router !== false) {
       addPluginTemplate({
-        filename: 'header-content-layout-router.mjs',
+        filename: 'appfr-router.mjs',
         getContents: () => `
 import { defineNuxtPlugin, useRouter } from '#app'
-import { ROUTE_ADAPTER_KEY, createVueRouterAdapter } from 'header-content-layout'
+import { ROUTE_ADAPTER_KEY, createVueRouterAdapter } from 'appfr'
 
 export default defineNuxtPlugin((nuxtApp) => {
   nuxtApp.vueApp.provide(ROUTE_ADAPTER_KEY, createVueRouterAdapter(useRouter()))

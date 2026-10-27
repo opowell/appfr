@@ -9,8 +9,8 @@
 -->
 <script setup>
 import { ref } from 'vue'
-import { DataShell, createMockDataSource } from 'header-content-layout'
-import { schemas } from 'header-content-layout/fixtures'
+import { DataShell, createMockDataSource } from 'appfr'
+import { schemas } from 'appfr/fixtures'
 import OpenedRow from './OpenedRow.vue'
 
 const params = new URLSearchParams(location.search)

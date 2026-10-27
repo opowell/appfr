@@ -38,7 +38,7 @@ test.describe('No build — dist on a static page', () => {
     // neither.
     const body = await response.text()
     expect(body).toContain('<template>')
-    expect(body).toContain(`from 'header-content-layout'`)
+    expect(body).toContain(`from 'appfr'`)
   })
 
   test('what it mounts is the real shell, driving the real address bar', async ({ page }) => {
@@ -85,7 +85,7 @@ test.describe('No build — dist on a static page', () => {
 
   test('the story frames that same page', async ({ page }) => {
     await page.goto(storyUrl('no-build-static-page--from-dist'))
-    const frame = page.frameLocator('iframe[title="header-content-layout with no build step"]')
+    const frame = page.frameLocator('iframe[title="appfr with no build step"]')
     await expect(frame.locator('#verdict[data-done="true"]')).toHaveAttribute('data-ok', 'true')
     await expect(frame.locator('.dc-shell')).toBeVisible()
   })

@@ -144,7 +144,7 @@ describe('createMemoryDataSource', () => {
   })
 
   it("applies a type's facets only to that type", () => {
-    const result = run('?e=hosts&f_region=eu')
+    const result = run('?e=hosts&q=region=eu')
     expect(result.total).toBe(3)
     expect(result.unfiltered).toBe(false)
   })

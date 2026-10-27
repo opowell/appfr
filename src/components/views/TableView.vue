@@ -59,7 +59,7 @@ function pressRow(row: ShellRow, event: MouseEvent) {
 }
 
 function headerTitle(column: ColumnDef): string | undefined {
-  const shortcut = columnShortcutOf(column, shell.entity.value)
+  const shortcut = columnShortcutOf(column, shell.entity.value, shell.schema.value)
   const line = shortcut ? `Shortcut: ${shortcut}` : undefined
   return [column.hint, line].filter(Boolean).join('\n') || undefined
 }

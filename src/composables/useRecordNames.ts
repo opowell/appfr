@@ -1,7 +1,7 @@
 import { shallowRef, watch } from 'vue'
 import type { ComputedRef, ShallowRef } from 'vue'
 import type { DataSource, DomainSchema, EntitySchema, QueryResult, ShellQuery, ShellRow } from '../types'
-import { emptyFacetState, findSort } from '../query/schema'
+import { findSort } from '../query/schema'
 import { cellTextOf, EMPTY_CELL, roleColumn } from '../query/columns'
 import { namedRecord, recordTerm } from '../query/drill'
 import { EXPRESSION_TERM } from '../query/summary'
@@ -114,7 +114,6 @@ export function useRecordNames(options: UseRecordNamesOptions): RecordNamesState
         // The reference on its own. The rest of the query is about the rows on
         // screen, which are of another type entirely.
         expr: recordTerm(entity, id) ?? '',
-        facets: emptyFacetState(entity),
         sort: findSort(entity, query.sort, options.schema.value).key,
         page: 1,
       },

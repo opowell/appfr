@@ -435,6 +435,7 @@ const within = computed(() => props.within?.trim() ?? '')
 const draft = useDraft({
   query: query.query,
   entity: query.entity,
+  schema: computed(() => props.schema),
   setExpression: query.setExpression,
 })
 

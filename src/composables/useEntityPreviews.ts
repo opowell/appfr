@@ -7,7 +7,7 @@ import type {
   QueryResult,
   ShellQuery,
 } from '../types'
-import { emptyFacetState, isPristineQuery } from '../query/schema'
+import { isPristineQuery } from '../query/schema'
 import { addTerm, scopeTermFor } from '../query/drill'
 import { andExpression } from '../data/expression'
 import type { PresentedRow } from './usePresentedRows'
@@ -107,12 +107,11 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
 
     const requests = entities.map((entity) => ({
       entity,
-      // Scope the query to this entity, keeping the expression and ordering
-      // but dropping facets, which belong to whichever entity is selected.
+      // Scope the query to this entity, keeping the expression and ordering.
       outcome: options.source.value.query({
         // Each card is the top few of its type, wherever the shell's own
         // result set has been paged to — so this asks for the first page.
-        query: { ...query, entity: entity.key, expr, facets: emptyFacetState(entity), page: 1 },
+        query: { ...query, entity: entity.key, expr, page: 1 },
         schema,
         entity,
         /*

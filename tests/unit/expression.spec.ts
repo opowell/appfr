@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   columnShortcut,
   columnShortcutOf,
+  compactShortcuts,
   expandShortcuts,
   formatExpression,
   formatTerm,
@@ -10,6 +11,7 @@ import {
   negateTerm,
   oppositeTerm,
   parseExpression,
+  rangeOf,
   readDraft,
   sameTerm,
   splitExpression,
@@ -566,5 +568,50 @@ describe('the two halves the panel edits', () => {
   it('re-reads what it wrote as the same two halves', () => {
     const halves = splitExpression('theme:space year>=1988 brick')
     expect(splitExpression(joinExpression(halves.parts, halves.text))).toEqual(halves)
+  })
+})
+
+describe('ranges', () => {
+  it('reads two numbers with `..` between them, either end left open', () => {
+    expect(rangeOf('1..5')).toEqual({ min: 1, max: 5 })
+    expect(rangeOf('..5')).toEqual({ min: null, max: 5 })
+    expect(rangeOf('100..')).toEqual({ min: 100, max: null })
+    expect(rangeOf('0.5..1.25')).toEqual({ min: 0.5, max: 1.25 })
+    expect(rangeOf('-2..2')).toEqual({ min: -2, max: 2 })
+    expect(rangeOf('5..1')).toEqual({ min: 1, max: 5 })
+  })
+
+  it('is no range without a number at either end', () => {
+    expect(rangeOf('..')).toBeNull()
+    expect(rangeOf('a..b')).toBeNull()
+    expect(rangeOf('5')).toBeNull()
+  })
+
+  it('keeps a row whose number lies between the ends, ends included', () => {
+    const ranked = row({ metric2: 40 })
+    expect(matches('metric2:40..40', ranked)).toBe(true)
+    expect(matches('metric2:41..', ranked)).toBe(false)
+    expect(matches('metric2:..39', ranked)).toBe(false)
+    expect(matches('-metric2:..39', ranked)).toBe(true)
+  })
+
+  it('asks nothing of a field that holds no number', () => {
+    expect(matches('metric2:1..5', row({ metric2: 'many' }))).toBe(true)
+  })
+
+  it('reads two ranges on one field as both, not either', () => {
+    const ranked = row({ metric2: 40 })
+    expect(matches('metric2:10.. metric2:..30', ranked)).toBe(false)
+  })
+})
+
+describe('shortcuts the other way round', () => {
+  it('writes a column under its shortcut, and reads back as it was', () => {
+    expect(compactShortcuts('metric2>5 metric1:1..3 recall', items)).toBe('s>5 l:1..3 recall')
+    expect(expandShortcuts('s>5 l:1..3 recall', items)).toBe('metric2>5 metric1:1..3 recall')
+  })
+
+  it('leaves alone what has no shortcut', () => {
+    expect(compactShortcuts('rank:1..5', items)).toBe('rank:1..5')
   })
 })

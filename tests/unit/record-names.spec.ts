@@ -155,12 +155,6 @@ describe('useRecordNames', () => {
     // A window rather than one row: the term matches on a substring, so the
     // first row back is not necessarily the record it names.
     expect(request.limit).toBeGreaterThan(1)
-    // The facets of the type on screen have nothing to say about this one.
-    expect(request.query.facets).toEqual({
-      theme: { kind: 'chips', selected: [] },
-      year: { kind: 'range', min: null, max: null },
-      owned: { kind: 'toggle', on: false },
-    })
   })
 
   it('waits for a source that answers late, and says nothing until it does', async () => {

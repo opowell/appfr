@@ -2,7 +2,14 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import type { FacetValue } from '../types'
 import { useShellContext } from '../composables/context'
-import { expandShortcuts, formatTerm, joinExpression, splitExpression } from '../data/expression'
+import {
+  compactShortcuts,
+  expandShortcuts,
+  formatTerm,
+  joinExpression,
+  splitExpression,
+} from '../data/expression'
+import { facetValue } from '../query/facetTerms'
 import FacetControl from './FacetControl.vue'
 
 defineProps<{
@@ -32,8 +39,16 @@ const shell = useShellContext()
  */
 const expression = computed(() => splitExpression(shell.query.value.expr))
 
-/** Each part, as the source it parses back to — which is what its button says. */
-const parts = computed(() => expression.value.parts.map(formatTerm))
+/**
+ * Each part, as the address and the box write it — a column under its
+ * shortcut — which is what its button says: this is the expression, written
+ * the way it is typed.
+ */
+const parts = computed(() =>
+  expression.value.parts.map((part) =>
+    compactShortcuts(formatTerm(part), shell.entity.value, shell.schema.value),
+  ),
+)
 
 /* The text is edited as a draft. Committing on every keystroke would put a
    history entry behind each character; it commits on Run or Enter. The parts
@@ -58,7 +73,7 @@ function run() {
   // ever pending here — and rewriting an expression nobody has touched would
   // push a history entry for a query that has not changed.
   if (dirty.value) {
-    const typed = expandShortcuts(draft.value, shell.entity.value)
+    const typed = expandShortcuts(draft.value, shell.entity.value, shell.schema.value)
     shell.setExpression(joinExpression(expression.value.parts, typed))
   }
   emit('close')
@@ -149,7 +164,7 @@ void nextTick(() => expressionField.value?.focus())
           v-for="facet in shell.entity.value.facets"
           :key="facet.key"
           :facet="facet"
-          :value="shell.query.value.facets[facet.key]!"
+          :value="facetValue(shell.query.value.expr, facet)"
           @update="onFacetUpdate(facet.key, $event)"
         />
       </template>

@@ -14,11 +14,9 @@ import { applyQuery } from './apply'
 import { fnv1a } from './format'
 
 /*
- * Applying a query to rows in memory — the facets, the expression, the sort and
- * the page — is shared with `createMemoryDataSource`, and lives in `apply.ts`.
- * `matchesFacets` went with it, and is still exported from here.
+ * Applying a query to rows in memory — the expression, the sort and the page —
+ * is shared with `createMemoryDataSource`, and lives in `apply.ts`.
  */
-export { matchesFacets } from './apply'
 
 /** Tile backgrounds for the grid view, cycled by row hash. */
 export const MOCK_TINTS = [

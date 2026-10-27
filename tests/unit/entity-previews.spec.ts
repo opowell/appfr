@@ -114,7 +114,7 @@ describe('useEntityPreviews', () => {
     expect(byKey.get('searches')!.rows[0]!.parts.metrics[0]!.label).toBe('New')
   })
 
-  it('drops facets, which belong to one entity, but keeps the expression', () => {
+  it('asks each type the expression, scoped to that type', () => {
     const seen: QueryRequest[] = []
     const inner = createMockDataSource({ seed: 'iRadar' })
     const source: DataSource = {
@@ -130,12 +130,6 @@ describe('useEntityPreviews', () => {
       expect(request.entity).not.toBeNull()
       expect(request.query.entity).toBe(request.entity!.key)
       expect(request.query.expr).toBe('recall')
-      // Each entity's facets are present but neutral.
-      expect(Object.values(request.query.facets).every((value) => {
-        if (value.kind === 'chips') return value.selected.length === 0
-        if (value.kind === 'range') return value.min === null && value.max === null
-        return value.on === false
-      })).toBe(true)
     }
   })
 

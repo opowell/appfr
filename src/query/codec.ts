@@ -1,20 +1,6 @@
-import type {
-  DomainSchema,
-  FacetDef,
-  FacetState,
-  FacetValue,
-  ShellQuery,
-  ShellQueryDefaults,
-} from '../types'
-import {
-  defaultQuery,
-  defaultViewFor,
-  emptyFacetValue,
-  findEntity,
-  findSort,
-  isViewKind,
-  reconcileFacets,
-} from './schema'
+import type { DomainSchema, EntitySchema, ShellQuery, ShellQueryDefaults, SortDef } from '../types'
+import { columnShortcut, compactShortcuts, expandShortcuts } from '../data/expression'
+import { defaultQuery, defaultViewFor, findEntity, findSort, isViewKind, sortsFor } from './schema'
 
 /** Query-string keys the shell owns. Anything else in the URL is left alone. */
 export const PARAM_ENTITY = 'e'
@@ -23,7 +9,6 @@ export const PARAM_SORT = 's'
 export const PARAM_DIR = 'd'
 export const PARAM_EXPR = 'q'
 export const PARAM_PAGE = 'p'
-export const FACET_PREFIX = 'f_'
 
 /**
  * Value of `e` meaning "every entity". Only needed when the host lands on an
@@ -41,15 +26,15 @@ const SCALAR_PARAMS = [
   PARAM_PAGE,
 ] as const
 
-const RANGE_SEPARATOR = '..'
-const CHIP_SEPARATOR = ','
-
 /**
  * Characters `encodeURIComponent` escapes that are safe to leave literal in a
  * query value. Keeping them readable matters here: the URL is the primary
- * record of a query and people paste it to each other.
+ * record of a query and people paste it to each other. `=` among them, which
+ * only the first of in a pair separates the name from the value — the rest
+ * are the `color=Red` a chip writes.
  */
 const READABLE: Array<[RegExp, string]> = [
+  [/%3D/g, '='],
   [/%2C/g, ','],
   [/%3A/g, ':'],
   [/%2F/g, '/'],
@@ -95,61 +80,59 @@ function parsePairs(search: string): Array<[string, string]> {
 }
 
 function isOwnedKey(key: string): boolean {
-  return (SCALAR_PARAMS as readonly string[]).includes(key) || key.startsWith(FACET_PREFIX)
+  return (SCALAR_PARAMS as readonly string[]).includes(key)
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value))
+/* ------------------------------------------------------------ shortcuts */
+
+/*
+ * The address says a type, a sort and a column by its initials wherever those
+ * are its own — `e=si&s=p&q=p:..5` rather than
+ * `e=inventories&s=priceValue&q=pricevalue:..5` — so the URL reads as what was
+ * typed, and is short enough to read at all. The query the shell holds is in
+ * keys throughout; only the address is shortened, and reading one takes keys
+ * and shortcuts alike, so a link written either way goes where it says.
+ *
+ * Initials are the first letter of each word of the label, the way a column's
+ * shortcut is made (see `columnShortcut`). Where two share them, the first
+ * declared has them and the other is written by its key; and initials that are
+ * some other one's key are nobody's, so a key always means what it says.
+ */
+
+/** Of `items`, the first whose initials are `shortcut`, unless a key is that already. */
+function initialsOwner<T extends { key: string; label: string }>(
+  items: readonly T[],
+  shortcut: string,
+): T | undefined {
+  if (!shortcut || items.some((item) => item.key === shortcut)) return undefined
+  return items.find((item) => columnShortcut(item.label) === shortcut)
 }
 
-function parseFacetValue(facet: FacetDef, raw: string): FacetValue {
-  const text = decodeValue(raw)
-  switch (facet.kind) {
-    case 'chips': {
-      const wanted = new Set(
-        text
-          .split(CHIP_SEPARATOR)
-          .map((part) => part.trim())
-          .filter(Boolean),
-      )
-      // Iterate the schema's options so selection order is always canonical
-      // and values the schema no longer offers are dropped.
-      const selected = facet.options.filter((option) => wanted.has(option))
-      return { kind: 'chips', selected }
-    }
-    case 'range': {
-      const cut = text.indexOf(RANGE_SEPARATOR)
-      const lowText = (cut === -1 ? text : text.slice(0, cut)).trim()
-      const highText = (cut === -1 ? '' : text.slice(cut + RANGE_SEPARATOR.length)).trim()
-      const lowRaw = lowText === '' ? null : Number(lowText)
-      const highRaw = highText === '' ? null : Number(highText)
-      let min = lowRaw !== null && Number.isFinite(lowRaw) ? clamp(lowRaw, facet.min, facet.max) : null
-      let max = highRaw !== null && Number.isFinite(highRaw) ? clamp(highRaw, facet.min, facet.max) : null
-      if (min !== null && max !== null && min > max) [min, max] = [max, min]
-      return { kind: 'range', min, max }
-    }
-    case 'toggle':
-      return { kind: 'toggle', on: text === '1' || text === 'true' }
-  }
+/** What the address calls an entity: its initials where they are its own, its key otherwise. */
+export function entityAddress(entity: EntitySchema, schema: DomainSchema): string {
+  const shortcut = columnShortcut(entity.label)
+  return initialsOwner(schema.entities, shortcut)?.key === entity.key ? shortcut : entity.key
 }
 
-function serializeFacetValue(value: FacetValue, facet: FacetDef): string | null {
-  switch (value.kind) {
-    case 'chips': {
-      if (!value.selected.length) return null
-      const ordered =
-        facet.kind === 'chips'
-          ? facet.options.filter((option) => value.selected.includes(option))
-          : value.selected
-      return ordered.join(CHIP_SEPARATOR)
-    }
-    case 'range': {
-      if (value.min === null && value.max === null) return null
-      return `${value.min ?? ''}${RANGE_SEPARATOR}${value.max ?? ''}`
-    }
-    case 'toggle':
-      return value.on ? '1' : null
-  }
+/** The entity an address names, by key or by {@link entityAddress}'s shortcut. */
+export function findEntityByAddress(
+  schema: DomainSchema,
+  address: string | null | undefined,
+): EntitySchema | null {
+  if (!address) return null
+  return findEntity(schema, address) ?? initialsOwner(schema.entities, address) ?? null
+}
+
+/** What the address calls a sort among the ones on offer, on the same rule. */
+export function sortAddress(sort: SortDef, sorts: readonly SortDef[]): string {
+  const shortcut = columnShortcut(sort.label)
+  return initialsOwner(sorts, shortcut)?.key === sort.key ? shortcut : sort.key
+}
+
+/** The sort key an address names among the ones on offer, or what it said where none. */
+function sortKeyOf(address: string, sorts: readonly SortDef[]): string {
+  if (sorts.some((sort) => sort.key === address)) return address
+  return initialsOwner(sorts, address)?.key ?? address
 }
 
 /**
@@ -169,7 +152,7 @@ export function parseQuery(
   // An `e` naming an entity the schema does not have falls back the same way.
   const entityParam = params.get(PARAM_ENTITY)
   const entityKey = entityParam === undefined ? base.entity : decodeValue(entityParam)
-  const entity = entityKey === ENTITY_ALL ? null : findEntity(schema, entityKey)
+  const entity = entityKey === ENTITY_ALL ? null : findEntityByAddress(schema, entityKey)
 
   const viewParam = params.get(PARAM_VIEW)
   const view =
@@ -178,7 +161,11 @@ export function parseQuery(
       : defaultViewFor(entity?.key ?? null, defaults)
 
   const sortParam = params.get(PARAM_SORT)
-  const sort = findSort(entity, sortParam ? decodeValue(sortParam) : defaults.sort, schema)
+  const sort = findSort(
+    entity,
+    sortParam ? sortKeyOf(decodeValue(sortParam), sortsFor(entity, schema)) : defaults.sort,
+    schema,
+  )
 
   const dirParam = params.get(PARAM_DIR)
   const dir = dirParam ? (decodeValue(dirParam) === 'asc' ? 'asc' : 'desc') : base.dir
@@ -192,19 +179,12 @@ export function parseQuery(
   const pageRaw = pageParam === undefined ? 1 : Number(decodeValue(pageParam))
   const page = Number.isFinite(pageRaw) ? Math.max(1, Math.floor(pageRaw)) : 1
 
-  const facets: FacetState = {}
-  for (const facet of entity?.facets ?? []) {
-    const raw = params.get(`${FACET_PREFIX}${facet.key}`)
-    facets[facet.key] = raw === undefined ? emptyFacetValue(facet) : parseFacetValue(facet, raw)
-  }
-
   return {
     entity: entity?.key ?? null,
     view: view as ShellQuery['view'],
     sort: sort.key,
     dir,
-    expr: exprParam === undefined ? '' : decodeValue(exprParam),
-    facets: reconcileFacets(entity, facets),
+    expr: exprParam === undefined ? '' : expandShortcuts(decodeValue(exprParam), entity, schema),
     page,
   }
 }
@@ -231,19 +211,16 @@ export function serializeQuery(
   if (entityKey !== base.entity) {
     // When home is the default, returning to the whole corpus is the absence
     // of the parameter — which is what keeps the home screen's URL empty.
-    put(PARAM_ENTITY, entityKey ?? ENTITY_ALL)
+    put(PARAM_ENTITY, entity ? entityAddress(entity, schema) : ENTITY_ALL)
   }
   if (query.view !== defaultViewFor(entityKey, defaults)) put(PARAM_VIEW, query.view)
-  if (query.sort !== base.sort) put(PARAM_SORT, query.sort)
-  if (query.dir !== base.dir) put(PARAM_DIR, query.dir)
-  if (query.expr.trim() !== '') put(PARAM_EXPR, query.expr)
-
-  for (const facet of entity?.facets ?? []) {
-    const value = query.facets[facet.key]
-    if (!value) continue
-    const encoded = serializeFacetValue(value, facet)
-    if (encoded !== null) owned.push([`${FACET_PREFIX}${facet.key}`, encodeValue(encoded)])
+  if (query.sort !== base.sort) {
+    const sorts = sortsFor(entity, schema)
+    const sort = sorts.find((candidate) => candidate.key === query.sort)
+    put(PARAM_SORT, sort ? sortAddress(sort, sorts) : query.sort)
   }
+  if (query.dir !== base.dir) put(PARAM_DIR, query.dir)
+  if (query.expr.trim() !== '') put(PARAM_EXPR, compactShortcuts(query.expr, entity, schema))
 
   // Last, after the terms that decide what is being paged through — the page
   // is a position in that result, and reads as one at the end of the URL.
@@ -294,13 +271,23 @@ export function searchFromQuery(routeQuery: RouteQuery): string {
  * The expression out of a search string — the `q` parameter, decoded, or `''`
  * where there is none.
  *
- * Read without a schema, for code that only needs to know which records a
- * URL names ({@link recordsIn}) and has no schema yet, or none it wants to
- * parse the rest against. Exactly the `expr` {@link parseQuery} reads out of
- * the same search, by the same decoding — including the last of a repeated
- * parameter winning — so the two never disagree about what the query says.
+ * Given the schema, exactly the `expr` {@link parseQuery} reads out of the
+ * same search: its shortcuts written out against the entity the search names.
+ * Without one, the terms as the address writes them — for code that only needs
+ * to know which records a URL names ({@link recordsIn}) and has no schema yet,
+ * which is enough, since a join key is never shortened. Either way by the same
+ * decoding, including the last of a repeated parameter winning, so the two
+ * never disagree about what the query says.
  */
-export function readExpression(search: string): string {
-  const raw = new Map(parsePairs(search)).get(PARAM_EXPR)
-  return raw === undefined ? '' : decodeValue(raw)
+export function readExpression(search: string, schema?: DomainSchema): string {
+  const params = new Map(parsePairs(search))
+  const raw = params.get(PARAM_EXPR)
+  const expr = raw === undefined ? '' : decodeValue(raw)
+  if (!schema) return expr
+  const entity = params.get(PARAM_ENTITY)
+  return expandShortcuts(
+    expr,
+    entity === undefined ? null : findEntityByAddress(schema, decodeValue(entity)),
+    schema,
+  )
 }

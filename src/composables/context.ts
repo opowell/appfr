@@ -217,7 +217,7 @@ function withStillDraft(input: ShellContextInput): ShellContext {
       const typed = draft.value.trim()
       if (!typed) return
       input.setExpression(
-        refineExpression(input.query.value.expr, expandShortcuts(typed, input.entity.value)),
+        refineExpression(input.query.value.expr, expandShortcuts(typed, input.entity.value, input.schema.value)),
       )
       draft.value = ''
     },

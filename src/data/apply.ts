@@ -1,7 +1,6 @@
 import type {
   ColumnDef,
   EntitySchema,
-  FacetState,
   QueryRequest,
   QueryResult,
   ShellRow,
@@ -11,50 +10,15 @@ import { cellValue } from '../query/columns'
 import { matchesExpression, parseExpression } from './expression'
 
 /**
- * A query, applied to rows that are already in memory: the facets, the
- * expression, the sort and the page — the whole of what a source does, for a
+ * A query, applied to rows that are already in memory: the expression, the
+ * sort and the page — the whole of what a source does, for a
  * source whose rows are an array.
  *
  * Two sources are made of it. The mock generates its rows and the memory
  * source is handed them, and the two differ in exactly the two places
  * {@link ApplyRules} names; everything else is this one loop, so the
- * expression language and the facet semantics behave in either exactly as
- * they do everywhere else.
+ * expression language behaves in either exactly as it does everywhere else.
  */
-
-/** Applies the facet state to a row. Neutral facets never exclude anything. */
-export function matchesFacets(row: ShellRow, facets: FacetState): boolean {
-  for (const [key, value] of Object.entries(facets)) {
-    const actual = row.fields[key]
-    switch (value.kind) {
-      case 'chips': {
-        if (!value.selected.length) break
-        // The chips of one facet are an OR, so a row holding several values is
-        // in the set when any one of them is selected.
-        if (Array.isArray(actual)) {
-          if (!actual.some((entry) => value.selected.includes(String(entry)))) return false
-          break
-        }
-        if (typeof actual !== 'string' || !value.selected.includes(actual)) return false
-        break
-      }
-      case 'range': {
-        if (value.min === null && value.max === null) break
-        const numeric = typeof actual === 'number' ? actual : Number(actual)
-        if (!Number.isFinite(numeric)) return false
-        if (value.min !== null && numeric < value.min) return false
-        if (value.max !== null && numeric > value.max) return false
-        break
-      }
-      case 'toggle': {
-        if (!value.on) break
-        if (actual !== true) return false
-        break
-      }
-    }
-  }
-  return true
-}
 
 /** Whether the column says it holds a date — by kind, or by being the recency one. */
 const isDated = (column: ColumnDef): boolean =>
@@ -118,8 +82,7 @@ export interface ApplyRules {
  * everything that matched.
  *
  * No entity selected means the whole corpus: every entity of the schema, in
- * the schema's order. Facets belong to an entity, so they only apply when one
- * is selected. The schema goes to {@link matchesExpression} as well, which
+ * the schema's order. The facets are terms of the expression. The schema goes to {@link matchesExpression} as well, which
  * is what lets {@link DomainSchema.strictScopes} reach a source built on this
  * — and changes nothing for a schema that does not set it.
  */
@@ -139,8 +102,7 @@ export function applyQuery(
   for (const candidate of scope) {
     for (const row of rowsOf(candidate)) {
       population += 1
-      const passesFacets = entity ? matchesFacets(row, query.facets) : true
-      if (passesFacets && matchesExpression(expression, row, candidate, schema)) matched.push(row)
+      if (matchesExpression(expression, row, candidate, schema)) matched.push(row)
     }
   }
 

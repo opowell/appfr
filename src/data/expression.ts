@@ -26,11 +26,17 @@ import { cellValue, roleColumn, roleColumns } from '../query/columns'
  * is for. Numbers and booleans compare exactly either way, there being no
  * containment a number could mean.
  *
+ * A value of two numbers with `..` between them is a range, ends included:
+ * `price:1..5`, and either end left open — `price:..5`, `quantity:100..`. It
+ * is one term for what `price>=1 price<=5` says in two, and the one a range
+ * facet writes. A row whose field holds no number is not constrained by it.
+ *
  * Two `field:value` terms on the same field in one group are any-of rather
  * than both: `category:5 category:7` is the rows filed under either, since
  * no row is filed under both, and it is what pressing two categories writes.
- * Only a positive `:` or `=` reads so — `year>=1988 year<=1990` is a range,
- * and `-set:a -set:b` is both sets left out.
+ * Only a positive `:` or `=` naming a value reads so — `year>=1988
+ * year<=1990` and `year:1988.. year:..1990` are each a range, and
+ * `-set:a -set:b` is both sets left out.
  *
  * A leading `-` turns a term round: `-theme:space` keeps every row the plain
  * term would have dropped, and drops every row it would have kept. Only the
@@ -66,6 +72,43 @@ export type Term = FieldTerm | TextTerm
 export type Expression = Term[][]
 
 const OPERATOR_PATTERN = /^([A-Za-z_][\w.-]*)\s*(>=|<=|:|=|>|<)\s*(.*)$/
+
+/** A number, as a range writes its ends: `5`, `-2`, `0.25`, `.5`. */
+const BOUND = '-?(?:\\d+\\.?\\d*|\\.\\d+)'
+const RANGE_PATTERN = new RegExp(`^(${BOUND})?\\.\\.(${BOUND})?$`)
+
+/** The ends of a range: `null` for an end left open. */
+export interface RangeBounds {
+  min: number | null
+  max: number | null
+}
+
+/**
+ * The range a value writes — `1..5`, `..5`, `100..` — or null where it is no
+ * range: a value with no number at either end, `..` on its own, is a word.
+ * Ends given the wrong way round are read the right way round.
+ */
+export function rangeOf(value: string): RangeBounds | null {
+  const match = RANGE_PATTERN.exec(value.trim())
+  if (!match || (match[1] === undefined && match[2] === undefined)) return null
+  const min = match[1] === undefined ? null : Number(match[1])
+  const max = match[2] === undefined ? null : Number(match[2])
+  return min !== null && max !== null && min > max ? { min: max, max: min } : { min, max }
+}
+
+/** A range written back as the value {@link rangeOf} reads: `1..5`, `..5`, `100..`. */
+export function formatRange(bounds: RangeBounds): string {
+  return `${bounds.min ?? ''}..${bounds.max ?? ''}`
+}
+
+/** A `field:a..b` term — a range rather than a value the field is named by. */
+export function isRangeTerm(term: Term): boolean {
+  return (
+    term.kind === 'field' &&
+    (term.comparator === ':' || term.comparator === '=') &&
+    rangeOf(term.value) !== null
+  )
+}
 
 /**
  * Splits on whitespace but keeps `field op value` together even when the user
@@ -194,7 +237,11 @@ function resolveField(field: string, row: ShellRow, entity: EntitySchema): unkno
   )
   if (named) return cellValue(named, row)
 
-  const facet = entity.facets.find((candidate) => alias(candidate.label) === normalized)
+  // By key as well as by heading: a facet writes its terms on its key, which
+  // the parse has lowercased like any other field.
+  const facet = entity.facets.find(
+    (candidate) => candidate.key.toLowerCase() === normalized || alias(candidate.label) === normalized,
+  )
   if (facet && facet.key in row.fields) return row.fields[facet.key]
 
   const role = ROLE_ALIASES.find(([name]) => name === normalized)?.[1]
@@ -237,16 +284,34 @@ function writtenName(column: ColumnDef): string | undefined {
 }
 
 /**
- * Whether a field already names something without shortcuts: `entity`, a
- * column by key, field or heading, a facet by key or heading, or a generic
- * name. A shortcut never stands in for any of these, so everything a query
- * could say before shortcuts it still says.
+ * Whether a field is a join key: some entity's {@link EntitySchema.scope}.
+ *
+ * A join key reads the same on every type — `store:"a"` is that store on the
+ * lots, on the countries and on the store's own row — which a shortcut never
+ * does, being one type's initials for one of its columns. So a join key is
+ * never written as a shortcut, and never read as one either.
  */
-function namesAlready(field: string, entity: EntitySchema): boolean {
+function isScopeField(field: string, schema: DomainSchema | null | undefined): boolean {
+  const normalized = alias(field)
+  return Boolean(schema?.entities.some((entity) => entity.scope && alias(entity.scope) === normalized))
+}
+
+/**
+ * Whether a field already names something without shortcuts: `entity`, a
+ * column by key, field or heading, a facet by key or heading, a generic name,
+ * or a join key. A shortcut never stands in for any of these, so everything a
+ * query could say before shortcuts it still says.
+ */
+function namesAlready(
+  field: string,
+  entity: EntitySchema,
+  schema: DomainSchema | null | undefined,
+): boolean {
   const normalized = alias(field)
   if (normalized === 'entity') return true
   if (ROLE_ALIASES.some(([name]) => name === normalized)) return true
   if (/^metric\d+$/.test(normalized)) return true
+  if (isScopeField(field, schema)) return true
   const named = (name: string | undefined) =>
     name !== undefined && alias(name) === normalized
   return (
@@ -267,32 +332,92 @@ function namesAlready(field: string, entity: EntitySchema): boolean {
  * that already names something is left alone (see {@link namesAlready}), and
  * so is one no column answers to, as an unknown field is anywhere.
  *
- * Written out when the query is committed rather than read at match time, so
- * the term in the address, on its pill and in front of the host's source is
- * the column's own name: a source that answers `ratio` itself need never learn
- * that `pr` means it.
+ * Written out when the query is committed, and when the address is read, so
+ * the query the shell holds and hands the host's source is in the columns' own
+ * names: a source that answers `ratio` itself need never learn that `pr` means
+ * it. The address is where it goes back to the shortcut — see
+ * {@link compactShortcuts}.
+ *
+ * `schema` names the join keys, which are never shortcuts; without one, only
+ * what the entity itself declares is.
  *
  * Returns what was typed, unchanged, where there is nothing to write out.
  */
-export function expandShortcuts(input: string, entity: EntitySchema | null | undefined): string {
+export function expandShortcuts(
+  input: string,
+  entity: EntitySchema | null | undefined,
+  schema?: DomainSchema | null,
+): string {
   if (!entity) return input
+  return renameFields(input, (field) => {
+    const column = shortcutOwner(field, entity, schema)
+    return column && writtenName(column)
+  })
+}
+
+/**
+ * The other way round: each term on a column written with the column's
+ * shortcut — `ratio<0.5` as `pr<0.5`. What the address holds, so the URL says
+ * what was typed rather than what the columns are keyed.
+ *
+ * Only a column that has a shortcut is shortened (see {@link columnShortcutOf}),
+ * so `expandShortcuts` reads every term of the result back as the one it was.
+ * A join key stays as it is, for the reason {@link isScopeField} gives.
+ */
+export function compactShortcuts(
+  input: string,
+  entity: EntitySchema | null | undefined,
+  schema?: DomainSchema | null,
+): string {
+  if (!entity) return input
+  return renameFields(input, (field) => {
+    if (isScopeField(field, schema)) return undefined
+    const column = (entity.columns ?? []).find((candidate) => writtenName(candidate) === field)
+    return column && columnShortcutOf(column, entity, schema)
+  })
+}
+
+/**
+ * What a field is called on screen: the title of the facet written on it, or
+ * the heading of the column it names. Undefined for a join key, which a pill
+ * names the record of instead, and for a field the entity declares nothing on.
+ */
+export function fieldHeading(
+  field: string,
+  entity: EntitySchema | null | undefined,
+  schema?: DomainSchema | null,
+): string | undefined {
+  if (!entity || isScopeField(field, schema)) return undefined
+  const facet = entity.facets.find((candidate) => candidate.key.toLowerCase() === field)
+  if (facet) return facet.label
+  return (entity.columns ?? []).find((column) => writtenName(column) === field)?.label
+}
+
+/**
+ * The expression with the fields `rename` names written under their new names,
+ * normalized; what was given, unchanged, where it renames none.
+ */
+function renameFields(input: string, rename: (field: string) => string | undefined): string {
   let changed = false
-  const expanded = parseExpression(input).map((group) =>
+  const renamed = parseExpression(input).map((group) =>
     group.map((term): Term => {
       if (term.kind !== 'field') return term
-      const column = shortcutOwner(term.field, entity)
-      const name = column && writtenName(column)
-      if (!name) return term
+      const name = rename(term.field)
+      if (!name || name === term.field) return term
       changed = true
       return { ...term, field: name }
     }),
   )
-  return changed ? formatExpression(expanded) : input
+  return changed ? formatExpression(renamed) : input
 }
 
 /** The column a shortcut stands for on this entity, if it stands for one. */
-function shortcutOwner(shortcut: string, entity: EntitySchema): ColumnDef | undefined {
-  if (!shortcut || namesAlready(shortcut, entity)) return undefined
+function shortcutOwner(
+  shortcut: string,
+  entity: EntitySchema,
+  schema: DomainSchema | null | undefined,
+): ColumnDef | undefined {
+  if (!shortcut || namesAlready(shortcut, entity, schema)) return undefined
   return (entity.columns ?? []).find(
     (column) => column.label !== undefined && columnShortcut(column.label) === shortcut,
   )
@@ -306,10 +431,11 @@ function shortcutOwner(shortcut: string, entity: EntitySchema): ColumnDef | unde
 export function columnShortcutOf(
   column: ColumnDef,
   entity: EntitySchema | null | undefined,
+  schema?: DomainSchema | null,
 ): string | undefined {
   if (!entity || column.label === undefined || !writtenName(column)) return undefined
   const shortcut = columnShortcut(column.label)
-  return shortcutOwner(shortcut, entity) === column ? shortcut : undefined
+  return shortcutOwner(shortcut, entity, schema) === column ? shortcut : undefined
 }
 
 /**
@@ -364,6 +490,16 @@ function termOutcome(
   // Unknown field: not a constraint — unless it is a join key the schema has
   // asked to be held to, which a row that never heard of it does not answer.
   if (actual === undefined) return strict?.has(term.field) ? false : null
+
+  // A range asks a number whether it lies between the ends; a field holding no
+  // number has no answer to give it.
+  const range = isRangeTerm(term) ? rangeOf(term.value) : null
+  if (range) {
+    if (Array.isArray(actual) || typeof actual === 'boolean') return null
+    const value = typeof actual === 'number' ? actual : Number(actual)
+    if (!Number.isFinite(value)) return null
+    return (range.min === null || value >= range.min) && (range.max === null || value <= range.max)
+  }
 
   // A multi-valued facet answers to each of its values on its own. Nothing
   // there is a number, so a comparison against one constrains nothing.
@@ -434,14 +570,16 @@ function compare(comparator: Comparator, left: number, right: number): boolean {
  * those on the same field in one group are alternatives, not a conjunction —
  * `category:5 category:7` is the rows filed under either, since no row is
  * filed under both. A comparison is not one of these: `year>=1988 year<=1990`
- * is a range, and stays two constraints; nor is a turned term, `-set:a -set:b`
+ * is a range, and stays two constraints; nor is a range, `year:1988..
+ * year:..1990` being the same two; nor is a turned term, `-set:a -set:b`
  * being both sets left out.
  */
 function names(term: Term): term is FieldTerm {
   return (
     term.kind === 'field' &&
     !term.negated &&
-    (term.comparator === ':' || term.comparator === '=')
+    (term.comparator === ':' || term.comparator === '=') &&
+    !isRangeTerm(term)
   )
 }
 

@@ -3,7 +3,6 @@ import type {
   DomainSchema,
   EntitySchema,
   FacetDef,
-  FacetState,
   FacetValue,
   ShellQuery,
   ShellQueryDefaults,
@@ -173,12 +172,6 @@ export function emptyFacetValue(facet: FacetDef): FacetValue {
   }
 }
 
-export function emptyFacetState(entity: EntitySchema | null): FacetState {
-  const state: FacetState = {}
-  for (const facet of entity?.facets ?? []) state[facet.key] = emptyFacetValue(facet)
-  return state
-}
-
 export function isFacetActive(value: FacetValue | undefined): boolean {
   if (!value) return false
   switch (value.kind) {
@@ -191,18 +184,12 @@ export function isFacetActive(value: FacetValue | undefined): boolean {
   }
 }
 
-export function hasActiveFacets(facets: FacetState): boolean {
-  return Object.values(facets).some(isFacetActive)
-}
-
 /**
- * True when nothing narrows the corpus: no entity chosen, no facets, no
- * expression. This is the home screen.
+ * True when nothing narrows the corpus: no entity chosen and no expression —
+ * which holds the facets too. This is the home screen.
  */
 export function isPristineQuery(query: ShellQuery): boolean {
-  return (
-    query.entity === null && query.expr.trim() === '' && !hasActiveFacets(query.facets)
-  )
+  return query.entity === null && query.expr.trim() === ''
 }
 
 /** True when an entity has been picked out of the whole corpus. */
@@ -246,7 +233,6 @@ export function defaultQuery(schema: DomainSchema, defaults: ShellQueryDefaults 
     sort: findSort(entity, defaults.sort).key,
     dir: defaults.dir === 'asc' ? 'asc' : 'desc',
     expr: '',
-    facets: emptyFacetState(entity),
     page: 1,
   }
 }
@@ -258,24 +244,9 @@ export function defaultQuery(schema: DomainSchema, defaults: ShellQueryDefaults 
  * deliberately not among them: the same rows drawn another way are still the
  * same rows, and page 3 of them is still page 3.
  */
-export const RESULT_FIELDS = ['entity', 'sort', 'dir', 'expr', 'facets'] as const
+export const RESULT_FIELDS = ['entity', 'sort', 'dir', 'expr'] as const
 
 /** True when a patch touches any of {@link RESULT_FIELDS}. */
 export function changesResults(patch: Partial<ShellQuery>): boolean {
   return RESULT_FIELDS.some((field) => field in patch)
-}
-
-/**
- * Drops facet values the entity does not declare and fills in the ones it
- * does. Called after every parse and on every entity change, so a stale or
- * hand-edited URL can never put the shell into a state its schema disallows.
- * With no entity selected there are no per-entity facets to keep.
- */
-export function reconcileFacets(entity: EntitySchema | null, facets: FacetState): FacetState {
-  const next: FacetState = {}
-  for (const facet of entity?.facets ?? []) {
-    const current = facets[facet.key]
-    next[facet.key] = current && current.kind === facet.kind ? current : emptyFacetValue(facet)
-  }
-  return next
 }

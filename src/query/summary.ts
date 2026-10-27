@@ -1,16 +1,22 @@
-import type { DomainSchema, EntitySchema, FacetDef, FacetValue, ShellQuery } from '../types'
-import { formatTerm, parseExpression } from '../data/expression'
-import { findSort, isFacetActive, isPristineQuery } from './schema'
+import type { DomainSchema, EntitySchema, ShellQuery } from '../types'
+import type { Term } from '../data/expression'
+import {
+  compactShortcuts,
+  fieldHeading,
+  formatTerm,
+  isRangeTerm,
+  parseExpression,
+  rangeOf,
+} from '../data/expression'
+import { findSort, isPristineQuery } from './schema'
 
 /** One removable term in the header's query summary. */
 export interface SummaryTerm {
   /** Stable identity for list rendering and for the remove handler. */
   id: string
   label: string
-  /** The facet this term came from, or `'entity'` for the entity filter. */
+  /** {@link EXPRESSION_TERM} for a term of the expression, or {@link ENTITY_TERM} for the entity filter. */
   facetKey: string
-  /** For chips terms, the single option this term stands for. */
-  option?: string
   /**
    * For expression terms, where in the expression the term sits: which `OR`
    * group, and where in that group. That pair is its address — the text of a
@@ -30,6 +36,12 @@ export interface SummaryTerm {
   value?: string
   /** The term was written with a leading `-`: it says which rows are *out*. */
   negated?: boolean
+  /**
+   * For an expression term, the term as the address and the search box write
+   * it — `p:..5` where the label says `price ≤ 5`. What a reader types to say
+   * it again, so it is what the pill says on hover.
+   */
+  address?: string
 }
 
 /** The term id the entity filter uses, so it can be lifted like any other. */
@@ -38,29 +50,37 @@ export const ENTITY_TERM = 'entity'
 /** The facet key the expression's own parts carry. */
 export const EXPRESSION_TERM = 'expr'
 
-function describeFacet(facet: FacetDef, value: FacetValue): SummaryTerm[] {
-  const name = facet.label.toLowerCase()
-  switch (value.kind) {
-    case 'chips':
-      return value.selected.map((option) => ({
-        id: `${facet.key}:${option}`,
-        label: `${name}:${option}`,
-        facetKey: facet.key,
-        option,
-      }))
-    case 'range': {
-      if (value.min === null && value.max === null) return []
-      const label =
-        value.min !== null && value.max !== null
-          ? `${value.min} ≤ ${name} ≤ ${value.max}`
-          : value.max !== null
-            ? `${name} ≤ ${value.max}`
-            : `${name} ≥ ${value.min}`
-      return [{ id: facet.key, label, facetKey: facet.key }]
-    }
-    case 'toggle':
-      return value.on ? [{ id: facet.key, label: `${name}:on`, facetKey: facet.key }] : []
+const SYMBOLS: Partial<Record<string, string>> = { '>=': '≥', '<=': '≤', '>': '>', '<': '<' }
+
+/**
+ * A term as a pill says it: the field under the name it has on screen, and a
+ * range or a comparison in the signs it is read in — `price ≤ 5`,
+ * `1 ≤ quantity ≤ 50`. A join key, a bare word and a field the entity does
+ * not declare are said as they are written.
+ */
+function describeTerm(
+  term: Term,
+  entity: EntitySchema | null,
+  schema: DomainSchema | null,
+): string {
+  if (term.kind !== 'field') return formatTerm(term)
+  const heading = fieldHeading(term.field, entity, schema)
+  if (heading === undefined) return formatTerm(term)
+  const name = heading.toLowerCase()
+  const sign = term.negated ? '-' : ''
+  const range = isRangeTerm(term) ? rangeOf(term.value) : null
+  if (range) {
+    const said =
+      range.min !== null && range.max !== null
+        ? `${range.min} ≤ ${name} ≤ ${range.max}`
+        : range.max !== null
+          ? `${name} ≤ ${range.max}`
+          : `${name} ≥ ${range.min}`
+    return sign + said
   }
+  const symbol = SYMBOLS[term.comparator]
+  if (symbol) return `${sign}${name} ${symbol} ${term.value}`
+  return formatTerm({ ...term, field: name })
 }
 
 /**
@@ -70,7 +90,12 @@ function describeFacet(facet: FacetDef, value: FacetValue): SummaryTerm[] {
  * any other, so what excludes them is an ordinary, liftable filter rather than
  * a mode the shell is in.
  */
-export function summaryTerms(query: ShellQuery, entity: EntitySchema | null): SummaryTerm[] {
+export function summaryTerms(
+  query: ShellQuery,
+  entity: EntitySchema | null,
+  /** For which fields are join keys, which keep their own names. */
+  schema: DomainSchema | null = null,
+): SummaryTerm[] {
   const terms: SummaryTerm[] = []
   if (entity) {
     terms.push({
@@ -79,17 +104,15 @@ export function summaryTerms(query: ShellQuery, entity: EntitySchema | null): Su
       facetKey: ENTITY_TERM,
     })
   }
-  for (const facet of entity?.facets ?? []) {
-    const value = query.facets[facet.key]
-    if (value && isFacetActive(value)) terms.push(...describeFacet(facet, value))
-  }
   // The expression is not one term but as many as it was written with: each is
-  // a constraint of its own, and each can be lifted on its own.
+  // a constraint of its own, and each can be lifted on its own. The facets are
+  // among them, being terms of it.
   parseExpression(query.expr).forEach((group, at) => {
     group.forEach((term, index) => {
       terms.push({
         id: `${EXPRESSION_TERM}:${at}:${index}`,
-        label: formatTerm(term),
+        label: describeTerm(term, entity, schema),
+        address: compactShortcuts(formatTerm(term), entity, schema),
         facetKey: EXPRESSION_TERM,
         group: at,
         index,

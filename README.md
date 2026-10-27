@@ -375,27 +375,43 @@ path the shell is mounted at as a last argument, `/` unless you say.
 
 ```
                                      ← home: nothing filtered, so no parameters
-?e=items&v=table&s=metric1&d=asc&q=price+%3C+40&f_kind=page,pdf&f_rank=20..80&f_seen=1&p=3
+?e=i&v=table&s=l&d=asc&q=s%3E40+kind=page+kind=pdf+rank:20..80+seen:true&p=3
 ```
 
 | Key | Meaning |
 | --- | --- |
-| `e` | entity filter. Absent means every entity — the home screen. `*` says so explicitly, which is only needed when the host lands on an entity by default |
+| `e` | entity filter, by its shortcut or its key. Absent means every entity — the home screen. `*` says so explicitly, which is only needed when the host lands on an entity by default |
 | `v` | view — `list`, `cards`, `grid`, `images`, `table`, `links`, `preview`. `cards` at home means a card per type; scoped to an entity it means a card per record |
-| `s` | sort field |
+| `s` | sort, by its shortcut or its key |
 | `d` | direction — `asc`, `desc` |
-| `q` | expression |
-| `f_<facet>` | a facet: `a,b` for chips, `min..max` for ranges (either end may be empty), `1` for toggles. Only meaningful alongside an `e`, since facets belong to an entity |
+| `q` | expression, its columns by their shortcuts — and the facets with it: `field=a field=b` for chips, `field:min..max` for a range (either end may be empty), `field:true` for a toggle |
 | `p` | page, 1-based. Absent means the first one. A page of `limit` rows — see [paging](#paging-through-the-results) |
+
+**Shortcuts.** The address names a type, a sort and a column by the first
+letter of each word of its label — **Items** is `i`, a sort labelled
+**Links** is `l`, a **Price ratio** column is `pr` — so it reads as what was
+typed: `p<5` stays `p<5` rather than becoming `pricevalue<5`. Where two share
+initials, the one declared first has them and the other is written by its
+key; initials that are another one's key are nobody's. A join key — some
+entity's `scope` — is never shortened, since it reads the same on every type
+and a shortcut is one type's. Reading an address takes keys and shortcuts
+alike, and the query the shell holds and hands your source is in keys
+throughout: only the address is shortened.
+
+**Facets are terms.** A facet has no parameter of its own: what it is set to
+is the terms on its field in `q`, so a range typed as `rank:20..80` is the
+range the control shows, and the control's edits are terms the header shows
+as parts — `20 ≤ rank ≤ 80`, the address form on hover. `facetValue(expr,
+facet)` and `withFacetValue(expr, facet, value)` read and write them.
 
 Three things this does on purpose:
 
 - **Anything at its default is omitted**, so a plain view has a clean URL.
 - **Parameters the shell does not own are preserved.** Your own `?tab=audit`
   survives every query change.
-- **Unparseable input degrades rather than throws.** An unknown entity, view,
-  sort or facet value falls back to the schema's default, and range bounds are
-  clamped, so a hand-edited URL cannot reach an unrenderable state.
+- **Unparseable input degrades rather than throws.** An unknown entity, view
+  or sort falls back to the schema's default, and a term on a field nothing
+  has narrows nothing, so a hand-edited URL cannot reach an unrenderable state.
 
 Changing the entity, view, sort, committed expression or page **pushes** a
 history entry — those are destinations worth coming back to. Nudging a facet
@@ -407,8 +423,10 @@ Both are configurable via `navigationMode` and `facetNavigationMode`.
 A redirect, a guard or a page beside the shell has the router's query object
 in hand rather than the adapter's search string. `searchFromQuery(route.query)`
 is that object as the search `parseQuery` reads — a repeated parameter kept,
-a `null` one dropped — and `readExpression(search)` is the expression alone,
-read without a schema, decoded exactly as `parseQuery` decodes it:
+a `null` one dropped — and `readExpression(search, schema?)` is the expression
+alone, decoded exactly as `parseQuery` decodes it: with the schema, its
+shortcuts written out as `parseQuery` writes them; without, as the address
+has them, which still names every record, join keys never being shortened:
 
 ```ts
 import { readExpression, searchFromQuery } from 'header-content-layout'

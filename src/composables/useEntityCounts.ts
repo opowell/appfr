@@ -1,7 +1,6 @@
 import { getCurrentScope, onScopeDispose, ref, shallowRef } from 'vue'
 import type { ComputedRef, Ref, ShallowRef } from 'vue'
 import type { DataSource, DomainSchema, EntitySchema, ShellQuery } from '../types'
-import { emptyFacetState } from '../query/schema'
 import { andExpression } from '../data/expression'
 import { withoutOwnScope } from '../query/drill'
 
@@ -116,7 +115,7 @@ export function useEntityCounts(options: UseEntityCountsOptions): EntityCountsSt
         counts.value = updated
       }
       const outcome = options.source.value.query({
-        query: { ...query, entity: entity.key, expr, facets: emptyFacetState(entity), page: 1 },
+        query: { ...query, entity: entity.key, expr, page: 1 },
         schema,
         entity,
         limit: 0,

@@ -230,7 +230,8 @@ export type { PopOutRect } from './window/popOut'
 /* Query model */
 export {
   ENTITY_ALL,
-  FACET_PREFIX,
+  entityAddress,
+  findEntityByAddress,
   PARAM_DIR,
   PARAM_ENTITY,
   PARAM_EXPR,
@@ -241,6 +242,7 @@ export {
   readExpression,
   searchFromQuery,
   serializeQuery,
+  sortAddress,
 } from './query/codec'
 export type { RouteQuery } from './query/codec'
 export {
@@ -252,23 +254,27 @@ export {
   defaultViewFor,
   viewAcross,
   defaultQuery,
-  emptyFacetState,
   emptyFacetValue,
   findEntity,
   findSort,
   focusEntity,
-  hasActiveFacets,
   isEntityScoped,
   isFacetActive,
   isPristineQuery,
   isTypeCardsQuery,
   isViewKind,
-  reconcileFacets,
   resolveView,
   RESULT_FIELDS,
   sortsFor,
   VIEW_LABELS,
 } from './query/schema'
+export {
+  facetField,
+  facetValue,
+  hasActiveFacets,
+  withFacetValue,
+  withoutFacet,
+} from './query/facetTerms'
 export {
   cellFull,
   cellText,
@@ -337,7 +343,7 @@ export { createVueRouterAdapter, entityRedirect, recordRedirect } from './routin
 export type { RedirectFrom, RedirectTo, RouterLike } from './routing/vueRouter'
 
 /* Data */
-export { createMockDataSource, generateRows, matchesFacets, MOCK_TINTS, tintFor } from './data/mock'
+export { createMockDataSource, generateRows, MOCK_TINTS, tintFor } from './data/mock'
 export type { MockSourceOptions } from './data/mock'
 export { createMemoryDataSource, queryAll } from './data/memory'
 export type { QueryAllRequest } from './data/memory'
@@ -345,7 +351,12 @@ export {
   andExpression,
   columnShortcut,
   columnShortcutOf,
+  compactShortcuts,
   expandShortcuts,
+  fieldHeading,
+  formatRange,
+  isRangeTerm,
+  rangeOf,
   readDraft,
   refineExpression,
   formatExpression,
@@ -364,6 +375,7 @@ export type {
   Expression,
   ExpressionSplit,
   FieldTerm,
+  RangeBounds,
   Term,
   TextTerm,
 } from './data/expression'
@@ -402,7 +414,6 @@ export type {
   DomainSchema,
   EntitySchema,
   FacetDef,
-  FacetState,
   FacetValue,
   LogChunk,
   NarrowedRecord,

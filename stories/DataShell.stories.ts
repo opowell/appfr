@@ -467,14 +467,14 @@ export const LogsEntity = story({ search: '?e=logs&v=list' })
 export const SettingsEntity = story({ search: '?e=settings&v=list' })
 
 /** A narrowed query inside one entity. */
-export const FilteredQuery = story({ search: '?e=searches&v=list&f_state=running&f_schedule=daily' })
+export const FilteredQuery = story({ search: '?e=searches&v=list&q=state=running+schedule=daily' })
 
 /** An expression rather than facets. */
 export const ExpressionQuery = story({ search: '?e=items&v=list&q=release+OR+recall' })
 
 /** Both at once, which is how a real query usually looks. */
 export const FacetsAndExpression = story({
-  search: '?e=items&v=list&f_kind=page,pdf&f_rank=40..100&q=example.com',
+  search: '?e=items&v=list&q=kind=page+kind=pdf+rank:40..100+example.com',
 })
 
 /**
@@ -486,8 +486,8 @@ export const FacetsAndExpression = story({
  */
 export const LongQuery = story({
   search:
-    '?e=items&v=list&f_kind=page,pdf&f_rank=40..100' +
-    '&q=example.com+year>=1988+digest+advisory+recall+bulletin+retraction+erratum+notice+revision',
+    '?e=items&v=list' +
+    '&q=kind=page+kind=pdf+rank:40..100+example.com+year>=1988+digest+advisory+recall+bulletin+retraction+erratum+notice+revision',
 })
 
 /* --------------------------------------------------------------- the views */

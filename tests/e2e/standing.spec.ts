@@ -153,7 +153,7 @@ test.describe('The standing control on lists and cards', () => {
       const first = page.locator(row).first()
       await first.locator(`${control} [data-dc-standing="out"]`).click()
       expect(queryOf(page)).toMatch(/^-set="sets_\d+"$/)
-      expect(entityOf(page)).toBe('sets')
+      expect(entityOf(page)).toBe('s')
       await expect(first.locator(`${control} ${LIT}`)).toHaveAttribute('data-dc-standing', 'out')
       await first.locator(`${control} [data-dc-standing="in"]`).click()
       // Turned round rather than added beside, and quoted only where it has to be.

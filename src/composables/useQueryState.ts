@@ -3,7 +3,6 @@ import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 import type {
   DomainSchema,
   EntitySchema,
-  FacetState,
   FacetValue,
   ShellQuery,
   ShellQueryDefaults,
@@ -15,16 +14,14 @@ import { parseQuery, serializeQuery } from '../query/codec'
 import {
   changesResults,
   defaultQuery,
-  emptyFacetState,
   findEntity,
   findSort,
   focusEntity,
-  hasActiveFacets,
   isPristineQuery,
-  reconcileFacets,
   sortsFor,
   viewAcross,
 } from '../query/schema'
+import { facetValue, hasActiveFacets, withFacetValue } from '../query/facetTerms'
 import type { SummaryTerm } from '../query/summary'
 import { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from '../query/summary'
 import { formatExpression, parseExpression, withoutTerm } from '../data/expression'
@@ -44,7 +41,8 @@ export interface UseQueryStateOptions {
   /**
    * How an individual facet edit navigates. Adjusting facets is exploratory
    * and one history entry per chip makes the back button useless, so these
-   * replace by default.
+   * replace by default — though what they write is terms of the expression,
+   * the same as a term typed.
    */
   facetNavigationMode?: MaybeRefOrGetter<NavigationMode>
 }
@@ -66,7 +64,7 @@ export interface QueryState {
   summary: ComputedRef<string>
   /** The individually removable terms behind that summary. */
   terms: ComputedRef<SummaryTerm[]>
-  /** True on the home screen: no entity, no facets, no expression. */
+  /** True on the home screen: no entity and no expression, which holds the facets too. */
   isPristine: ComputedRef<boolean>
   /** True when no entity filter is applied — every entity is in the results. */
   isEverything: ComputedRef<boolean>
@@ -118,7 +116,7 @@ export interface QueryState {
   setRange(key: string, min: number | null, max: number | null): void
   toggleFlag(key: string): void
   removeTerm(term: SummaryTerm): void
-  /** Clears the entity filter, the expression and every facet. */
+  /** Clears the entity filter and the expression, facets and all. */
   clearFilters(): void
   /** Returns everything to the schema's defaults — the home screen. */
   reset(): void
@@ -179,20 +177,23 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     return adapter.href ? adapter.href(search) : `${adapter.path.value}${search}`
   }
 
+  /** Sets one of the listed entity's facets, by writing the terms it reads into the expression. */
   const patchFacets = (key: string, produce: (current: FacetValue) => FacetValue) => {
-    const current = query.value.facets[key]
-    if (!current) return
-    const facets: FacetState = { ...query.value.facets, [key]: produce(current) }
-    commit({ facets }, facetMode())
+    const facet = entity.value?.facets.find((candidate) => candidate.key === key)
+    if (!facet) return
+    const expr = withFacetValue(query.value.expr, facet, produce(facetValue(query.value.expr, facet)))
+    commit({ expr }, facetMode())
   }
 
   /**
    * What changing the listed entity does to the rest of the query. A different
-   * entity has different facets and its own sort set, so only what still
-   * applies is carried over and the URL stays self-consistent.
+   * entity has its own sort set, so only a sort that still applies is carried
+   * over and the URL stays self-consistent. The expression — facets and all —
+   * goes across as it is: a term on a field the new entity does not have
+   * narrows nothing there, as anywhere.
    *
    * Empty when the entity is already that one, so a caller can spread it into
-   * a larger patch without it clearing facets that were never going to change.
+   * a larger patch without it changing what was never going to change.
    */
   const entityPatch = (key: string | null): Partial<ShellQuery> => {
     const next = key === null ? null : findEntity(schema.value, key)
@@ -201,7 +202,6 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
       entity: next?.key ?? null,
       view: viewAcross(query.value.view, query.value.entity, next?.key ?? null, defaults.value),
       sort: findSort(next, query.value.sort, schema.value).key,
-      facets: emptyFacetState(next),
     }
   }
 
@@ -218,10 +218,10 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     sort,
     sorts,
     summary: computed(() => summarizeQuery(query.value, entity.value, schema.value)),
-    terms: computed(() => summaryTerms(query.value, entity.value)),
+    terms: computed(() => summaryTerms(query.value, entity.value, schema.value)),
     isPristine: computed(() => isPristineQuery(query.value)),
     isEverything: computed(() => query.value.entity === null),
-    hasFacets: computed(() => hasActiveFacets(query.value.facets)),
+    hasFacets: computed(() => hasActiveFacets(query.value.expr, entity.value)),
 
     setEntity,
     entityHref: (key) => linkTo(entityPatch(key)),
@@ -281,19 +281,10 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
       if (term.facetKey === EXPRESSION_TERM) {
         const rest = withoutTerm(parseExpression(query.value.expr), term.group ?? 0, term.index ?? 0)
         commit({ expr: formatExpression(rest) }, primaryMode())
-        return
       }
-      patchFacets(term.facetKey, (current) => {
-        if (current.kind === 'chips' && term.option) {
-          return { kind: 'chips', selected: current.selected.filter((o) => o !== term.option) }
-        }
-        if (current.kind === 'range') return { kind: 'range', min: null, max: null }
-        if (current.kind === 'toggle') return { kind: 'toggle', on: false }
-        return current
-      })
     },
     clearFilters() {
-      commit({ ...entityPatch(null), expr: '', facets: emptyFacetState(null) }, primaryMode())
+      commit({ ...entityPatch(null), expr: '' }, primaryMode())
     },
     reset() {
       navigate(defaultQuery(schema.value, defaults.value), primaryMode())
@@ -307,8 +298,6 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
       // The same rule the mutations follow, so a link built for a change goes
       // exactly where clicking through to that change would have gone.
       next.page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
-      // Keep the facets legal for whichever entity the patch lands on.
-      next.facets = reconcileFacets(findEntity(schema.value, next.entity), next.facets)
       return `${adapter.path.value}${serializeQuery(next, schema.value, defaults.value, adapter.search.value)}`
     },
   }

@@ -63,17 +63,17 @@ test.describe('URL — the query is the route', () => {
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'settings')
   })
 
-  test('facets appear in the URL, with readable separators', async ({ page }) => {
+  test('facets appear in the expression, readably', async ({ page }) => {
     await gotoStory(page, LIVE_OPEN)
     await pickEntity(page, 'Searches')
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
     await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
-    await expect(terms(page)).toHaveText(['state:running', 'state:paused'])
+    await expect(terms(page)).toHaveText(['state=running', 'state=paused'])
 
-    expect(shellParams(page.url())).toEqual({ e: 'searches', f_state: 'running,paused' })
-    // The comma is left literal rather than percent-encoded.
-    expect(page.url()).toContain('f_state=running,paused')
+    expect(shellParams(page.url())).toEqual({ e: 's', q: 'state=running state=paused' })
+    // The `=` is left literal rather than percent-encoded.
+    expect(page.url()).toContain('q=state=running+state=paused')
   })
 
   test('a committed expression appears in the URL', async ({ page }) => {
@@ -96,7 +96,7 @@ test.describe('URL — the query is the route', () => {
     // The first press orders by it, and the second runs it the other way.
     await sortHeading(page, 'New').click()
     await sortHeading(page, 'New').click()
-    expect(shellParams(page.url())).toEqual({ v: 'table', s: 'metric1', d: 'asc' })
+    expect(shellParams(page.url())).toEqual({ v: 'table', s: 'n', d: 'asc' })
   })
 
   test('leaves the parameters it does not own alone', async ({ page }) => {
@@ -117,22 +117,23 @@ test.describe('URL — reload and history', () => {
     await pickEntity(page, 'Searches')
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
     await chooseView(page, 'table')
-    const before = page.url()
+    const before = shellParams(page.url())
 
     await page.reload()
     await page.locator('.dc-shell').first().waitFor({ state: 'visible' })
 
-    expect(page.url()).toBe(before)
+    // The same parameters, however the reload chose to escape them.
+    expect(shellParams(page.url())).toEqual(before)
     await expect(page.locator('.dc-table')).toBeVisible()
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
-    await expect(terms(page)).toHaveText(['state:running'])
+    await expect(terms(page)).toHaveText(['state=running'])
   })
 
   test('a pasted URL renders that query without any interaction', async ({ page }) => {
-    await gotoStory(page, LIVE, '&e=items&v=grid&f_kind=pdf&s=metric1')
+    await gotoStory(page, LIVE, '&e=i&v=grid&q=kind=pdf&s=l')
     await expect(page.locator('.dc-grid')).toBeVisible()
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'items')
-    await expect(terms(page)).toHaveText(['kind:pdf'])
+    await expect(terms(page)).toHaveText(['kind=pdf'])
   })
 
   test('Back returns to the previous query', async ({ page }) => {
@@ -178,9 +179,9 @@ test.describe('URL — reload and history', () => {
     await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
     await page.locator('.dc-chip', { hasText: 'hourly' }).first().click()
     await expect(terms(page)).toHaveText([
-      'state:running',
-      'state:paused',
-      'schedule:hourly',
+      'state=running',
+      'state=paused',
+      'schedule=hourly',
     ])
 
     // A single Back should land before the facets, not step through them.
@@ -229,7 +230,7 @@ test.describe('URL — the page is in it too', () => {
     await openPanel(page)
     await page.locator('.dc-chip', { hasText: 'running' }).first().click()
     // Back to the first page of the narrowed results, so `p` goes with it.
-    expect(shellParams(page.url())).toEqual({ f_state: 'running' })
+    expect(shellParams(page.url())).toEqual({ q: 'state=running' })
   })
 })
 

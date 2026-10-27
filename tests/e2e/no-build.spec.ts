@@ -53,7 +53,7 @@ test.describe('No build — dist on a static page', () => {
     await expect(page.locator('.dc-list__row').first()).toBeVisible()
 
     const params = new URL(page.url()).searchParams
-    expect(params.get('e')).toBe('sets')
+    expect(params.get('e')).toBe('s')
     expect(params.get('v')).toBe('list')
     // The page's own parameter survives the shell writing beside it.
     expect(params.get('schema')).toBe('LEGO')

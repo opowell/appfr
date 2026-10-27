@@ -166,7 +166,7 @@ const entityOptions = computed(() => [
 const scopeTerms = computed<SummaryTerm[]>(() => {
   const within = shell.within.value.trim()
   if (!within) return []
-  return summaryTerms({ ...shell.query.value, expr: within, facets: {} }, null)
+  return summaryTerms({ ...shell.query.value, expr: within }, null)
 })
 
 /* ------------------------------------------------------- how they are drawn */
@@ -297,6 +297,21 @@ function labelOf(term: SummaryTerm): string {
   // the part says is that this record is out, and the name only says which.
   const sign = term.negated ? '-' : ''
   return `${sign}${fieldLabelOf(term.field!)}: ${withoutOwnId(name)}`
+}
+
+/**
+ * What a part says on hover: that pressing it takes it out — or, for an idle
+ * one, that it is not applied here — and, where the part says its field by
+ * the name on screen, how the address and the box write it, which is what to
+ * type to say it again.
+ */
+function titleOf(entry: { term: SummaryTerm; idle: boolean }): string {
+  const label = labelOf(entry.term)
+  const action = entry.idle
+    ? `Not applied to ${shell.entity.value?.label} — remove ${label}`
+    : `Remove ${label}`
+  const address = entry.term.address
+  return address && address !== label ? `${action}\nWritten ${address} in the address and the search box` : action
 }
 
 /* ---------------------------------------------------------- what is listed */
@@ -788,9 +803,7 @@ function abandonTyped(event: Event): void {
                     type="button"
                     class="dc-term dc-mono"
                     :class="{ 'dc-term--idle': entry.idle }"
-                    :title="entry.idle
-                      ? `Not applied to ${shell.entity.value?.label} — remove ${labelOf(entry.term)}`
-                      : `Remove ${labelOf(entry.term)}`"
+                    :title="titleOf(entry)"
                     :aria-label="`Remove ${labelOf(entry.term)}`"
                     @mousedown.prevent
                     @click="lift(entry.term, run.key === 'before')"

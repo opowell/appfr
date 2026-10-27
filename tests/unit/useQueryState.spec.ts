@@ -65,7 +65,7 @@ describe('useQueryState — the entity filter', () => {
   it('scoping to an entity is a filter, written to the URL', () => {
     const { state, adapter } = setup('')
     state.setEntity('items')
-    expect(adapter.search.value).toBe('?e=items')
+    expect(adapter.search.value).toBe('?e=i')
     expect(state.entity.value?.key).toBe('items')
     expect(state.isEverything.value).toBe(false)
     expect(state.isPristine.value).toBe(false)
@@ -99,7 +99,7 @@ describe('useQueryState — the entity filter', () => {
   it('opens a type chosen from the home screen as its table', () => {
     const { state, adapter } = setup('')
     state.setEntity('items')
-    expect(adapter.search.value).toBe('?e=items')
+    expect(adapter.search.value).toBe('?e=i')
     expect(state.query.value.view).toBe('table')
   })
 
@@ -113,31 +113,31 @@ describe('useQueryState — the entity filter', () => {
   it('keeps a view somebody chose across a change of type', () => {
     const { state, adapter } = setup('?e=items&v=list')
     state.setEntity('logs')
-    expect(adapter.search.value).toBe('?e=logs&v=list')
+    expect(adapter.search.value).toBe('?e=l&v=list')
 
     const cards = setup('?e=items&v=cards')
     cards.state.setEntity('logs')
-    expect(cards.adapter.search.value).toBe('?e=logs&v=cards')
+    expect(cards.adapter.search.value).toBe('?e=l&v=cards')
   })
 
   it('opens a metric drill from the home screen as a table of what it counts', () => {
     const { state, adapter } = setup('')
     state.narrow('search:"s1"', 'items')
     expect(state.query.value.view).toBe('table')
-    expect(adapter.search.value).toBe('?e=items&q=search:%22s1%22')
+    expect(adapter.search.value).toBe('?e=i&q=search:%22s1%22')
   })
 
   it('builds the same href for a type that choosing it would go to', () => {
     const { state } = setup('')
-    expect(state.hrefFor({ entity: 'items' })).toBe('/?e=items')
+    expect(state.hrefFor({ entity: 'items' })).toBe('/?e=i')
     expect(setup('?e=items').state.hrefFor({ entity: null })).toBe('/')
   })
 
-  it('carries the entity term ahead of that entity’s own facets', () => {
-    const { state } = setup('?e=searches&f_state=running')
+  it('carries the entity term ahead of the terms its facets write', () => {
+    const { state } = setup('?e=searches&q=state=running')
     expect(state.terms.value.map((term) => term.label)).toEqual([
       'entity:searches',
-      'state:running',
+      'state=running',
     ])
   })
 
@@ -149,9 +149,8 @@ describe('useQueryState — the entity filter', () => {
     expect(state.entity.value?.facets.map((f) => f.key)).toEqual(['section', 'type', 'changed'])
   })
 
-  it('gains no facets while unscoped', () => {
+  it('has no facets set while unscoped', () => {
     const { state } = setup('')
-    expect(state.query.value.facets).toEqual({})
     expect(state.hasFacets.value).toBe(false)
   })
 })
@@ -192,8 +191,7 @@ describe('useQueryState — reading and writing the URL', () => {
     state.toggleChip('state', 'running')
     state.toggleChip('schedule', 'daily')
     expect(adapter.history).toHaveLength(before)
-    expect(adapter.search.value).toContain('f_state=running')
-    expect(adapter.search.value).toContain('f_schedule=daily')
+    expect(adapter.search.value).toBe('?e=s&q=state=running+schedule=daily')
   })
 
   it('honours an overridden navigation mode', () => {
@@ -207,7 +205,7 @@ describe('useQueryState — reading and writing the URL', () => {
     const { state, adapter } = setup('?e=searches')
     state.toggleChip('state', 'running')
     state.toggleChip('state', 'running')
-    expect(adapter.search.value).toBe('?e=searches')
+    expect(adapter.search.value).toBe('?e=s')
     expect(state.hasFacets.value).toBe(false)
   })
 
@@ -219,14 +217,14 @@ describe('useQueryState — reading and writing the URL', () => {
     expect(adapter.search.value).toBe('')
   })
 
-  it('drops facets that do not survive an entity switch', () => {
+  it('carries what a facet wrote across an entity switch, as any other term', () => {
     const { state, adapter } = setup('?e=searches')
     state.toggleChip('schedule', 'daily')
-    expect(adapter.search.value).toContain('f_schedule=daily')
+    expect(adapter.search.value).toBe('?e=s&q=schedule=daily')
 
     state.setEntity('items')
-    expect(adapter.search.value).toBe('?e=items')
-    expect(Object.keys(state.query.value.facets).sort()).toEqual(['kind', 'rank', 'seen'])
+    expect(adapter.search.value).toBe('?e=i&q=schedule=daily')
+    expect(state.hasFacets.value).toBe(false)
   })
 
   it('keeps a sort that both entities share', () => {
@@ -238,9 +236,10 @@ describe('useQueryState — reading and writing the URL', () => {
   it('sets and clears a range', () => {
     const { state, adapter } = setup('?e=items')
     state.setRange('rank', 20, 80)
-    expect(adapter.search.value).toContain('f_rank=20..80')
+    expect(adapter.search.value).toBe('?e=i&q=rank:20..80')
+    expect(state.hasFacets.value).toBe(true)
     state.setRange('rank', null, null)
-    expect(adapter.search.value).toBe('?e=items')
+    expect(adapter.search.value).toBe('?e=i')
   })
 
   it('states a range term with the bound it actually has', () => {
@@ -256,9 +255,9 @@ describe('useQueryState — reading and writing the URL', () => {
   it('flips a toggle facet', () => {
     const { state, adapter } = setup('?e=items')
     state.toggleFlag('seen')
-    expect(adapter.search.value).toContain('f_seen=1')
+    expect(adapter.search.value).toBe('?e=i&q=seen:true')
     state.toggleFlag('seen')
-    expect(adapter.search.value).toBe('?e=items')
+    expect(adapter.search.value).toBe('?e=i')
   })
 
   it('commits an expression', () => {
@@ -269,37 +268,37 @@ describe('useQueryState — reading and writing the URL', () => {
   })
 
   it('clears the entity, the expression and every facet, keeping view and sort', () => {
-    const { state, adapter } = setup('?e=items&v=list&s=metric1&f_kind=page&q=release')
+    const { state, adapter } = setup('?e=items&v=list&s=metric1&q=kind=page+release')
     state.clearFilters()
-    expect(adapter.search.value).toBe('?v=list&s=metric1')
+    expect(adapter.search.value).toBe('?v=list&s=m')
     expect(state.isEverything.value).toBe(true)
     expect(state.isPristine.value).toBe(true)
   })
 
   it('resets everything back to the home screen', () => {
-    const { state, adapter } = setup('?e=items&v=table&s=metric1&f_kind=page')
+    const { state, adapter } = setup('?e=items&v=table&s=metric1&q=kind=page')
     state.reset()
     expect(adapter.search.value).toBe('')
     expect(state.isPristine.value).toBe(true)
   })
 
   it('summarises a narrowed query by its terms', () => {
-    const { state } = setup('?e=searches&f_state=running,paused&f_hits=1&q=pricing')
+    const { state } = setup('?e=searches&q=state=running+state=paused+hits:true+pricing')
     expect(state.summary.value).toBe(
-      'entity:searches · state:running · state:paused · results:on · "pricing"',
+      'entity:searches · "state=running state=paused hits:true pricing"',
     )
   })
 
   it('lists each term so it can be lifted individually', () => {
-    const { state, adapter } = setup('?e=searches&f_state=running,paused')
+    const { state, adapter } = setup('?e=searches&q=state=running+state=paused')
     expect(state.terms.value.map((t) => t.label)).toEqual([
       'entity:searches',
-      'state:running',
-      'state:paused',
+      'state=running',
+      'state=paused',
     ])
 
     state.removeTerm(state.terms.value[1]!)
-    expect(adapter.search.value).toBe('?e=searches&f_state=paused')
+    expect(adapter.search.value).toBe('?e=s&q=state=paused')
   })
 
   /*
@@ -333,14 +332,14 @@ describe('useQueryState — reading and writing the URL', () => {
   it('lifting one part leaves the rest of the expression running', () => {
     const { state, adapter } = setup('?e=items&q=theme:space+year>=1988')
     state.removeTerm(state.terms.value[1]!)
-    expect(adapter.search.value).toBe('?e=items&q=year%3E%3D1988')
+    expect(adapter.search.value).toBe('?e=i&q=year%3E=1988')
     expect(state.query.value.expr).toBe('year>=1988')
   })
 
   it('lifting the last part leaves no expression at all', () => {
     const { state, adapter } = setup('?e=items&q=recall')
     state.removeTerm(state.terms.value[1]!)
-    expect(adapter.search.value).toBe('?e=items')
+    expect(adapter.search.value).toBe('?e=i')
   })
 
   /* Which alternative a term is in is part of its address, so lifting one of
@@ -365,7 +364,7 @@ describe('useQueryState — reading and writing the URL', () => {
   it('builds an href for a prospective change without navigating', () => {
     const { state, adapter } = setup('')
     expect(state.hrefFor({ view: 'grid' })).toBe('/?v=grid')
-    expect(state.hrefFor({ entity: 'items' })).toBe('/?e=items')
+    expect(state.hrefFor({ entity: 'items' })).toBe('/?e=i')
     expect(adapter.search.value).toBe('')
   })
 
@@ -387,6 +386,7 @@ describe('useQueryState — the page', () => {
   it('starts on the first page, which the URL does not spell out', () => {
     const { state, adapter } = setup('?e=items&v=list')
     expect(state.query.value.page).toBe(1)
+    // As it was given: nothing has been written yet.
     expect(adapter.search.value).toBe('?e=items&v=list')
   })
 
@@ -394,14 +394,14 @@ describe('useQueryState — the page', () => {
     const { state, adapter } = setup('?e=items&v=list')
     state.setPage(3)
     expect(state.query.value.page).toBe(3)
-    expect(adapter.search.value).toBe('?e=items&v=list&p=3')
+    expect(adapter.search.value).toBe('?e=i&v=list&p=3')
   })
 
   it('clamps to the first page rather than below it', () => {
     const { state, adapter } = setup('?e=items&p=2')
     state.setPage(0)
     expect(state.query.value.page).toBe(1)
-    expect(adapter.search.value).toBe('?e=items')
+    expect(adapter.search.value).toBe('?e=i')
   })
 
   it('pushes by default, so paging is a destination the back button reaches', () => {
@@ -415,7 +415,7 @@ describe('useQueryState — the page', () => {
     const { state, adapter } = setup('?e=items&p=99')
     const before = adapter.history.length
     state.setPage(4, 'replace')
-    expect(adapter.search.value).toBe('?e=items&p=4')
+    expect(adapter.search.value).toBe('?e=i&p=4')
     expect(adapter.history.length).toBe(before)
   })
 })
@@ -425,7 +425,7 @@ describe('useQueryState — what returns to the first page', () => {
   it('the entity filter', () => {
     const { state, adapter } = setup('?e=items&p=5')
     state.setEntity('logs')
-    expect(adapter.search.value).toBe('?e=logs')
+    expect(adapter.search.value).toBe('?e=l')
   })
 
   it('lifting the entity filter', () => {
@@ -437,35 +437,35 @@ describe('useQueryState — what returns to the first page', () => {
   it('the sort field, and the direction', () => {
     const { state, adapter } = setup('?e=items&p=5')
     state.setSort('metric1')
-    expect(adapter.search.value).toBe('?e=items&s=metric1')
+    expect(adapter.search.value).toBe('?e=i&s=l')
 
     state.setPage(5)
     state.toggleDirection()
-    expect(adapter.search.value).toBe('?e=items&s=metric1&d=asc')
+    expect(adapter.search.value).toBe('?e=i&s=l&d=asc')
   })
 
   it('the expression', () => {
     const { state, adapter } = setup('?e=items&p=5')
     state.setExpression('recall')
-    expect(adapter.search.value).toBe('?e=items&q=recall')
+    expect(adapter.search.value).toBe('?e=i&q=recall')
   })
 
   it('a facet, however it is edited', () => {
     const { state, adapter } = setup('?e=items&p=5')
     state.toggleChip('kind', 'page')
-    expect(adapter.search.value).toBe('?e=items&f_kind=page')
+    expect(adapter.search.value).toBe('?e=i&q=kind=page')
 
     state.setPage(5)
     state.setRange('rank', 20, 80)
-    expect(adapter.search.value).toBe('?e=items&f_kind=page&f_rank=20..80')
+    expect(adapter.search.value).toBe('?e=i&q=kind=page+rank:20..80')
   })
 
   it('lifting a term, and clearing the filters', () => {
-    const { state, adapter } = setup('?e=items&f_kind=page&p=5')
+    const { state, adapter } = setup('?e=items&q=kind=page&p=5')
     state.removeTerm(state.terms.value[1]!)
-    expect(adapter.search.value).toBe('?e=items')
+    expect(adapter.search.value).toBe('?e=i')
 
-    const cleared = setup('?e=items&f_kind=page&p=5')
+    const cleared = setup('?e=items&q=kind=page&p=5')
     cleared.state.clearFilters()
     expect(cleared.adapter.search.value).toBe('')
   })
@@ -473,15 +473,15 @@ describe('useQueryState — what returns to the first page', () => {
   it('but not the view: the same rows drawn another way are the same rows', () => {
     const { state, adapter } = setup('?e=items&v=list&p=5')
     state.setView('grid')
-    expect(adapter.search.value).toBe('?e=items&v=grid&p=5')
+    expect(adapter.search.value).toBe('?e=i&v=grid&p=5')
     expect(state.query.value.page).toBe(5)
   })
 
   it('and an href agrees with the click it stands in for', () => {
     const { state } = setup('?e=items&v=list&p=5')
-    expect(state.hrefFor({ view: 'grid' })).toBe('/?e=items&v=grid&p=5')
-    expect(state.hrefFor({ sort: 'metric1' })).toBe('/?e=items&v=list&s=metric1')
-    expect(state.hrefFor({ page: 2 })).toBe('/?e=items&v=list&p=2')
+    expect(state.hrefFor({ view: 'grid' })).toBe('/?e=i&v=grid&p=5')
+    expect(state.hrefFor({ sort: 'metric1' })).toBe('/?e=i&v=list&s=l')
+    expect(state.hrefFor({ page: 2 })).toBe('/?e=i&v=list&p=2')
   })
 })
 
@@ -522,7 +522,7 @@ describe('narrow', () => {
     // happened either way.
     expect(adapter.history.length).toBe(before + 1)
     expect(adapter.history.at(-1)).toContain('q=set')
-    expect(adapter.history.at(-1)).toContain('e=pieces')
+    expect(adapter.history.at(-1)).toContain('e=p')
   })
 
   it('narrows without picking a type when the entity is null', () => {
@@ -536,13 +536,13 @@ describe('narrow', () => {
   })
 
   it('leaves the entity alone when it is already the one asked for', () => {
-    const adapter = createMemoryAdapter('?e=pieces&f_shape=brick')
+    const adapter = createMemoryAdapter('?e=pieces&v=grid')
     const state = useQueryState({ schema: () => legoSchema, adapter })
 
     state.narrow('color:"colors_10000"', 'pieces')
 
     expect(state.query.value.expr).toBe('color:"colors_10000"')
-    expect(state.query.value.facets.shape).toEqual({ kind: 'chips', selected: ['brick'] })
+    expect(state.query.value.view).toBe('grid')
   })
 })
 
@@ -581,5 +581,18 @@ describe('useQueryState — links', () => {
     expect(state.query.value.entity).toBe('searches')
     state.setEntity('items')
     expect(adapter.history.at(-1)).toBe(href)
+  })
+})
+
+describe('useQueryState — the parts a pill says', () => {
+  it('says a column by its heading, and keeps the shortcut it is written with on hover', () => {
+    const { state, adapter } = setup('?e=items')
+    state.setExpression('metric2>5 metric1:3..')
+    expect(adapter.search.value).toBe('?e=i&q=s%3E5+l:3..')
+    const parts = state.terms.value.filter((term) => term.facetKey === 'expr')
+    expect(parts.map((term) => [term.label, term.address])).toEqual([
+      ['score > 5', 's>5'],
+      ['links ≥ 3', 'l:3..'],
+    ])
   })
 })

@@ -1,6 +1,6 @@
 import { computed, getCurrentScope, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import type { ComputedRef, Ref } from 'vue'
-import type { EntitySchema, ShellQuery } from '../types'
+import type { DomainSchema, EntitySchema, ShellQuery } from '../types'
 import { RESULT_FIELDS } from '../query/schema'
 import { expandShortcuts, readDraft, refineExpression } from '../data/expression'
 
@@ -12,6 +12,8 @@ export interface UseDraftOptions {
   query: ComputedRef<ShellQuery>
   /** The entity it lists, whose column shortcuts a draft may be written in. */
   entity: ComputedRef<EntitySchema | null>
+  /** The schema, which says which fields are join keys and so never shortcuts. */
+  schema?: ComputedRef<DomainSchema>
   /**
    * Commits an expression, returning whether that navigated anywhere — see
    * {@link QueryState.setExpression}, which is what this usually is.
@@ -91,7 +93,7 @@ export function useDraft(options: UseDraftOptions): DraftState {
   }
 
   /** What the draft adds to the query, written as the query would be. */
-  const typed = computed(() => expandShortcuts(readDraft(applied.value), options.entity.value))
+  const typed = computed(() => expandShortcuts(readDraft(applied.value), options.entity.value, options.schema?.value))
 
   const drafting = computed(() => typed.value.trim() !== '')
 
@@ -171,7 +173,7 @@ export function useDraft(options: UseDraftOptions): DraftState {
       // saying this is the term, half-finished or not.
       const expr = refineExpression(
         options.query.value.expr,
-        expandShortcuts(written, options.entity.value),
+        expandShortcuts(written, options.entity.value, options.schema?.value),
       )
       // Until the part lands the draft's results are already the answer, so
       // they stay up rather than the query without it flashing between.

@@ -92,7 +92,7 @@ test.describe('A metric that counts something listable', () => {
     await gotoStory(page, TABLE)
     await page.locator('.dc-table__row').first().locator('.dc-drill').first().click()
     expect(queryOf(page)).toMatch(/^set="sets_\d+"$/)
-    expect(entityOf(page)).toBe('pieces')
+    expect(entityOf(page)).toBe('p')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'pieces')
     // A metric names the type it is going to a list of, so it keeps the view it was drawn in.
     await expect(page.locator('.dc-table')).toBeVisible()
@@ -259,7 +259,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Shift'] })
     const url = new URL((await opened).url())
     expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
-    expect(url.searchParams.get('e')).toBe('pieces')
+    expect(url.searchParams.get('e')).toBe('p')
     expect(page.url()).toBe(before)
   })
 
@@ -299,7 +299,7 @@ test.describe('Pressing a row with ⌥ held', () => {
     // Where it was: the same type, the same view — and the same rows. The
     // term leaves that set's pieces, colors and inventories out; the list of
     // sets is where that set is put out and taken back, so it stays in it.
-    expect(entityOf(page)).toBe('sets')
+    expect(entityOf(page)).toBe('s')
     await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
     await expect(listRows(page)).toHaveCount(before)
     await expect(page.locator('.dc-list__primary').filter({ hasText: name })).toHaveCount(1)
@@ -338,7 +338,7 @@ test.describe('Pressing a row with ⌥ held', () => {
     await gotoStory(page, TABLE)
     await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Alt'] })
     expect(queryOf(page)).toMatch(/^-set="sets_\d+"$/)
-    expect(entityOf(page)).toBe('pieces')
+    expect(entityOf(page)).toBe('p')
   })
 })
 
@@ -378,7 +378,7 @@ test.describe('A row the query names', () => {
     expect(queryOf(page)).toMatch(/^-set="sets_\d+"$/)
     await listRows(page).first().locator('.dc-list__standing [data-dc-standing="none"]').click()
     expect(queryOf(page)).toBeNull()
-    expect(entityOf(page)).toBe('sets')
+    expect(entityOf(page)).toBe('s')
     await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
     await expect(listRows(page)).toHaveCount(before)
     await expect(marks(page)).toHaveCount(0)

@@ -52,7 +52,7 @@ export const LegoHome = story({ schema: legoSchema })
 export const CommerceHome = story({ schema: commerceSchema })
 
 /** Catalogue and inventory: sets, pieces, colors, inventories, categories. */
-export const Lego = story({ schema: legoSchema, search: '?e=sets&v=list&f_theme=space' })
+export const Lego = story({ schema: legoSchema, search: '?e=sets&v=list&q=theme=space' })
 
 /** Crawl and test platform: tenants, crawls, tests, results. */
 export const Commerce = story({ schema: commerceSchema, search: '?e=testresults&v=table' })

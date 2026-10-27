@@ -54,7 +54,6 @@ function setupWith(entity: ComputedRef<EntitySchema>) {
     sort: 'updated',
     dir: 'desc',
     expr: '',
-    facets: {},
     page: 1,
   }))
   const scope = effectScope()
@@ -192,7 +191,7 @@ describe('useDraft — Enter, Escape and a press', () => {
   })
 
   it('lets go at once where the part is already on the query, there being nothing to wait for', async () => {
-    const { adapter, queued } = deferredAdapter('?e=items&v=list&q=notice')
+    const { adapter, queued } = deferredAdapter('?e=i&v=list&q=notice')
     const { draft } = setup('', adapter)
     await type(draft, 'notice')
     draft.commit()

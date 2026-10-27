@@ -105,7 +105,7 @@ test.describe('Header — the query as it stands', () => {
   test('describes a narrowed query by its terms', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
-    await expect(terms(page)).toHaveText(['state:running', 'schedule:daily'])
+    await expect(terms(page)).toHaveText(['state=running', 'schedule=daily'])
   })
 
   test('breaks a committed expression into its own parts', async ({ page }) => {
@@ -280,8 +280,8 @@ test.describe('Header — lifting a part of the query', () => {
 
   test('says what pressing one does before it is pressed', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
-    const running = terms(page).filter({ hasText: 'state:running' })
-    await expect(running).toHaveAttribute('aria-label', 'Remove state:running')
+    const running = terms(page).filter({ hasText: 'state=running' })
+    await expect(running).toHaveAttribute('aria-label', 'Remove state=running')
 
     // Struck through and faded on hover: this is the term, and this is it gone.
     await running.hover()
@@ -335,7 +335,7 @@ test.describe('Header — writing the next part on the bar', () => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
     const url = page.url()
     await searchBox(page).press('Enter')
-    await expect(terms(page)).toHaveText(['state:running', 'schedule:daily'])
+    await expect(terms(page)).toHaveText(['state=running', 'schedule=daily'])
     expect(page.url()).toBe(url)
   })
 
@@ -352,12 +352,12 @@ test.describe('Header — writing the next part on the bar', () => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
     await searchBox(page).focus()
     await searchBox(page).press('Backspace')
-    await expect(terms(page)).toHaveText(['state:running'])
+    await expect(terms(page)).toHaveText(['state=running'])
     // With something typed, Backspace is Backspace.
     await searchBox(page).fill('ab')
     await searchBox(page).press('Backspace')
     await expect(searchBox(page)).toHaveValue('a')
-    await expect(terms(page)).toHaveText(['state:running'])
+    await expect(terms(page)).toHaveText(['state=running'])
   })
 
   test('a press on the box is a press on the box, not on the bar', async ({ page }) => {
@@ -388,25 +388,25 @@ test.describe('Header — the parts as characters in the field', () => {
     await gotoStory(page, FILTERED)
     await expect(searchField(page).locator('.dc-term')).toHaveCount(2)
     await expect(searchField(page).locator('.dc-header__search')).toHaveCount(1)
-    expect(await fieldOrder(page)).toEqual(['state:running', 'schedule:daily', '|'])
+    expect(await fieldOrder(page)).toEqual(['state=running', 'schedule=daily', '|'])
   })
 
   test('the arrow keys step the box past one part at a time', async ({ page }) => {
     await gotoStory(page, FILTERED)
     await searchBox(page).focus()
     await searchBox(page).press('ArrowLeft')
-    expect(await fieldOrder(page)).toEqual(['state:running', '|', 'schedule:daily'])
+    expect(await fieldOrder(page)).toEqual(['state=running', '|', 'schedule=daily'])
     await expect(searchBox(page)).toBeFocused()
     await searchBox(page).press('ArrowLeft')
-    expect(await fieldOrder(page)).toEqual(['|', 'state:running', 'schedule:daily'])
+    expect(await fieldOrder(page)).toEqual(['|', 'state=running', 'schedule=daily'])
     // Nowhere further to go.
     await searchBox(page).press('ArrowLeft')
-    expect(await fieldOrder(page)).toEqual(['|', 'state:running', 'schedule:daily'])
+    expect(await fieldOrder(page)).toEqual(['|', 'state=running', 'schedule=daily'])
     await searchBox(page).press('End')
-    expect(await fieldOrder(page)).toEqual(['state:running', 'schedule:daily', '|'])
+    expect(await fieldOrder(page)).toEqual(['state=running', 'schedule=daily', '|'])
     await searchBox(page).press('Home')
     await searchBox(page).press('ArrowRight')
-    expect(await fieldOrder(page)).toEqual(['state:running', '|', 'schedule:daily'])
+    expect(await fieldOrder(page)).toEqual(['state=running', '|', 'schedule=daily'])
   })
 
   test('a box with something in it steps only from the edge of what is typed', async ({ page }) => {
@@ -414,10 +414,10 @@ test.describe('Header — the parts as characters in the field', () => {
     await searchBox(page).fill('ab')
     // The caret is after the `b`: the first press moves it inside the word.
     await searchBox(page).press('ArrowLeft')
-    expect(await fieldOrder(page)).toEqual(['state:running', 'schedule:daily', '|'])
+    expect(await fieldOrder(page)).toEqual(['state=running', 'schedule=daily', '|'])
     await searchBox(page).press('ArrowLeft')
     await searchBox(page).press('ArrowLeft')
-    expect(await fieldOrder(page)).toEqual(['state:running', '|', 'schedule:daily'])
+    expect(await fieldOrder(page)).toEqual(['state=running', '|', 'schedule=daily'])
     await expect(searchBox(page)).toHaveValue('ab')
   })
 
@@ -426,23 +426,23 @@ test.describe('Header — the parts as characters in the field', () => {
     await searchBox(page).focus()
     await searchBox(page).press('ArrowLeft')
     await searchBox(page).press('Delete')
-    await expect(terms(page)).toHaveText(['state:running'])
-    expect(await fieldOrder(page)).toEqual(['state:running', '|'])
+    await expect(terms(page)).toHaveText(['state=running'])
+    expect(await fieldOrder(page)).toEqual(['state=running', '|'])
 
     await gotoStory(page, FILTERED)
     await searchBox(page).focus()
     await searchBox(page).press('ArrowLeft')
     await searchBox(page).press('Backspace')
-    await expect(terms(page)).toHaveText(['schedule:daily'])
-    expect(await fieldOrder(page)).toEqual(['|', 'schedule:daily'])
+    await expect(terms(page)).toHaveText(['schedule=daily'])
+    expect(await fieldOrder(page)).toEqual(['|', 'schedule=daily'])
     await expect(searchBox(page)).toBeFocused()
   })
 
   test('a press on a part keeps the focus in the box', async ({ page }) => {
     await gotoStory(page, FILTERED)
     await searchBox(page).fill('ab')
-    await terms(page).filter({ hasText: 'schedule:daily' }).click()
-    await expect(terms(page)).toHaveText(['state:running'])
+    await terms(page).filter({ hasText: 'schedule=daily' }).click()
+    await expect(terms(page)).toHaveText(['state=running'])
     await expect(searchBox(page)).toBeFocused()
     await expect(searchBox(page)).toHaveValue('ab')
   })
@@ -607,9 +607,9 @@ test.describe('Header — opening the expanded query view', () => {
 
   test('a press on a part of the query lifts it rather than opening the panel', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
-    await terms(page).filter({ hasText: 'state:running' }).click()
+    await terms(page).filter({ hasText: 'state=running' }).click()
 
-    await expect(terms(page)).toHaveText(['schedule:daily'])
+    await expect(terms(page)).toHaveText(['schedule=daily'])
     await expect(panel(page)).toHaveCount(0)
   })
 

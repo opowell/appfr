@@ -173,9 +173,6 @@ export type FacetValue =
   | { kind: 'range'; min: number | null; max: number | null }
   | { kind: 'toggle'; on: boolean }
 
-/** Facet values keyed by {@link FacetDef.key}. */
-export type FacetState = Record<string, FacetValue>
-
 /* ----------------------------------------------------------------- columns */
 
 /**
@@ -681,9 +678,13 @@ export interface ShellQuery {
   /** {@link SortDef.key} to order by. */
   sort: string
   dir: SortDirection
-  /** Free-text expression, in the schema's own query language. */
+  /**
+   * Free-text expression, in the schema's own query language. The facets are
+   * in it too, as the terms they write — `quantity:100..`, `color=Red` — so
+   * the query panel's controls and the typed query are one query, read one
+   * way: see `facetValue`.
+   */
   expr: string
-  facets: FacetState
   /**
    * Which page of the matching rows is on screen, 1-based and never lower. A
    * page is `limit` rows long. This is a position in a result set rather than

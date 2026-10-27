@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createMockDataSource, generateRows, matchesFacets } from '../../src/data/mock'
+import { createMockDataSource, generateRows } from '../../src/data/mock'
+import { matchesExpression, parseExpression } from '../../src/data/expression'
 import { parseQuery } from '../../src/query/codec'
 import { defaultQuery, findEntity } from '../../src/query/schema'
 import { commerceSchema, iRadarSchema, schemaList } from '../../src/fixtures/schemas'
@@ -97,42 +98,40 @@ describe('generateRows', () => {
   })
 })
 
-describe('matchesFacets', () => {
+describe('the terms a facet writes', () => {
   const [subject] = generateRows(items, { seed: 'x', population: 1 })
+  const matches = (row: ShellRow, expr: string) => matchesExpression(parseExpression(expr), row, items)
 
-  it('lets everything through when facets are neutral', () => {
-    expect(matchesFacets(subject!, {})).toBe(true)
+  it('lets everything through when no facet is set', () => {
+    expect(matches(subject!, '')).toBe(true)
   })
 
   it('excludes a row outside a selected chip set', () => {
-    const facets = { kind: { kind: 'chips' as const, selected: ['feed'] } }
-    expect(matchesFacets({ ...subject!, fields: { ...subject!.fields, kind: 'page' } }, facets)).toBe(
-      false,
-    )
+    expect(matches({ ...subject!, fields: { ...subject!.fields, kind: 'page' } }, 'kind=feed')).toBe(false)
   })
 
   it('keeps a row holding a selected value among several', () => {
     const row = { ...subject!, fields: { ...subject!.fields, kind: ['feed', 'page'] } }
-    expect(matchesFacets(row, { kind: { kind: 'chips' as const, selected: ['feed'] } })).toBe(true)
-    expect(matchesFacets(row, { kind: { kind: 'chips' as const, selected: ['image'] } })).toBe(false)
+    expect(matches(row, 'kind=feed')).toBe(true)
+    expect(matches(row, 'kind=image')).toBe(false)
   })
 
   it('excludes a row holding no value at all for a selected chip set', () => {
     const row = { ...subject!, fields: { ...subject!.fields, kind: [] } }
-    expect(matchesFacets(row, { kind: { kind: 'chips' as const, selected: ['feed'] } })).toBe(false)
+    expect(matches(row, 'kind=feed')).toBe(false)
   })
 
   it('applies range bounds inclusively', () => {
     const row = { ...subject!, fields: { ...subject!.fields, rank: 40 } }
-    expect(matchesFacets(row, { rank: { kind: 'range', min: 40, max: 40 } })).toBe(true)
-    expect(matchesFacets(row, { rank: { kind: 'range', min: 41, max: null } })).toBe(false)
-    expect(matchesFacets(row, { rank: { kind: 'range', min: null, max: 39 } })).toBe(false)
+    expect(matches(row, 'rank:40..40')).toBe(true)
+    expect(matches(row, 'rank:41..')).toBe(false)
+    expect(matches(row, 'rank:..39')).toBe(false)
   })
 
   it('only constrains a toggle when it is on', () => {
     const row = { ...subject!, fields: { ...subject!.fields, seen: false } }
-    expect(matchesFacets(row, { seen: { kind: 'toggle', on: false } })).toBe(true)
-    expect(matchesFacets(row, { seen: { kind: 'toggle', on: true } })).toBe(false)
+    expect(matches(row, '')).toBe(true)
+    expect(matches(row, 'seen:true')).toBe(false)
   })
 })
 
@@ -172,9 +171,11 @@ describe('createMockDataSource — the whole corpus', () => {
     expect(result.rows.every((row) => row.entityKey === 'settings')).toBe(true)
   })
 
-  it('ignores facet values while unscoped, since facets are per entity', () => {
-    // `f_kind` belongs to `items`; with no entity selected it is not parsed.
-    expect(run('?f_kind=page').total).toBe(CORPUS)
+  it('reads a facet term while unscoped only against the types that have the field', () => {
+    // `kind` belongs to `items`; every other type carries no such field and is not narrowed.
+    const result = run('?q=kind=page')
+    expect(result.total).toBeLessThan(CORPUS)
+    expect(result.rows.filter((row) => row.entityKey === 'items').every((row) => row.fields.kind === 'page')).toBe(true)
   })
 
   it('sorts a mixed result set by date', () => {
@@ -191,7 +192,7 @@ describe('createMockDataSource — one entity', () => {
   })
 
   it('narrows on a chip facet', () => {
-    const result = run('?e=searches&f_state=running')
+    const result = run('?e=searches&q=state=running')
     expect(result.total).toBeGreaterThan(0)
     expect(result.total).toBeLessThan(PER_ENTITY)
     expect(result.rows.every((r) => r.fields.state === 'running')).toBe(true)
@@ -199,14 +200,14 @@ describe('createMockDataSource — one entity', () => {
   })
 
   it('widens as more chips are selected', () => {
-    const one = run('?e=searches&f_state=running').total
-    const two = run('?e=searches&f_state=running,paused').total
+    const one = run('?e=searches&q=state=running').total
+    const two = run('?e=searches&q=state=running+state=paused').total
     expect(two).toBeGreaterThan(one)
   })
 
   it('intersects independent facets', () => {
-    const state = run('?e=searches&f_state=running').total
-    const both = run('?e=searches&f_state=running&f_schedule=daily')
+    const state = run('?e=searches&q=state=running').total
+    const both = run('?e=searches&q=state=running+schedule=daily')
     expect(both.total).toBeLessThanOrEqual(state)
     expect(
       both.rows.every((r) => r.fields.state === 'running' && r.fields.schedule === 'daily'),
@@ -214,8 +215,8 @@ describe('createMockDataSource — one entity', () => {
   })
 
   it('combines the expression with the facets', () => {
-    const facetOnly = run('?e=items&f_kind=page').total
-    const both = run('?e=items&f_kind=page&q=release')
+    const facetOnly = run('?e=items&q=kind=page').total
+    const both = run('?e=items&q=kind=page+release')
     expect(both.total).toBeLessThanOrEqual(facetOnly)
     expect(
       both.rows.every(
@@ -303,7 +304,8 @@ describe('createMockDataSource — a multi-valued facet', () => {
   }
 
   const ALL = `?e=${tenants.key}`
-  const withRegions = (...values: string[]) => `${ALL}&f_${REGION.key}=${values.join(',')}`
+  const withRegions = (...values: string[]) =>
+    `${ALL}&q=${values.map((value) => `${REGION.key}=${value}`).join('+')}`
 
   it('counts a row under every value it holds, so the buckets overlap', () => {
     const total = commerce(ALL).total

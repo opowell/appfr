@@ -140,7 +140,7 @@ test.describe('Search box — a press on what it found', () => {
 
 test.describe('Search box — the URL', () => {
   test('is not written while typing, and is once Enter commits', async ({ page }) => {
-    await gotoStory(page, LIVE, '&e=items&v=list')
+    await gotoStory(page, LIVE, '&e=i&v=list')
     const before = shellParams(page.url())
     const entries = await page.evaluate(() => history.length)
     const rows = await listRows(page).count()

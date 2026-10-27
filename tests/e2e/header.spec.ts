@@ -8,6 +8,7 @@ import {
   expectPage,
   gotoStory,
   header,
+  headerBar,
   listRows,
   openPanel,
   pageBox,
@@ -23,6 +24,7 @@ import {
   scopeLabel,
   scopeSelect,
   searchBox,
+  searchField,
   sortHeading,
   stepPage,
   termBar,
@@ -366,6 +368,94 @@ test.describe('Header — writing the next part on the bar', () => {
   })
 })
 
+/*
+ * The parts are in the search field the way characters are in a line of text:
+ * the box steps past them, and Backspace and Delete take out the one either
+ * side of it.
+ */
+test.describe('Header — the parts as characters in the field', () => {
+  const FILTERED = 'shell-data-shell--filtered-query'
+
+  /** What is in the field, in order, the box written as `|`. */
+  const fieldOrder = (page: Page) =>
+    termBar(page).evaluate((row) =>
+      [...row.querySelectorAll('.dc-term, .dc-header__search')].map((element) =>
+        element.matches('input') ? '|' : (element.textContent ?? '').trim(),
+      ),
+    )
+
+  test('holds the parts and the box inside one field', async ({ page }) => {
+    await gotoStory(page, FILTERED)
+    await expect(searchField(page).locator('.dc-term')).toHaveCount(2)
+    await expect(searchField(page).locator('.dc-header__search')).toHaveCount(1)
+    expect(await fieldOrder(page)).toEqual(['state:running', 'schedule:daily', '|'])
+  })
+
+  test('the arrow keys step the box past one part at a time', async ({ page }) => {
+    await gotoStory(page, FILTERED)
+    await searchBox(page).focus()
+    await searchBox(page).press('ArrowLeft')
+    expect(await fieldOrder(page)).toEqual(['state:running', '|', 'schedule:daily'])
+    await expect(searchBox(page)).toBeFocused()
+    await searchBox(page).press('ArrowLeft')
+    expect(await fieldOrder(page)).toEqual(['|', 'state:running', 'schedule:daily'])
+    // Nowhere further to go.
+    await searchBox(page).press('ArrowLeft')
+    expect(await fieldOrder(page)).toEqual(['|', 'state:running', 'schedule:daily'])
+    await searchBox(page).press('End')
+    expect(await fieldOrder(page)).toEqual(['state:running', 'schedule:daily', '|'])
+    await searchBox(page).press('Home')
+    await searchBox(page).press('ArrowRight')
+    expect(await fieldOrder(page)).toEqual(['state:running', '|', 'schedule:daily'])
+  })
+
+  test('a box with something in it steps only from the edge of what is typed', async ({ page }) => {
+    await gotoStory(page, FILTERED)
+    await searchBox(page).fill('ab')
+    // The caret is after the `b`: the first press moves it inside the word.
+    await searchBox(page).press('ArrowLeft')
+    expect(await fieldOrder(page)).toEqual(['state:running', 'schedule:daily', '|'])
+    await searchBox(page).press('ArrowLeft')
+    await searchBox(page).press('ArrowLeft')
+    expect(await fieldOrder(page)).toEqual(['state:running', '|', 'schedule:daily'])
+    await expect(searchBox(page)).toHaveValue('ab')
+  })
+
+  test('Backspace lifts the part in front of the box, and Delete the one after', async ({ page }) => {
+    await gotoStory(page, FILTERED)
+    await searchBox(page).focus()
+    await searchBox(page).press('ArrowLeft')
+    await searchBox(page).press('Delete')
+    await expect(terms(page)).toHaveText(['state:running'])
+    expect(await fieldOrder(page)).toEqual(['state:running', '|'])
+
+    await gotoStory(page, FILTERED)
+    await searchBox(page).focus()
+    await searchBox(page).press('ArrowLeft')
+    await searchBox(page).press('Backspace')
+    await expect(terms(page)).toHaveText(['schedule:daily'])
+    expect(await fieldOrder(page)).toEqual(['|', 'schedule:daily'])
+    await expect(searchBox(page)).toBeFocused()
+  })
+
+  test('a press on a part keeps the focus in the box', async ({ page }) => {
+    await gotoStory(page, FILTERED)
+    await searchBox(page).fill('ab')
+    await terms(page).filter({ hasText: 'schedule:daily' }).click()
+    await expect(terms(page)).toHaveText(['state:running'])
+    await expect(searchBox(page)).toBeFocused()
+    await expect(searchBox(page)).toHaveValue('ab')
+  })
+
+  test('a press on the field past the parts is a press on the box', async ({ page }) => {
+    await gotoStory(page, FILTERED)
+    const field = await searchField(page).boundingBox()
+    await page.mouse.click(field!.x + field!.width - 2, field!.y + field!.height / 2)
+    await expect(searchBox(page)).toBeFocused()
+    await expect(panel(page)).toHaveCount(0)
+  })
+})
+
 test.describe('Header — a part that names a record', () => {
   const DRILLED = 'shell-data-shell--drilled-into-pieces'
 
@@ -501,7 +591,7 @@ test.describe('Header — opening the expanded query view', () => {
   test('a press anywhere on the bar opens the panel', async ({ page }) => {
     await gotoStory(page, HOME)
     // The room before the query, which is the bar's and nothing else's.
-    await termBar(page).click({ position: { x: 4, y: 4 } })
+    await headerBar(page).click({ position: { x: 4, y: 4 } })
     await expect(panel(page)).toBeVisible()
   })
 

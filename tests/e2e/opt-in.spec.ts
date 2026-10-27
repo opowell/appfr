@@ -6,6 +6,7 @@ import {
   pager,
   rowOrdinals,
   searchBox,
+  searchField,
   terms,
   viewSelect,
 } from './story'
@@ -150,7 +151,7 @@ test.describe('search field tokens', () => {
       probe.remove()
       return read
     })
-    const box = await searchBox(page).evaluate((element) => {
+    const box = await searchField(page).evaluate((element) => {
       const style = getComputedStyle(element)
       return { fill: style.backgroundColor, border: style.borderTopColor }
     })
@@ -159,7 +160,7 @@ test.describe('search field tokens', () => {
 
   test('without them the box is bare, as it always was', async ({ page }) => {
     await gotoStory(page, ENTITY_LIST)
-    const box = await searchBox(page).evaluate((element) => {
+    const box = await searchField(page).evaluate((element) => {
       const style = getComputedStyle(element)
       return { fill: style.backgroundColor, border: style.borderTopColor, image: style.backgroundImage }
     })

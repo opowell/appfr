@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import PickControl from './PickControl.vue'
 import { useShellContext } from '../composables/context'
 import { useEntityCounts } from '../composables/useEntityCounts'
@@ -338,22 +338,146 @@ function chooseEntity(key: string): void {
  */
 const searchBox = ref<HTMLInputElement | null>(null)
 
+/* A function rather than a name: a `ref` inside a `v-for` collects an array,
+   and the box is drawn inside the loop over the runs of parts. */
+function keepBox(element: unknown): void {
+  searchBox.value = element instanceof HTMLInputElement ? element : null
+}
+
 /** Escape gives up on what is half-typed: the query stands as it was. */
 function abandonSearch(): void {
   shell.abandonDraft()
   searchBox.value?.blur()
 }
 
+/** Enter adds what is typed on to the query, and the part lands at the end. */
+function commitSearch(): void {
+  caret.value = null
+  shell.commitDraft()
+}
+
+/* ------------------------------------------------- where the box sits */
+
 /**
- * An empty box backspaces into the parts in front of it, as a field made of
- * parts is expected to — the last pill on the row, whichever kind it is.
+ * Where the box sits among the parts, counted in parts: `0` is in front of the
+ * first, and `null` is after the last, which is where it is until someone
+ * moves it.
+ *
+ * The parts are in the field the way characters are in a line of text. The
+ * arrow keys step the box past them one at a time, Backspace takes out the one
+ * in front of it and Delete the one after. A box with something typed in it
+ * steps only from the edge its caret is at, and takes what is typed with it:
+ * a part is one character, and the draft is the word being written.
+ *
+ * Where a part goes in an expression changes nothing about what it matches,
+ * so a part committed from the middle still lands at the end. Only where the
+ * box is drawn moves. The parts move around the box rather than the box
+ * among them: a focused field taken out of the document loses its focus, and
+ * everything typed into it with that.
  */
-function backspaceSearch(event: KeyboardEvent): void {
-  if (shell.draft.value) return
-  const last = terms.value.at(-1)
-  if (!last) return
+const caret = ref<number | null>(null)
+
+const at = computed(() => Math.min(caret.value ?? Infinity, terms.value.length))
+
+/** The parts in front of the box and the parts after it. */
+const runs = computed(() => [
+  { key: 'before', entries: terms.value.slice(0, at.value) },
+  { key: 'after', entries: terms.value.slice(at.value) },
+])
+
+/** Whether the box is between two parts rather than at the end of them. */
+const between = computed(() => at.value < terms.value.length)
+
+/*
+ * A query changed from somewhere else (a press in the results, Back, the
+ * panel) can leave the caret counting parts that are gone.
+ */
+watch(terms, (now) => {
+  if (caret.value !== null && caret.value >= now.length) caret.value = null
+})
+
+/**
+ * Puts the box in front of part `to`, with the caret at the edge it came in
+ * by, so that holding the key keeps going the same way.
+ */
+function moveBox(to: number, edge: 'start' | 'end'): void {
+  caret.value = to >= terms.value.length ? null : Math.max(0, to)
+  void nextTick(() => {
+    const box = searchBox.value
+    if (!box) return
+    const place = edge === 'start' ? 0 : box.value.length
+    box.setSelectionRange(place, place)
+    box.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    measureTerms()
+  })
+}
+
+/** Whether the caret is at one edge of what is typed, nothing selected. */
+function caretAt(edge: 'start' | 'end'): boolean {
+  const box = searchBox.value
+  if (!box || box.selectionStart !== box.selectionEnd) return false
+  return box.selectionStart === (edge === 'start' ? 0 : box.value.length)
+}
+
+function stepBack(event: KeyboardEvent): void {
+  if (at.value === 0 || !caretAt('start')) return
   event.preventDefault()
-  shell.removeTerm(last.term)
+  moveBox(event.key === 'Home' ? 0 : at.value - 1, 'start')
+}
+
+function stepOn(event: KeyboardEvent): void {
+  if (!between.value || !caretAt('end')) return
+  event.preventDefault()
+  moveBox(event.key === 'End' ? terms.value.length : at.value + 1, 'end')
+}
+
+/** Backspace at the start of the box lifts the part in front of it. */
+function backspaceSearch(event: KeyboardEvent): void {
+  if (at.value === 0 || !caretAt('start')) return
+  event.preventDefault()
+  lift(terms.value[at.value - 1]!.term, true)
+}
+
+/** And Delete at the end of it, the part after it. */
+function deleteSearch(event: KeyboardEvent): void {
+  if (!between.value || !caretAt('end')) return
+  event.preventDefault()
+  lift(terms.value[at.value]!.term, false)
+}
+
+/*
+ * One listener for the keys that step through the field. Vue's `.delete`
+ * modifier answers Backspace as well as Delete, which here would be two parts
+ * lifted for one press.
+ */
+function stepThrough(event: KeyboardEvent): void {
+  if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+  if (event.key === 'ArrowLeft' || event.key === 'Home') stepBack(event)
+  else if (event.key === 'ArrowRight' || event.key === 'End') stepOn(event)
+  else if (event.key === 'Backspace') backspaceSearch(event)
+  else if (event.key === 'Delete') deleteSearch(event)
+}
+
+/** Takes a part out. One in front of the box takes the box back a place. */
+function lift(term: SummaryTerm, inFront: boolean): void {
+  if (inFront && caret.value !== null) caret.value = Math.max(0, caret.value - 1)
+  shell.removeTerm(term)
+}
+
+/**
+ * A press on the field where there is no part is a press on the box. The
+ * caret goes to the end, as it does in a text field pressed past its text.
+ */
+function pressField(event: MouseEvent): void {
+  if ((event.target as HTMLElement | null)?.closest('button, input')) return
+  event.preventDefault()
+  searchBox.value?.focus()
+  moveBox(terms.value.length, 'end')
+}
+
+/** Nothing typed and nowhere to be: the box goes back to the end. */
+function leaveSearch(): void {
+  if (!shell.draft.value) caret.value = null
 }
 
 /* ------------------------------------------------------------ pressing the bar */
@@ -368,7 +492,7 @@ function backspaceSearch(event: KeyboardEvent): void {
  * what the surface does for anyone not using a pointer.
  */
 function pressBar(event: MouseEvent): void {
-  if ((event.target as HTMLElement | null)?.closest('button, select, label, input')) return
+  if ((event.target as HTMLElement | null)?.closest('button, select, label, input, .dc-header__field')) return
   emit('toggle')
 }
 
@@ -424,7 +548,7 @@ watch(
  * query that stays narrowed — and the observer sees no resize in that, since
  * what changed is inside it.
  */
-watch(terms, measureTerms, { flush: 'post' })
+watch([terms, at], measureTerms, { flush: 'post' })
 
 onBeforeUnmount(() => watching?.disconnect())
 
@@ -599,13 +723,7 @@ function abandonTyped(event: Event): void {
       </span>
 
       <!-- The query: what is being listed, and everything narrowing it. -->
-      <div
-        ref="termBar"
-        class="dc-header__query dc-header__terms"
-        :data-dc-more="more"
-        :title="shell.summary.value"
-        @scroll="measureTerms"
-      >
+      <div class="dc-header__query">
         <!-- Which type, while one is filtered to. It is the one part of a
              query that is a choice rather than a thing to take off, so
              `Everything` is in the list beside the types and widening back
@@ -636,47 +754,76 @@ function abandonTyped(event: Event): void {
           @update:model-value="chooseView"
         />
 
-        <template
-          v-for="entry in terms"
-          :key="entry.term.id"
+        <!-- The search field, with the parts already in it: each one a
+             button that takes itself out, and the box wherever the caret has
+             been stepped to among them. A press on a part keeps the focus in
+             the box, so typing goes on where it was. -->
+        <div
+          class="dc-header__field"
+          @mousedown="pressField"
         >
-          <span
-            v-if="entry.or"
-            class="dc-header__or dc-mono"
-            aria-hidden="true"
-          >or</span>
-
-          <button
-            type="button"
-            class="dc-term dc-mono"
-            :class="{ 'dc-term--idle': entry.idle }"
-            :title="entry.idle
-              ? `Not applied to ${shell.entity.value?.label} — remove ${labelOf(entry.term)}`
-              : `Remove ${labelOf(entry.term)}`"
-            :aria-label="`Remove ${labelOf(entry.term)}`"
-            @click="shell.removeTerm(entry.term)"
+          <div
+            ref="termBar"
+            class="dc-header__terms"
+            :data-dc-more="more"
+            :title="shell.summary.value"
+            @scroll="measureTerms"
           >
-            {{ labelOf(entry.term) }}
-          </button>
-        </template>
+            <template
+              v-for="run in runs"
+              :key="run.key"
+            >
+              <span class="dc-header__run">
+                <template
+                  v-for="entry in run.entries"
+                  :key="entry.term.id"
+                >
+                  <span
+                    v-if="entry.or"
+                    class="dc-header__or dc-mono"
+                    aria-hidden="true"
+                  >or</span>
 
-        <!-- And the box the next part is written in, at the end of the row as
-             a field of parts has it. What it holds is a draft the results are
-             already read under: Enter adds it to the query, and it then
-             stands beside the box as a pill. -->
-        <input
-          ref="searchBox"
-          v-model="shell.draft.value"
-          class="dc-header__search dc-mono"
-          type="text"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="Search…"
-          aria-label="Search"
-          @keydown.enter.prevent="shell.commitDraft"
-          @keydown.esc.prevent="abandonSearch"
-          @keydown.backspace="backspaceSearch"
-        >
+                  <button
+                    type="button"
+                    class="dc-term dc-mono"
+                    :class="{ 'dc-term--idle': entry.idle }"
+                    :title="entry.idle
+                      ? `Not applied to ${shell.entity.value?.label} — remove ${labelOf(entry.term)}`
+                      : `Remove ${labelOf(entry.term)}`"
+                    :aria-label="`Remove ${labelOf(entry.term)}`"
+                    @mousedown.prevent
+                    @click="lift(entry.term, run.key === 'before')"
+                  >
+                    {{ labelOf(entry.term) }}
+                  </button>
+                </template>
+              </span>
+
+              <!-- Between the two runs, and the same element wherever the
+                   caret is. What it holds is a draft the results are already
+                   read under: Enter adds it to the query, and it then stands
+                   in the field as a part. -->
+              <input
+                v-if="run.key === 'before'"
+                :ref="keepBox"
+                v-model="shell.draft.value"
+                class="dc-header__search dc-mono"
+                :class="{ 'dc-header__search--between': between }"
+                :style="{ '--dc-typed': String(Math.max(1, shell.draft.value.length)) }"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                :placeholder="between ? '' : 'Search…'"
+                aria-label="Search"
+                @keydown.enter.prevent="commitSearch"
+                @keydown.esc.prevent="abandonSearch"
+                @keydown="stepThrough"
+                @blur="leaveSearch"
+              >
+            </template>
+          </div>
+        </div>
       </div>
 
       <!-- What the surface does, for anyone not using a pointer: a surface is
@@ -805,7 +952,7 @@ function abandonTyped(event: Event): void {
     :has(
       .dc-term:hover,
       .dc-header__pick:hover,
-      .dc-header__search:hover,
+      .dc-header__field:hover,
       .dc-header__domain:hover
     )
   ) {
@@ -817,7 +964,7 @@ function abandonTyped(event: Event): void {
     :has(
       .dc-term:hover,
       .dc-header__pick:hover,
-      .dc-header__search:hover,
+      .dc-header__field:hover,
       .dc-header__domain:hover
     )
   ) {
@@ -857,31 +1004,63 @@ function abandonTyped(event: Event): void {
 }
 
 .dc-header__query {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  flex: 1;
   gap: 6px;
   min-width: 0;
-  overflow: hidden;
   padding-left: 12px;
   border-left: 1px solid var(--dc-line);
 }
 
 /*
- * The parts take the rest of the bar: what the query is is the longest thing
- * on it, and the chevron is held to the end by the toggle beside them.
+ * The search field, with the parts in it. It takes the rest of the bar,
+ * because what the query is is the longest thing on it, and the chevron is
+ * held to the end by the toggle beside it.
+ *
+ * Bare unless a host says otherwise, so that an empty one is the rest of the
+ * row rather than a widget on it. A dark surface can leave a bare field a
+ * faint smudge, and a resting fill and edge make it read as one. The tokens
+ * are the host's and unset here, and the fallbacks are the field as it has
+ * always been. Focus anywhere in it swaps in the accent edge.
  */
+.dc-header__field {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 12ch;
+  padding: 0 3px;
+  background: var(--dc-search-fill, none);
+  border: 1px solid var(--dc-search-border, transparent);
+  border-radius: var(--dc-radius-sm);
+  cursor: text;
+}
+
+.dc-header__field:focus-within {
+  border-color: var(--dc-accent-dim);
+  background: var(--dc-bg-0);
+}
+
 .dc-header__terms {
   /* How much of the edge the cue below softens — a good part of a pill, so
      that what is cut off reads as cut off rather than as ending there. */
   --dc-terms-cue: 32px;
 
+  display: flex;
+  align-items: center;
   flex: 1;
   gap: 5px;
+  min-width: 0;
+  padding: 2px 0;
   /* One line, scrolled rather than wrapped: the bar is one row high, and a
      query long enough to wrap would push the pager off it. */
   overflow-x: auto;
   scrollbar-width: none;
   white-space: nowrap;
+}
+
+/* The parts in front of the box and after it, laid out as one row. */
+.dc-header__run {
+  display: contents;
 }
 
 .dc-header__terms::-webkit-scrollbar {
@@ -935,26 +1114,22 @@ function abandonTyped(event: Event): void {
 }
 
 /*
- * The box the next part is typed into. Bare, so that an empty one is the rest
- * of the row rather than a widget on it — the placeholder is what says it is
- * there — and bordered only once it is being typed into. It takes whatever
- * room the parts leave and never less than a few characters, so a long query
- * scrolls the parts rather than squeezing the box out of the row.
+ * The box the next part is typed into, drawn as nothing: the field around it
+ * is the edge, and the placeholder is what says it is there. At the end of the
+ * parts it takes whatever room they leave and never less than a few
+ * characters, so a long query scrolls the parts rather than squeezing the box
+ * out of the row.
  */
 .dc-header__search {
   flex: 1 1 auto;
   min-width: 8ch;
-  padding: 3px 6px;
-  /* Bare unless a host says otherwise — a dark surface can leave an empty
-     bare box a faint smudge, and a resting fill and edge make it read as a
-     field. The tokens are the host's and unset here; the fallbacks are the
-     box as it has always been. Focus still swaps in the accent edge. */
-  background: var(--dc-search-fill, none);
-  border: 1px solid var(--dc-search-border, transparent);
-  border-radius: var(--dc-radius-sm);
+  padding: 3px 3px;
+  background: none;
+  border: none;
   color: var(--dc-fg-1);
   font-size: var(--dc-text-code);
   line-height: 1.5;
+  outline: none;
   cursor: text;
 }
 
@@ -962,10 +1137,24 @@ function abandonTyped(event: Event): void {
   color: var(--dc-search-placeholder, var(--dc-fg-3));
 }
 
-.dc-header__search:focus-visible {
-  outline: none;
-  border-color: var(--dc-accent-dim);
-  background: var(--dc-bg-0);
+/*
+ * Between two parts it is as wide as what is typed in it and no wider, the
+ * way a caret between two characters takes no room of its own. `--dc-typed`
+ * is the number of characters, for a browser that cannot size a field by its
+ * content.
+ */
+.dc-header__search--between {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: calc(var(--dc-typed, 1) * 1ch + 6px);
+}
+
+@supports (field-sizing: content) {
+  .dc-header__search--between {
+    field-sizing: content;
+    width: auto;
+    min-width: 1ch;
+  }
 }
 
 /*

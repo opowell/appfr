@@ -242,7 +242,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
     class="dc-table"
     :data-dc-wrap="wraps ? '' : undefined"
   >
-    <thead>
+    <thead data-dc-stuck>
       <tr>
         <!-- Not a column: the shell declares none, and this is an affordance
              rather than a field of the record — the same tick the other views
@@ -412,16 +412,29 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
 .dc-table {
   width: 100%;
   table-layout: fixed;
-  border-collapse: collapse;
+  /* Separate rather than collapsed, with no gap: a collapsed border belongs to
+     the table rather than to the cell, and so scrolls away from under a
+     heading that stays. Every cell draws only its bottom edge either way. */
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: var(--dc-text-body);
 }
 
+/*
+ * The headings stay at the top of the results while the rows scroll under
+ * them: a column of numbers is no use once what it is a column of has gone.
+ * Laid on the ground rather than on nothing, since `--dc-bg-1` is a veil under
+ * the plain themes and the rows would read straight through it.
+ */
 .dc-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   padding: 10px 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   border-bottom: 1px solid var(--dc-line);
-  background: var(--dc-bg-1);
+  background: linear-gradient(var(--dc-bg-1), var(--dc-bg-1)) var(--dc-ground);
   color: var(--dc-fg-2);
   font-size: var(--dc-text-micro);
   font-weight: var(--dc-weight-semibold);

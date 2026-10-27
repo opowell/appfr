@@ -101,6 +101,13 @@ const more = ref('')
  */
 const gutters = ref({ x: 0, y: 0 })
 
+/*
+ * How much of the top stays put while the rest scrolls — a table's headings,
+ * marked `data-dc-stuck` by the view — so that the top fade starts under it:
+ * what stays put is not cut off, and fading it would say it was.
+ */
+const stuck = ref(0)
+
 function measureEdges(): void {
   const element = scroller.value
   if (!element) {
@@ -122,6 +129,7 @@ function measureEdges(): void {
     x: element.offsetHeight - element.clientHeight,
     y: element.offsetWidth - element.clientWidth,
   }
+  stuck.value = element.querySelector<HTMLElement>('[data-dc-stuck]')?.offsetHeight ?? 0
 }
 
 /*
@@ -179,6 +187,7 @@ onBeforeUnmount(() => {
     :style="{
       '--dc-results-gutter-x': `${gutters.x}px`,
       '--dc-results-gutter-y': `${gutters.y}px`,
+      '--dc-results-stuck': `${stuck}px`,
     }"
   >
     <!-- Before anything that reads the source, because nothing it answers is
@@ -328,7 +337,7 @@ onBeforeUnmount(() => {
     var(--dc-results-cue-left) calc(100% - var(--dc-results-gutter-x));
   mask-position:
     0 0,
-    left 0 top 0,
+    left 0 top var(--dc-results-stuck, 0px),
     right var(--dc-results-gutter-y) top 0,
     left 0 bottom var(--dc-results-gutter-x),
     left 0 top 0;

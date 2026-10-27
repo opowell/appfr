@@ -3621,7 +3621,9 @@ about and the rest stay derived: `--dc-bg-0…3`, `--dc-line`, `--dc-line-2`,
 `--dc-fg-0…3`, `--dc-accent-dim`, `--dc-accent-bg`, `--dc-accent-contrast`,
 `--dc-ok-bg`, `--dc-warn-bg`, `--dc-danger-bg`, `--dc-raised` and
 `--dc-raised-ink` (the query panel, which floats over the results and so needs
-a background and a text colour that work together), and `--dc-scrim`,
+a background and a text colour that work together), `--dc-ground` (the opaque
+colour a table's headings are laid on, so the rows scrolling under them do not
+show through), and `--dc-scrim`,
 `--dc-scrim-strong`, `--dc-scrim-fg` (over imagery, not over a surface).
 
 Nothing is declared on `:root`, so dropping the shell into an app cannot
@@ -3665,7 +3667,9 @@ from the `Canvas`/`CanvasText`/`AccentColor` system colours, which follow the
 `color-scheme` the shell inherits — so a host with a dark background should
 declare `color-scheme: dark`, which it owes its native controls and scrollbars
 anyway. Set `--dc-raised` and `--dc-raised-ink` to your own surface if you
-would rather the panel matched the app exactly.
+would rather the panel matched the app exactly. A table's headings stay put
+while its rows scroll, and are laid on `--dc-ground`, which is `Canvas` here:
+set it to your page's background so they sit on the same colour as the rest.
 
 An app with its own design system usually stops at mapping its variables onto
 the seeds:

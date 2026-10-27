@@ -368,3 +368,41 @@ test.describe('Columns — as many as the schema declares', () => {
     expect(new Set(kinds.map((text) => text.trim())).size).toBeGreaterThan(1)
   })
 })
+
+/*
+ * The headings say what each column is, and a column scrolled away from its
+ * heading is a column of numbers nobody can read. So they stay at the top of
+ * the results while the rows go under them, on a ground the rows do not show
+ * through, and the fade that says more is above starts under them.
+ */
+test.describe('Table — headings that stay put', () => {
+  test.use({ viewport: { width: 1100, height: 420 } })
+
+  test('stay at the top of the results as the rows scroll under them', async ({ page }) => {
+    await gotoStory(page, LONG)
+    const heading = table(page).locator('th').first()
+    const top = async () =>
+      Math.round(
+        (await heading.boundingBox())!.y - (await results(page).boundingBox())!.y,
+      )
+    expect(await top()).toBe(0)
+    await results(page).evaluate((element) => {
+      element.scrollTop = 200
+    })
+    await expect(results(page)).toHaveAttribute('data-dc-more', /top/)
+    expect(await top()).toBe(0)
+  })
+
+  test('start the fade over the rows under them, not over themselves', async ({ page }) => {
+    await gotoStory(page, LONG)
+    await results(page).evaluate((element) => {
+      element.scrollTop = 200
+    })
+    await expect(results(page)).toHaveAttribute('data-dc-more', /top/)
+    const [stuck, head] = await Promise.all([
+      results(page).evaluate((element) => getComputedStyle(element).getPropertyValue('--dc-results-stuck')),
+      table(page).locator('thead').evaluate((element) => (element as HTMLElement).offsetHeight),
+    ])
+    expect(stuck).toBe(`${head}px`)
+  })
+})

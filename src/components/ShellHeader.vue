@@ -1,28 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import PickControl from './PickControl.vue'
 import { useShellContext } from '../composables/context'
-import { useEntityCounts } from '../composables/useEntityCounts'
 import { useRecordNames } from '../composables/useRecordNames'
 import { scopedEntity } from '../query/drill'
-import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
+import { isTypeCardsQuery } from '../query/schema'
 import { formatCount } from '../data/format'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
-import type { EntitySchema, ViewKind } from '../types'
-import { VIEW_KINDS } from '../types'
+import type { ViewKind } from '../types'
 
 const props = defineProps<{
-  /**
-   * Leave the live match count off the type in force, e.g. while a detail view
-   * is open: the list of types then says what each of them holds, rather than
-   * what the query behind the detail matched.
-   */
-  hideCount?: boolean
   /** Views to offer, when the host restricts them. Defaults to all six. */
   views?: ViewKind[]
-  /** Where the list of types is a control on the bar — see `showTypes`. */
-  typeChooser?: 'scoped' | 'always'
   /**
    * What the count is short of, in the host's words — `first 1,200 of 30,200
    * lots`. Said where the count is, which is the pager's hover text, rather
@@ -35,11 +24,6 @@ const props = defineProps<{
    * is nothing to page.
    */
   hidePages?: boolean
-  /**
-   * Leave the View chooser off the bar, under a page of the host's: how the
-   * results are drawn means nothing where they are not.
-   */
-  hideViews?: boolean
 }>()
 
 const slots = defineSlots<{
@@ -55,96 +39,6 @@ const slots = defineSlots<{
 const shell = useShellContext()
 
 const domain = computed(() => shell.schema.value)
-
-/* ------------------------------------------------------- how many there are */
-
-/**
- * Whether the results are narrower than the type in force: a facet, an
- * expression, or the scope the whole shell is read inside — which the reader
- * did not ask for and cannot lift, but which is no less a narrowing. A draft
- * being typed is one too, being what the results are read under right now.
- */
-const narrowed = computed(
-  () =>
-    shell.hasFacets.value ||
-    Boolean(shell.liveQuery.value.expr.trim()) ||
-    Boolean(shell.within.value),
-)
-
-/**
- * How a count is written here: the host's hand where the schema names one, and
- * the shell's otherwise — see {@link DomainSchema.formatCount}.
- *
- * It is worth a computed rather than a call at each site because the two
- * numbers it writes sit in the same control as the host's own populations, and
- * the whole point of the hook is that all of them read as one list.
- */
-const writeCount = computed(() => domain.value.formatCount ?? formatCount)
-
-/**
- * Every entity's own count against the query as it stands, fetched as the
- * picker opens rather than watched — see {@link useEntityCounts}.
- */
-const entityCounts = useEntityCounts({
-  source: shell.source,
-  schema: shell.schema,
-  // What each type holds of what is on screen, the draft's results included:
-  // a count of the committed query would disagree with the rows under it.
-  query: shell.liveQuery,
-  entities: shell.entities,
-  within: shell.within,
-})
-
-/**
- * What a count says before its source has said anything: a mark in the place
- * the number goes, so the list keeps its shape while the numbers arrive.
- */
-const COUNTING = '…'
-
-/**
- * How many records a type holds, said beside its name in the list of them.
- *
- * The population is what the schema publishes, and it is what makes that list
- * a chooser rather than a row of names: how many of each of these there are.
- * Once the query narrows anything, every entity says something else instead —
- * how many of it matched — because that is the count that is true of the
- * query, not just of the type in force. The type in force already has its
- * own live total, the shell's own query; the rest are counted separately as
- * the picker opens, and one still being counted carries a `~`, since the
- * true total may yet grow. One the source has said nothing about yet reads
- * {@link COUNTING} rather than a number at all.
- */
-function countOf(entity: EntitySchema): string {
-  if (props.hideCount) return entity.count
-  const chosen = entity.key === shell.query.value.entity
-  if (chosen && narrowed.value) return writeCount.value(shell.total.value)
-  if (entityCounts.pristine.value) return entity.count
-  const found = entityCounts.counts.value.get(entity.key)
-  if (!found) return entity.count
-  // Nothing said yet is not nought matched, and `~0` read as the second.
-  if (!found.counted) return COUNTING
-  return `${found.pending ? '~' : ''}${writeCount.value(found.total)}`
-}
-
-/** A type as the list offers it: what it is called, and how many there are. */
-function optionLabel(entity: EntitySchema): string {
-  return `${entity.label} · ${countOf(entity)}`
-}
-
-/**
- * The list the type picker offers: `Everything` first, under the empty key
- * that stands for no type at all, and then each type the schema declares.
- * Read afresh whenever a count lands, so a list that is already up says the
- * new number in place — see {@link PickControl}.
- *
- * `Everything` carries no count. The picker is only on the bar while a type
- * is chosen (see `showTypes`), and how big the whole corpus is is then a
- * question nobody has put to the source.
- */
-const entityOptions = computed(() => [
-  { key: '', label: 'Everything' },
-  ...shell.entities.value.map((entity) => ({ key: entity.key, label: optionLabel(entity) })),
-])
 
 /* --------------------------------------------------------- what this is about */
 
@@ -164,61 +58,11 @@ const scopeTerms = computed<SummaryTerm[]>(() => {
   return summaryTerms({ ...shell.query.value, expr: within }, null)
 })
 
-/* ------------------------------------------------------- how they are drawn */
-
-/**
- * The views on offer, as the chooser beside the type lists them.
- *
- * How the results are drawn used to be said here rather than chosen — the tail
- * of the one-line summary, and then only on a query with nothing in it to
- * lift. It is a part of the query like the type is, so it is a control like
- * the type is, and it stays on the bar however narrow the query gets. The
- * whole sentence is still there as the row's title.
- */
-const viewOptions = computed<{ key: ViewKind; label: string }[]>(() =>
-  (props.views ?? [...VIEW_KINDS]).map((key) => ({ key, label: VIEW_LABELS[key] })),
-)
-
-/**
- * Which of them is in force. A URL naming a view the host withheld draws as
- * the first on offer — {@link resolveView}, the same reading the results area
- * takes — so the chooser says what is on screen rather than sitting blank.
- */
-const view = computed(() => resolveView(shell.query.value.view, props.views))
-
-/**
- * Whether there is a choice to offer. A host offering one view has said how
- * the results are drawn — and a host may say it per screen, passing `views`
- * as the query changes — so a chooser of one would be a label posing as a
- * control.
- */
-const showViews = computed(() => !props.hideViews && viewOptions.value.length > 1)
-
-/**
- * Whether the list of types is worth a control of its own.
- *
- * By default only while a type is filtered to: the chooser is then the way to
- * another type, and the way back out to `Everything`. On `Everything` itself
- * the content is what offers the types — each card on the home screen is
- * headed by its own, and the rows of a mixed list each say theirs — so a
- * chooser on the bar would be the same choice offered twice.
- *
- * `typeChooser: 'always'` keeps it on `Everything` too, for a host whose home
- * screen opens on the records rather than on a card per type: there a row
- * saying its type is no way to pick one, and the bar is where the choice is
- * looked for.
- */
-const showTypes = computed(() => props.typeChooser === 'always' || shell.query.value.entity !== null)
-
-function chooseView(key: string): void {
-  shell.setView(key as ViewKind)
-}
-
 /**
  * The parts of the query the bar offers as pills — every active facet and
  * every term of the expression. The entity filter is not among them: it is a
- * choice rather than a thing to take off, and it has the control at the head
- * of the row to itself.
+ * choice rather than a thing to take off, and it has its own control over the
+ * results — see `RecordActions`.
  *
  * `or` marks a term that starts a new alternative. An expression's `OR` groups
  * are alternatives, and a plain row of pills would otherwise read them as one
@@ -306,18 +150,6 @@ function titleOf(entry: { term: SummaryTerm; idle: boolean }): string {
     : `Remove ${label}`
   const address = entry.term.address
   return address && address !== label ? `${action}\nWritten ${address} in the address and the search box` : action
-}
-
-/* ---------------------------------------------------------- what is listed */
-
-/**
- * Which type the results are, as the choice it is rather than as a part to
- * take off: the useful move from one entity is almost always another entity,
- * and lifting the filter altogether is one option among them rather than the
- * only one on offer.
- */
-function chooseEntity(key: string): void {
-  shell.setEntity(key || null)
 }
 
 /* ------------------------------------------------------- adding to the query */
@@ -708,38 +540,10 @@ function abandonTyped(event: Event): void {
         >{{ labelOf(term) }}</span>
       </span>
 
-      <!-- The query: what is being listed, and everything narrowing it. -->
+      <!-- The query: everything narrowing what is listed. Which type it is,
+           and how it is drawn, are chosen over the results — see
+           `RecordActions`. -->
       <div class="dc-header__query">
-        <!-- Which type, while one is filtered to. It is the one part of a
-             query that is a choice rather than a thing to take off, so
-             `Everything` is in the list beside the types and widening back
-             out stays one press. On `Everything` the content names the types
-             instead, and the bar leaves the choice to it. -->
-        <PickControl
-          v-if="showTypes"
-          class="dc-header__pick dc-header__scope-select"
-          label="Type"
-          :model-value="shell.query.value.entity ?? ''"
-          :options="entityOptions"
-          @open="entityCounts.refresh"
-          @close="entityCounts.cancel"
-          @update:model-value="chooseEntity"
-        />
-
-        <!-- And how they are drawn, wherever the host offers more than one
-             way: it is a part of the query, so it is on the bar whatever else
-             is. What they are ordered by is not here, because the table's own
-             headings offer it with the column on screen under them, and the
-             bar would be the same choice in the abstract. -->
-        <PickControl
-          v-if="showViews"
-          class="dc-header__pick dc-header__view-select"
-          label="View"
-          :model-value="view"
-          :options="viewOptions"
-          @update:model-value="chooseView"
-        />
-
         <!-- The search field, with the parts already in it: each one a
              button that takes itself out, and the box wherever the caret has
              been stepped to among them. A press on a part keeps the focus in
@@ -1098,22 +902,6 @@ function abandonTyped(event: Event): void {
   background: transparent;
   border-style: dashed;
   color: var(--dc-fg-2);
-}
-
-/*
- * The three parts of the query that are chosen rather than lifted: which type
- * is being listed, how it is drawn, and what it is ordered by. They sit in the
- * row of parts because that is what they are — terms of the query — and read
- * as ones, so the bar is still one line of the same thing rather than widgets
- * with pills after them. Each is a {@link PickControl}, which draws itself;
- * the size is set here so that the three of them are set as the pills are.
- */
-.dc-header__pick {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  font-size: var(--dc-text-code);
-  cursor: pointer;
 }
 
 /*

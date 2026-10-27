@@ -739,10 +739,8 @@ defineExpose({
     <div class="dc-shell__head">
       <ShellHeader
         :views="offeredViews"
-        :type-chooser="typeChooser"
         :pages-note="pagesNote"
         :hide-pages="loading || hasPage"
-        :hide-views="hasPage"
       >
         <template
           v-if="slots.brand"
@@ -775,13 +773,14 @@ defineExpose({
       />
     </div>
 
-    <!-- What can be done with the records of the type being listed, over the
-         records themselves and under the query that found them. It renders
-         nothing where the type offers nothing, and stays put while the results
-         scroll. -->
+    <!-- Which type the records are, how they are drawn, and what can be done
+         with them, over the records themselves and under the query that found
+         them. It renders nothing where there is nothing to choose or do, and
+         stays put while the results scroll. -->
     <RecordActions
       v-if="!slots.page"
       :views="offeredViews"
+      :type-chooser="typeChooser"
     />
 
     <slot

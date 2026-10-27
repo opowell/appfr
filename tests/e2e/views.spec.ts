@@ -45,14 +45,14 @@ test.describe('Views — a host offering one has no chooser', () => {
   test('the bar carries no View control', async ({ page }) => {
     await gotoStory(page, SINGLE)
     await expect(page.locator('.dc-table')).toBeVisible()
-    await expect(page.locator('.dc-header__view-select')).toHaveCount(0)
+    await expect(page.locator('.dc-actions__view')).toHaveCount(0)
   })
 
   test('a link naming another view still draws the one on offer', async ({ page }) => {
     await gotoStory(page, SINGLE_UNOFFERED_LINK)
     await expect(page.locator('.dc-table')).toBeVisible()
     await expect(page.locator('.dc-list')).toHaveCount(0)
-    await expect(page.locator('.dc-header__view-select')).toHaveCount(0)
+    await expect(page.locator('.dc-actions__view')).toHaveCount(0)
   })
 
   test('across every type, that link draws a card per type', async ({ page }) => {

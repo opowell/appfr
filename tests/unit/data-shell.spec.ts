@@ -186,7 +186,7 @@ describe('DataShell — views as a function', () => {
 
     expect(views).toHaveBeenLastCalledWith({ entity: schema.entities[0], records: [] })
     // One view on offer: no chooser, and a link to another draws that one.
-    expect(w.find('.dc-header__view-select').exists()).toBe(false)
+    expect(w.find('.dc-actions__view').exists()).toBe(false)
     expect(w.find('.dc-table').exists()).toBe(true)
 
     adapter.push('?q=test%3D%22a.spec%22')
@@ -199,7 +199,7 @@ describe('DataShell — views as a function', () => {
 
     adapter.push('?v=table')
     await flushPromises()
-    expect(w.find('.dc-header__view-select').exists()).toBe(true)
+    expect(w.find('.dc-actions__view').exists()).toBe(true)
   })
 
   it('takes a list exactly as before', async () => {
@@ -207,7 +207,7 @@ describe('DataShell — views as a function', () => {
     const w = shell(adapter, { views: ['list', 'table'] })
     await flushPromises()
     expect(w.find('.dc-list').exists()).toBe(true)
-    expect(w.find('.dc-header__view-select').exists()).toBe(true)
+    expect(w.find('.dc-actions__view').exists()).toBe(true)
   })
 })
 
@@ -325,7 +325,7 @@ describe('DataShell — a page of the host’s', () => {
     expect(w.find('.dc-header').exists()).toBe(true)
     expect(w.find('.dc-shell__page .host-page').text()).toBe('for tests')
     expect(w.find('.dc-results').exists()).toBe(false)
-    expect(w.find('.dc-header__view-select').exists()).toBe(false)
+    expect(w.find('.dc-actions__view').exists()).toBe(false)
     expect(w.find('.dc-header__pages').exists()).toBe(false)
     // A page pages nothing, so the URL's page is not corrected under it.
     expect(param(adapter, 'p')).toBe('7')

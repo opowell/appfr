@@ -582,20 +582,21 @@ test.describe('Header — what a press on the bar does', () => {
   })
 
   test('the header is reachable and operable from the keyboard alone', async ({ page }) => {
-    // A type in force, so both choosers are on the bar: on Everything the
-    // content names the types and there is no type chooser to reach.
+    // A type in force, so both choosers are over the results: on Everything
+    // the content names the types and there is no type chooser to reach.
     await gotoStory(page, ENTITY)
     // The name first, being the way home and the first thing on the bar. Then
-    // the query, since it is what the bar is mostly made of: which type is
-    // listed, how it is drawn, and the box the next part is written in.
+    // the box the next part of the query is written in, and then, over the
+    // results, which type is listed and how it is drawn.
     await page.keyboard.press('Tab')
     await expect(page.locator('.dc-header__domain')).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(searchBox(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(scopeSelect(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(viewSelect(page)).toBeFocused()
-    await page.keyboard.press('Tab')
-    await expect(searchBox(page)).toBeFocused()
+    await searchBox(page).focus()
     await searchBox(page).fill('state=running')
     await page.keyboard.press('Enter')
     await expect(terms(page)).toHaveText(['state=running'])

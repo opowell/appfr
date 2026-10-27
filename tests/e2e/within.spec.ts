@@ -73,22 +73,22 @@ test.describe('within — the scope on the bar', () => {
 test.describe('within — what the bar stops offering', () => {
   test('no list of types while the record\u2019s own types are the screen', async ({ page }) => {
     await gotoStory(page, RECORD)
-    await expect(page.locator('.dc-header__scope-select')).toHaveCount(0)
+    await expect(page.locator('.dc-actions__type')).toHaveCount(0)
     // Nor in a view of records across every type: `Everything` is what is
     // listed, and the chooser only comes with a type to come back out of.
     await gotoStory(page, 'shell-data-shell--record-page-as-list')
-    await expect(page.locator('.dc-header__scope-select')).toHaveCount(0)
+    await expect(page.locator('.dc-actions__type')).toHaveCount(0)
   })
 
   test('but it is there with a type filtered to, as the way back out', async ({ page }) => {
     await gotoStory(page, ENTITY)
-    await expect(page.locator('.dc-header__scope-select')).toHaveCount(1)
+    await expect(page.locator('.dc-actions__type')).toHaveCount(1)
   })
 
   test('a card heading is what picks a type instead, and brings the list back', async ({ page }) => {
     await gotoStory(page, RECORD)
     await typeCard(page, 'Pieces').locator('.dc-type__head').click()
-    await expect(page.locator('.dc-header__scope-select')).toHaveCount(1)
+    await expect(page.locator('.dc-actions__type')).toHaveCount(1)
     expect(await scopeLabel(page)).toMatch(/^Pieces/)
   })
 

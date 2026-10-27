@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ViewKind } from '../types'
+import type { EntitySchema, ViewKind } from '../types'
+import { VIEW_KINDS } from '../types'
 import { useShellContext } from '../composables/context'
-import { isTypeCardsQuery, resolveView } from '../query/schema'
+import { useEntityCounts } from '../composables/useEntityCounts'
+import { formatCount } from '../data/format'
+import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
 import PageTick from './views/PageTick.vue'
+import PickControl from './PickControl.vue'
 
 /**
- * What can be done with the records of the type being listed: make one, tick
- * some, and copy, delete or otherwise operate on what is ticked.
+ * The head of the results: which type they are and how they are drawn, and
+ * what can be done with them — make one, tick some, and copy, delete or
+ * otherwise operate on what is ticked.
+ *
+ * The type and the view are chosen here rather than on the bar above, which
+ * is the query's to narrow: both are about the results as a whole, and here
+ * they are over the results they change.
  *
  * The bar over the results rather than a menu on each row, because three of
  * the four are about a *set* of records — and the fourth, making one, is what
@@ -15,14 +24,137 @@ import PageTick from './views/PageTick.vue'
  *
  * Every one of them is named by the entity rather than assumed: a type that
  * says nothing about deleting is a type that is not deleted from here, and the
- * bar is one control shorter. A type that says nothing at all has no bar.
+ * bar is one control shorter. A type that says nothing at all, with no choice
+ * of type or view to offer either, has no bar.
  */
 const props = defineProps<{
   /** The views on offer, as `DataShell` was told them — see `ResultsArea`. */
   views?: ViewKind[]
+  /** Where the list of types is a control on the bar — see `showTypes`. */
+  typeChooser?: 'scoped' | 'always'
 }>()
 
 const shell = useShellContext()
+
+/* ---------------------------------------------------------- which type */
+
+/**
+ * Whether the results are narrower than the type in force: a facet, an
+ * expression, or the scope the whole shell is read inside — which the reader
+ * did not ask for and cannot lift, but which is no less a narrowing. A draft
+ * being typed is one too, being what the results are read under right now.
+ */
+const narrowed = computed(
+  () =>
+    shell.hasFacets.value ||
+    Boolean(shell.liveQuery.value.expr.trim()) ||
+    Boolean(shell.within.value),
+)
+
+/**
+ * How a count is written here: the host's hand where the schema names one, and
+ * the shell's otherwise — see {@link DomainSchema.formatCount}.
+ */
+const writeCount = computed(() => shell.schema.value.formatCount ?? formatCount)
+
+/**
+ * Every entity's own count against the query as it stands, fetched as the
+ * picker opens rather than watched — see {@link useEntityCounts}.
+ */
+const entityCounts = useEntityCounts({
+  source: shell.source,
+  schema: shell.schema,
+  // What each type holds of what is on screen, the draft's results included:
+  // a count of the committed query would disagree with the rows under it.
+  query: shell.liveQuery,
+  entities: shell.entities,
+  within: shell.within,
+})
+
+/**
+ * What a count says before its source has said anything: a mark in the place
+ * the number goes, so the list keeps its shape while the numbers arrive.
+ */
+const COUNTING = '…'
+
+/**
+ * How many records a type holds, said beside its name in the list of them.
+ *
+ * The population is what the schema publishes, and it is what makes that list
+ * a chooser rather than a row of names: how many of each of these there are.
+ * Once the query narrows anything, every entity says something else instead —
+ * how many of it matched. The type in force already has its own live total,
+ * the shell's own query; the rest are counted separately as the picker opens,
+ * and one still being counted carries a `~`, since the true total may yet
+ * grow. One the source has said nothing about yet reads {@link COUNTING}.
+ */
+function countOf(entity: EntitySchema): string {
+  const chosen = entity.key === shell.query.value.entity
+  if (chosen && narrowed.value) return writeCount.value(shell.total.value)
+  if (entityCounts.pristine.value) return entity.count
+  const found = entityCounts.counts.value.get(entity.key)
+  if (!found) return entity.count
+  // Nothing said yet is not nought matched, and `~0` read as the second.
+  if (!found.counted) return COUNTING
+  return `${found.pending ? '~' : ''}${writeCount.value(found.total)}`
+}
+
+/**
+ * The list the type picker offers: `Everything` first, under the empty key
+ * that stands for no type at all, and then each type with its count. Read
+ * afresh whenever a count lands, so a list that is already up says the new
+ * number in place — see {@link PickControl}.
+ */
+const entityOptions = computed(() => [
+  { key: '', label: 'Everything' },
+  ...shell.entities.value.map((entity) => ({
+    key: entity.key,
+    label: `${entity.label} · ${countOf(entity)}`,
+  })),
+])
+
+/**
+ * Whether the list of types is worth a control of its own.
+ *
+ * By default only while a type is filtered to: the chooser is then the way to
+ * another type, and the way back out to `Everything`. On `Everything` itself
+ * the content is what offers the types — each card on the home screen is
+ * headed by its own, and the rows of a mixed list each say theirs.
+ *
+ * `typeChooser: 'always'` keeps it on `Everything` too, for a host whose home
+ * screen opens on the records rather than on a card per type.
+ */
+const showTypes = computed(
+  () => props.typeChooser === 'always' || shell.query.value.entity !== null,
+)
+
+/** The useful move from one type is almost always another type. */
+function chooseEntity(key: string): void {
+  shell.setEntity(key || null)
+}
+
+/* --------------------------------------------------------- how they are drawn */
+
+const viewOptions = computed<{ key: ViewKind; label: string }[]>(() =>
+  (props.views ?? [...VIEW_KINDS]).map((key) => ({ key, label: VIEW_LABELS[key] })),
+)
+
+/**
+ * Which view is in force. A URL naming one the host withheld draws as the
+ * first on offer — {@link resolveView}, the same reading the results area
+ * takes — so the chooser says what is on screen rather than sitting blank.
+ */
+const view = computed(() => resolveView(shell.query.value.view, props.views))
+
+/**
+ * A host offering one view has said how the results are drawn, so a chooser
+ * of one would be a label posing as a control.
+ */
+const showViews = computed(() => viewOptions.value.length > 1)
+
+function chooseView(key: string): void {
+  shell.setView(key as ViewKind)
+}
 
 /**
  * The type in force. The operations are its own words, so a mixed result set —
@@ -62,34 +194,33 @@ const selecting = computed(
  * so theirs stays at the head of the bar. The count and the way to clear it
  * are of the whole selection, and stay on the bar whichever view it is.
  */
-const tickInHeader = computed(
-  () => resolveView(shell.query.value.view, props.views) === 'table',
-)
+const tickInHeader = computed(() => view.value === 'table')
 
 const offered = computed(
   () =>
-    records.value &&
-    (selecting.value ||
+    showTypes.value ||
+    showViews.value ||
+    (records.value &&
+      (selecting.value ||
       Boolean(
         entity.value?.create ||
           entity.value?.duplicate ||
           entity.value?.delete ||
           entity.value?.operations?.length,
-      )),
+        ))),
 )
 
 /**
  * What the tick says it is counting. The number is of the whole selection
  * rather than of the page, because that is what the operations beside it are
  * for: ticks survive paging, and a delete would take the lot. With nothing
- * ticked the words are the tick's own label where the tick is here, and a
- * plain reading of the state where it is in the table's header — so the bar
- * says the same thing at the same place whichever view is showing, and the
- * rows never move when the first tick is made.
+ * ticked the words are the tick's own label where the tick is here, and
+ * nothing at all where it is in the table's header — that nothing is ticked
+ * is what the unticked boxes already say.
  */
 const readout = computed(() => {
   if (count.value) return `${count.value} selected`
-  return tickInHeader.value ? 'None selected' : 'Select all'
+  return tickInHeader.value ? '' : 'Select all'
 })
 
 /** An operation says how many it is for, once there are any. */
@@ -103,8 +234,33 @@ function opLabel(label: string): string {
     v-if="offered"
     class="dc-actions"
   >
+    <!-- Which type, while one is filtered to, with `Everything` in the list
+         beside the types so widening back out stays one press. -->
+    <PickControl
+      v-if="showTypes"
+      class="dc-actions__pick dc-actions__type"
+      label="Type"
+      :model-value="shell.query.value.entity ?? ''"
+      :options="entityOptions"
+      @open="entityCounts.refresh"
+      @close="entityCounts.cancel"
+      @update:model-value="chooseEntity"
+    />
+
+    <!-- And how they are drawn, wherever the host offers more than one way.
+         What they are ordered by is not here, because the table's own
+         headings offer it with the column on screen under them. -->
+    <PickControl
+      v-if="showViews"
+      class="dc-actions__pick dc-actions__view"
+      label="View"
+      :model-value="view"
+      :options="viewOptions"
+      @update:model-value="chooseView"
+    />
+
     <div
-      v-if="selecting"
+      v-if="selecting && readout"
       class="dc-actions__select"
     >
       <!-- The words are part of the control where the tick is here: pressing
@@ -214,6 +370,15 @@ function opLabel(label: string): string {
   font-size: var(--dc-text-meta);
 }
 
+/* Set as the query's parts are set, being parts of the query too. */
+.dc-actions__pick {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  font-size: var(--dc-text-code);
+  cursor: pointer;
+}
+
 .dc-actions__select {
   display: flex;
   align-items: center;
@@ -242,7 +407,6 @@ label.dc-actions__all {
   background: transparent;
   color: var(--dc-fg-3);
   font-size: var(--dc-text-micro);
-  text-decoration: underline;
   cursor: pointer;
 }
 

@@ -140,8 +140,9 @@ const href = computed(() =>
   cursor: pointer;
 }
 
+/* A button, so a tint rather than an underline. */
 .dc-table__open:hover {
-  text-decoration: underline;
+  background: var(--dc-accent-bg);
 }
 
 .dc-cell__image {

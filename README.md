@@ -1957,10 +1957,10 @@ own.
 | `defaults` | `ShellQueryDefaults` | home, `cards` (one type: `table`), `updated`, `desc` | Fallbacks when the URL omits a field. `landing: 'entity'` opens on one entity's list instead of home, in `view`. `entityView` is the view one type opens in. |
 | `within` | `string` | — | An expression the whole shell is read inside — its scope, held here rather than in the URL. See [a shell about one record](#a-shell-about-one-record). |
 | `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. `0` draws only each card's heading (name and count, no `create` button), in narrower wrapping columns. |
-| `typeChooser` | `'scoped' \| 'always'` | `'scoped'` | Where the bar offers the list of types. `scoped` only once one is filtered to, the home screen's cards naming the types already; `always` keeps it on `Everything` too, for a home screen that opens on records rather than on a card per type. |
+| `typeChooser` | `'scoped' \| 'always'` | `'scoped'` | When the strip over the results offers the list of types. `scoped` only once one is filtered to, the home screen's cards naming the types already; `always` keeps it on `Everything` too, for a home screen that opens on records rather than on a card per type. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
 | `pagesNote` | `string` | — | What the count is short of, in your words — `first 1,200 of 30,200 lots`. Goes under the pager's hover text, and keeps the pager up on a single page. See [paging through the results](#paging-through-the-results). |
-| `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the bar has no way back from. With one on the list the bar carries no View chooser — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type), or a function of `{ entity, records }` and the shell works the screen out for you — see [cards for the records the query names](#cards-for-the-records-the-query-names). |
+| `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the bar has no way back from. With one on the list there is no View chooser over the results — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type), or a function of `{ entity, records }` and the shell works the screen out for you — see [cards for the records the query names](#cards-for-the-records-the-query-names). |
 | `loading` | `boolean` | `false` | The source's answers are not yet the data. The results area says *Loading…*, the pager is off the bar, and nothing is corrected from a count until it turns false — see [while the data is on its way](#while-the-data-is-on-its-way). |
 | `recordCards` | `Record<string, Component>` | — | A component per record the query names, by the record's type, given `id` — the shorthand for the `record` slot. See [cards for the records the query names](#cards-for-the-records-the-query-names). |
 | `pageQuery` | `'shell' \| 'detached'` | `'shell'` | Whether a `page` is about the query. `detached`: the bar reads the pristine query, not the page's URL, and its first edit goes to `listPath`. Read only while a `page` is provided — see [a page that is not about the query](#a-page-that-is-not-about-the-query). |
@@ -2039,10 +2039,11 @@ How it differs from `results`, which also replaces the content area: `results`
 is handed the rows and draws them its own way, so everything that acts on rows
 stays. A page is not a drawing of the rows, so under it
 
-- the bar carries **no pager and no View chooser** — there is nothing under it
-  to page through or to draw another way;
-- the type's [operations](#records-you-can-copy-and-delete) are **not offered**
-  over it — *Delete* over a form deletes nothing the reader can see;
+- the bar carries **no pager**, and there is **no strip over the results** —
+  no Type or View chooser and none of the type's
+  [operations](#records-you-can-copy-and-delete): there is nothing under it to
+  page through or draw another way, and *Delete* over a form deletes nothing
+  the reader can see;
 - **nothing corrects the URL's page** from a count, so `p` is where it was when
   the slot goes and the list comes back.
 
@@ -2296,7 +2297,8 @@ data (see [rows you already have](#rows-you-already-have)), and
 The context carries the selection as well — `selectable`, `selection`,
 `isSelected`, `toggleSelect`, `selectPage` and `clearSelection`, plus `create`,
 `duplicate` and `delete` — so a view of your own can offer the ticks the
-shipped seven do, and `<RecordActions>` is exported for a host laying the parts
+shipped seven do, and `<RecordActions>` — the strip over the results, with the
+Type and View choosers — is exported for a host laying the parts
 out itself. `within` is on it too, for a view that says what narrowed the
 results: it is the shell's scope rather than part of its query, so it is not on
 `query`. `useResults` and `useEntityPreviews` each take it as an option, which

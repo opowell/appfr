@@ -94,9 +94,9 @@ test('every story renders without logging an error', async ({ page }) => {
 
 test('every schema story renders rows with its own vocabulary', async ({ page }) => {
   const cases: Array<[string, string[]]> = [
-    // Unscoped stories are listing the whole corpus, which the header leaves
-    // to the content to say; the rest name the entity filtered to, as the
-    // choice it is.
+    // The domain, on the bar. Unscoped stories are listing the whole corpus,
+    // which is left to the content to say; the rest name the entity filtered
+    // to over the results, as the choice it is.
     ['schemas-same-shell--i-radar', ['iRadar']],
     ['schemas-same-shell--everything-across-kinds', ['Commerce']],
     ['schemas-same-shell--lego', ['LEGO', 'Sets']],
@@ -107,11 +107,10 @@ test('every schema story renders rows with its own vocabulary', async ({ page })
     ['schemas-same-shell--shared-settings-entity', ['LEGO', 'Settings']],
   ]
 
-  for (const [id, expected] of cases) {
+  for (const [id, [domain, entity]] of cases) {
     await gotoStory(page, id)
-    for (const text of expected) {
-      await expect(page.locator('.dc-header'), id).toContainText(text)
-    }
+    await expect(page.locator('.dc-header'), id).toContainText(domain)
+    if (entity) await expect(page.locator('.dc-actions__type'), id).toContainText(entity)
     // Something is actually listed, in whichever view the story chose.
     const rendered = page.locator(
       '.dc-list__row, .dc-card, .dc-tile, .dc-table tbody tr, .dc-link, .dc-preview__card, .dc-type__row',
@@ -146,7 +145,7 @@ test.describe('narrow viewport', () => {
   test('the header stays usable', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-as-list')
     // The query survives the narrow layout even though the domain name does not.
-    await expect(page.locator('.dc-header__view-select')).toBeVisible()
+    await expect(page.locator('.dc-actions__view')).toBeVisible()
     await expect(page.locator('.dc-header__domain')).toBeHidden()
 
     await expect(page.locator('.dc-header__search')).toBeVisible()

@@ -44,14 +44,18 @@ test.describe('Records — the bar is what the type says it is', () => {
     await expect(allTick(page)).toHaveCount(0)
   })
 
-  test('a schema that names nothing has no bar at all', async ({ page }) => {
+  // The bar is still there for the Type and View choosers, but with nothing
+  // to tick or do it holds only them.
+  const doings = (page: Page) => bar(page).locator('.dc-actions__select, .dc-actions__op')
+
+  test('a schema that names nothing offers nothing to do', async ({ page }) => {
     await gotoStory(page, ENTITY)
-    await expect(bar(page)).toHaveCount(0)
+    await expect(doings(page)).toHaveCount(0)
   })
 
   test('the home screen has none either: its cards are types, not records', async ({ page }) => {
     await gotoStory(page, HOME)
-    await expect(bar(page)).toHaveCount(0)
+    await expect(doings(page)).toHaveCount(0)
   })
 
   test('naming an operation for a selection is what offers the ticks', async ({ page }) => {
@@ -244,7 +248,7 @@ test.describe('Records — ticks in every view that draws rows', () => {
     await gotoStory(page, TABLE)
     await page.locator('.dc-table__row').first().locator('.dc-table__primary').click()
     // Reported, so nothing moves — and nothing was ticked by the press.
-    await expect(readout(page)).toHaveText('None selected')
+    await expect(readout(page)).toHaveCount(0)
   })
 
   test('the tick for the page heads the table’s own column, and leaves the bar', async ({
@@ -265,7 +269,8 @@ test.describe('Records — ticks in every view that draws rows', () => {
     await expect(page.locator('.dc-table')).toBeVisible()
 
     await headTick(page).click()
-    await expect(readout(page)).toHaveText('None selected')
+    // Nothing ticked is what the boxes say, so the bar says nothing of it.
+    await expect(readout(page)).toHaveCount(0)
     await expect(tableTicks(page).nth(0)).not.toBeChecked()
   })
 
@@ -281,7 +286,7 @@ test.describe('Records — ticks in every view that draws rows', () => {
 
     // The count and the way to clear it stay on the bar, whichever view.
     await bar(page).getByRole('button', { name: 'Clear' }).click()
-    await expect(readout(page)).toHaveText('None selected')
+    await expect(readout(page)).toHaveCount(0)
     await expect(headTick(page)).not.toBeChecked()
   })
 

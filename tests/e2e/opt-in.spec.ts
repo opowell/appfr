@@ -50,7 +50,7 @@ test.describe('a record’s own cards', () => {
     await expect(cards.nth(1)).toContainText('Sets: sets_10404')
     // The views function said cards, and one view is no chooser.
     await expect(page.locator('.dc-types')).toBeVisible()
-    await expect(page.locator('.dc-header__view-select')).toHaveCount(0)
+    await expect(page.locator('.dc-actions__view')).toHaveCount(0)
   })
 
   test('lifting a record’s part takes its card with it', async ({ page }) => {
@@ -128,7 +128,7 @@ test.describe('a page of the host’s', () => {
     await expect(page.locator('.sb-host-page')).toBeVisible()
     await expect(page.locator('.dc-results')).toHaveCount(0)
     await expect(pager(page)).toHaveCount(0)
-    await expect(page.locator('.dc-header__view-select')).toHaveCount(0)
+    await expect(page.locator('.dc-actions__view')).toHaveCount(0)
     await expect(page.locator('.sb-host-page__query')).toHaveText('e=searches q=recall')
 
     await terms(page).filter({ hasText: 'recall' }).click()

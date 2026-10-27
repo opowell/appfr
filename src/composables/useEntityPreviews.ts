@@ -7,7 +7,8 @@ import type {
   QueryResult,
   ShellQuery,
 } from '../types'
-import { isPristineQuery } from '../query/schema'
+import { entityCount, isPristineQuery } from '../query/schema'
+import { formatCount } from '../data/format'
 import { addTerm, scopeTermFor } from '../query/drill'
 import { andExpression } from '../data/expression'
 import type { PresentedRow } from './usePresentedRows'
@@ -86,7 +87,7 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
       ? result.rows.map((row, index) => presentRow(row, index, entity, options.isPinned(row.id)))
       : [],
     total: result.total,
-    count: pristine ? entity.count : String(result.total),
+    count: pristine ? entityCount(entity) : formatCount(result.total),
     pinned: namesItsOnlyRow(schema, result, expr),
   })
 

@@ -4,7 +4,7 @@ import { useShellContext } from '../composables/context'
 import { useRecordNames } from '../composables/useRecordNames'
 import { scopedEntity } from '../query/drill'
 import { isTypeCardsQuery } from '../query/schema'
-import { formatCount } from '../data/format'
+import { formatInteger } from '../data/format'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
 import type { ViewKind } from '../types'
@@ -409,7 +409,7 @@ const paged = computed(
  * are on their way, but the number of pages is known.
  */
 const pages = computed(() =>
-  `${shell.counting.value ? '~' : ''}${formatCount(shell.pageCount.value)}`,
+  `${shell.counting.value ? '~' : ''}${formatInteger(shell.pageCount.value)}`,
 )
 
 /**
@@ -419,12 +419,12 @@ const pages = computed(() =>
  * the count is short of is a fact about the same number.
  */
 const position = computed(() => {
-  let place = `Page ${formatCount(page.value)} of ${pages.value}`
+  let place = `Page ${formatInteger(page.value)} of ${pages.value}`
   const shown = shell.rows.value.length
   if (shown) {
     const first = shell.offset.value + 1
-    const total = `${shell.counting.value ? '~' : ''}${formatCount(shell.total.value)}`
-    place += ` — rows ${formatCount(first)} to ${formatCount(first + shown - 1)} of ${total}`
+    const total = `${shell.counting.value ? '~' : ''}${formatInteger(shell.total.value)}`
+    place += ` — rows ${formatInteger(first)} to ${formatInteger(first + shown - 1)} of ${total}`
   }
   return props.pagesNote ? `${place}\n${props.pagesNote}` : place
 })
@@ -754,18 +754,18 @@ function abandonTyped(event: Event): void {
  * The search field, with the parts in it. It takes the rest of the bar,
  * because what the query is is the longest thing on it.
  *
- * Filled, so that it is a field on the bar rather than more of the bar, and
- * the fill is what parts it from the name — no divider between them. A host
- * sets its own fill and resting edge with the tokens; focus anywhere in it
- * swaps in the accent edge and keeps the fill.
+ * Filled and edged as a field, so that it is a field on the bar rather than
+ * more of the bar, and can be found before it is focused; the fill and edge
+ * are what part it from the name — no divider between them. Focus anywhere in
+ * it swaps in the accent edge and keeps the fill.
  */
 .dc-header__field {
   display: flex;
   flex: 1 1 auto;
   min-width: 12ch;
   padding: 0 3px;
-  background: var(--dc-search-fill, var(--dc-bg-1));
-  border: 1px solid var(--dc-search-border, transparent);
+  background: var(--dc-field);
+  border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
   cursor: text;
 }

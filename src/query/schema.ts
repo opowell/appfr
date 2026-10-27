@@ -10,6 +10,7 @@ import type {
   ViewKind,
 } from '../types'
 import { VIEW_KINDS } from '../types'
+import { formatCount } from '../data/format'
 
 /**
  * Cards. On the home screen — where no entity is filtered to — that means a
@@ -78,6 +79,14 @@ export function resolveView(asked: ViewKind, offered: ViewKind[] | undefined): V
   const [fallback] = offered ?? []
   if (fallback === undefined) return asked
   return offered?.includes(asked) ? asked : fallback
+}
+
+/**
+ * The population an entity publishes, as it is written: a number in the
+ * shell's own hand, a string as the host gave it.
+ */
+export function entityCount(entity: EntitySchema): string {
+  return typeof entity.count === 'number' ? formatCount(entity.count) : entity.count
 }
 
 /** The entity a key names, or `null` when it names none. */

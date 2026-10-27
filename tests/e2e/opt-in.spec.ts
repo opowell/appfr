@@ -137,12 +137,12 @@ test.describe('a page of the host’s', () => {
 })
 
 test.describe('search field tokens', () => {
-  test('the box takes the host’s fill, edge and placeholder', async ({ page }) => {
+  test('the box takes the host’s field fill, and keeps its edge', async ({ page }) => {
     await gotoStory(page, SEARCH_TOKENS)
     const shell = page.locator('.dc-shell')
     const expected = await shell.evaluate((element) => {
       const probe = document.createElement('div')
-      probe.style.background = 'var(--dc-bg-1)'
+      probe.style.background = 'var(--dc-bg-2)'
       probe.style.borderColor = 'var(--dc-line)'
       element.append(probe)
       const style = getComputedStyle(probe)
@@ -157,8 +157,17 @@ test.describe('search field tokens', () => {
     expect(box).toEqual(expected)
   })
 
-  test('without them the box is filled apart from the bar, with no edge', async ({ page }) => {
+  test('without them the box is filled apart from the bar, and edged', async ({ page }) => {
     await gotoStory(page, ENTITY_LIST)
+    const shell = page.locator('.dc-shell')
+    const line = await shell.evaluate((element) => {
+      const probe = document.createElement('div')
+      probe.style.borderColor = 'var(--dc-line)'
+      element.append(probe)
+      const color = getComputedStyle(probe).borderTopColor
+      probe.remove()
+      return color
+    })
     const box = await searchField(page).evaluate((element) => {
       const style = getComputedStyle(element)
       const bar = getComputedStyle(element.closest('.dc-header')!)
@@ -166,7 +175,7 @@ test.describe('search field tokens', () => {
     })
     expect(box.fill).not.toBe('rgba(0, 0, 0, 0)')
     expect(box.fill).not.toBe(box.bar)
-    expect(box.border).toBe('rgba(0, 0, 0, 0)')
+    expect(box.border).toBe(line)
   })
 })
 

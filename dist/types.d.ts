@@ -351,13 +351,12 @@ export interface EntitySchema {
      */
     description?: string;
     /**
-     * Total population, pre-formatted for display (e.g. `'9,988'`) — the shell's
-     * own `formatCount` is what it uses for the live counts beside these, so a
-     * host with nothing else in mind should format with that. A host that writes
-     * its numbers some other way says so once, in
-     * {@link DomainSchema.formatCount}, rather than matching the shell here.
+     * Total population. A number is written by the shell, in the same hand as
+     * the live counts beside it — `formatCount`, so `9988` reads `10k`. A string
+     * is shown as given, for what is not a number yet: an estimate (`~1.2k`),
+     * a word while it is counted, or `''` for nothing at all.
      */
-    count: string;
+    count: number | string;
     facets: FacetDef[];
     /** Detail tabs offered when a record is opened. */
     tabs: string[];
@@ -527,23 +526,6 @@ export interface DomainSchema {
      * entity's, the shell invents none.
      */
     columns?: ColumnDef[];
-    /**
-     * How to write a count the shell works out for itself, when the host writes
-     * its own some other way. Defaults to the shell's `formatCount`.
-     *
-     * There is one such count and it is the live one: how many rows matched,
-     * said on the type in force and on `Everything`. Every other number in the
-     * list of types is {@link EntitySchema.count}, which the host has already
-     * formatted. So this is the one place the two hands meet, and until now the
-     * shell's hand won: a host abbreviating its populations got `Items · 199k`
-     * beside `Everything · 198,689` the moment a query narrowed, and no way to
-     * settle it short of writing its own populations the shell's way.
-     *
-     * Stated once for the domain rather than per entity, because what it fixes
-     * is one control reading in two hands — and a list of types that wrote each
-     * line in its own would be the same fault again, spread wider.
-     */
-    formatCount?: (value: number) => string;
     /**
      * Whether a term on a join key — some entity's {@link EntitySchema.scope} —
      * leaves out a row that does not carry that field at all.

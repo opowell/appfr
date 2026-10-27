@@ -5,6 +5,7 @@ import {
   formatDateTime,
   formatDuration,
   formatElapsed,
+  formatInteger,
   formatPercent,
   stripAnsi,
 } from '../../src/data/format'
@@ -12,18 +13,40 @@ import {
 /**
  * The counts in the header's list of types come from two places — the
  * population each type publishes and the live size of what matched — so they
- * have to be formatted the same way or one control says `2,641` beside `3214`.
+ * have to be formatted the same way or one control says `2,641` beside `2.6k`.
  */
 describe('formatCount', () => {
-  it('groups a population the way a schema is expected to publish one', () => {
+  it('abbreviates a population the way a schema is expected to publish one', () => {
     expect(formatCount(240)).toBe('240')
-    expect(formatCount(3214)).toBe('3,214')
-    expect(formatCount(9988)).toBe('9,988')
+    expect(formatCount(1700)).toBe('1.7k')
+    expect(formatCount(3214)).toBe('3.2k')
+    expect(formatCount(198_689)).toBe('199k')
+    expect(formatCount(23_500_000)).toBe('23.5m')
+  })
+
+  it('rolls over at the rounding rather than at the bound', () => {
+    expect(formatCount(999)).toBe('999')
+    expect(formatCount(9949)).toBe('9.9k')
+    expect(formatCount(9988)).toBe('10k')
+    expect(formatCount(999_499)).toBe('999k')
+    expect(formatCount(999_600)).toBe('1.0m')
   })
 
   it('says nothing of a number that is not one', () => {
     expect(formatCount(Number.NaN)).toBe('—')
     expect(formatCount(Number.POSITIVE_INFINITY)).toBe('—')
+  })
+})
+
+describe('formatInteger', () => {
+  it('groups an exact number', () => {
+    expect(formatInteger(240)).toBe('240')
+    expect(formatInteger(3214)).toBe('3,214')
+    expect(formatInteger(198_689)).toBe('198,689')
+  })
+
+  it('says nothing of a number that is not one', () => {
+    expect(formatInteger(Number.NaN)).toBe('—')
   })
 })
 

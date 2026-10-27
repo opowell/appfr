@@ -5,6 +5,7 @@ import type { EntityPreviewsState } from '../../src/composables/useEntityPreview
 import { createMockDataSource } from '../../src/data/mock'
 import { parseQuery } from '../../src/query/codec'
 import { scopeTermFor } from '../../src/query/drill'
+import { formatCount } from '../../src/data/format'
 import { iRadarSchema, legoSchema } from '../../src/fixtures/schemas'
 import type { DataSource, QueryRequest, QueryResult, ShellQuery } from '../../src/types'
 
@@ -92,7 +93,7 @@ describe('useEntityPreviews', () => {
   it('reports the published population while the query is untouched', () => {
     const byKey = new Map(setup().state.previews.value.map((p) => [p.entity.key, p.count]))
     expect(byKey.get('searches')).toBe('38')
-    expect(byKey.get('items')).toBe('9,988')
+    expect(byKey.get('items')).toBe('10k')
     expect(byKey.get('logs')).toBe('184k')
   })
 
@@ -101,7 +102,7 @@ describe('useEntityPreviews', () => {
     const byKey = new Map(state.previews.value.map((p) => [p.entity.key, p]))
     // "digest" only appears among settings.
     expect(byKey.get('settings')!.total).toBeGreaterThan(0)
-    expect(byKey.get('settings')!.count).toBe(String(byKey.get('settings')!.total))
+    expect(byKey.get('settings')!.count).toBe(formatCount(byKey.get('settings')!.total))
     expect(byKey.get('searches')!.count).toBe('0')
     expect(byKey.get('searches')!.rows).toHaveLength(0)
   })

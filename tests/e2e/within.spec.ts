@@ -128,7 +128,7 @@ test.describe('within — what the counts say', () => {
     await expect(listRows(page).first()).toBeVisible()
 
     const pieces = legoSchema.entities.find((entity) => entity.key === 'pieces')
-    const published = Number((pieces?.count ?? '0').replace(/\D/g, ''))
+    const published = Number(pieces?.count ?? 0)
     const label = await scopeLabel(page)
     expect(label).toMatch(/^Pieces · [\d,]+$/)
     expect(Number(label.replace(/\D/g, ''))).toBeLessThan(published)

@@ -7,8 +7,6 @@ import type { DataSource, DomainSchema, EntitySchema, ShellRow } from '../src/ty
 import { createMemoryAdapter } from '../src/routing/memory'
 import { createMockDataSource } from '../src/data/mock'
 import {
-  abbreviatedCountsSchema,
-  abbreviatedCountsSource,
   delayedSource,
   everythingColumnsSchema,
   failingSource,
@@ -386,22 +384,6 @@ export const SearchEverything = story({ search: '?v=list&q=digest' })
 
 /** Filtering by kind from the expression alone, without leaving home. */
 export const ExcludeByExpression = story({ search: '?v=list&q=entity:logs' })
-
-/**
- * A host that writes its counts its own way, and the list of types reading in
- * one hand because of it.
- *
- * The populations in that list are the host's, already formatted; the count on
- * `Everything`, and on the type in force once a query narrows it, is the one
- * number the shell works out for itself. `formatCount` on the schema is how
- * the host says which hand to write it in — here `2.0k` rather than `2,000`,
- * so the two halves of one control cannot disagree about what a number looks
- * like.
- */
-export const HostWrittenCounts = story({
-  schema: abbreviatedCountsSchema(),
-  source: abbreviatedCountsSource(),
-})
 
 /* ------------------------------------------------- scoped to one entity */
 
@@ -1258,16 +1240,15 @@ export const DetachedPage: Story = {
 }
 
 /**
- * The header's search box given a resting fill and edge through three tokens
- * — `--dc-search-fill`, `--dc-search-border` and `--dc-search-placeholder` —
- * for a dark surface where a bare box is a faint smudge in an empty bar.
+ * The header's search box restyled through two tokens — `--dc-field`, the
+ * fill every field takes, and `--dc-search-placeholder` — here a deeper fill
+ * and a placeholder that reads on a dark surface.
  */
 export const SearchFieldTokens = story({
   theme: 'dark',
   search: '?e=searches&v=list',
   tokens: {
-    '--dc-search-fill': 'var(--dc-bg-1)',
-    '--dc-search-border': 'var(--dc-line)',
+    '--dc-field': 'var(--dc-bg-2)',
     '--dc-search-placeholder': 'var(--dc-fg-2)',
   },
 })

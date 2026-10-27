@@ -207,6 +207,11 @@
      itself in every theme that paints one. */
   --dc-ground: var(--dc-surface);
 
+  /* What a field is filled with — the header's search box: the surface a
+     step away from the ink, lighter on paper and darker on a dark ground, so
+     the box reads as somewhere to type rather than as more of the bar. */
+  --dc-field: color-mix(in oklab, var(--dc-surface), light-dark(#fff, #000) 30%);
+
   /* Sits over imagery rather than over a surface, so these are keyed to the
      media underneath and stay put across themes. */
   --dc-scrim: oklch(0 0 0 / 0.5);
@@ -572,6 +577,7 @@
   --dc-raised: Canvas;
   --dc-raised-ink: CanvasText;
   --dc-ground: Canvas;
+  --dc-field: Field;
 
   --dc-tint: 16%;
   --dc-shadow: 0 16px 36px oklch(0 0 0 / 0.22);

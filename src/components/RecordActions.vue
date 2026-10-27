@@ -5,7 +5,7 @@ import { VIEW_KINDS } from '../types'
 import { useShellContext } from '../composables/context'
 import { useEntityCounts } from '../composables/useEntityCounts'
 import { formatCount } from '../data/format'
-import { VIEW_LABELS, isTypeCardsQuery, resolveView } from '../query/schema'
+import { VIEW_LABELS, entityCount, isTypeCardsQuery, resolveView } from '../query/schema'
 import PageTick from './views/PageTick.vue'
 import PickControl from './PickControl.vue'
 
@@ -52,12 +52,6 @@ const narrowed = computed(
 )
 
 /**
- * How a count is written here: the host's hand where the schema names one, and
- * the shell's otherwise — see {@link DomainSchema.formatCount}.
- */
-const writeCount = computed(() => shell.schema.value.formatCount ?? formatCount)
-
-/**
  * Every entity's own count against the query as it stands, fetched as the
  * picker opens rather than watched — see {@link useEntityCounts}.
  */
@@ -90,13 +84,13 @@ const COUNTING = '…'
  */
 function countOf(entity: EntitySchema): string {
   const chosen = entity.key === shell.query.value.entity
-  if (chosen && narrowed.value) return writeCount.value(shell.total.value)
-  if (entityCounts.pristine.value) return entity.count
+  if (chosen && narrowed.value) return formatCount(shell.total.value)
+  if (entityCounts.pristine.value) return entityCount(entity)
   const found = entityCounts.counts.value.get(entity.key)
-  if (!found) return entity.count
+  if (!found) return entityCount(entity)
   // Nothing said yet is not nought matched, and `~0` read as the second.
   if (!found.counted) return COUNTING
-  return `${found.pending ? '~' : ''}${writeCount.value(found.total)}`
+  return `${found.pending ? '~' : ''}${formatCount(found.total)}`
 }
 
 /**

@@ -34,6 +34,11 @@ export declare const VIEW_LABELS: Record<ViewKind, string>;
  * offer, so a link into a restricted shell still lands somewhere it can draw.
  */
 export declare function resolveView(asked: ViewKind, offered: ViewKind[] | undefined): ViewKind;
+/**
+ * The population an entity publishes, as it is written: a number in the
+ * shell's own hand, a string as the host gave it.
+ */
+export declare function entityCount(entity: EntitySchema): string;
 /** The entity a key names, or `null` when it names none. */
 export declare function findEntity(schema: DomainSchema, key: string | null | undefined): EntitySchema | null;
 /**

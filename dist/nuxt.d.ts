@@ -19,7 +19,7 @@ export interface ModuleOptions {
  * ```ts
  * // nuxt.config.ts
  * export default defineNuxtConfig({
- *   modules: ['header-content-layout/nuxt'],
+ *   modules: ['appfr/nuxt'],
  * })
  * ```
  */

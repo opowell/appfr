@@ -7,7 +7,8 @@ import { useEntityPreviews } from '../../src/composables/useEntityPreviews'
 import type { EntityPreviewsState } from '../../src/composables/useEntityPreviews'
 import { createMockDataSource } from '../../src/data/mock'
 import { parseQuery } from '../../src/query/codec'
-import { defaultQuery, findEntity } from '../../src/query/schema'
+import { defaultQuery, entityCount, findEntity } from '../../src/query/schema'
+import { formatCount } from '../../src/data/format'
 import { iRadarSchema, legoSchema } from '../../src/fixtures/schemas'
 import type { DataSource, DomainSchema, QueryRequest, ShellQuery } from '../../src/types'
 
@@ -184,17 +185,17 @@ function previews(within: string) {
 describe('useEntityPreviews within a scope', () => {
   it('reports what matched rather than the population the schema publishes', () => {
     const { state } = previews('level:error')
-    const published = iRadarSchema.entities.map((entity) => entity.count)
+    const published = iRadarSchema.entities.map(entityCount)
     expect(state.previews.value.map((preview) => preview.count)).not.toEqual(published)
     for (const preview of state.previews.value) {
-      expect(preview.count).toBe(String(preview.total))
+      expect(preview.count).toBe(formatCount(preview.total))
     }
   })
 
   it('publishes the population again once nothing scopes it', () => {
     const { state } = previews('')
     expect(state.previews.value.map((preview) => preview.count)).toEqual(
-      iRadarSchema.entities.map((entity) => entity.count),
+      iRadarSchema.entities.map(entityCount),
     )
   })
 

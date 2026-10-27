@@ -80,7 +80,7 @@ test.describe('Header — the query as it stands', () => {
     // Chosen and narrowed, `Items` already reads its own match count — this is
     // about what the *other* types in the list say, which is a query nobody
     // has put to the source until the picker is opened.
-    expect(await scopeLabel(page)).not.toBe('Items · 9,988')
+    expect(await scopeLabel(page)).not.toBe('Items · 10k')
 
     await openPick(page, scopeSelect(page), 'Type')
 
@@ -125,27 +125,11 @@ test.describe('Header — the query as it stands', () => {
     expect(matched).toBeLessThan(48)
   })
 
-  test('writes the live count in the host’s hand where the schema names one', async ({
-    page,
-  }) => {
-    // Five types of four hundred. The shell's own `formatCount` would group
-    // the corpus as `2,000`; this schema abbreviates its populations and names
-    // a `formatCount` that does the same, so the one number the shell works
-    // out for itself is written the way the ones beside it are.
-    await gotoStory(page, 'shell-data-shell--host-written-counts')
-    await chooseScope(page, 'Items')
-    await expect.poll(() => scopeLabel(page)).toBe('Items · 400')
-    // And the rest of the list in the same hand, so there is nothing to tell
-    // apart: a population the host wrote, beside the live count.
-    await openPick(page, scopeSelect(page), 'Type')
-    await expect(pickOptions(page, 'Type').filter({ hasText: 'Searches' })).toHaveText('Searches · 400')
-  })
-
   test('follows the scope when it changes', async ({ page }) => {
     await gotoStory(page, HOME)
     await pickEntity(page, 'Items')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'items')
-    await expect.poll(() => scopeLabel(page)).toBe('Items · 9,988')
+    await expect.poll(() => scopeLabel(page)).toBe('Items · 10k')
   })
 
   test('widens back to everything when the scope is lifted, and the chooser goes with it', async ({ page }) => {
@@ -243,7 +227,7 @@ test.describe('Header — lifting a part of the query', () => {
     await expect(pickOptions(page, 'Type')).toHaveText([
       'Everything',
       'Searches · 38',
-      'Items · 9,988',
+      'Items · 10k',
       'Scrapers · 24',
       'Logs · 184k',
       'Settings · 20',

@@ -28,8 +28,7 @@ export interface UseStableSchemaOptions {
  * holds.
  *
  * By value means by `key`, `JSON.stringify` unless said, which leaves out
- * every function: a column's `format`, `value` and `click`, and a domain's
- * `formatCount`, are not compared. A rebuild that changed only one of those
+ * every function: a column's `format`, `value` and `click` are not compared. A rebuild that changed only one of those
  * keeps the old schema, and the old function with it — so a function that
  * reads changing data should read it when it is called rather than close
  * over a snapshot of it, or the `key` should say what it depends on.

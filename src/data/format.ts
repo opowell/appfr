@@ -21,15 +21,33 @@ export function formatMetric(value: number): string {
 }
 
 /**
- * A population, grouped: `240`, `3,214`.
+ * A population, abbreviated: `240`, `1.7k`, `199k`, `23.5m`.
  *
  * What {@link EntitySchema.count} is expected to hold, and what the shell
  * formats its own live counts with, so a control that carries both — the list
  * of types in the header, where the type in force says what matched and the
- * rest say what they hold — does not put `2,641` beside `3214`. Fixed rather
- * than locale-derived, for the same reason {@link formatDate} is.
+ * rest say what they hold — does not put `2,641` beside `2.6k`. A population
+ * is read for its size and not for its digits: which types are big, not that
+ * there are 198,689 items.
  */
 export function formatCount(value: number): string {
+  if (!Number.isFinite(value)) return '—'
+  const whole = Math.round(value)
+  const size = Math.abs(whole)
+  if (size < 1_000) return String(whole)
+  // Each bound is where the next one's rounding would begin, so `9,990` is
+  // `10k` rather than `10.0k`, and `999,600` is `1.0m` rather than `1000k`.
+  if (size < 9_950) return `${(whole / 1_000).toFixed(1)}k`
+  if (size < 999_500) return `${Math.round(whole / 1_000)}k`
+  return `${(whole / 1_000_000).toFixed(1)}m`
+}
+
+/**
+ * An exact number, grouped: `240`, `3,214`. For where the digits are the
+ * point — which page this is, which rows are on it. Fixed rather than
+ * locale-derived, for the same reason {@link formatDate} is.
+ */
+export function formatInteger(value: number): string {
   if (!Number.isFinite(value)) return '—'
   return Math.round(value).toLocaleString('en-US')
 }

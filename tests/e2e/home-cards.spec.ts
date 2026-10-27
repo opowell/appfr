@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { chooseView, clearScope, gotoStory, listRows, scopeSelect, terms, viewSelect } from './story'
 import { iRadarSchema } from '../../src/fixtures/schemas'
+import { entityCount } from '../../src/query/schema'
 
 /**
  * The home screen: a card per item type, each naming the type, how many of it
@@ -38,7 +39,7 @@ test.describe('Home — a card per item type', () => {
   test('each card states the count the schema publishes', async ({ page }) => {
     await gotoStory(page, HOME)
     await expect(card(page, 'Searches').locator('.dc-type__count')).toHaveText('38')
-    await expect(card(page, 'Items').locator('.dc-type__count')).toHaveText('9,988')
+    await expect(card(page, 'Items').locator('.dc-type__count')).toHaveText('10k')
     await expect(card(page, 'Logs').locator('.dc-type__count')).toHaveText('184k')
   })
 
@@ -261,7 +262,7 @@ test.describe('Home — heads only', () => {
     await expect(page.locator('.dc-type__row')).toHaveCount(0)
     await expect(page.locator('.dc-type__empty')).toHaveCount(0)
     for (const entity of iRadarSchema.entities) {
-      await expect(card(page, entity.label).locator('.dc-type__count')).toHaveText(entity.count)
+      await expect(card(page, entity.label).locator('.dc-type__count')).toHaveText(entityCount(entity))
     }
   })
 

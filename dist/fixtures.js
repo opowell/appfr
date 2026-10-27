@@ -193,7 +193,7 @@ const h = [
 ], c = a({
   key: "settings",
   label: "Settings",
-  count: "20",
+  count: 20,
   primary: "Setting",
   secondary: "Key",
   metric1: "Changes",
@@ -229,7 +229,7 @@ const h = [
 }), m = a({
   key: "logs",
   label: "Logs",
-  count: "184k",
+  count: 184e3,
   primary: "Event",
   secondary: "Trace id",
   metric1: "Duration",
@@ -260,7 +260,7 @@ const h = [
     a({
       key: "searches",
       label: "Searches",
-      count: "38",
+      count: 38,
       primary: "Search",
       secondary: "Expression",
       metric1: "New",
@@ -283,7 +283,7 @@ const h = [
     a({
       key: "items",
       label: "Items",
-      count: "9,988",
+      count: 9988,
       primary: "Item",
       secondary: "URL",
       metric1: "Links",
@@ -306,7 +306,7 @@ const h = [
     a({
       key: "scrapers",
       label: "Scrapers",
-      count: "24",
+      count: 24,
       primary: "Scraper",
       secondary: "Host",
       metric1: "Rules",
@@ -339,7 +339,7 @@ const h = [
     a({
       key: "sets",
       label: "Sets",
-      count: "19,412",
+      count: 19412,
       primary: "Set",
       secondary: "Set number",
       metric1: "Parts",
@@ -366,7 +366,7 @@ const h = [
     a({
       key: "pieces",
       label: "Pieces",
-      count: "58,203",
+      count: 58203,
       primary: "Piece",
       secondary: "Part number",
       metric1: "Colors",
@@ -398,7 +398,7 @@ const h = [
     a({
       key: "colors",
       label: "Colors",
-      count: "267",
+      count: 267,
       primary: "Color",
       secondary: "Hex",
       metric1: "Parts",
@@ -424,7 +424,7 @@ const h = [
     a({
       key: "inventories",
       label: "Inventories",
-      count: "21,884",
+      count: 21884,
       primary: "Inventory",
       secondary: "Revision",
       metric1: "Lines",
@@ -447,7 +447,7 @@ const h = [
     a({
       key: "categories",
       label: "Categories",
-      count: "68",
+      count: 68,
       primary: "Category",
       secondary: "Slug",
       metric1: "Parts",
@@ -482,7 +482,7 @@ const h = [
     a({
       key: "tenants",
       label: "Tenants",
-      count: "142",
+      count: 142,
       primary: "Tenant",
       secondary: "Slug",
       metric1: "Crawls",
@@ -507,7 +507,7 @@ const h = [
     a({
       key: "crawls",
       label: "Crawls",
-      count: "3,410",
+      count: 3410,
       primary: "Crawl",
       secondary: "Run id",
       metric1: "Pages",
@@ -530,7 +530,7 @@ const h = [
     a({
       key: "tests",
       label: "Tests",
-      count: "486",
+      count: 486,
       primary: "Test",
       secondary: "Key",
       metric1: "Assertions",
@@ -553,7 +553,7 @@ const h = [
     a({
       key: "testresults",
       label: "Test results",
-      count: "92,117",
+      count: 92117,
       primary: "Result",
       secondary: "Result id",
       metric1: "Duration",
@@ -576,7 +576,7 @@ const h = [
     a({
       key: "crawlresults",
       label: "Crawl results",
-      count: "1.2m",
+      count: 12e5,
       primary: "Page",
       secondary: "URL",
       metric1: "Size kB",
@@ -609,7 +609,7 @@ const h = [
     a({
       key: "units",
       label: "Units",
-      count: "612",
+      count: 612,
       primary: "Unit",
       secondary: "Code",
       metric1: "Power",
@@ -632,7 +632,7 @@ const h = [
     a({
       key: "factions",
       label: "Factions",
-      count: "18",
+      count: 18,
       primary: "Faction",
       secondary: "Tag",
       metric1: "Units",
@@ -655,7 +655,7 @@ const h = [
     a({
       key: "scenarios",
       label: "Scenarios",
-      count: "94",
+      count: 94,
       primary: "Scenario",
       secondary: "Slug",
       metric1: "Rounds",
@@ -678,7 +678,7 @@ const h = [
     a({
       key: "runs",
       label: "Runs",
-      count: "48,220",
+      count: 48220,
       primary: "Run",
       secondary: "Run id",
       metric1: "Rounds",

@@ -40,7 +40,7 @@ The default view shows it as **a card per item type**: the type's name, how
 many of it there are, and its most recently updated few.
 
 ```
-┌── Searches      38 ──┐ ┌── Items      9,988 ──┐ ┌── Scrapers      24 ──┐
+┌── Searches      38 ──┐ ┌── Items        10k ──┐ ┌── Scrapers      24 ──┐
 │ Security advisories  │ │ Supplier directory   │ │ Hacker News          │
 │   cve OR advisory    │ │   example.com/eu     │ │   news.ycombinator   │
 │            350 NEW   │ │           476 LINKS  │ │          629 RULES   │
@@ -451,7 +451,7 @@ const schema: DomainSchema = {
     {
       key: 'items',
       label: 'Items',
-      count: '9,988',
+      count: 9988,
       // Views read these instead of hard-coding column names.
       // What this type is: every field the shell shows, and which of them a
       // card, a tile and a preview pane are made of. The shell has no set of
@@ -1808,14 +1808,18 @@ you rather than picking a generic name out of a list.
 
 It says how many, too, because what is being listed and how much of it there is
 are one question. Each type carries the population the schema publishes —
-`Items · 9,988` — and the type in force says what actually matched the moment a
+`Items · 10k` — and the type in force says what actually matched the moment a
 facet or an expression narrows it, since the population is then no longer what
 is on screen. `Everything` carries a count only while it is what is being
 listed: the corpus population is the one number no schema publishes, so what
 stands there is the size of the result the shell asked for. Both halves of that
-label are counts in one control, so the live ones are formatted the way a
-schema is expected to publish `count` — `formatCount`, exported, so a host has
-the same one rather than a near miss.
+label are counts in one control, so the shell writes both: a schema publishes
+`count` as a number and the shell abbreviates it with `formatCount`, the same
+function the live counts go through — `9988` reads `Items · 10k`, since a
+population is read for its size. A string is shown as given, for a count that
+is not a number yet (`~1.2k` while it is estimated, `''` while it is unknown).
+`formatInteger` is the exact, grouped form the pager writes page and row
+numbers in.
 
 A part is a control of its own: pressing it lifts that constraint.
 
@@ -2375,7 +2379,7 @@ const layout = ref<WindowNode>(
 <template>
   <!-- Like the shell, the window fills the box it is given. -->
   <div style="height: 100vh">
-    <WindowFrame v-model:layout="layout" :panels="panels" movable>
+    <WindowFrame v-model:layout="layout" :panels="panels">
       <template #panel-items="{ view }">
         <ItemsTable :view="view" />
       </template>
@@ -2529,8 +2533,8 @@ const stepped = cascade([panelNode('items'), panelNode('sources')], { w: 420, h:
 `frame` fills in anything it is not told from `DEFAULT_FRAME`, so a position or
 a size alone is enough.
 
-With `movable`, a window drags by its title bar — the part of the tab strip
-that is not a tab. With `resizable`, it resizes from any of its eight edges and
+A window drags by its title bar — the part of the tab strip that is not a
+tab. With `resizable`, it resizes from any of its eight edges and
 corners: the dragged edge follows the pointer and the opposite one stays put.
 Both keep the window inside the space it floats over and no smaller than
 `minPanelSize`, and Escape mid-drag puts it back. Touching a window anywhere
@@ -3037,11 +3041,10 @@ the same thing, which is worth avoiding.
 
 ### Closing panels
 
-`closable` gives every panel a close button — one per tab in a tabbed pane,
+Every panel has a close button — one per tab in a tabbed pane,
 since a tab that is not on top is otherwise unreachable. The button and nothing
 else: a `Close` item would sit in a menu opened from the header the cross is
-already in. A panel can opt in or out on its own with `closable` in its
-definition.
+already in. A panel that must stay says `closable: false` in its definition.
 
 A pane of tabs has **Close all** in its menu, under the tabs' heading, since no
 button does that. It sends `panel-close` once for each panel on the strip that
@@ -3054,7 +3057,6 @@ removes it, after which the layout reconciles around the gap.
 ```vue
 <WindowFrame
   :panels="panels"
-  closable
   @panel-close="(id) => (panels = panels.filter((panel) => panel.id !== id))"
 />
 ```
@@ -3136,8 +3138,8 @@ version is in `stories/helpers.ts`, as `ItemsPanel`.
 
 ### Moving panels
 
-With `movable`, a panel can be dragged by its header onto any other. Where it
-lands is decided by which part of the target it is dropped on:
+A panel can be dragged by its header onto any other — any panel not marked
+`fixed`. Where it lands is decided by which part of the target it is dropped on:
 
 | Dropped on | Result |
 | --- | --- |
@@ -3217,7 +3219,7 @@ the arithmetic is testable without a DOM.
 arrangement takes one handler:
 
 ```vue
-<WindowFrame :panels="panels" movable @update:layout="(next) => save(JSON.stringify(next))" />
+<WindowFrame :panels="panels" @update:layout="(next) => save(JSON.stringify(next))" />
 ```
 
 A stored layout is squared with the panels that actually exist before it is
@@ -3245,7 +3247,7 @@ useLayoutRoute(layout, { adapter: route, home })
 ```
 
 ```vue
-<WindowFrame v-model:layout="layout" :panels="panels" movable />
+<WindowFrame v-model:layout="layout" :panels="panels" />
 ```
 
 - **One adapter for the page.** The shell's query and the layout are written
@@ -3304,10 +3306,8 @@ or a test without going near the DOM.
 | `panels` | `WindowPanelDef[]` | — | Required. Id, title, and optional subtitle, views, `fixed`, `closable` and `keepAlive`. |
 | `layout` | `WindowNode \| null` | one row of every panel | `v-model:layout` to own the arrangement, tabs and their order included. |
 | `views` | `Record<string, string>` | each panel's default | `v-model:views` — panel id to view key. |
-| `movable` | `boolean` | `false` | Lets panels be dragged into a new part of the grid, and floating windows be moved. |
 | `resizable` | `boolean` | `true` | Lets the boundary between two panels be dragged, and floating windows be resized. |
 | `minPanelSize` | `number` | `120` | Smallest a panel or a floating window may be resized to, in pixels. |
-| `closable` | `boolean` | `false` | Gives every panel a close button, which asks the host to drop it. |
 | `menu` | `boolean` | `true` | Whether the *window's* own menu items are offered — how a space is shown, a pane's tabs, its close. Items the content registered stay either way. |
 | `spaceNames` | `boolean` | `true` | Whether a strip that *is* a named space says that name beside its tabs. Off, the name is kept in the layout and said on the bar of every other shape. |
 | `rootBar` | `boolean` | `true` | Whether the space at the root draws a bar and a border. Off, the panes sit straight in the window and the root's menu is the exposed `rootMenu`, for a menu bar. |
@@ -3523,20 +3523,12 @@ are a whole theme:
 | `--dc-shadow`, `--dc-header-height` | — |
 | `--dc-card-image`, `--dc-card-picture` | how large a record card's picture is drawn (64px), and how narrow a column of picture cards may be (160px) |
 
-And three a theme leaves unset, whose absence is the shell as it is: the
-header's search box is filled `--dc-bg-1`, with no resting edge and its
-placeholder in `--dc-fg-3`. These set the box's own fill and edge; focus still
-swaps in the accent edge.
+And one a theme leaves unset, whose absence is the shell as it is: the
+header's search box writes its placeholder in `--dc-fg-3`, and
+`--dc-search-placeholder` sets another.
 
 ```vue
-<DataShell
-  theme="dark"
-  :tokens="{
-    '--dc-search-fill': 'var(--dc-bg-1)',
-    '--dc-search-border': 'var(--dc-line)',
-    '--dc-search-placeholder': 'var(--dc-fg-2)',
-  }"
-/>
+<DataShell theme="dark" :tokens="{ '--dc-search-placeholder': 'var(--dc-fg-2)' }" />
 ```
 
 ### Any single token
@@ -3548,7 +3540,8 @@ about and the rest stay derived: `--dc-bg-0…3`, `--dc-line`, `--dc-line-2`,
 `--dc-raised-ink` (menus, dialogs, popovers and toasts, which float over the
 results and so need a background and a text colour that work together), `--dc-ground` (the opaque
 colour a table's headings are laid on, so the rows scrolling under them do not
-show through), and `--dc-scrim`,
+show through), `--dc-field` (what the header's search box is filled with: the
+surface a step away from the ink, `Field` under `inherit` and `mono-size`), and `--dc-scrim`,
 `--dc-scrim-strong`, `--dc-scrim-fg` (over imagery, not over a surface).
 
 Nothing is declared on `:root`, so dropping the shell into an app cannot

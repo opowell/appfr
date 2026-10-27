@@ -5,19 +5,10 @@ import type { DropEdge, FloatRect, FrameChange, PanelMove, WindowNode, WindowPan
 type __VLS_Props = {
     /** The panels this window can show, in the order a default layout uses. */
     panels: WindowPanelDef[];
-    /** Lets panels be dragged by their header into a new part of the grid. */
-    movable?: boolean;
     /** Lets the boundary between two panels be dragged. */
     resizable?: boolean;
     /** Smallest a panel may be resized to, in pixels. */
     minPanelSize?: number;
-    /**
-     * Gives every panel a close button. Closing is a request, not something
-     * the window does itself: it emits `panel-close` and the host drops the
-     * panel from `panels`, which is what removes it. A panel can say otherwise
-     * with its own `closable`.
-     */
-    closable?: boolean;
     /**
      * Whether a pane offers the items the *window* contributes to its menu —
      * which view it is showing, how its space is shown, the way along its
@@ -190,8 +181,6 @@ declare const _default: import("vue").DefineComponent<__VLS_PublicProps, {
     menu: boolean;
     theme: ShellTheme;
     resizable: boolean;
-    movable: boolean;
-    closable: boolean;
     minPanelSize: number;
     spaceNames: boolean;
     rootBar: boolean;

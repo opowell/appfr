@@ -43,7 +43,7 @@ const toggle = (key: string, label: string, text: string): ToggleFacet => ({
 interface EntityInput {
   key: string
   label: string
-  count: string
+  count: number
   /** What the record's name is called, and what its reference is called. */
   primary: string
   secondary: string
@@ -323,7 +323,7 @@ const pieceColumns: ColumnDef[] = [
 export const settingsEntity: EntitySchema = entity({
   key: 'settings',
   label: 'Settings',
-  count: '20',
+  count: 20,
   primary: 'Setting',
   secondary: 'Key',
   metric1: 'Changes',
@@ -362,7 +362,7 @@ export const settingsEntity: EntitySchema = entity({
 export const logsEntity: EntitySchema = entity({
   key: 'logs',
   label: 'Logs',
-  count: '184k',
+  count: 184_000,
   primary: 'Event',
   secondary: 'Trace id',
   metric1: 'Duration',
@@ -397,7 +397,7 @@ export const iRadarSchema: DomainSchema = {
     entity({
       key: 'searches',
       label: 'Searches',
-      count: '38',
+      count: 38,
       primary: 'Search',
       secondary: 'Expression',
       metric1: 'New',
@@ -420,7 +420,7 @@ export const iRadarSchema: DomainSchema = {
     entity({
       key: 'items',
       label: 'Items',
-      count: '9,988',
+      count: 9988,
       primary: 'Item',
       secondary: 'URL',
       metric1: 'Links',
@@ -443,7 +443,7 @@ export const iRadarSchema: DomainSchema = {
     entity({
       key: 'scrapers',
       label: 'Scrapers',
-      count: '24',
+      count: 24,
       primary: 'Scraper',
       secondary: 'Host',
       metric1: 'Rules',
@@ -480,7 +480,7 @@ export const legoSchema: DomainSchema = {
     entity({
       key: 'sets',
       label: 'Sets',
-      count: '19,412',
+      count: 19_412,
       primary: 'Set',
       secondary: 'Set number',
       metric1: 'Parts',
@@ -507,7 +507,7 @@ export const legoSchema: DomainSchema = {
     entity({
       key: 'pieces',
       label: 'Pieces',
-      count: '58,203',
+      count: 58_203,
       primary: 'Piece',
       secondary: 'Part number',
       metric1: 'Colors',
@@ -539,7 +539,7 @@ export const legoSchema: DomainSchema = {
     entity({
       key: 'colors',
       label: 'Colors',
-      count: '267',
+      count: 267,
       primary: 'Color',
       secondary: 'Hex',
       metric1: 'Parts',
@@ -565,7 +565,7 @@ export const legoSchema: DomainSchema = {
     entity({
       key: 'inventories',
       label: 'Inventories',
-      count: '21,884',
+      count: 21_884,
       primary: 'Inventory',
       secondary: 'Revision',
       metric1: 'Lines',
@@ -588,7 +588,7 @@ export const legoSchema: DomainSchema = {
     entity({
       key: 'categories',
       label: 'Categories',
-      count: '68',
+      count: 68,
       primary: 'Category',
       secondary: 'Slug',
       metric1: 'Parts',
@@ -627,7 +627,7 @@ export const commerceSchema: DomainSchema = {
     entity({
       key: 'tenants',
       label: 'Tenants',
-      count: '142',
+      count: 142,
       primary: 'Tenant',
       secondary: 'Slug',
       metric1: 'Crawls',
@@ -652,7 +652,7 @@ export const commerceSchema: DomainSchema = {
     entity({
       key: 'crawls',
       label: 'Crawls',
-      count: '3,410',
+      count: 3410,
       primary: 'Crawl',
       secondary: 'Run id',
       metric1: 'Pages',
@@ -675,7 +675,7 @@ export const commerceSchema: DomainSchema = {
     entity({
       key: 'tests',
       label: 'Tests',
-      count: '486',
+      count: 486,
       primary: 'Test',
       secondary: 'Key',
       metric1: 'Assertions',
@@ -698,7 +698,7 @@ export const commerceSchema: DomainSchema = {
     entity({
       key: 'testresults',
       label: 'Test results',
-      count: '92,117',
+      count: 92_117,
       primary: 'Result',
       secondary: 'Result id',
       metric1: 'Duration',
@@ -721,7 +721,7 @@ export const commerceSchema: DomainSchema = {
     entity({
       key: 'crawlresults',
       label: 'Crawl results',
-      count: '1.2m',
+      count: 1_200_000,
       primary: 'Page',
       secondary: 'URL',
       metric1: 'Size kB',
@@ -758,7 +758,7 @@ export const battleSimSchema: DomainSchema = {
     entity({
       key: 'units',
       label: 'Units',
-      count: '612',
+      count: 612,
       primary: 'Unit',
       secondary: 'Code',
       metric1: 'Power',
@@ -781,7 +781,7 @@ export const battleSimSchema: DomainSchema = {
     entity({
       key: 'factions',
       label: 'Factions',
-      count: '18',
+      count: 18,
       primary: 'Faction',
       secondary: 'Tag',
       metric1: 'Units',
@@ -804,7 +804,7 @@ export const battleSimSchema: DomainSchema = {
     entity({
       key: 'scenarios',
       label: 'Scenarios',
-      count: '94',
+      count: 94,
       primary: 'Scenario',
       secondary: 'Slug',
       metric1: 'Rounds',
@@ -827,7 +827,7 @@ export const battleSimSchema: DomainSchema = {
     entity({
       key: 'runs',
       label: 'Runs',
-      count: '48,220',
+      count: 48_220,
       primary: 'Run',
       secondary: 'Run id',
       metric1: 'Rounds',

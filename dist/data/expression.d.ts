@@ -24,11 +24,17 @@ import type { ColumnDef, DomainSchema, EntitySchema, ShellRow } from '../types';
  * is for. Numbers and booleans compare exactly either way, there being no
  * containment a number could mean.
  *
+ * A value of two numbers with `..` between them is a range, ends included:
+ * `price:1..5`, and either end left open — `price:..5`, `quantity:100..`. It
+ * is one term for what `price>=1 price<=5` says in two, and the one a range
+ * facet writes. A row whose field holds no number is not constrained by it.
+ *
  * Two `field:value` terms on the same field in one group are any-of rather
  * than both: `category:5 category:7` is the rows filed under either, since
  * no row is filed under both, and it is what pressing two categories writes.
- * Only a positive `:` or `=` reads so — `year>=1988 year<=1990` is a range,
- * and `-set:a -set:b` is both sets left out.
+ * Only a positive `:` or `=` naming a value reads so — `year>=1988
+ * year<=1990` and `year:1988.. year:..1990` are each a range, and
+ * `-set:a -set:b` is both sets left out.
  *
  * A leading `-` turns a term round: `-theme:space` keeps every row the plain
  * term would have dropped, and drops every row it would have kept. Only the
@@ -57,6 +63,21 @@ export interface TextTerm {
 export type Term = FieldTerm | TextTerm;
 /** Disjunction of conjunctions: the outer array is `OR`, each inner is `AND`. */
 export type Expression = Term[][];
+/** The ends of a range: `null` for an end left open. */
+export interface RangeBounds {
+    min: number | null;
+    max: number | null;
+}
+/**
+ * The range a value writes — `1..5`, `..5`, `100..` — or null where it is no
+ * range: a value with no number at either end, `..` on its own, is a word.
+ * Ends given the wrong way round are read the right way round.
+ */
+export declare function rangeOf(value: string): RangeBounds | null;
+/** A range written back as the value {@link rangeOf} reads: `1..5`, `..5`, `100..`. */
+export declare function formatRange(bounds: RangeBounds): string;
+/** A `field:a..b` term — a range rather than a value the field is named by. */
+export declare function isRangeTerm(term: Term): boolean;
 export declare function parseExpression(input: string): Expression;
 /**
  * A column's shortcut: the first letter of each word of its heading — `p` for
@@ -75,20 +96,40 @@ export declare function columnShortcut(label: string): string;
  * that already names something is left alone (see {@link namesAlready}), and
  * so is one no column answers to, as an unknown field is anywhere.
  *
- * Written out when the query is committed rather than read at match time, so
- * the term in the address, on its pill and in front of the host's source is
- * the column's own name: a source that answers `ratio` itself need never learn
- * that `pr` means it.
+ * Written out when the query is committed, and when the address is read, so
+ * the query the shell holds and hands the host's source is in the columns' own
+ * names: a source that answers `ratio` itself need never learn that `pr` means
+ * it. The address is where it goes back to the shortcut — see
+ * {@link compactShortcuts}.
+ *
+ * `schema` names the join keys, which are never shortcuts; without one, only
+ * what the entity itself declares is.
  *
  * Returns what was typed, unchanged, where there is nothing to write out.
  */
-export declare function expandShortcuts(input: string, entity: EntitySchema | null | undefined): string;
+export declare function expandShortcuts(input: string, entity: EntitySchema | null | undefined, schema?: DomainSchema | null): string;
+/**
+ * The other way round: each term on a column written with the column's
+ * shortcut — `ratio<0.5` as `pr<0.5`. What the address holds, so the URL says
+ * what was typed rather than what the columns are keyed.
+ *
+ * Only a column that has a shortcut is shortened (see {@link columnShortcutOf}),
+ * so `expandShortcuts` reads every term of the result back as the one it was.
+ * A join key stays as it is, for the reason {@link isScopeField} gives.
+ */
+export declare function compactShortcuts(input: string, entity: EntitySchema | null | undefined, schema?: DomainSchema | null): string;
+/**
+ * What a field is called on screen: the title of the facet written on it, or
+ * the heading of the column it names. Undefined for a join key, which a pill
+ * names the record of instead, and for a field the entity declares nothing on.
+ */
+export declare function fieldHeading(field: string, entity: EntitySchema | null | undefined, schema?: DomainSchema | null): string | undefined;
 /**
  * The shortcut {@link expandShortcuts} writes out as this column, or nothing
  * where it has none: its initials name something already, belong to a column
  * declared before it, or it has no name a term could be written with.
  */
-export declare function columnShortcutOf(column: ColumnDef, entity: EntitySchema | null | undefined): string | undefined;
+export declare function columnShortcutOf(column: ColumnDef, entity: EntitySchema | null | undefined, schema?: DomainSchema | null): string | undefined;
 /**
  * True when the row satisfies at least one `OR` group in full — every term
  * of it, except that the naming terms on one field (see {@link names}) count

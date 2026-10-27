@@ -4,10 +4,8 @@ export interface SummaryTerm {
     /** Stable identity for list rendering and for the remove handler. */
     id: string;
     label: string;
-    /** The facet this term came from, or `'entity'` for the entity filter. */
+    /** {@link EXPRESSION_TERM} for a term of the expression, or {@link ENTITY_TERM} for the entity filter. */
     facetKey: string;
-    /** For chips terms, the single option this term stands for. */
-    option?: string;
     /**
      * For expression terms, where in the expression the term sits: which `OR`
      * group, and where in that group. That pair is its address — the text of a
@@ -27,6 +25,12 @@ export interface SummaryTerm {
     value?: string;
     /** The term was written with a leading `-`: it says which rows are *out*. */
     negated?: boolean;
+    /**
+     * For an expression term, the term as the address and the search box write
+     * it — `p:..5` where the label says `Price ≤ 5`. What a reader types to say
+     * it again, so it is what the pill says on hover.
+     */
+    address?: string;
 }
 /** The term id the entity filter uses, so it can be lifted like any other. */
 export declare const ENTITY_TERM = "entity";
@@ -39,7 +43,9 @@ export declare const EXPRESSION_TERM = "expr";
  * any other, so what excludes them is an ordinary, liftable filter rather than
  * a mode the shell is in.
  */
-export declare function summaryTerms(query: ShellQuery, entity: EntitySchema | null): SummaryTerm[];
+export declare function summaryTerms(query: ShellQuery, entity: EntitySchema | null, 
+/** For which fields are join keys, which keep their own names. */
+schema?: DomainSchema | null): SummaryTerm[];
 /**
  * The query as one line of prose. An untouched query still states what it is
  * showing and how, so nothing that says this is ever blank and none of it

@@ -1,5 +1,5 @@
 import type { ComputedRef, Ref } from 'vue';
-import type { EntitySchema, ShellQuery } from '../types';
+import type { DomainSchema, EntitySchema, ShellQuery } from '../types';
 /** How long typing has to pause before what was typed is read. */
 export declare const DRAFT_DELAY = 150;
 export interface UseDraftOptions {
@@ -7,6 +7,8 @@ export interface UseDraftOptions {
     query: ComputedRef<ShellQuery>;
     /** The entity it lists, whose column shortcuts a draft may be written in. */
     entity: ComputedRef<EntitySchema | null>;
+    /** The schema, which says which fields are join keys and so never shortcuts. */
+    schema?: ComputedRef<DomainSchema>;
     /**
      * Commits an expression, returning whether that navigated anywhere — see
      * {@link QueryState.setExpression}, which is what this usually is.

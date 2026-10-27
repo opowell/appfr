@@ -68,14 +68,6 @@ export interface StatusCount {
     tone?: PillTone;
 }
 export type SortDirection = 'asc' | 'desc';
-/**
- * How the header bar and the query panel that drops from it are brought to one
- * width: `grow` widens the panel to the bar, `shrink` narrows the bar to the
- * panel — to `--dc-header-width` — so the two still measure the same.
- */
-export type ShellWidthMatch = 'grow' | 'shrink';
-/** Where a bar and panel narrowed by `shrink` sit across the shell. */
-export type ShellAlign = 'left' | 'center' | 'right';
 /** A multi-select set of mutually compatible values. */
 export interface ChipsFacet {
     kind: 'chips';
@@ -90,27 +82,6 @@ export interface ChipsFacet {
      * and is what the mock source generates against.
      */
     multiple?: boolean;
-    /**
-     * The most rows of chips the facet shows before it scrolls — for a facet
-     * whose options grow with the data (every host a tool has run against,
-     * every target URL), where the tallest facet would otherwise set the height
-     * of the whole panel and push the rest of it off the screen.
-     *
-     * The cut falls between two rows rather than through one: the height is a
-     * whole number of chips, worked out from the chip's own type size, so it
-     * follows a theme or a token that changes it. And the cut says that it is
-     * one — the edge with more behind it fades, from a scroll timeline, where
-     * motion is welcome. Left out, the facet is as tall as its chips.
-     */
-    maxRows?: number;
-    /**
-     * One line per chip, ellipsised where it would be wider than the facet,
-     * the whole value on hover. `end` cuts the tail, as text usually is; `start`
-     * cuts the head instead, for values that share a long beginning and differ
-     * at the end — URLs on one host, paths under one root — where the head is
-     * the part that says nothing. Left out, a chip wraps as it always has.
-     */
-    truncate?: 'end' | 'start';
 }
 /** A numeric window. Either bound may be left open. */
 export interface RangeFacet {
@@ -139,8 +110,6 @@ export type FacetValue = {
     kind: 'toggle';
     on: boolean;
 };
-/** Facet values keyed by {@link FacetDef.key}. */
-export type FacetState = Record<string, FacetValue>;
 /**
  * What a cell draws. `text` when a column does not say.
  *
@@ -610,9 +579,13 @@ export interface ShellQuery {
     /** {@link SortDef.key} to order by. */
     sort: string;
     dir: SortDirection;
-    /** Free-text expression, in the schema's own query language. */
+    /**
+     * Free-text expression, in the schema's own query language. The facets are
+     * in it too, as the terms they write — `quantity:100..`, `color=Red` — so
+     * the query panel's controls and the typed query are one query, read one
+     * way: see `facetValue`.
+     */
     expr: string;
-    facets: FacetState;
     /**
      * Which page of the matching rows is on screen, 1-based and never lower. A
      * page is `limit` rows long. This is a position in a result set rather than

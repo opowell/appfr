@@ -1,4 +1,4 @@
-import type { DomainSchema, ShellQuery, ShellQueryDefaults } from '../types';
+import type { DomainSchema, EntitySchema, ShellQuery, ShellQueryDefaults, SortDef } from '../types';
 /** Query-string keys the shell owns. Anything else in the URL is left alone. */
 export declare const PARAM_ENTITY = "e";
 export declare const PARAM_VIEW = "v";
@@ -6,13 +6,18 @@ export declare const PARAM_SORT = "s";
 export declare const PARAM_DIR = "d";
 export declare const PARAM_EXPR = "q";
 export declare const PARAM_PAGE = "p";
-export declare const FACET_PREFIX = "f_";
 /**
  * Value of `e` meaning "every entity". Only needed when the host lands on an
  * entity by default, since then the absence of `e` already means that entity
  * and the whole corpus has to be spelled out.
  */
 export declare const ENTITY_ALL = "*";
+/** What the address calls an entity: its initials where they are its own, its key otherwise. */
+export declare function entityAddress(entity: EntitySchema, schema: DomainSchema): string;
+/** The entity an address names, by key or by {@link entityAddress}'s shortcut. */
+export declare function findEntityByAddress(schema: DomainSchema, address: string | null | undefined): EntitySchema | null;
+/** What the address calls a sort among the ones on offer, on the same rule. */
+export declare function sortAddress(sort: SortDef, sorts: readonly SortDef[]): string;
 /**
  * Reads a {@link ShellQuery} out of a URL search string. Unknown entities,
  * views, sorts and facet values fall back to the schema's defaults, so an
@@ -50,10 +55,12 @@ export declare function searchFromQuery(routeQuery: RouteQuery): string;
  * The expression out of a search string — the `q` parameter, decoded, or `''`
  * where there is none.
  *
- * Read without a schema, for code that only needs to know which records a
- * URL names ({@link recordsIn}) and has no schema yet, or none it wants to
- * parse the rest against. Exactly the `expr` {@link parseQuery} reads out of
- * the same search, by the same decoding — including the last of a repeated
- * parameter winning — so the two never disagree about what the query says.
+ * Given the schema, exactly the `expr` {@link parseQuery} reads out of the
+ * same search: its shortcuts written out against the entity the search names.
+ * Without one, the terms as the address writes them — for code that only needs
+ * to know which records a URL names ({@link recordsIn}) and has no schema yet,
+ * which is enough, since a join key is never shortened. Either way by the same
+ * decoding, including the last of a repeated parameter winning, so the two
+ * never disagree about what the query says.
  */
-export declare function readExpression(search: string): string;
+export declare function readExpression(search: string, schema?: DomainSchema): string;

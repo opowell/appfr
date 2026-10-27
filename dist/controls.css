@@ -76,7 +76,7 @@
 }
 
 /* A button that reads as a link: an action in a sentence, or one of a row of
-   quiet ones. */
+   quiet ones. Never underlined, being a button — its hover is a tint. */
 :where(.dc-shell) :where(button.link:not([class*='dc-'])) {
   padding: 2px 4px;
   border: none;
@@ -84,8 +84,7 @@
 }
 
 :where(.dc-shell) :where(button.link:not([class*='dc-']):hover:not(:disabled)) {
-  background: none;
-  text-decoration: underline;
+  background: var(--dc-accent-bg);
 }
 
 /* The colours, at the weight of `.dc-shell button` — see the top of the file. */

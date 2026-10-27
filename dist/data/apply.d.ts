@@ -1,17 +1,4 @@
-import type { EntitySchema, FacetState, QueryRequest, QueryResult, ShellRow } from '../types';
-/**
- * A query, applied to rows that are already in memory: the facets, the
- * expression, the sort and the page — the whole of what a source does, for a
- * source whose rows are an array.
- *
- * Two sources are made of it. The mock generates its rows and the memory
- * source is handed them, and the two differ in exactly the two places
- * {@link ApplyRules} names; everything else is this one loop, so the
- * expression language and the facet semantics behave in either exactly as
- * they do everywhere else.
- */
-/** Applies the facet state to a row. Neutral facets never exclude anything. */
-export declare function matchesFacets(row: ShellRow, facets: FacetState): boolean;
+import type { EntitySchema, QueryRequest, QueryResult, ShellRow } from '../types';
 /** Where the two in-memory sources part ways. */
 export interface ApplyRules {
     /**
@@ -29,8 +16,7 @@ export interface ApplyRules {
  * everything that matched.
  *
  * No entity selected means the whole corpus: every entity of the schema, in
- * the schema's order. Facets belong to an entity, so they only apply when one
- * is selected. The schema goes to {@link matchesExpression} as well, which
+ * the schema's order. The facets are terms of the expression. The schema goes to {@link matchesExpression} as well, which
  * is what lets {@link DomainSchema.strictScopes} reach a source built on this
  * — and changes nothing for a schema that does not set it.
  */

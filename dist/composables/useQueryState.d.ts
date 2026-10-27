@@ -16,7 +16,8 @@ export interface UseQueryStateOptions {
     /**
      * How an individual facet edit navigates. Adjusting facets is exploratory
      * and one history entry per chip makes the back button useless, so these
-     * replace by default.
+     * replace by default — though what they write is terms of the expression,
+     * the same as a term typed.
      */
     facetNavigationMode?: MaybeRefOrGetter<NavigationMode>;
 }
@@ -37,7 +38,7 @@ export interface QueryState {
     summary: ComputedRef<string>;
     /** The individually removable terms behind that summary. */
     terms: ComputedRef<SummaryTerm[]>;
-    /** True on the home screen: no entity, no facets, no expression. */
+    /** True on the home screen: no entity and no expression, which holds the facets too. */
     isPristine: ComputedRef<boolean>;
     /** True when no entity filter is applied — every entity is in the results. */
     isEverything: ComputedRef<boolean>;
@@ -88,7 +89,7 @@ export interface QueryState {
     setRange(key: string, min: number | null, max: number | null): void;
     toggleFlag(key: string): void;
     removeTerm(term: SummaryTerm): void;
-    /** Clears the entity filter, the expression and every facet. */
+    /** Clears the entity filter and the expression, facets and all. */
     clearFilters(): void;
     /** Returns everything to the schema's defaults — the home screen. */
     reset(): void;

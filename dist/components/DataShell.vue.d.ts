@@ -1,6 +1,6 @@
 import '../style/tokens.css';
 import type { Component } from 'vue';
-import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellAlign, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ShellWidthMatch, ViewsOption } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ViewsOption } from '../types';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
 type __VLS_Props = {
@@ -137,19 +137,6 @@ type __VLS_Props = {
      * that has already decided how text looks.
      */
     theme?: ShellTheme;
-    /**
-     * How the header bar and the panel that drops from it are brought to one
-     * width. `grow`, the default, widens the panel to the bar, so the query
-     * opens over exactly what it summarizes however wide the shell is.
-     * `shrink` brings the bar in to the panel instead — to `--dc-header-width`
-     * — which keeps a query off the far edges of a very wide screen.
-     */
-    matchWidth?: ShellWidthMatch;
-    /**
-     * Where that narrowed pair sits across the shell. Only `shrink` leaves
-     * anything to align: a panel grown to a full-width bar already spans it.
-     */
-    headAlign?: ShellAlign;
     /** Offers the star affordance on rows. */
     pinnable?: boolean;
     /**
@@ -205,12 +192,6 @@ type __VLS_Slots = {
         /** {@link DomainSchema.label}, for a mark that wants to say it too. */
         label: string;
     }) => unknown;
-    /**
-     * A section of your own at the end of the query panel — for the controls
-     * that belong to the application rather than to the query, which the header
-     * bar would otherwise have to carry beside the summary it is there to show.
-     */
-    'panel-section'?: () => unknown;
     /**
      * Cards of the host's own, above and below the card-per-type screen — the
      * things a shell read inside one record has to say that no type of record
@@ -279,24 +260,19 @@ type __VLS_Slots = {
         loading: boolean;
     }) => unknown;
 };
-declare function closePanel(): void;
 type __VLS_PublicProps = __VLS_Props & {
     /**
-     * Each of these is optionally controlled: bind `v-model:open`,
-     * `v-model:pinned` or `v-model:selected` to own the state, or leave them alone
-     * and the shell keeps it internally. `defineModel` distinguishes the two by
-     * whether the prop was actually passed, which a plain boolean prop cannot do —
-     * Vue casts an absent boolean to `false`.
+     * Each of these is optionally controlled: bind `v-model:pinned` or
+     * `v-model:selected` to own the state, or leave them alone and the shell
+     * keeps it internally. `defineModel` distinguishes the two by whether the
+     * prop was actually passed.
      */
-    'open'?: boolean;
     'pinned'?: string[];
     /** Which records are ticked, by id — see the `Selection` an operation carries. */
     'selected'?: string[];
 };
 declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, {
     query: import("vue").ComputedRef<ShellQuery>;
-    openPanel: () => void;
-    closePanel: typeof closePanel;
 }, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     activate: (row: ShellRow) => any;
     create: (entity: EntitySchema) => any;
@@ -306,7 +282,6 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     drill: (row: ShellRow, entity: EntitySchema | null, options: PressOptions) => any;
     "query-change": (query: ShellQuery) => any;
     "toggle-pin": (row: ShellRow) => any;
-    "update:open": (value: boolean) => any;
     "update:pinned": (value: string[]) => any;
     "update:selected": (value: string[]) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_PublicProps> & Readonly<{
@@ -318,7 +293,6 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     onDrill?: ((row: ShellRow, entity: EntitySchema | null, options: PressOptions) => any) | undefined;
     "onQuery-change"?: ((query: ShellQuery) => any) | undefined;
     "onToggle-pin"?: ((row: ShellRow) => any) | undefined;
-    "onUpdate:open"?: ((value: boolean) => any) | undefined;
     "onUpdate:pinned"?: ((value: string[]) => any) | undefined;
     "onUpdate:selected"?: ((value: string[]) => any) | undefined;
 }>, {
@@ -329,8 +303,6 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     pageQuery: "shell" | "detached";
     listPath: string;
     theme: ShellTheme;
-    matchWidth: ShellWidthMatch;
-    headAlign: ShellAlign;
     rowPress: "open" | "narrow";
     navigationMode: NavigationMode;
     facetNavigationMode: NavigationMode;

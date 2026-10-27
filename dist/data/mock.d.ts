@@ -1,5 +1,4 @@
 import type { EntitySchema, ShellRow, SyncDataSource } from '../types';
-export { matchesFacets } from './apply';
 /** Tile backgrounds for the grid view, cycled by row hash. */
 export declare const MOCK_TINTS: readonly ["oklch(0.36 0.06 240)", "oklch(0.34 0.07 290)", "oklch(0.36 0.06 160)", "oklch(0.38 0.06 80)", "oklch(0.35 0.07 30)", "oklch(0.34 0.05 200)"];
 /**

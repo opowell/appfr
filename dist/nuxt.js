@@ -2,9 +2,7 @@ import { defineNuxtModule as r, addComponent as o, addPluginTemplate as n } from
 const u = [
   "DataShell",
   "ShellHeader",
-  "QueryPanel",
   "ResultsArea",
-  "FacetControl",
   "SegmentedControl",
   "StatusPill",
   "WindowFrame",

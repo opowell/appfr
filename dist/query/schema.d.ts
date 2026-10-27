@@ -1,4 +1,4 @@
-import type { ColumnDef, DomainSchema, EntitySchema, FacetDef, FacetState, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
+import type { ColumnDef, DomainSchema, EntitySchema, FacetDef, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
 /**
  * Cards. On the home screen — where no entity is filtered to — that means a
  * card per item type rather than per record: what each type is, how many of it
@@ -69,12 +69,10 @@ export declare function sortsFor(entity: EntitySchema | null, schema?: DomainSch
 export declare function findSort(entity: EntitySchema | null, key: string | undefined, schema?: DomainSchema | null): SortDef;
 /** The neutral value for a facet — the state in which it narrows nothing. */
 export declare function emptyFacetValue(facet: FacetDef): FacetValue;
-export declare function emptyFacetState(entity: EntitySchema | null): FacetState;
 export declare function isFacetActive(value: FacetValue | undefined): boolean;
-export declare function hasActiveFacets(facets: FacetState): boolean;
 /**
- * True when nothing narrows the corpus: no entity chosen, no facets, no
- * expression. This is the home screen.
+ * True when nothing narrows the corpus: no entity chosen and no expression —
+ * which holds the facets too. This is the home screen.
  */
 export declare function isPristineQuery(query: ShellQuery): boolean;
 /** True when an entity has been picked out of the whole corpus. */
@@ -107,13 +105,6 @@ export declare function defaultQuery(schema: DomainSchema, defaults?: ShellQuery
  * deliberately not among them: the same rows drawn another way are still the
  * same rows, and page 3 of them is still page 3.
  */
-export declare const RESULT_FIELDS: readonly ["entity", "sort", "dir", "expr", "facets"];
+export declare const RESULT_FIELDS: readonly ["entity", "sort", "dir", "expr"];
 /** True when a patch touches any of {@link RESULT_FIELDS}. */
 export declare function changesResults(patch: Partial<ShellQuery>): boolean;
-/**
- * Drops facet values the entity does not declare and fills in the ones it
- * does. Called after every parse and on every entity change, so a stale or
- * hand-edited URL can never put the shell into a state its schema disallows.
- * With no entity selected there are no per-entity facets to keep.
- */
-export declare function reconcileFacets(entity: EntitySchema | null, facets: FacetState): FacetState;

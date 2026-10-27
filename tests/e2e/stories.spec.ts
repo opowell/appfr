@@ -93,7 +93,7 @@ test('every story renders without logging an error', async ({ page }) => {
 })
 
 test('every schema story renders rows with its own vocabulary', async ({ page }) => {
-  const cases: Array<[string, string[]]> = [
+  const cases: Array<[string, [string, string?]]> = [
     // The domain, on the bar. Unscoped stories are listing the whole corpus,
     // which is left to the content to say; the rest name the entity filtered
     // to over the results, as the choice it is.

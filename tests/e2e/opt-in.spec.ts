@@ -25,7 +25,6 @@ const LINK_ROWS = 'shell-data-shell--link-rows'
 const LINK_ROWS_NARROW = 'shell-data-shell--link-rows-that-narrow'
 const HOST_PAGE = 'shell-data-shell--host-page'
 const SEARCH_TOKENS = 'shell-data-shell--search-field-tokens'
-const LONG_CHIPS = 'shell-data-shell--long-chips-facet'
 const ENTITY_LIST = 'shell-data-shell--entity-list'
 
 test.describe('loading', () => {
@@ -165,50 +164,6 @@ test.describe('search field tokens', () => {
       return { fill: style.backgroundColor, border: style.borderTopColor, image: style.backgroundImage }
     })
     expect(box).toEqual({ fill: 'rgba(0, 0, 0, 0)', border: 'rgba(0, 0, 0, 0)', image: 'none' })
-  })
-})
-
-test.describe('long chips facets', () => {
-  test('a capped facet is a whole number of rows tall, and scrolls the rest', async ({ page }) => {
-    await gotoStory(page, LONG_CHIPS)
-    const list = page.locator('.dc-facet__chips[data-dc-max-rows="3"]')
-    await expect(list).toBeVisible()
-    const measured = await list.evaluate((element) => {
-      const chip = element.querySelector<HTMLElement>('.dc-chip')!
-      return {
-        height: element.getBoundingClientRect().height,
-        chip: chip.getBoundingClientRect().height,
-        scrolls: element.scrollHeight > element.clientHeight,
-      }
-    })
-    expect(measured.scrolls).toBe(true)
-    expect(Math.abs(measured.height - (3 * measured.chip + 2 * 5))).toBeLessThan(1)
-  })
-
-  test('each chip is one line, cut at its start', async ({ page }) => {
-    await gotoStory(page, LONG_CHIPS)
-    const chip = page.locator('.dc-facet__chips[data-dc-truncate="start"] .dc-chip').first()
-    await expect(chip).toHaveAttribute(
-      'title',
-      'https://shop.example.com/en/pages/a-long-shared-path/that-says-nothing/target-01/',
-    )
-    const style = await chip.evaluate((element) => {
-      const read = getComputedStyle(element)
-      return { direction: read.direction, wrap: read.whiteSpace, overflow: read.textOverflow }
-    })
-    expect(style).toEqual({ direction: 'rtl', wrap: 'nowrap', overflow: 'ellipsis' })
-  })
-
-  test('a facet that asks for neither is as it was', async ({ page }) => {
-    await gotoStory(page, LONG_CHIPS)
-    const plain = page.locator('.dc-facet__chips').first()
-    await expect(plain).not.toHaveAttribute('data-dc-max-rows')
-    const read = await plain.evaluate((element) => {
-      const style = getComputedStyle(element)
-      const chip = getComputedStyle(element.querySelector('.dc-chip')!)
-      return { max: style.maxHeight, overflow: style.overflowY, wrap: chip.whiteSpace, mask: style.maskImage }
-    })
-    expect(read).toEqual({ max: 'none', overflow: 'visible', wrap: 'normal', mask: 'none' })
   })
 })
 

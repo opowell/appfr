@@ -143,14 +143,13 @@ test('no story makes the page scroll sideways', async ({ page }) => {
 test.describe('narrow viewport', () => {
   test.use({ viewport: { width: 420, height: 780 } })
 
-  test('the header stays usable and the panel still opens', async ({ page }) => {
+  test('the header stays usable', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-as-list')
     // The query survives the narrow layout even though the domain name does not.
     await expect(page.locator('.dc-header__view-select')).toBeVisible()
     await expect(page.locator('.dc-header__domain')).toBeHidden()
 
-    await page.locator('.dc-header__toggle').click()
-    await expect(page.locator('.dc-panel')).toBeVisible()
+    await expect(page.locator('.dc-header__search')).toBeVisible()
 
     const overflows = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,

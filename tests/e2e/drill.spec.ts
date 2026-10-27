@@ -3,12 +3,10 @@ import type { Page } from '@playwright/test'
 import {
   chooseScope,
   chooseView,
-  expressionBox,
   gotoStory,
   listRows,
-  openPanel,
-  parts,
   scopeSelect,
+  searchBox,
   termBar,
   terms,
   viewSelect,
@@ -430,17 +428,13 @@ test.describe('A home screen that arrives already naming a record', () => {
 })
 
 test.describe('A narrowed query', () => {
-  test('is an ordinary expression, in the header and in the panel', async ({ page }) => {
+  test('is an ordinary expression, a part on the bar and not text in the box', async ({ page }) => {
     await gotoStory(page, HOME)
     await press(page, 'Sets')
-    const term = queryOf(page)!
+    expect(queryOf(page)).toMatch(/^set=/)
     await expect(termBar(page)).toContainText('set:')
-
-    // Nobody typed it, so the panel does not offer it back as text: it is a
-    // part of the query there, the same pill the header lifts it with.
-    await openPanel(page)
-    await expect(parts(page)).toHaveText([term.replace(/"/g, '')])
-    await expect(expressionBox(page)).toHaveValue('')
+    // Nobody typed it, so the box does not offer it back as text.
+    await expect(searchBox(page)).toHaveValue('')
   })
 
   test('does not carry the same term twice', async ({ page }) => {

@@ -65,7 +65,7 @@ test.describe('Views — a host offering one has no chooser', () => {
 
 test.describe('Views — every one of them, when the host says nothing', () => {
   test('the View control offers all seven', async ({ page }) => {
-    await gotoStory(page, 'shell-data-shell--home-panel-open')
+    await gotoStory(page, 'shell-data-shell--home')
     await expect(await viewOptions(page)).toHaveText([
       'List',
       'Cards',

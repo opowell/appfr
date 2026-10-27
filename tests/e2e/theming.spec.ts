@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { gotoStory, grip, openPanel, pane, paneHead, panel, trigger } from './story'
+import { gotoStory, grip, headerBar, openPick, pane, paneHead, pickList, viewSelect } from './story'
 
 type Rgba = [number, number, number, number]
 
@@ -110,7 +110,7 @@ test.describe('Theming — the shipped themes', () => {
 
     // No corners and no shadow — the two things a border would otherwise share
     // the job of separating surfaces with.
-    expect(await styleOf(page, '.dc-header__trigger', 'border-radius')).toBe('0px')
+    expect(await styleOf(page, '.dc-header__main', 'border-radius')).toBe('0px')
     expect((await styleOf(page, '.dc-shell', '--dc-shadow')).trim()).toBe('none')
 
     // One ink for everything that carried a hue: the accent and all three
@@ -133,9 +133,7 @@ test.describe('Theming — the shipped themes', () => {
     const sizes = await typeOf(page, 'font-size')
     expect(new Set(sizes).size).toBeGreaterThan(1)
 
-    // Buttons are part of that scale rather than exempt from it: on the panel,
-    // a view picker sits a rung below the primary button beside it.
-    await openPanel(page)
+    // Buttons are part of that scale rather than exempt from it.
     expect(new Set(await buttonType(page)).size).toBeGreaterThan(1)
   })
 
@@ -147,7 +145,6 @@ test.describe('Theming — the shipped themes', () => {
   test('mono-size sets every word at one size and one weight', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--mono-size-theme')
     await expect(page.locator('.dc-shell')).toHaveAttribute('data-dc-theme', 'mono-size')
-    await openPanel(page)
 
     // The one size is the host's own: the scale is given up and the size with
     // it, so what the shell sets is whatever it was dropped into rather than a
@@ -210,7 +207,7 @@ test.describe('Theming — the shipped themes', () => {
 
     expect(await styleOf(page, '.dc-shell', 'font-family')).toContain('-apple-system')
     expect(await styleOf(page, '.dc-shell', 'font-size')).toBe('13px')
-    expect(await styleOf(page, '.dc-header__trigger', 'border-radius')).toBe('8px')
+    expect(await styleOf(page, '.dc-header__main', 'border-radius')).toBe('8px')
     expect(luma(await paint(page, '--dc-bg-0'))).toBeGreaterThan(0.9)
 
     // An operating system's look includes which of its schemes the user is in,
@@ -226,7 +223,7 @@ test.describe('Theming — the shipped themes', () => {
     await gotoStory(page, 'shell-data-shell--windows-theme')
 
     expect(await styleOf(page, '.dc-shell', 'font-family')).toContain('Segoe UI')
-    expect(await styleOf(page, '.dc-header__trigger', 'border-radius')).toBe('6px')
+    expect(await styleOf(page, '.dc-header__main', 'border-radius')).toBe('6px')
 
     // The page is Fluent's grey, not paper — and the panel that floats over it
     // is *lighter*, which the derived ramp cannot do on a light surface: every
@@ -296,7 +293,7 @@ test.describe('Theming — the palette is derived from a few seeds', () => {
     expect(luma(line)).toBeLessThan(luma(ink))
 
     // Non-colour tokens are set the same way.
-    expect(await styleOf(page, '.dc-header__trigger', 'border-radius')).toBe('2px')
+    expect(await styleOf(page, '.dc-header__main', 'border-radius')).toBe('2px')
   })
 
   test('a custom accent reaches the rows', async ({ page }) => {
@@ -358,17 +355,17 @@ test.describe('Theming — inherit brings no palette', () => {
   test('one token is enough to brand an otherwise unthemed shell', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--inherits-with-a-brand-accent')
     expect(await paint(page, '--dc-accent')).toEqual([180, 68, 31, 1])
-    await expect(trigger(page)).toBeVisible()
+    await expect(headerBar(page)).toBeVisible()
   })
 })
 
 test.describe('Theming — surfaces that float', () => {
   /*
-   * The query panel is the one surface with results underneath it. In the
-   * `inherit` theme the in-flow surfaces are translucent veils, so the panel
-   * has to be told to be something else — and its own text colour with it, or
-   * a host whose ink is light would write light text on the panel's light
-   * background.
+   * A list dropped from the bar has the results underneath it. In the
+   * `inherit` theme the in-flow surfaces are translucent veils, so a floating
+   * one has to be told to be something else — and its own text colour with
+   * it, or a host whose ink is light would write light text on the list's
+   * light background.
    */
   const stories = [
     ['minimal, the default', 'shell-data-shell--home'],
@@ -382,20 +379,20 @@ test.describe('Theming — surfaces that float', () => {
   ] as const
 
   for (const [name, id] of stories) {
-    test(`the query panel is opaque and legible — ${name}`, async ({ page }) => {
+    test(`a list dropped from the bar is opaque and legible — ${name}`, async ({ page }) => {
       await gotoStory(page, id)
-      await openPanel(page)
+      await openPick(page, viewSelect(page), 'View')
 
-      const surface = await paint(page, '--dc-raised', '.dc-panel')
+      const surface = await paint(page, '--dc-raised', '.dc-menu[aria-label="View"]')
       expect(surface[3]).toBe(1)
 
-      const ink = await paint(page, '--dc-raised-ink', '.dc-panel')
+      const ink = await paint(page, '--dc-raised-ink', '.dc-menu[aria-label="View"]')
       expect(ink[3]).toBe(1)
       // Text and background have to land on opposite sides of mid-grey, or the
       // panel is unreadable whatever else is right about it.
       expect(Math.abs(luma(surface) - luma(ink))).toBeGreaterThan(0.5)
 
-      await expect(panel(page)).toBeVisible()
+      await expect(pickList(page, 'View')).toBeVisible()
     })
   }
 })

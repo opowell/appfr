@@ -13,7 +13,7 @@ is a link someone can paste, bookmark, or reload into.
 
 It is schema-driven: one `DomainSchema` describes the entities, their facets,
 what their fields are called, and what the columns of each one's table are. The
-same header, panel and seven views serve any schema: swapping the schema swaps
+same header and seven views serve any schema: swapping the schema swaps
 the vocabulary, not the component.
 
 For screens that are several things at once there is a second component:
@@ -305,7 +305,7 @@ It still changes more often than it says anything new: a poll lands, a case
 flips, and the counts and options stand still. `useStableSchema(build)` re-runs
 `build` whenever what it reads changes and hands over the result only when it
 differs *by value* — `JSON.stringify`, or a `key` of your own — so the shell is
-not handed a new schema, and does not rebuild its query panel, for nothing.
+not handed a new schema, and does not rebuild what it draws from it, for nothing.
 Functions in the schema, a column's `format` or `value`, are not part of that
 comparison: one that reads changing data should read it when called.
 
@@ -398,11 +398,13 @@ and a shortcut is one type's. Reading an address takes keys and shortcuts
 alike, and the query the shell holds and hands your source is in keys
 throughout: only the address is shortened.
 
-**Facets are terms.** A facet has no parameter of its own: what it is set to
-is the terms on its field in `q`, so a range typed as `rank:20..80` is the
-range the control shows, and the control's edits are terms the header shows
-as parts — `20 ≤ rank ≤ 80`, the address form on hover. `facetValue(expr,
-facet)` and `withFacetValue(expr, facet, value)` read and write them.
+**Facets are terms.** A facet has no parameter and no control of its own:
+it names a field the query can be narrowed on, and what it is set to is the
+terms on that field in `q` — typed in the bar as `rank:20..80`, shown as the
+part `20 ≤ rank ≤ 80`, the address form on hover. `facetValue(expr, facet)`
+and `withFacetValue(expr, facet, value)` read and write them, and
+`setFacet`, `toggleChip`, `setRange` and `toggleFlag` on the query state do
+it through the URL.
 
 Three things this does on purpose:
 
@@ -1710,23 +1712,6 @@ filtering follows whatever the row holds — a source may return a list whether
 or not the schema declares one. The flag is what says so in the schema, and
 what the bundled mock source generates against.
 
-### A facet that grows with the data
-
-A chips facet whose options are the data's — every host a tool has run
-against, every target URL — grows with it, and the tallest facet sets the
-height of the panel. Two fields keep one in bounds:
-
-```ts
-{ kind: 'chips', key: 'target', label: 'Target', options: targets, maxRows: 6, truncate: 'start' }
-```
-
-| Field | Type | |
-| --- | --- | --- |
-| `maxRows` | `number` | The most rows of chips shown before the facet scrolls. The height is a whole number of chips, worked out from the chip's own type size, so the cut falls between two rows and follows a theme that changes the type. The edge with more behind it fades, from a scroll timeline, where motion is welcome. |
-| `truncate` | `'end' \| 'start'` | One line per chip, never wider than the facet, ellipsised — the whole value on hover. `start` cuts the head instead of the tail, for values that share a long beginning and differ at the end: URLs on one host, paths under one root. |
-
-Left out, a facet is as tall as its chips and a chip wraps, as before.
-
 ## The expression field
 
 A small query language, evaluated by the bundled mock source and exported for
@@ -1783,7 +1768,7 @@ numeric comparison against one constrains nothing.
 ### The parts of a query
 
 The header shows a query as the parts it is made of — the entity filter, how
-the results are drawn, each active facet, and each term of the expression.
+the results are drawn, and each term of the expression, facets among them.
 Press a pill and that part comes out; the rest goes on running.
 
 ```
@@ -1803,12 +1788,12 @@ corpus is a scope like any other rather than the absence of one.
 The view is the second, and the ordering is the third, and both are on the bar
 for the same reason: how the results are drawn and what they are ordered by are
 parts of the query, in the URL with the rest of it, so they are choices you
-make where the query is rather than ones you go into the panel for. The sort
+make where the query is. The sort
 lists the columns that offer an ordering, named as those columns are named, so
 the bar and the table's own headings offer one list rather than two; the arrow
 beside it is that same ordering the other way about, which is a press rather
-than another entry in the list. What is left in the panel is what narrows a
-type: its facets, and the expression.
+than another entry in the list. What narrows a type — its facets, and
+anything else — is the expression, in the field beside them.
 
 The ordering waits for a type, though. A mixed result set has only the
 schema-level `columns` to be ordered by — generic headings a row of any type
@@ -1832,10 +1817,7 @@ label are counts in one control, so the live ones are formatted the way a
 schema is expected to publish `count` — `formatCount`, exported, so a host has
 the same one rather than a near miss.
 
-The whole bar is the panel's toggle, query and all: press it anywhere and the
-panel opens, except on a part — a part is a control of its own and pressing it
-lifts that constraint. The chevron at the end is what carries this for anyone
-not using a pointer, because a surface is nothing a keyboard can reach.
+A part is a control of its own: pressing it lifts that constraint.
 
 `OR` groups are alternatives rather than requirements, so the bar says `or`
 between them, and lifting the last term of one drops that alternative with it.
@@ -1898,42 +1880,23 @@ does, and the fade would then sit over the label for good.
 
 ### The field it is edited in
 
-The panel edits that same expression as a field of parts. A `field:value` term
-is a whole constraint on its own — and most of them were written by a drill
-rather than typed — so each one stands in the field as a part that comes out
-when it is pressed, while the box beside them is left for what a person writes:
-the words to look for, or the next term to add.
+The bar is where the query is edited, and the only place: the parts stand in
+the field in front of a box, and the box is where the next one is written — a
+word to look for, or a term like `p<5` or `quantity:100..`.
 
-```
-Expression   [set:sets_10007] [year>=1988] | brick                  |
-                    ^ press: that part is gone
-```
-
-Committing is what turns a typed term into a part: `set:sets_10007 brick` comes
-back as one part and one word, because that is what it is made of. The parts
-commit as they are pressed and the box is a draft until Run or Enter — so
-lifting a part beside half-typed text leaves that text where it is, still
-waiting. Backspace in an empty box lifts the part in front of it.
-
-An expression with `OR` in it is the exception and stays in the box whole: its
-terms depend on one another, and one of them lifted out of an alternative and
-ANDed back on to the query is a different query. The header is where those come
-out one at a time. `splitExpression` and `joinExpression` are exported for a
-host writing a field of its own.
-
-The bar has a box of its own too, at the end of the row of parts, so that
-adding a word does not mean opening the panel — most of what anyone types is a
-name to look for, and the panel is a heavier move than that is worth. It is a
-draft and nothing else: Enter ANDs what was typed on to the query as it stands
+The box is a draft and nothing else: Enter ANDs what was typed on to the query as it stands
 (`refineExpression`, so a word added to `release OR recall` is added to each
 alternative, and `-set:a` typed on to `set:a` turns the term round rather than
 leaving the query saying both), the new part takes its place beside the box as
-a pill, and the box is empty again for the next. Escape gives the draft up, and Backspace in
-an empty box lifts the last part on the row, whichever kind it is.
+a pill, and the box is empty again for the next. Escape gives the draft up.
+The parts are in the field the way characters are in a line of text: the arrow
+keys step the box past them one at a time, Backspace at the start of the box
+lifts the part in front of it and Delete at its end the one after. Wherever the
+box is, what Enter commits lands at the end of the query.
 
 ```
-[Items ▾] [List ▾] [updated ▾] [↓] [year>=1988] | brick        |  ▼
-                                                  ^ Enter: [brick] joins the row
+[Items ▾] [List ▾] [year ≥ 1988] | brick        |
+                                   ^ Enter: [brick] joins the row
 ```
 
 It is a draft the results already answer, though. What is typed narrows them
@@ -1997,7 +1960,7 @@ own.
 | `typeChooser` | `'scoped' \| 'always'` | `'scoped'` | Where the bar offers the list of types. `scoped` only once one is filtered to, the home screen's cards naming the types already; `always` keeps it on `Everything` too, for a home screen that opens on records rather than on a card per type. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
 | `pagesNote` | `string` | — | What the count is short of, in your words — `first 1,200 of 30,200 lots`. Goes under the pager's hover text, and keeps the pager up on a single page. See [paging through the results](#paging-through-the-results). |
-| `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the panel has no way back from. With one on the list the bar carries no View chooser — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type), or a function of `{ entity, records }` and the shell works the screen out for you — see [cards for the records the query names](#cards-for-the-records-the-query-names). |
+| `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the bar has no way back from. With one on the list the bar carries no View chooser — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type), or a function of `{ entity, records }` and the shell works the screen out for you — see [cards for the records the query names](#cards-for-the-records-the-query-names). |
 | `loading` | `boolean` | `false` | The source's answers are not yet the data. The results area says *Loading…*, the pager is off the bar, and nothing is corrected from a count until it turns false — see [while the data is on its way](#while-the-data-is-on-its-way). |
 | `recordCards` | `Record<string, Component>` | — | A component per record the query names, by the record's type, given `id` — the shorthand for the `record` slot. See [cards for the records the query names](#cards-for-the-records-the-query-names). |
 | `pageQuery` | `'shell' \| 'detached'` | `'shell'` | Whether a `page` is about the query. `detached`: the bar reads the pristine query, not the page's URL, and its first edit goes to `listPath`. Read only while a `page` is provided — see [a page that is not about the query](#a-page-that-is-not-about-the-query). |
@@ -2005,28 +1968,23 @@ own.
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all; `mono-size` is `inherit` with the type scale given up too, every word at the host's one size and one weight with only colour and opacity varying. |
-| `matchWidth` | `'grow' \| 'shrink'` | `'grow'` | How the header bar and the query panel are brought to one width: `grow` widens the panel to the bar, `shrink` narrows the bar to the panel. |
-| `headAlign` | `'left' \| 'center' \| 'right'` | `'center'` | Where the narrowed pair sits across the shell. `shrink` only. |
 | `rowPress` | `'open' \| 'narrow'` | `'narrow'` | What pressing a row means: add that record to the query, or report it as `activate` and apply nothing. See [narrowing to one record](#narrowing-to-one-record). |
 | `pinnable` | `boolean` | `false` | Offers the star affordance on rows. |
 | `selectable` | `boolean` | `false` | Offers the tick on rows even where the type names no operation for a selection. A type naming `duplicate` or `delete` offers them anyway. |
-| `open` | `boolean` | — | `v-model:open` to control the panel; omit and the shell holds it. |
 | `pinned` | `string[]` | — | `v-model:pinned` to control pinning; omit and the shell holds it. |
 | `selected` | `string[]` | — | `v-model:selected` to control which records are ticked; omit and the shell holds it. |
 | `navigationMode` | `'push' \| 'replace'` | `'push'` | For entity, view, sort and expression. |
-| `facetNavigationMode` | `'push' \| 'replace'` | `'replace'` | For individual facet edits. |
+| `facetNavigationMode` | `'push' \| 'replace'` | `'replace'` | For a facet set through `setFacet` and its kin. |
 
 **Events** — `activate(row)` when a row is opened, `create(entity)` when a
 create button is pressed, `duplicate(selection)` and `delete(selection)` when
 the ticked records are to be copied or deleted, `drill(row, entity)` when a row
 is narrowed to (already applied), `query-change(query)` after the URL has been
-updated, `toggle-pin(row)`, plus `update:open`, `update:pinned` and
-`update:selected`.
+updated, `toggle-pin(row)`, plus `update:pinned` and `update:selected`.
 
 **Slots** — `actions` for extra controls at the right of the header bar,
 `brand` for a mark in place of the domain's name at its left (see
-[a mark for the name](#a-mark-for-the-name)), `panel-section` for a section of
-your own at the end of the query panel, `cards-before` and `cards-after` for
+[a mark for the name](#a-mark-for-the-name)), `cards-before` and `cards-after` for
 [cards of your own](#cards-of-your-own) above and below the card-per-type
 screen, `record` for cards about [each record the query
 names](#cards-for-the-records-the-query-names) (receives `entity` and `id`),
@@ -2037,30 +1995,11 @@ entirely (receives `rows` — the current page of them — plus `total`,
 one the rows answer, which is the committed query with whatever is being typed
 in the header's box ANDed on — see [the field it is edited in](#the-field-it-is-edited-in).
 
-`panel-section` is where an application's own commands go when they are not
-about the query — the header bar's width belongs to the summary it exists to
-show, and it is trimmed before its actions are. The shell renders the section
-element, so it sits flush with the query above it and takes the divider
-between them; the content is yours, and `dc-eyebrow` is there for a heading
-that matches its own:
-
-```vue
-<DataShell :schema="schema">
-  <template #panel-section>
-    <header class="app-head">
-      <span class="dc-eyebrow">App</span>
-    </header>
-    <button type="button" @click="reload">Reload data</button>
-  </template>
-</DataShell>
-```
-
 ### A mark for the name
 
 The domain's name at the left of the bar is the way home: pressed, it returns
 the shell to the schema's defaults, as `reset()` does — a step the back button
-undoes, and one press rather than two, since the bar's panel toggle leaves a
-press on a button to the button. The `brand` slot draws a
+undoes. The `brand` slot draws a
 mark in its place — a logo, an icon — and the name stays the bar's accessible
 text, read out where the mark is drawn, so `schema.label` is still the one
 place the name is written:
@@ -2122,7 +2061,7 @@ pills on the bar that mean nothing. `pageQuery="detached"` says so:
 - the bar reads the **pristine query** — `Everything`, nothing narrowing it —
   whatever the page's URL holds, and the page is handed that as its `query`;
 - the **first edit** to it — a word typed and Enter, a type chosen, an
-  expression run from the panel — is a way back to the list: it navigates to `listPath` (`/`
+  term committed from the bar — is a way back to the list: it navigates to `listPath` (`/`
   unless you say) with that edit applied, and pushes, so Back returns to the
   page;
 - nothing is written while the reader only reads: the page's URL is the
@@ -2180,39 +2119,6 @@ and Enter lands on `/?q=checkout`. No wrapping of the router in a
 
 `detachableAdapter(adapter, { detached, path })` is the adapter that does
 this, exported for a host wiring `useQueryState` to chrome of its own.
-
-### One width for the bar and the panel
-
-The panel drops from the bar and says what the bar summarizes, so the two are
-always the same width. Which of them gives way is `matchWidth`:
-
-```
-match-width="grow" — the panel widens to the bar
-┌──────────────────────────────────────────────────────┐
-│ ◆ iRadar │ [Everything · 240 ▾] [Cards ▾]           ▲ │
-├──────────────────────────────────────────────────────┤
-│ Query                                                │
-└──────────────────────────────────────────────────────┘
-  01  Competitor pricing pages          909  running
-
-match-width="shrink" — the bar comes in to the panel
-        ┌──────────────────────────────────────┐
-        │ ◆ iRadar │ [Everything · 240 ▾] ▲ │
-        ├──────────────────────────────────────┤
-        │ Query                                │
-        └──────────────────────────────────────┘
-  01  Competitor pricing pages          909  running
-```
-
-`grow` widens the panel to the bar, which spans the shell. `shrink` narrows the
-bar to the panel instead — to `--dc-header-width`, 1220px — which keeps a query
-off the far edges of a very wide screen; the results below keep the shell's
-full width either way. `headAlign` (`left`, `center`, `right`) then says where
-that narrowed pair sits, and is the one prop `grow` has nothing to do with.
-
-```vue
-<DataShell :schema="schema" match-width="shrink" head-align="left" />
-```
 
 ### Paging through the results
 
@@ -3612,7 +3518,6 @@ are a whole theme:
 | `--dc-radius-sm`, `--dc-radius`, `--dc-radius-lg` | corners |
 | `--dc-table-lines` | how many lines a cell may wrap to, in a table whose rows are already tall |
 | `--dc-shadow`, `--dc-header-height` | — |
-| `--dc-header-width` | how wide the bar and panel are under `matchWidth="shrink"` |
 | `--dc-card-image`, `--dc-card-picture` | how large a record card's picture is drawn (64px), and how narrow a column of picture cards may be (160px) |
 
 And three a theme leaves unset, whose absence is the shell as it is: the
@@ -3638,8 +3543,8 @@ The derived tier is plain custom properties, so override the ones you care
 about and the rest stay derived: `--dc-bg-0…3`, `--dc-line`, `--dc-line-2`,
 `--dc-fg-0…3`, `--dc-accent-dim`, `--dc-accent-bg`, `--dc-accent-contrast`,
 `--dc-ok-bg`, `--dc-warn-bg`, `--dc-danger-bg`, `--dc-raised` and
-`--dc-raised-ink` (the query panel, which floats over the results and so needs
-a background and a text colour that work together), `--dc-ground` (the opaque
+`--dc-raised-ink` (menus, dialogs, popovers and toasts, which float over the
+results and so need a background and a text colour that work together), `--dc-ground` (the opaque
 colour a table's headings are laid on, so the rows scrolling under them do not
 show through), and `--dc-scrim`,
 `--dc-scrim-strong`, `--dc-scrim-fg` (over imagery, not over a surface).
@@ -3679,13 +3584,13 @@ a word in it rather than a green or a red: a fixed mid-lightness hue is not a
 promise this theme can keep over a background it has never seen. Set `--dc-ok`,
 `--dc-warn` and `--dc-danger` if the host has colours of its own to lend.
 
-Two things it cannot take from `currentColor`: text on the accent, and the
-query panel, which floats over the results and has to be opaque. Those come
+Two things it cannot take from `currentColor`: text on the accent, and what
+floats over the results — menus, dialogs, popovers — which has to be opaque. Those come
 from the `Canvas`/`CanvasText`/`AccentColor` system colours, which follow the
 `color-scheme` the shell inherits — so a host with a dark background should
 declare `color-scheme: dark`, which it owes its native controls and scrollbars
 anyway. Set `--dc-raised` and `--dc-raised-ink` to your own surface if you
-would rather the panel matched the app exactly. A table's headings stay put
+would rather those matched the app exactly. A table's headings stay put
 while its rows scroll, and are laid on `--dc-ground`, which is `Canvas` here:
 set it to your page's background so they sit on the same colour as the rest.
 

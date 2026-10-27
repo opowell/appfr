@@ -5,14 +5,13 @@ import {
   expectPage,
   gotoStory,
   listRows,
-  openPanel,
   pickEntity,
+  searchBox,
   scopeSelect,
   shellParams,
   sortHeading,
   stepPage,
   terms,
-  trigger,
   viewSelect,
 } from './story'
 
@@ -23,7 +22,6 @@ import {
  */
 
 const LIVE = 'routing-url-bound--live-url'
-const LIVE_OPEN = 'routing-url-bound--live-url-panel-open'
 const LANDS_ON_ENTITY = 'routing-url-bound--live-url-lands-on-entity'
 
 test.describe('URL — the query is the route', () => {
@@ -42,7 +40,6 @@ test.describe('URL — the query is the route', () => {
 
   test('an entity filter appears in the URL, and lifting it removes it', async ({ page }) => {
     await gotoStory(page, LIVE)
-    await openPanel(page)
 
     await pickEntity(page, 'Scrapers')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'scrapers')
@@ -56,7 +53,6 @@ test.describe('URL — the query is the route', () => {
 
   test('logs and settings are filtered to like any other entity', async ({ page }) => {
     await gotoStory(page, LIVE)
-    await openPanel(page)
 
     await pickEntity(page, 'Settings')
     expect(shellParams(page.url())).toEqual({ e: 'settings' })
@@ -64,10 +60,12 @@ test.describe('URL — the query is the route', () => {
   })
 
   test('facets appear in the expression, readably', async ({ page }) => {
-    await gotoStory(page, LIVE_OPEN)
+    await gotoStory(page, LIVE)
     await pickEntity(page, 'Searches')
-    await page.locator('.dc-chip', { hasText: 'running' }).first().click()
-    await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
+    await searchBox(page).fill('state=running')
+    await searchBox(page).press('Enter')
+    await searchBox(page).fill('state=paused')
+    await searchBox(page).press('Enter')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
     await expect(terms(page)).toHaveText(['state=running', 'state=paused'])
 
@@ -77,12 +75,12 @@ test.describe('URL — the query is the route', () => {
   })
 
   test('a committed expression appears in the URL', async ({ page }) => {
-    await gotoStory(page, LIVE_OPEN)
-    await page.locator('.dc-expression').fill('price < 40')
-    await page.locator('.dc-button--primary').click()
+    await gotoStory(page, LIVE)
+    await searchBox(page).fill('price < 40')
+    await searchBox(page).press('Enter')
     // Three tokens as typed, one term as parsed: `price < 40` is a comparison.
     await expect(terms(page)).toHaveText(['price<40'])
-    expect(shellParams(page.url()).q).toBe('price < 40')
+    expect(shellParams(page.url()).q).toBe('price<40')
   })
 
   /*
@@ -113,9 +111,10 @@ test.describe('URL — the query is the route', () => {
 
 test.describe('URL — reload and history', () => {
   test('a reload restores the same query', async ({ page }) => {
-    await gotoStory(page, LIVE_OPEN)
+    await gotoStory(page, LIVE)
     await pickEntity(page, 'Searches')
-    await page.locator('.dc-chip', { hasText: 'running' }).first().click()
+    await searchBox(page).fill('state=running')
+    await searchBox(page).press('Enter')
     await chooseView(page, 'table')
     const before = shellParams(page.url())
 
@@ -157,7 +156,6 @@ test.describe('URL — reload and history', () => {
     await gotoStory(page, LIVE)
     await expect(page.locator('.dc-types')).toBeVisible()
 
-    await openPanel(page)
     await pickEntity(page, 'Logs')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'logs')
     await expect(page.locator('.dc-types')).toHaveCount(0)
@@ -166,28 +164,6 @@ test.describe('URL — reload and history', () => {
     await expect(scopeSelect(page)).toHaveCount(0)
     await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'cards')
     await expect(page.locator('.dc-types')).toBeVisible()
-  })
-
-  test('nudging facets does not fill the history with one entry per chip', async ({ page }) => {
-    await gotoStory(page, LIVE)
-    await openPanel(page)
-    // One pushed entry for the entity, then three facet edits that replace.
-    await pickEntity(page, 'Searches')
-    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
-
-    await page.locator('.dc-chip', { hasText: 'running' }).first().click()
-    await page.locator('.dc-chip', { hasText: 'paused' }).first().click()
-    await page.locator('.dc-chip', { hasText: 'hourly' }).first().click()
-    await expect(terms(page)).toHaveText([
-      'state=running',
-      'state=paused',
-      'schedule=hourly',
-    ])
-
-    // A single Back should land before the facets, not step through them.
-    await page.goBack()
-    await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'cards')
-    expect(shellParams(page.url())).toEqual({})
   })
 })
 
@@ -227,8 +203,8 @@ test.describe('URL — the page is in it too', () => {
 
   test('a change to what matched drops the page from the URL', async ({ page }) => {
     await gotoStory(page, PAGED, '&p=3')
-    await openPanel(page)
-    await page.locator('.dc-chip', { hasText: 'running' }).first().click()
+    await searchBox(page).fill('state=running')
+    await searchBox(page).press('Enter')
     // Back to the first page of the narrowed results, so `p` goes with it.
     expect(shellParams(page.url())).toEqual({ q: 'state=running' })
   })
@@ -240,13 +216,6 @@ test.describe('URL — what stays out of it', () => {
     const star = page.locator('.dc-star').first()
     await star.click()
     await expect(star).toHaveAttribute('aria-pressed', 'true')
-    expect(shellParams(page.url())).toEqual({})
-  })
-
-  test('opening the panel is ephemeral and does not touch the URL', async ({ page }) => {
-    await gotoStory(page, LIVE)
-    await trigger(page).click()
-    await expect(page.locator('.dc-panel')).toBeVisible()
     expect(shellParams(page.url())).toEqual({})
   })
 })

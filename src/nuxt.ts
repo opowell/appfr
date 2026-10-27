@@ -15,9 +15,7 @@ export interface ModuleOptions {
 const COMPONENTS = [
   'DataShell',
   'ShellHeader',
-  'QueryPanel',
   'ResultsArea',
-  'FacetControl',
   'SegmentedControl',
   'StatusPill',
   'WindowFrame',

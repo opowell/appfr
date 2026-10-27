@@ -7,7 +7,7 @@
  */
 import '../style/tokens.css'
 
-import { computed, inject, nextTick, onBeforeUnmount, onBeforeUpdate, ref, useId, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, onBeforeUpdate, ref, watch } from 'vue'
 import type { Component } from 'vue'
 import type {
   DataSource,
@@ -16,12 +16,10 @@ import type {
   NarrowedRecord,
   PressOptions,
   Selection,
-  ShellAlign,
   ShellQuery,
   ShellQueryDefaults,
   ShellRow,
   ShellTheme,
-  ShellWidthMatch,
   ViewKind,
   ViewsOption,
 } from '../types'
@@ -38,7 +36,6 @@ import type { NavigationMode } from '../composables/useQueryState'
 import { useResults } from '../composables/useResults'
 import { useDraft } from '../composables/useDraft'
 import ShellHeader from './ShellHeader.vue'
-import QueryPanel from './QueryPanel.vue'
 import RecordActions from './RecordActions.vue'
 import ResultsArea from './ResultsArea.vue'
 
@@ -177,19 +174,6 @@ const props = withDefaults(
      * that has already decided how text looks.
      */
     theme?: ShellTheme
-    /**
-     * How the header bar and the panel that drops from it are brought to one
-     * width. `grow`, the default, widens the panel to the bar, so the query
-     * opens over exactly what it summarizes however wide the shell is.
-     * `shrink` brings the bar in to the panel instead — to `--dc-header-width`
-     * — which keeps a query off the far edges of a very wide screen.
-     */
-    matchWidth?: ShellWidthMatch
-    /**
-     * Where that narrowed pair sits across the shell. Only `shrink` leaves
-     * anything to align: a panel grown to a full-width bar already spans it.
-     */
-    headAlign?: ShellAlign
     /** Offers the star affordance on rows. */
     pinnable?: boolean
     /**
@@ -236,8 +220,6 @@ const props = withDefaults(
     previewsPerType: 3,
     typeChooser: 'scoped',
     theme: 'minimal',
-    matchWidth: 'grow',
-    headAlign: 'center',
     navigationMode: 'push',
     facetNavigationMode: 'replace',
   },
@@ -277,13 +259,11 @@ const emit = defineEmits<{
 }>()
 
 /**
- * Each of these is optionally controlled: bind `v-model:open`,
- * `v-model:pinned` or `v-model:selected` to own the state, or leave them alone
- * and the shell keeps it internally. `defineModel` distinguishes the two by
- * whether the prop was actually passed, which a plain boolean prop cannot do —
- * Vue casts an absent boolean to `false`.
+ * Each of these is optionally controlled: bind `v-model:pinned` or
+ * `v-model:selected` to own the state, or leave them alone and the shell
+ * keeps it internally. `defineModel` distinguishes the two by whether the
+ * prop was actually passed.
  */
-const panelOpen = defineModel<boolean>('open', { default: false })
 const pinned = defineModel<string[]>('pinned', { default: () => [] })
 /** Which records are ticked, by id — see the `Selection` an operation carries. */
 const selected = defineModel<string[]>('selected', { default: () => [] })
@@ -306,12 +286,6 @@ const slots = defineSlots<{
     /** {@link DomainSchema.label}, for a mark that wants to say it too. */
     label: string
   }) => unknown
-  /**
-   * A section of your own at the end of the query panel — for the controls
-   * that belong to the application rather than to the query, which the header
-   * bar would otherwise have to carry beside the summary it is there to show.
-   */
-  'panel-section'?: () => unknown
   /**
    * Cards of the host's own, above and below the card-per-type screen — the
    * things a shell read inside one record has to say that no type of record
@@ -534,22 +508,6 @@ watch(
   { immediate: true, flush: 'post' },
 )
 
-/* -------------------------------------------------------------- panel open */
-
-const panelId = useId() ?? 'dc-query-panel'
-const headerRef = ref<InstanceType<typeof ShellHeader> | null>(null)
-
-function closePanel() {
-  if (!panelOpen.value) return
-  panelOpen.value = false
-  // Return focus to the control that opened the panel rather than dropping
-  // keyboard users at the top of the document.
-  void nextTick(() => {
-    const root = headerRef.value?.$el as HTMLElement | undefined
-    root?.querySelector<HTMLElement>('.dc-header__toggle')?.focus()
-  })
-}
-
 /* ----------------------------------------------------------------- pinning */
 
 const pinnedIds = computed(() => new Set(pinned.value))
@@ -769,10 +727,6 @@ const style = computed(() => {
 
 defineExpose({
   query: query.query,
-  openPanel: () => {
-    panelOpen.value = true
-  },
-  closePanel,
 })
 </script>
 
@@ -782,21 +736,13 @@ defineExpose({
     :data-dc-theme="theme"
     :style="style"
   >
-    <div
-      class="dc-shell__head"
-      :data-dc-width="matchWidth"
-      :data-dc-align="matchWidth === 'shrink' ? headAlign : undefined"
-    >
+    <div class="dc-shell__head">
       <ShellHeader
-        ref="headerRef"
-        :expanded="panelOpen"
-        :panel-id="panelId"
         :views="offeredViews"
         :type-chooser="typeChooser"
         :pages-note="pagesNote"
         :hide-pages="loading || hasPage"
         :hide-views="hasPage"
-        @toggle="panelOpen = !panelOpen"
       >
         <template
           v-if="slots.brand"
@@ -814,28 +760,6 @@ defineExpose({
           <slot name="actions" />
         </template>
       </ShellHeader>
-
-      <template v-if="panelOpen">
-        <!-- Full-bleed catcher: a click anywhere outside dismisses the panel
-             without the results underneath also receiving it. -->
-        <div
-          class="dc-shell__scrim"
-          @click="closePanel"
-        />
-        <div class="dc-shell__panel">
-          <QueryPanel
-            :panel-id="panelId"
-            @close="closePanel"
-          >
-            <template
-              v-if="slots['panel-section']"
-              #panel-section
-            >
-              <slot name="panel-section" />
-            </template>
-          </QueryPanel>
-        </div>
-      </template>
     </div>
 
 
@@ -926,57 +850,5 @@ defineExpose({
   position: relative;
   z-index: 30;
   flex: 0 0 auto;
-}
-
-/*
- * The bar and the panel are one width, and this is which of them gives way.
- * `grow` is the default and needs no rule: the bar already spans the shell and
- * the panel is pinned to the head's own edges below.
- *
- * `shrink` caps the head instead, which carries the bar and the panel with it,
- * and `align-self` moves the pair across the shell as one — the head is a flex
- * item of the shell's column, so this is its cross-axis alignment.
- */
-.dc-shell__head[data-dc-width='shrink'] {
-  width: 100%;
-  max-width: var(--dc-header-width, 1220px);
-}
-
-.dc-shell__head[data-dc-align='left'] {
-  align-self: flex-start;
-}
-
-.dc-shell__head[data-dc-align='center'] {
-  align-self: center;
-}
-
-.dc-shell__head[data-dc-align='right'] {
-  align-self: flex-end;
-}
-
-/*
- * Layering inside the head, which is itself above the content area:
- * the scrim covers the results, the panel sits over the scrim, and the header
- * bar sits over both so its trigger stays clickable while the panel is open.
- */
-.dc-shell__scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-}
-
-.dc-shell__panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  /* The bar's own edges, whichever mode brought them here: the panel says what
-     the bar says, so it is measured against the bar and nothing else. */
-  left: 0;
-  right: 0;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  /* Constrains the panel so its own `overflow: auto` engages instead of the
-     panel running off the bottom of a short container. */
-  max-height: calc(100vh - var(--dc-header-height) - 24px);
 }
 </style>

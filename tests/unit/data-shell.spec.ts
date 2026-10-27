@@ -234,7 +234,7 @@ describe('DataShell — brand', () => {
     expect(domain.attributes('data-dc-brand')).toBeUndefined()
   })
 
-  it('goes home when pressed, and leaves the query panel shut', async () => {
+  it('goes home when pressed', async () => {
     const adapter = createMemoryAdapter('?e=tests&v=list&q=tests-1&p=2&host=1')
     const w = shell(adapter)
     await flushPromises()
@@ -248,7 +248,6 @@ describe('DataShell — brand', () => {
     expect(param(adapter, 'host')).toBe('1')
     // A step like any other: Back returns to the table.
     expect(adapter.history).toHaveLength(2)
-    expect(w.find('.dc-header').attributes('data-dc-expanded')).toBe('false')
   })
 
   it('goes home from the mark too', async () => {

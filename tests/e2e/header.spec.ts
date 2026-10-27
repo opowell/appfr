@@ -4,18 +4,14 @@ import {
   chooseScope,
   chooseView,
   clearScope,
-  clickOutsidePanel,
   expectPage,
   gotoStory,
   header,
-  headerBar,
   listRows,
-  openPanel,
   pageBox,
   pager,
   pageReadout,
   pageStep,
-  panel,
   pickEntity,
   rowOrdinals,
   openPick,
@@ -29,13 +25,11 @@ import {
   stepPage,
   termBar,
   terms,
-  trigger,
   typePage,
   viewSelect,
 } from './story'
 
 const HOME = 'shell-data-shell--home'
-const HOME_OPEN = 'shell-data-shell--home-panel-open'
 const ENTITY = 'shell-data-shell--entity-list'
 
 test.describe('Header — the query as it stands', () => {
@@ -149,7 +143,6 @@ test.describe('Header — the query as it stands', () => {
 
   test('follows the scope when it changes', async ({ page }) => {
     await gotoStory(page, HOME)
-    await openPanel(page)
     await pickEntity(page, 'Items')
     await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'items')
     await expect.poll(() => scopeLabel(page)).toBe('Items · 9,988')
@@ -308,8 +301,6 @@ test.describe('Header — writing the next part on the bar', () => {
     await expect(terms(page)).toHaveText(['regulatory'])
     await expect(searchBox(page)).toHaveValue('')
     expect(await listRows(page).count()).toBeLessThan(before)
-    // It was written on the bar so that the panel need not open for it.
-    await expect(panel(page)).toHaveCount(0)
   })
 
   test('a term typed there is a part in its own right', async ({ page }) => {
@@ -364,7 +355,6 @@ test.describe('Header — writing the next part on the bar', () => {
     await gotoStory(page, ENTITY)
     await searchBox(page).click()
     await expect(searchBox(page)).toBeFocused()
-    await expect(panel(page)).toHaveCount(0)
   })
 })
 
@@ -452,7 +442,6 @@ test.describe('Header — the parts as characters in the field', () => {
     const field = await searchField(page).boundingBox()
     await page.mouse.click(field!.x + field!.width - 2, field!.y + field!.height / 2)
     await expect(searchBox(page)).toBeFocused()
-    await expect(panel(page)).toHaveCount(0)
   })
 })
 
@@ -569,84 +558,27 @@ test.describe('Header — a query longer than the bar', () => {
   })
 })
 
-test.describe('Header — opening the expanded query view', () => {
-  test('starts closed', async ({ page }) => {
-    await gotoStory(page, HOME)
-    await expect(panel(page)).toHaveCount(0)
-    await expect(trigger(page)).toHaveAttribute('aria-expanded', 'false')
-  })
-
-  test('a click on the header opens the panel', async ({ page }) => {
-    await gotoStory(page, HOME)
-    await trigger(page).click()
-    await expect(panel(page)).toBeVisible()
-    await expect(trigger(page)).toHaveAttribute('aria-expanded', 'true')
-  })
-
-  /*
-   * The query sits on the bar now, so the bar is the toggle's surface rather
-   * than the toggle itself: a press anywhere on it opens the panel, and a
-   * press that lands on a part of the query belongs to that part instead.
-   */
-  test('a press anywhere on the bar opens the panel', async ({ page }) => {
-    await gotoStory(page, HOME)
-    // The room before the query, which is the bar's and nothing else's.
-    await headerBar(page).click({ position: { x: 4, y: 4 } })
-    await expect(panel(page)).toBeVisible()
-  })
-
-  test('a press on the name goes home rather than opening the panel', async ({ page }) => {
+test.describe('Header — what a press on the bar does', () => {
+  test('a press on the name goes home', async ({ page }) => {
     await gotoStory(page, ENTITY)
     await expect(listRows(page).first()).toBeVisible()
     await page.locator('.dc-header__domain').click()
 
     await expect(page.locator('.dc-type').first()).toBeVisible()
     await expect(listRows(page)).toHaveCount(0)
-    await expect(panel(page)).toHaveCount(0)
   })
 
-  test('a press on a part of the query lifts it rather than opening the panel', async ({ page }) => {
+  test('a press on a part of the query lifts it', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--filtered-query')
     await terms(page).filter({ hasText: 'state=running' }).click()
 
     await expect(terms(page)).toHaveText(['schedule=daily'])
-    await expect(panel(page)).toHaveCount(0)
   })
 
-  test('a press on the view control opens its own list, not the panel', async ({ page }) => {
-    await gotoStory(page, ENTITY)
-    await scopeSelect(page).click()
-    await expect(panel(page)).toHaveCount(0)
-  })
-
-  test('the trigger points at the panel it controls', async ({ page }) => {
+  test('there is no panel to open: the bar is where the query is edited', async ({ page }) => {
     await gotoStory(page, HOME)
-    await openPanel(page)
-    const controls = await trigger(page).getAttribute('aria-controls')
-    expect(controls).toBeTruthy()
-    await expect(panel(page)).toHaveAttribute('id', controls!)
-  })
-
-  test('a second click closes it', async ({ page }) => {
-    await gotoStory(page, HOME)
-    await openPanel(page)
-    await trigger(page).click()
-    await expect(panel(page)).toHaveCount(0)
-  })
-
-  test('a click outside closes it', async ({ page }) => {
-    await gotoStory(page, HOME)
-    await openPanel(page)
-    await clickOutsidePanel(page)
-    await expect(panel(page)).toHaveCount(0)
-  })
-
-  test('Escape closes it and focus returns to the header', async ({ page }) => {
-    await gotoStory(page, HOME)
-    await openPanel(page)
-    await page.keyboard.press('Escape')
-    await expect(panel(page)).toHaveCount(0)
-    await expect(trigger(page)).toBeFocused()
+    await expect(page.locator('.dc-header__toggle')).toHaveCount(0)
+    await expect(page.locator('.dc-panel')).toHaveCount(0)
   })
 
   test('the header is reachable and operable from the keyboard alone', async ({ page }) => {
@@ -655,27 +587,18 @@ test.describe('Header — opening the expanded query view', () => {
     await gotoStory(page, ENTITY)
     // The name first, being the way home and the first thing on the bar. Then
     // the query, since it is what the bar is mostly made of: which type is
-    // listed and how it is drawn — and then the button that opens the rest of
-    // the query.
+    // listed, how it is drawn, and the box the next part is written in.
     await page.keyboard.press('Tab')
     await expect(page.locator('.dc-header__domain')).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(scopeSelect(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(viewSelect(page)).toBeFocused()
-    // Then the box the next part is written in, at the end of the row —
     await page.keyboard.press('Tab')
     await expect(searchBox(page)).toBeFocused()
-    await page.keyboard.press('Tab')
-    await expect(trigger(page)).toBeFocused()
+    await searchBox(page).fill('state=running')
     await page.keyboard.press('Enter')
-    await expect(panel(page)).toBeVisible()
-  })
-
-  test('results stay behind the open panel rather than being replaced', async ({ page }) => {
-    await gotoStory(page, HOME_OPEN)
-    await expect(panel(page)).toBeVisible()
-    await expect(page.locator('.dc-type').first()).toBeVisible()
+    await expect(terms(page)).toHaveText(['state=running'])
   })
 })
 
@@ -806,9 +729,8 @@ test.describe('Header — paging through the results', () => {
     await stepPage(page, 'Next')
     await expectPage(page, '2 / 4')
 
-    await openPanel(page)
-    await page.getByRole('button', { name: 'running' }).first().click()
-    await clickOutsidePanel(page)
+    await searchBox(page).fill('state=running')
+    await searchBox(page).press('Enter')
 
     // Fewer pages, and back at the first of them.
     await expectPage(page, /^1 \/ /)
@@ -850,58 +772,5 @@ test.describe('Header — paging through the results', () => {
     // The same query as a list does page.
     await gotoStory(page, 'shell-data-shell--home-as-list')
     await expect(pager(page)).toBeVisible()
-  })
-})
-
-test.describe('Header — the width the bar and the panel share', () => {
-  /** The three boxes the width rules are about, in viewport coordinates. */
-  async function boxes(page: Page) {
-    const shell = await page.locator('.dc-shell').boundingBox()
-    const bar = await header(page).boundingBox()
-    const sheet = await panel(page).boundingBox()
-    if (!shell || !bar || !sheet) throw new Error('The shell, bar and panel are not all on screen')
-    return { shell, bar, sheet }
-  }
-
-  test('the panel grows to the bar by default', async ({ page }) => {
-    await gotoStory(page, 'shell-data-shell--panel-fills-the-bar')
-    const { shell, bar, sheet } = await boxes(page)
-
-    expect(Math.abs(sheet.width - bar.width)).toBeLessThanOrEqual(1)
-    expect(Math.abs(sheet.x - bar.x)).toBeLessThanOrEqual(1)
-    // And the bar is still the whole shell, so nothing was narrowed to match.
-    expect(Math.abs(bar.width - shell.width)).toBeLessThanOrEqual(1)
-  })
-
-  test('shrink brings the bar in to the panel, and centres the pair', async ({ page }) => {
-    await gotoStory(page, 'shell-data-shell--bar-comes-in-to-the-panel')
-    const { shell, bar, sheet } = await boxes(page)
-
-    expect(Math.abs(sheet.width - bar.width)).toBeLessThanOrEqual(1)
-    expect(bar.width).toBeLessThan(shell.width)
-    // Equal gutters either side.
-    const left = bar.x - shell.x
-    const right = shell.x + shell.width - (bar.x + bar.width)
-    expect(left).toBeGreaterThan(0)
-    expect(Math.abs(left - right)).toBeLessThanOrEqual(1)
-  })
-
-  test('the narrowed pair can be held to either edge instead', async ({ page }) => {
-    await gotoStory(page, 'shell-data-shell--bar-comes-in-left')
-    {
-      const { shell, bar, sheet } = await boxes(page)
-      expect(Math.abs(sheet.x - bar.x)).toBeLessThanOrEqual(1)
-      expect(Math.abs(bar.x - shell.x)).toBeLessThanOrEqual(1)
-      expect(bar.width).toBeLessThan(shell.width)
-    }
-
-    await gotoStory(page, 'shell-data-shell--bar-comes-in-right')
-    {
-      const { shell, bar, sheet } = await boxes(page)
-      const barRight = bar.x + bar.width
-      expect(Math.abs(sheet.x + sheet.width - barRight)).toBeLessThanOrEqual(1)
-      expect(Math.abs(barRight - (shell.x + shell.width))).toBeLessThanOrEqual(1)
-      expect(bar.width).toBeLessThan(shell.width)
-    }
   })
 })

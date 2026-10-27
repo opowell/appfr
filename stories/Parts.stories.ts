@@ -3,7 +3,7 @@ import { h, ref } from 'vue'
 import SegmentedControl from '../src/components/SegmentedControl.vue'
 import StatusPill from '../src/components/StatusPill.vue'
 import { RECORD_STATUSES } from '../src/types'
-import { partSurface, statefulFacet } from './helpers'
+import { partSurface } from './helpers'
 import { dialogDemo, pillTones, recordPage } from './content'
 import { layersBeside } from './layers'
 
@@ -14,7 +14,7 @@ const meta = {
     docs: {
       description: {
         component: [
-          'The pieces the header and query panel are built from. Each is',
+          'The pieces the header is built from. Each is',
           'exported and usable on its own; none needs the surrounding shell',
           'except for its design tokens.',
         ].join('\n'),
@@ -78,33 +78,6 @@ export const Segmented: Story = {
         )
     },
   }),
-}
-
-/** A multi-select facet. */
-export const ChipsFacet: Story = {
-  render: () =>
-    statefulFacet(
-      { kind: 'chips', key: 'state', label: 'State', options: ['running', 'paused', 'failed'] },
-      { kind: 'chips', selected: ['running'] },
-    ),
-}
-
-/** A numeric window. Either bound may be left open. */
-export const RangeFacet: Story = {
-  render: () =>
-    statefulFacet(
-      { kind: 'range', key: 'rank', label: 'Rank', min: 0, max: 100 },
-      { kind: 'range', min: 20, max: 80 },
-    ),
-}
-
-/** A single boolean predicate, described by its own text. */
-export const ToggleFacet: Story = {
-  render: () =>
-    statefulFacet(
-      { kind: 'toggle', key: 'seen', label: 'Seen', text: 'Hide items already seen' },
-      { kind: 'toggle', on: false },
-    ),
 }
 
 /**

@@ -40,11 +40,8 @@ const story = (args: ShellStoryArgs): Story => ({
   render: (storyArgs: ShellStoryArgs) => renderShell(storyArgs),
 })
 
-/** Open the panel, change something, and watch the address bar. */
+/** Change something on the bar, and watch the address bar. */
 export const LiveUrl = story({ liveUrl: true })
-
-/** The same thing with the panel already open. */
-export const LiveUrlPanelOpen = story({ liveUrl: true, open: true })
 
 /**
  * In the list view, where an entity filter's effect on the rows is obvious.

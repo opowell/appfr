@@ -8,11 +8,9 @@
 /* Components */
 export { default as DataShell } from './components/DataShell.vue'
 export { default as ShellHeader } from './components/ShellHeader.vue'
-export { default as QueryPanel } from './components/QueryPanel.vue'
 export { default as RecordActions } from './components/RecordActions.vue'
 export { default as ShellCard } from './components/ShellCard.vue'
 export { default as ResultsArea } from './components/ResultsArea.vue'
-export { default as FacetControl } from './components/FacetControl.vue'
 export { default as SegmentedControl } from './components/SegmentedControl.vue'
 export { default as MenuBar } from './components/MenuBar.vue'
 export { default as MenuButton } from './components/MenuButton.vue'
@@ -427,14 +425,12 @@ export type {
   RecordStatus,
   Selection,
   SelectionOperation,
-  ShellAlign,
   ShellFactItem,
   ShellFactValue,
   ShellQuery,
   ShellQueryDefaults,
   ShellRow,
   ShellTheme,
-  ShellWidthMatch,
   SortDef,
   SortDirection,
   StatusCount,

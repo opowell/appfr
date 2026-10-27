@@ -13,9 +13,6 @@ import type { EntitySchema, ViewKind } from '../types'
 import { VIEW_KINDS } from '../types'
 
 const props = defineProps<{
-  expanded: boolean
-  /** Id of the panel this bar controls, for `aria-controls`. */
-  panelId: string
   /**
    * Leave the live match count off the type in force, e.g. while a detail view
    * is open: the list of types then says what each of them holds, rather than
@@ -44,8 +41,6 @@ const props = defineProps<{
    */
   hideViews?: boolean
 }>()
-
-const emit = defineEmits<{ toggle: [] }>()
 
 const slots = defineSlots<{
   /** Extra controls at the right end of the bar. */
@@ -206,8 +201,7 @@ const showViews = computed(() => !props.hideViews && viewOptions.value.length > 
  * another type, and the way back out to `Everything`. On `Everything` itself
  * the content is what offers the types — each card on the home screen is
  * headed by its own, and the rows of a mixed list each say theirs — so a
- * chooser on the bar would be the same choice offered twice, and the query
- * panel still holds it for anyone who wants it as a control.
+ * chooser on the bar would be the same choice offered twice.
  *
  * `typeChooser: 'always'` keeps it on `Everything` too, for a host whose home
  * screen opens on the records rather than on a card per type: there a row
@@ -333,9 +327,9 @@ function chooseEntity(key: string): void {
  *
  * The bar shows the query as the parts it is made of, and each of them comes
  * out when it is pressed — so the row reads as a field of parts, and a field
- * of parts has a box at the end of it. Without one, the only way to *add* a
- * word was to open the panel, which is a heavier move than the words are
- * worth: most of what anyone types is a name to look for.
+ * of parts has a box at the end of it, and it is the one place the query is
+ * written: most of what anyone types is a name to look for, and the rest is
+ * a term — `p<5`, `quantity:100..` — written the same way.
  *
  * The box is a draft. It never holds the query's own text — what is committed
  * shows as pills beside it, like every other part — so Enter ANDs what was
@@ -404,8 +398,8 @@ const runs = computed(() => [
 const between = computed(() => at.value < terms.value.length)
 
 /*
- * A query changed from somewhere else (a press in the results, Back, the
- * panel) can leave the caret counting parts that are gone.
+ * A query changed from somewhere else (a press in the results, Back) can
+ * leave the caret counting parts that are gone.
  */
 watch(terms, (now) => {
   if (caret.value !== null && caret.value >= now.length) caret.value = null
@@ -493,22 +487,6 @@ function pressField(event: MouseEvent): void {
 /** Nothing typed and nowhere to be: the box goes back to the end. */
 function leaveSearch(): void {
   if (!shell.draft.value) caret.value = null
-}
-
-/* ------------------------------------------------------------ pressing the bar */
-
-/**
- * A press on the bar opens the query panel.
- *
- * The bar is the toggle's *surface* rather than the toggle itself, because the
- * query now sits on it and each part of a query is a control of its own — a
- * button cannot hold another. So a press that landed on one of them belongs to
- * it and stops there, and the chevron at the end is a real button carrying
- * what the surface does for anyone not using a pointer.
- */
-function pressBar(event: MouseEvent): void {
-  if ((event.target as HTMLElement | null)?.closest('button, select, label, input, .dc-header__field')) return
-  emit('toggle')
 }
 
 /* --------------------------------------------------------- parts off the end */
@@ -678,20 +656,13 @@ function abandonTyped(event: Event): void {
 </script>
 
 <template>
-  <div
-    class="dc-header"
-    :data-dc-expanded="expanded ? 'true' : 'false'"
-  >
-    <!-- The whole of this is the toggle: the domain it opens on, the query as
-         it stands, and the chevron that says which way it goes. -->
-    <div
-      class="dc-header__trigger"
-      @click="pressBar"
-    >
-      <!-- The name, which is the way home: a button, so the press is its own
-           and not the panel's — see `pressBar`. A host's mark, where it has
-           one, is drawn for the eye and hidden from assistive technology,
-           which reads the name it stands for. -->
+  <div class="dc-header">
+    <!-- The domain, and the query as it stands: where the query is read and
+         edited, and the only place it is. -->
+    <div class="dc-header__main">
+      <!-- The name, which is the way home. A host's mark, where it has one,
+           is drawn for the eye and hidden from assistive technology, which
+           reads the name it stands for. -->
       <button
         v-if="slots.brand"
         type="button"
@@ -838,26 +809,10 @@ function abandonTyped(event: Event): void {
           </div>
         </div>
       </div>
-
-      <!-- What the surface does, for anyone not using a pointer: a surface is
-           nothing a keyboard can reach, so the press itself is a button. -->
-      <button
-        type="button"
-        class="dc-header__toggle"
-        :aria-expanded="expanded"
-        :aria-controls="panelId"
-        @click="emit('toggle')"
-      >
-        <span
-          class="dc-header__chevron"
-          aria-hidden="true"
-        >{{ expanded ? '▲' : '▼' }}</span>
-        <span class="dc-header__sr">{{ expanded ? 'Hide query panel' : 'Edit query' }}</span>
-      </button>
     </div>
 
-    <!-- Off the trigger's surface, because stepping through pages is not part
-         of the query and pressing here should not open the panel. -->
+    <!-- Beside the query rather than in it: stepping through pages is not
+         part of the query. -->
     <nav
       v-if="paged"
       class="dc-header__pages"
@@ -927,8 +882,6 @@ function abandonTyped(event: Event): void {
 
 <style scoped>
 .dc-header {
-  /* Above the query panel's scrim, so the trigger keeps working while the
-     panel is open — `aria-expanded` promises it toggles. */
   position: relative;
   z-index: 3;
   display: flex;
@@ -940,11 +893,7 @@ function abandonTyped(event: Event): void {
   background: var(--dc-bg-0);
 }
 
-.dc-header[data-dc-expanded='true'] {
-  background: var(--dc-bg-1);
-}
-
-.dc-header__trigger {
+.dc-header__main {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -953,35 +902,6 @@ function abandonTyped(event: Event): void {
   margin-left: -8px;
   padding: 6px 8px;
   border-radius: var(--dc-radius);
-  cursor: pointer;
-}
-
-/*
- * The whole surface lights up, because the whole surface opens the panel —
- * except while the pointer is over a part of the query, which is a control of
- * its own and does something else entirely when it is pressed.
- */
-.dc-header__trigger:hover:not(
-    :has(
-      .dc-term:hover,
-      .dc-header__pick:hover,
-      .dc-header__field:hover,
-      .dc-header__domain:hover
-    )
-  ) {
-  background: var(--dc-bg-1);
-}
-
-.dc-header[data-dc-expanded='true']
-  .dc-header__trigger:hover:not(
-    :has(
-      .dc-term:hover,
-      .dc-header__pick:hover,
-      .dc-header__field:hover,
-      .dc-header__domain:hover
-    )
-  ) {
-  background: var(--dc-bg-2);
 }
 
 /*
@@ -1028,8 +948,7 @@ function abandonTyped(event: Event): void {
 
 /*
  * The search field, with the parts in it. It takes the rest of the bar,
- * because what the query is is the longest thing on it, and the chevron is
- * held to the end by the toggle beside it.
+ * because what the query is is the longest thing on it.
  *
  * Bare unless a host says otherwise, so that an empty one is the rest of the
  * row rather than a widget on it. A dark surface can leave a bare field a
@@ -1230,30 +1149,6 @@ function abandonTyped(event: Event): void {
 .dc-header__or {
   flex: 0 0 auto;
   font-size: var(--dc-text-micro);
-  color: var(--dc-fg-3);
-}
-
-/*
- * The press itself. It carries what the bar does — `aria-expanded`, the panel
- * it controls, and a name saying which way it goes — and is drawn as nothing
- * but the chevron, because the surface around it is the button as far as a
- * pointer is concerned.
- */
-.dc-header__toggle {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  margin-left: auto;
-  padding: 4px;
-  border: none;
-  border-radius: var(--dc-radius-sm);
-  background: transparent;
-  cursor: pointer;
-}
-
-.dc-header__chevron {
-  font-size: var(--dc-text-eyebrow);
-  line-height: 1;
   color: var(--dc-fg-3);
 }
 

@@ -1,7 +1,5 @@
 import type { App, Plugin } from 'vue'
 import DataShell from './components/DataShell.vue'
-import FacetControl from './components/FacetControl.vue'
-import QueryPanel from './components/QueryPanel.vue'
 import RecordActions from './components/RecordActions.vue'
 import ResultsArea from './components/ResultsArea.vue'
 import SegmentedControl from './components/SegmentedControl.vue'
@@ -45,10 +43,8 @@ export interface HeaderContentLayoutOptions {
 const COMPONENTS = {
   DataShell,
   ShellHeader,
-  QueryPanel,
   RecordActions,
   ResultsArea,
-  FacetControl,
   SegmentedControl,
   StatusPill,
   WindowFrame,

@@ -27,18 +27,6 @@ const meta = {
   component: DataShell,
   argTypes: {
     ...themeArgTypes,
-    matchWidth: {
-      control: { type: 'select' as const },
-      options: ['grow', 'shrink'],
-      description: 'Whether the panel grows to the bar, or the bar comes in to the panel.',
-      table: { defaultValue: { summary: 'grow' } },
-    },
-    headAlign: {
-      control: { type: 'select' as const },
-      options: ['left', 'center', 'right'],
-      description: 'Where the pair sits once `shrink` has narrowed them.',
-      table: { defaultValue: { summary: 'center' } },
-    },
   },
   parameters: {
     layout: 'fullscreen',
@@ -79,34 +67,6 @@ const story = (args: ShellStoryArgs): Story => ({
  * A card's header filters the results to that type; a row opens that record.
  */
 export const Home = story({})
-
-/** Home with the query panel open, showing what narrowing is available. */
-export const HomePanelOpen = story({ open: true })
-
-/**
- * A host's own section at the end of the panel, through the `panel-section`
- * slot. The section is the panel's — same metrics, same divider — and what
- * goes in it is the host's, which is why this one styles its own heading with
- * the `dc-eyebrow` utility and lays out its own controls.
- *
- * It is where an application's commands go when they are not about the query:
- * the header bar's width belongs to the summary it exists to show.
- */
-export const HostPanelSection = story({
-  open: true,
-  slots: {
-    'panel-section': () => [
-      h('header', { class: 'sb-panel-section__head' }, [
-        h('span', { class: 'dc-eyebrow' }, 'App'),
-        h('span', { class: 'sb-panel-section__note' }, 'the host\u2019s own controls, not the query'),
-      ]),
-      h('div', { class: 'sb-panel-section__actions' }, [
-        h('button', { type: 'button' }, 'Reload data'),
-        h('button', { type: 'button' }, 'Sign out'),
-      ]),
-    ],
-  },
-})
 
 /** More of each type per card. */
 export const HomeDeeperCards = story({ previewsPerType: 6 })
@@ -380,18 +340,6 @@ export const DrillableTableTicked = story({
 export const DrilledIntoPieces = story({
   schema: legoSchema,
   search: '?e=pieces&v=table&q=set%3A%22sets_10007%22',
-})
-
-/**
- * The same drill with the panel open, which is where that term is edited: it
- * is a part of the expression field rather than text in it, and the box beside
- * it is where the next one is written — a word to search for, or a term of its
- * own.
- */
-export const DrilledPanelOpen = story({
-  schema: legoSchema,
-  search: '?e=pieces&v=table&q=set%3A%22sets_10007%22',
-  open: true,
 })
 
 /**
@@ -697,7 +645,6 @@ export const StreamedHome = story({ source: streamingSource() })
 export const RestrictedViews = story({
   search: '?e=searches&v=table',
   views: ['list', 'table'],
-  open: true,
 })
 
 /** A link to a view this shell does not offer: it renders the first it does. */
@@ -820,29 +767,6 @@ export const PagesNoteOnOnePage = story({
  * still the same rows, and page two of them is still page two.
  */
 export const PagedInTheTableView = story({ search: '?e=items&v=table&p=2', limit: 12 })
-
-/* --------------------------------------------- the width the two of them share */
-
-/**
- * The default. The panel grows to the bar it drops from, so the query opens
- * over exactly the width of the summary it came from — at any size of shell,
- * and with nothing left over at either end.
- */
-export const PanelFillsTheBar = story({ open: true })
-
-/**
- * The other way round: `matchWidth="shrink"` brings the *bar* in to the width
- * the panel wants — `--dc-header-width`, 1220px — so the pair still measure
- * the same, and a query on a very wide screen is not read corner to corner.
- * The results below keep the shell's full width.
- */
-export const BarComesInToThePanel = story({ open: true, matchWidth: 'shrink' })
-
-/** The narrowed pair held to the left of the shell rather than centred. */
-export const BarComesInLeft = story({ open: true, matchWidth: 'shrink', headAlign: 'left' })
-
-/** And to the right. */
-export const BarComesInRight = story({ open: true, matchWidth: 'shrink', headAlign: 'right' })
 
 /* ------------------------------------------------------------------ variants */
 
@@ -1348,36 +1272,3 @@ export const SearchFieldTokens = story({
   },
 })
 
-/** Every URL the tool has run against, which grows with the data. */
-const TARGETS = Array.from(
-  { length: 30 },
-  (_, at) =>
-    `https://shop.example.com/en/pages/a-long-shared-path/that-says-nothing/target-${String(at + 1).padStart(2, '0')}/`,
-)
-
-const longFacetsSchema: DomainSchema = {
-  ...iRadarSchema,
-  entities: iRadarSchema.entities.map((entity) =>
-    entity.key === 'searches'
-      ? {
-          ...entity,
-          facets: [
-            ...entity.facets,
-            { kind: 'chips', key: 'target', label: 'Target', options: TARGETS, maxRows: 3, truncate: 'start' },
-          ],
-        }
-      : entity,
-  ),
-}
-
-/**
- * A facet whose options grow with the data, capped at three rows of chips
- * (`maxRows`) and cut at the start of each (`truncate: 'start'`): the rows
- * scroll, the edge with more behind it fades, and each chip is one line
- * ending in the part of the URL that tells it apart.
- */
-export const LongChipsFacet = story({
-  schema: longFacetsSchema,
-  search: '?e=searches&v=list',
-  open: true,
-})

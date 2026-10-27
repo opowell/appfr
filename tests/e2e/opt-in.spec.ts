@@ -74,9 +74,11 @@ test.describe('brand', () => {
     await expect(domain.locator('svg.sb-brand')).toBeVisible()
     await expect(domain.locator('.dc-header__brand')).toHaveAttribute('aria-hidden', 'true')
     await expect(domain).toHaveText('iRadar')
-    // Only the mark takes room: the name is visually hidden.
+    // Only the mark takes room, and the room its hover tint is drawn in: the
+    // name is visually hidden.
     const box = await domain.boundingBox()
-    expect(box?.width).toBeLessThan(24)
+    const mark = await domain.locator('svg.sb-brand').boundingBox()
+    expect(box!.width - mark!.width).toBeLessThanOrEqual(12)
   })
 
   test('without it the name is drawn as text, as it always was', async ({ page }) => {

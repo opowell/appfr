@@ -233,6 +233,33 @@ describe('DataShell — brand', () => {
     expect(domain.text()).toBe('Unit Domain')
     expect(domain.attributes('data-dc-brand')).toBeUndefined()
   })
+
+  it('goes home when pressed, and leaves the query panel shut', async () => {
+    const adapter = createMemoryAdapter('?e=tests&v=list&q=tests-1&p=2&host=1')
+    const w = shell(adapter)
+    await flushPromises()
+
+    await w.find('.dc-header__domain').trigger('click')
+    await flushPromises()
+    expect(param(adapter, 'e')).toBeNull()
+    expect(param(adapter, 'q')).toBeNull()
+    expect(param(adapter, 'p')).toBeNull()
+    // What the shell does not read is the host's, and stays.
+    expect(param(adapter, 'host')).toBe('1')
+    // A step like any other: Back returns to the table.
+    expect(adapter.history).toHaveLength(2)
+    expect(w.find('.dc-header').attributes('data-dc-expanded')).toBe('false')
+  })
+
+  it('goes home from the mark too', async () => {
+    const adapter = createMemoryAdapter('?e=tests&v=list')
+    const w = shell(adapter, {}, { brand: () => h('svg', { class: 'mark' }) })
+    await flushPromises()
+
+    await w.find('.mark').trigger('click')
+    await flushPromises()
+    expect(param(adapter, 'e')).toBeNull()
+  })
 })
 
 describe('DataShell — rows that live somewhere', () => {

@@ -1,5 +1,9 @@
 # header-content-layout
 
+> **Pre-alpha.** Breaking changes go out freely, in any release, with no
+> deprecation period and no migration path. Pin an exact tag, and read the
+> diff before moving to the next one.
+
 A query header over a switchable content area, for data-heavy screens.
 
 The header states what the current query is. Clicking it opens the expanded
@@ -2035,7 +2039,10 @@ that matches its own:
 
 ### A mark for the name
 
-The domain's name at the left of the bar is text. The `brand` slot draws a
+The domain's name at the left of the bar is the way home: pressed, it returns
+the shell to the schema's defaults, as `reset()` does — a step the back button
+undoes, and one press rather than two, since the bar's panel toggle leaves a
+press on a button to the button. The `brand` slot draws a
 mark in its place — a logo, an icon — and the name stays the bar's accessible
 text, read out where the mark is drawn, so `schema.label` is still the one
 place the name is written:
@@ -2048,9 +2055,9 @@ place the name is written:
 </DataShell>
 ```
 
-The mark is hidden from assistive technology, and it is a mark rather than a
-control: the whole bar is the query panel's toggle, so a link there would be a
-second press on the same surface. It takes the name's colour (`currentColor`)
+The mark is hidden from assistive technology, which reads the name on the
+button it is drawn in, and goes home when pressed as the name does. It takes
+the name's colour (`currentColor`)
 and goes where the name goes on a narrow shell. The slot is handed `label`,
 for a mark that wants to say the name too.
 

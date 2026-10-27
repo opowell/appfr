@@ -549,12 +549,17 @@ function abandonTyped(event: Event): void {
       class="dc-header__trigger"
       @click="pressBar"
     >
-      <!-- A host's mark, where it has one: drawn for the eye and hidden from
-           assistive technology, which reads the name it stands for. -->
-      <span
+      <!-- The name, which is the way home: a button, so the press is its own
+           and not the panel's — see `pressBar`. A host's mark, where it has
+           one, is drawn for the eye and hidden from assistive technology,
+           which reads the name it stands for. -->
+      <button
         v-if="slots.brand"
+        type="button"
         class="dc-header__domain"
         data-dc-brand
+        title="Home"
+        @click="shell.reset()"
       >
         <span
           class="dc-header__brand"
@@ -566,11 +571,16 @@ function abandonTyped(event: Event): void {
           />
         </span>
         <span class="dc-header__sr">{{ domain.label }}</span>
-      </span>
-      <span
+      </button>
+      <button
         v-else
+        type="button"
         class="dc-header__domain"
-      >{{ domain.label }}</span>
+        title="Home"
+        @click="shell.reset()"
+      >
+        {{ domain.label }}
+      </button>
 
       <!-- What the shell is read inside, where it is read inside anything: not
            a part of the query and not something to take off, so it sits before
@@ -792,23 +802,50 @@ function abandonTyped(event: Event): void {
  * its own and does something else entirely when it is pressed.
  */
 .dc-header__trigger:hover:not(
-    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__search:hover)
+    :has(
+      .dc-term:hover,
+      .dc-header__pick:hover,
+      .dc-header__search:hover,
+      .dc-header__domain:hover
+    )
   ) {
   background: var(--dc-bg-1);
 }
 
 .dc-header[data-dc-expanded='true']
   .dc-header__trigger:hover:not(
-    :has(.dc-term:hover, .dc-header__pick:hover, .dc-header__search:hover)
+    :has(
+      .dc-term:hover,
+      .dc-header__pick:hover,
+      .dc-header__search:hover,
+      .dc-header__domain:hover
+    )
   ) {
   background: var(--dc-bg-2);
 }
 
+/*
+ * The name, and the way home. Set as the name always was rather than as a
+ * button, being the domain's name first; the press shows itself only on the
+ * way past, with room made for its tint that the margin takes back, so the
+ * name does not move to make it.
+ */
 .dc-header__domain {
   flex: 0 0 auto;
+  margin: -3px -6px;
+  padding: 3px 6px;
+  border: none;
+  border-radius: var(--dc-radius-sm);
+  background: transparent;
+  font: inherit;
   font-size: var(--dc-text-body);
   font-weight: var(--dc-weight-semibold);
   color: var(--dc-fg-1);
+  cursor: pointer;
+}
+
+.dc-header__domain:hover {
+  background: var(--dc-bg-2);
 }
 
 /* A mark sits on the bar's centre line, as the name's text does; its size is

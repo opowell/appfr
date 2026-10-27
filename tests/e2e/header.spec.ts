@@ -500,8 +500,19 @@ test.describe('Header — opening the expanded query view', () => {
    */
   test('a press anywhere on the bar opens the panel', async ({ page }) => {
     await gotoStory(page, HOME)
-    await page.locator('.dc-header__domain').click()
+    // The room before the query, which is the bar's and nothing else's.
+    await termBar(page).click({ position: { x: 4, y: 4 } })
     await expect(panel(page)).toBeVisible()
+  })
+
+  test('a press on the name goes home rather than opening the panel', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    await expect(listRows(page).first()).toBeVisible()
+    await page.locator('.dc-header__domain').click()
+
+    await expect(page.locator('.dc-type').first()).toBeVisible()
+    await expect(listRows(page)).toHaveCount(0)
+    await expect(panel(page)).toHaveCount(0)
   })
 
   test('a press on a part of the query lifts it rather than opening the panel', async ({ page }) => {
@@ -552,9 +563,12 @@ test.describe('Header — opening the expanded query view', () => {
     // A type in force, so both choosers are on the bar: on Everything the
     // content names the types and there is no type chooser to reach.
     await gotoStory(page, ENTITY)
-    // The query comes first, since it is what the bar is mostly made of: which
-    // type is listed and how it is drawn — and then the button that opens the
-    // rest of the query.
+    // The name first, being the way home and the first thing on the bar. Then
+    // the query, since it is what the bar is mostly made of: which type is
+    // listed and how it is drawn — and then the button that opens the rest of
+    // the query.
+    await page.keyboard.press('Tab')
+    await expect(page.locator('.dc-header__domain')).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(scopeSelect(page)).toBeFocused()
     await page.keyboard.press('Tab')

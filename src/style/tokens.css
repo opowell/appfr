@@ -145,6 +145,11 @@
   --dc-radius: 0;
   --dc-radius-lg: 0;
   --dc-header-height: 48px;
+  /* The inset from the shell's left and right edges to whatever starts or
+     ends a line on it: the name on the bar, the strip's first control, a
+     table's tick or first column, a view's first card. One length, so they
+     all stand on the one line down the page. */
+  --dc-gutter: 16px;
   /* How many lines a table cell may wrap to before it is cut short with an
      ellipsis — and only in a table whose rows are already tall, which is the
      one place the depth is going spare. See `data-dc-wrap` in TableView. */

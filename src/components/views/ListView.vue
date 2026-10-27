@@ -97,7 +97,7 @@ const showEntity = computed(() => shell.isEverything.value)
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-right: 16px;
+  padding-right: var(--dc-gutter);
   border-bottom: 1px solid var(--dc-line);
 }
 
@@ -109,7 +109,7 @@ const showEntity = computed(() => shell.isEverything.value)
    link beside them gives up the padding it was holding that gutter with. */
 .dc-list__tick,
 .dc-list__standing:first-child {
-  margin-left: 16px;
+  margin-left: var(--dc-gutter);
 }
 
 .dc-list__row:has(.dc-list__tick, .dc-list__standing) .dc-list__open {
@@ -135,7 +135,7 @@ const showEntity = computed(() => shell.isEverything.value)
   gap: 14px;
   flex: 1;
   min-width: 0;
-  padding: 11px 0 11px 16px;
+  padding: 11px 0 11px var(--dc-gutter);
   border: none;
   background: transparent;
   text-align: left;

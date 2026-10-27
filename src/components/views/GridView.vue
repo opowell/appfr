@@ -59,7 +59,7 @@ const rows = usePresentedRows()
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 10px;
-  padding: 16px;
+  padding: 16px var(--dc-gutter);
 }
 
 /* What the grid lays out, now that a tile may have something over it. */

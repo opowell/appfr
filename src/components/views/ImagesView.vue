@@ -221,7 +221,7 @@ const layout = computed<{ boxes: Placed[]; height: number }>(() => {
 
 <style scoped>
 .dc-images {
-  padding: 16px;
+  padding: 16px var(--dc-gutter);
 }
 
 /* The boxes are placed within it, so it is what they are placed within. */

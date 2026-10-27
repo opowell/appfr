@@ -41,7 +41,7 @@ const rows = usePresentedRows()
   flex-wrap: wrap;
   align-items: baseline;
   gap: 6px 10px;
-  padding: 16px;
+  padding: 16px var(--dc-gutter);
 }
 
 .dc-links__item {

@@ -364,7 +364,7 @@ function opLabel(label: string): string {
   gap: 12px;
   flex: 0 0 auto;
   min-height: 38px;
-  padding: 5px 16px;
+  padding: 5px var(--dc-gutter);
   border-bottom: 1px solid var(--dc-line);
   background: var(--dc-bg-1);
   font-size: var(--dc-text-meta);

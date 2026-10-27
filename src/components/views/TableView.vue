@@ -450,15 +450,28 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
   white-space: nowrap;
 }
 
+/* The row's ends are the shell's gutter rather than a cell's padding, so that
+   the tick or the first value stands under the bar's name, and the last one
+   ends where the bar does. */
+.dc-table th:first-child,
+.dc-table td:first-child {
+  padding-left: var(--dc-gutter);
+}
+
+.dc-table th:last-child,
+.dc-table td:last-child {
+  padding-right: var(--dc-gutter);
+}
+
 .dc-table__row {
   cursor: pointer;
 }
 
 /* Held to the tick's own width, since `table-layout: fixed` shares out only
-   what the columns did not claim. */
+   what the columns did not claim: the gutter, the box, and the room after it. */
 .dc-table th.dc-table__pick,
 .dc-table td.dc-table__pick {
-  width: 36px;
+  width: calc(var(--dc-gutter) + 24px);
   padding-right: 0;
 }
 
@@ -483,6 +496,12 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
   font-size: var(--dc-text-meta);
   text-transform: none;
   letter-spacing: normal;
+}
+
+/* Leading the row, the control's left padding is the gutter. */
+.dc-table th.dc-table__standing:first-child,
+.dc-table td.dc-table__standing:first-child {
+  width: calc(4.5em + 8px + var(--dc-gutter));
 }
 
 .dc-table__row:hover {

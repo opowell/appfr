@@ -694,7 +694,7 @@ function abandonTyped(event: Event): void {
   align-items: center;
   gap: 12px;
   height: var(--dc-header-height);
-  padding: 0 14px;
+  padding: 0 var(--dc-gutter);
   border-bottom: 1px solid var(--dc-line);
   background: var(--dc-bg-0);
 }

@@ -139,7 +139,7 @@ const allPictures = computed(() => rows.value.length > 0 && rows.value.every(isP
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 12px;
-  padding: 16px;
+  padding: 16px var(--dc-gutter);
 }
 
 .dc-card {

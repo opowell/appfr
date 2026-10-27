@@ -10,6 +10,7 @@ import { chooseScope, chooseView, gotoStory, listRows, stepPage, viewSelect } fr
 
 const ACTIONS = 'shell-data-shell--entity-actions'
 const TABLE = 'shell-data-shell--entity-actions-table'
+const RUNNING = 'shell-data-shell--entity-actions-running'
 const GRID = 'shell-data-shell--entity-actions-grid'
 const PAGED = 'shell-data-shell--entity-actions-paged'
 const CREATE_ONLY = 'shell-data-shell--entity-actions-create-only'
@@ -230,6 +231,13 @@ test.describe('Records — ticks in every view that draws rows', () => {
     await expect(page.locator('.dc-table__row').first().locator('td').first()).toHaveClass(
       /dc-table__pick/,
     )
+  })
+
+  test('the bar counts nothing while there is nothing yet to tick', async ({ page }) => {
+    await gotoStory(page, RUNNING)
+    await expect(page.locator('.dc-results__state')).toContainText('Running query…')
+    await expect(ops(page)).toHaveText(['+ Start new…', 'Duplicate', 'Delete'])
+    await expect(readout(page)).toHaveCount(0)
   })
 
   test('a table row still opens when the cell beside the tick is pressed', async ({ page }) => {

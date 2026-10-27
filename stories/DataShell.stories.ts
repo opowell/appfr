@@ -249,6 +249,15 @@ export const EntityActions = managed({ search: '?e=searches&v=list' })
 export const EntityActionsTable = managed({ search: '?e=searches&v=table' })
 
 /**
+ * The same, with the first page still on its way. The operations are there to
+ * be found, but there is nothing yet to tick, so the bar counts nothing.
+ */
+export const EntityActionsRunning = managed({
+  search: '?e=searches&v=table',
+  source: delayedSource(100_000),
+})
+
+/**
  * A type whose only words for a selection are its own — `operations` — and
  * none of the three the shell knows by name. They still put the ticks on the
  * rows, and each is reported by its key with the selection it is for.

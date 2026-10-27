@@ -37,7 +37,23 @@ const entity = computed(() => shell.entity.value)
  */
 const records = computed(() => !isTypeCardsQuery(shell.query.value, props.views))
 
-const selecting = computed(() => records.value && shell.selectable.value)
+/* ---------------------------------------------------------- what is ticked */
+
+/** How many records are ticked, on this page and every other. */
+const count = computed(() => shell.selection.value.ids.length)
+
+/**
+ * Nothing to tick until there are rows: while the first page is still on its
+ * way, or the query found none, the results under the bar say which, and
+ * "None selected" over "Running query…" would be a reading of a page that is
+ * not there. Ticks made before the rows went stay counted, and clearable.
+ */
+const selecting = computed(
+  () =>
+    records.value &&
+    shell.selectable.value &&
+    (shell.rows.value.length > 0 || count.value > 0),
+)
 
 /**
  * Whether the tick that takes the page is the table's rather than the bar's.
@@ -61,11 +77,6 @@ const offered = computed(
           entity.value?.operations?.length,
       )),
 )
-
-/* ---------------------------------------------------------- what is ticked */
-
-/** How many records are ticked, on this page and every other. */
-const count = computed(() => shell.selection.value.ids.length)
 
 /**
  * What the tick says it is counting. The number is of the whole selection

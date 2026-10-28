@@ -154,6 +154,7 @@ export function presentRow(
   entity: EntitySchema | null,
   pinned: boolean,
   selected = false,
+  plainOrdinal = false,
 ): PresentedRow {
   const columns = entity?.columns ?? []
   return {
@@ -162,7 +163,7 @@ export function presentRow(
     entityLabel: row.entityLabel,
     entity,
     columns,
-    ordinal: formatOrdinal(index),
+    ordinal: formatOrdinal(index, plainOrdinal),
     parts: presentParts(row, columns),
     pinned,
     selected,
@@ -184,6 +185,7 @@ export function usePresentedRows(): ComputedRef<PresentedRow[]> {
         byKey.value.get(row.entityKey) ?? null,
         shell.isPinned(row),
         shell.isSelected(row),
+        shell.schema.value.plainOrdinals,
       ),
     ),
   )

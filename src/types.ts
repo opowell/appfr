@@ -612,6 +612,11 @@ export interface DomainSchema {
    * and mock sources both do.
    */
   strictScopes?: boolean
+  /**
+   * Whether the leading column of the list and table views counts 1, 2, 3
+   * rather than 01, 02, 03. Unset, it pads to two digits.
+   */
+  plainOrdinals?: boolean
 }
 
 /* ------------------------------------------------------------------- query */

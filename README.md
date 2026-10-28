@@ -711,6 +711,9 @@ columns: [
 
 Each is a fresh object, so changing one set changes no other.
 
+The ordinal column pads to two digits (`01`, `02`); `plainOrdinals: true` on the
+schema counts `1`, `2` instead.
+
 **Formatting what a tool measures.** `formatBytes` (`28.0 kB`, decimal units),
 `formatDuration` from milliseconds (`640ms`, `12.4s`, `3m 7s`), `formatElapsed`
 from seconds (`1:42`), `formatPercent` from a share (`50%`), `formatDateTime`

@@ -6,6 +6,7 @@ import {
   formatDuration,
   formatElapsed,
   formatInteger,
+  formatOrdinal,
   formatPercent,
   stripAnsi,
 } from '../../src/data/format'
@@ -47,6 +48,23 @@ describe('formatInteger', () => {
 
   it('says nothing of a number that is not one', () => {
     expect(formatInteger(Number.NaN)).toBe('—')
+  })
+})
+
+/**
+ * The leading column of the list and table views: padded unless the schema
+ * asks for the bare number with `plainOrdinals`.
+ */
+describe('formatOrdinal', () => {
+  it('pads to two digits by default', () => {
+    expect(formatOrdinal(0)).toBe('01')
+    expect(formatOrdinal(49)).toBe('50')
+    expect(formatOrdinal(99)).toBe('100')
+  })
+
+  it('counts from one without padding when asked', () => {
+    expect(formatOrdinal(0, true)).toBe('1')
+    expect(formatOrdinal(9, true)).toBe('10')
   })
 })
 

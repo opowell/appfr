@@ -131,4 +131,38 @@ function choose(event: MouseEvent, standing: TermStanding | null) {
 .dc-standing-control__choice[data-dc-standing='none'][data-dc-active='true'] {
   background: var(--dc-bg-2);
 }
+
+/* Under the pointer each sign is a button of its own: a surface behind it, and
+   an edge in the colour it is about to light in. Inset, so the box and the
+   rules between the three stay where they are. Drawn after the lit ones, so a
+   lit sign still shows it is under the pointer. */
+.dc-standing-control__choice:hover,
+.dc-standing-control__choice:focus-visible {
+  background: var(--dc-bg-2);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 55%, transparent);
+}
+
+.dc-standing-control__choice[data-dc-active='true']:hover,
+.dc-standing-control__choice[data-dc-active='true']:focus-visible {
+  background: var(--dc-bg-3);
+}
+
+.dc-standing-control__choice[data-dc-standing='in'][data-dc-active='true']:hover,
+.dc-standing-control__choice[data-dc-standing='in'][data-dc-active='true']:focus-visible {
+  background: color-mix(in oklab, var(--dc-ok-bg), var(--dc-ok) 12%);
+}
+
+.dc-standing-control__choice[data-dc-standing='out'][data-dc-active='true']:hover,
+.dc-standing-control__choice[data-dc-standing='out'][data-dc-active='true']:focus-visible {
+  background: color-mix(in oklab, var(--dc-danger-bg), var(--dc-danger) 12%);
+}
+
+/* The box's corners belong to the outer two, so their edge follows them. */
+.dc-standing-control__choice:first-child {
+  border-radius: var(--dc-radius-sm) 0 0 var(--dc-radius-sm);
+}
+
+.dc-standing-control__choice:last-child {
+  border-radius: 0 var(--dc-radius-sm) var(--dc-radius-sm) 0;
+}
 </style>

@@ -27,10 +27,11 @@ export function ordinalColumn(over: Over = {}): ColumnDef {
 
 /**
  * The record's state, as the pill. Usually last, because it is the last thing
- * a row is read for and the first thing it is scanned by.
+ * a row is read for and the first thing it is scanned by — and sorted by
+ * `state`, which puts every row in one state together.
  */
 export function stateColumn(over: Over = {}): ColumnDef {
-  return { key: 'status', role: 'state', kind: 'status', label: 'State', width: '104px', ...over }
+  return { key: 'status', role: 'state', kind: 'status', label: 'State', sort: 'state', width: '104px', ...over }
 }
 
 /**
@@ -74,12 +75,16 @@ export function identityColumn(label: string, over: Over = {}): ColumnDef {
   }
 }
 
-/** The reference under the name — a path, a host, a part number. */
+/**
+ * The reference under the name — a path, a host, a part number — sorted by
+ * `reference`, the way the name is by `name`.
+ */
 export function referenceColumn(label: string, over: Over = {}): ColumnDef {
   return {
     key: 'secondary',
     role: 'reference',
     label,
+    sort: 'reference',
     mono: true,
     muted: true,
     truncate: true,
@@ -126,6 +131,7 @@ export function entityColumn(over: Over = {}): ColumnDef {
   return {
     key: 'entityLabel',
     label: 'Entity',
+    sort: 'entity',
     width: '130px',
     truncate: true,
     class: 'dc-table__entity',
@@ -135,11 +141,12 @@ export function entityColumn(over: Over = {}): ColumnDef {
 
 /**
  * A field of this type alone, as a column — under the same key its facet is
- * offered by, so the column and the facet are one name. Among the first to
- * stand down: it is what this type has besides the parts every type has.
+ * offered by, so the column and the facet are one name — and the sort too.
+ * Among the first to stand down: it is what this type has besides the parts
+ * every type has.
  */
 export function facetColumn(key: string, label: string, over: Over = {}): ColumnDef {
-  return { key, label, truncate: true, hideBelow: 900, ...over }
+  return { key, label, sort: key, truncate: true, hideBelow: 900, ...over }
 }
 
 /**
@@ -149,7 +156,8 @@ export function facetColumn(key: string, label: string, over: Over = {}): Column
  * as one they are the short line that says what is unusual about the row —
  * `crawled, recorded`, and nothing at all for a row that is neither. `names`
  * maps each field to what to call it, in the order to say them; `key` only
- * identifies the column, since its value is computed.
+ * identifies the column, since its value is computed, and the sort, which
+ * groups the rows by what is unusual about them.
  */
 export function flagColumn(
   key: string,
@@ -164,6 +172,7 @@ export function flagColumn(
       Object.entries(names)
         .filter(([field]) => row.fields[field] === true)
         .map(([, name]) => name),
+    sort: key,
     muted: true,
     truncate: true,
     hideBelow: 1100,

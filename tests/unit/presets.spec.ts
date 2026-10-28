@@ -49,6 +49,17 @@ describe('column presets', () => {
     expect(dateColumn('lastUpdated', 'Last updated')).toMatchObject({ kind: 'date', sort: 'lastUpdated' })
   })
 
+  it('sort by every column that holds a value, and not by the position or the picture', () => {
+    expect(referenceColumn('Path').sort).toBe('reference')
+    expect(stateColumn().sort).toBe('state')
+    expect(entityColumn().sort).toBe('entity')
+    expect(facetColumn('tag', 'Tags').sort).toBe('tag')
+    expect(flagColumn('reach', 'Coverage', { crawled: 'crawled' }).sort).toBe('reach')
+    expect(ordinalColumn().sort).toBeUndefined()
+    expect(pictureColumn().sort).toBeUndefined()
+    expect(tintColumn().sort).toBeUndefined()
+  })
+
   it('take what a type says differently over their defaults', () => {
     expect(identityColumn('Spec', { scope: true }).scope).toBe(true)
     expect(metricColumn('metric1', 'Cases', { drill: 'cases', width: '80px' })).toMatchObject({

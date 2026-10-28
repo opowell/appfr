@@ -241,7 +241,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const before = page.url()
     const opened = context.waitForEvent('page')
-    await page.locator('.dc-list__open').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-list__open').first().click({ modifiers: ['ControlOrMeta'] })
     const tab = await opened
     await tab.waitForLoadState('domcontentloaded')
     const url = new URL(tab.url())
@@ -275,7 +275,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     await gotoStory(page, HOME)
     const before = page.url()
     const opened = context.waitForEvent('page')
-    await page.locator('.dc-type__head').first().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-type__head').first().click({ modifiers: ['ControlOrMeta'] })
     const url = new URL((await opened).url())
     expect(url.searchParams.get('e')).not.toBeNull()
     expect(page.url()).toBe(before)

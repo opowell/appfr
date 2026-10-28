@@ -119,7 +119,7 @@ test.describe('Content — the view renders what the query asked for', () => {
   test('the list view shows an ordinal, an identity pair, metrics and a state', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--short-page')
     const row = listRows(page).first()
-    await expect(row.locator('.dc-list__ordinal')).toHaveText('01')
+    await expect(row.locator('.dc-list__ordinal')).toHaveText('1')
     await expect(row.locator('.dc-list__primary')).not.toBeEmpty()
     await expect(row.locator('.dc-list__secondary')).not.toBeEmpty()
     await expect(row.locator('.dc-list__metrics')).toBeVisible()

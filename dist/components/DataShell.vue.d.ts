@@ -116,6 +116,13 @@ type __VLS_Props = {
      * too, for a home screen that opens as records rather than as type cards.
      */
     typeChooser?: 'scoped' | 'always';
+    /**
+     * Where the strip over the results says how many are ticked, with its
+     * Clear. `start`, the default, leads the strip after the choosers, the
+     * Clear a quiet word. `end` sets both at the far end beside the operations
+     * they are the count for, the Clear drawn as one of their buttons.
+     */
+    selectionPlacement?: 'start' | 'end';
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string;
     /**
@@ -162,6 +169,18 @@ type __VLS_Props = {
      * either way, and a host that only handles those need do nothing else.
      */
     rowPress?: 'open' | 'narrow';
+    /**
+     * Makes every table row a real link to where pressing it goes, rather than
+     * a row that only answers a click: each cell carries an `<a>` to the
+     * row's {@link ShellContext.pressHref} under what it draws, so a middle
+     * click, the context menu and the status bar's address work anywhere on
+     * the row, as they do on the record's name. The ticks, the `+ · −`, the
+     * counts and the marks stay controls of their own above it.
+     *
+     * Off by default, where only the name is a link; a host whose name column
+     * is no link of its own (`activate: false`) turns this on to keep one.
+     */
+    rowLinks?: boolean;
     /**
      * What the count is short of, in the host's words — `first 1,200 of
      * 30,200 lots` for a seller whose pages are still being fetched, or were
@@ -298,7 +317,9 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
 }>, {
     limit: number;
     previewsPerType: number;
+    rowLinks: boolean;
     typeChooser: "scoped" | "always";
+    selectionPlacement: "start" | "end";
     loading: boolean;
     pageQuery: "shell" | "detached";
     listPath: string;

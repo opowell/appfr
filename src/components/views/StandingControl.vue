@@ -81,13 +81,16 @@ function choose(event: MouseEvent, standing: TermStanding | null) {
   vertical-align: middle;
 }
 
+/* Set at the size and leading of the row's own text, so each sign is a line
+   of it tall, and padded past that so it reads as a button around it. */
 .dc-standing-control__choice {
   min-width: 1.5em;
-  padding: 1px 3px;
+  padding: var(--dc-standing-pad, 3px) 3px;
   border: none;
   background: transparent;
   color: var(--dc-fg-3);
-  font-size: var(--dc-text-meta);
+  font-size: var(--dc-standing-text, var(--dc-text-body));
+  line-height: var(--dc-standing-leading, var(--dc-leading));
   font-weight: var(--dc-weight-semibold);
   text-align: center;
   cursor: pointer;

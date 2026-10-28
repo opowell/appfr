@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ColumnDef, ShellRow } from '../../types'
+import type { ColumnDef, PressOptions, ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
 import { isBrowserPress, pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
 import type { TermStanding } from '../../query/drill'
@@ -17,6 +17,7 @@ import {
 } from '../../query/columns'
 import ColumnCell from './ColumnCell.vue'
 import OpenMark from './OpenMark.vue'
+import PressLink from './PressLink.vue'
 import ScopeMark from './ScopeMark.vue'
 import StandingControl from './StandingControl.vue'
 import PageTick from './PageTick.vue'
@@ -56,6 +57,31 @@ function pressRow(row: ShellRow, event: MouseEvent) {
     return
   }
   shell.activate(row, pressOptions(event))
+}
+
+/**
+ * Where each row leads, by its key, where the host asked for rows that are
+ * links all the way across (`rowLinks`) — and nothing otherwise. Worked out
+ * once a row rather than once a cell, since every cell of the row carries it.
+ */
+const rowHrefs = computed(() => {
+  if (!shell.rowLinks?.value) return new Map<string, string | null>()
+  return new Map(rows.value.map((entry) => [entry.key, shell.pressHref(entry.row)]))
+})
+
+/**
+ * The one cell whose link a keyboard and a screen reader find, named for the
+ * record: the identity column, or else the first. The links on the other cells
+ * are the same address again, so they are there for the pointer alone.
+ */
+const linkColumn = computed(
+  () => columns.value.find((column) => column.role === 'identity') ?? columns.value[0],
+)
+
+/** A press on a cell's link that is the shell's — a plain one, or ⌥ held. */
+function pressCell(row: ShellRow, options: PressOptions, event: MouseEvent) {
+  event.stopPropagation()
+  shell.activate(row, options)
 }
 
 function headerTitle(column: ColumnDef): string | undefined {
@@ -241,6 +267,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
     v-else
     class="dc-table"
     :data-dc-wrap="wraps ? '' : undefined"
+    :data-dc-row-links="shell.rowLinks?.value ? '' : undefined"
   >
     <thead data-dc-stuck>
       <tr>
@@ -351,6 +378,19 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
           :data-dc-hide="column.hideBelow"
           :title="cellTitle(column, entry)"
         >
+          <!-- The row's link, laid over the whole cell and under the controls
+               in it — first, so that whatever the cell draws after it and
+               raises is above it. Empty: the cell's own value is what is
+               read, and the cell's hover text still shows through it. -->
+          <PressLink
+            v-if="rowHrefs.get(entry.key)"
+            class="dc-table__cell-link"
+            :href="rowHrefs.get(entry.key)"
+            :tabindex="column === linkColumn ? undefined : -1"
+            :aria-hidden="column === linkColumn ? undefined : 'true'"
+            :aria-label="column === linkColumn ? entry.parts.identity : undefined"
+            @press="(options, event) => pressCell(entry.row, options, event)"
+          />
           <!-- The mark is a sibling of the value, not a wrapper around it:
                a mark that leads somewhere else cannot sit inside the button
                that opens this record. -->
@@ -493,7 +533,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
 .dc-table td.dc-table__standing {
   width: calc(4.5em + 20px);
   padding-right: 4px;
-  font-size: var(--dc-text-meta);
+  font-size: var(--dc-standing-text, var(--dc-text-body));
   text-transform: none;
   letter-spacing: normal;
 }
@@ -506,6 +546,26 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
 
 .dc-table__row:hover {
   background: var(--dc-bg-1);
+}
+
+/*
+ * A row that is a link all the way across (`rowLinks`): every data cell holds
+ * the row's link, stretched over the cell, padding and all, so there is no
+ * stripe between two cells that is only a click handler.
+ */
+.dc-table[data-dc-row-links] tbody td {
+  position: relative;
+}
+
+.dc-table__cell-link {
+  position: absolute;
+  inset: 0;
+}
+
+/* Inset, since the cell's edges are the next cell's edges. */
+.dc-table__cell-link:focus-visible {
+  outline: 2px solid var(--dc-accent);
+  outline-offset: -2px;
 }
 
 .dc-table__sort {
@@ -635,5 +695,21 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
   .dc-table [data-dc-hide='480'] {
     display: none;
   }
+}
+</style>
+
+<style>
+/*
+ * What leads somewhere of its own inside a row that is a link (`rowLinks`) —
+ * a count, the `→`, the `↗`, a host's checkbox — is lifted over the row's
+ * link, so it is pressed rather than the row. Global, because most of these
+ * are another component's markup, and of no specificity at all, so that one
+ * already placed — absolutely, say — stays where its own styles put it.
+ */
+:where(
+  .dc-table[data-dc-row-links] tbody td
+    :is(a, button, input, select, textarea, label, [tabindex]):not(.dc-table__cell-link)
+) {
+  position: relative;
 }
 </style>

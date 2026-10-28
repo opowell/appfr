@@ -99,6 +99,12 @@ export interface ShellContext extends QueryState {
      */
     narrowsOnPress: ComputedRef<boolean>;
     /**
+     * Whether a table row is a link all the way across — `rowLinks` on
+     * `DataShell`. Optional, so a context a host built before there was any
+     * such thing is still one: without it only the name is a link.
+     */
+    rowLinks?: ComputedRef<boolean>;
+    /**
      * A row was pressed. Narrows to the record where that is what a press means
      * and the record's type can be narrowed to; reported to the host otherwise —
      * which is every row of a type that declares no `scope`, and every row at

@@ -207,6 +207,15 @@ export const EntityActions = managed({ search: '?e=searches&v=list' })
 export const EntityActionsTable = managed({ search: '?e=searches&v=table' })
 
 /**
+ * The same table with the count of ticks and its Clear at the far end, beside
+ * the operations they count for (`selectionPlacement: 'end'`).
+ */
+export const EntityActionsSelectionAtEnd = managed({
+  search: '?e=searches&v=table',
+  selectionPlacement: 'end',
+})
+
+/**
  * The same, with the first page still on its way. The operations are there to
  * be found, but there is nothing yet to tick, so the bar counts nothing.
  */
@@ -517,6 +526,17 @@ export const TableViewLongValues = story({
   source: longValueSource(),
 })
 
+/**
+ * The same table with every row a link all the way across (`rowLinks`): a
+ * middle click or the context menu anywhere on a row works on the record as it
+ * does on its name, while the counts and the `+ · −` stay controls of their own.
+ */
+export const TableViewRowLinks = story({
+  schema: legoSchema,
+  search: '?e=pieces&v=table',
+  rowLinks: true,
+})
+
 /* ------------------------------------------------------------------ columns */
 
 /**
@@ -706,7 +726,7 @@ export const Paged = story({ search: '?e=searches&v=list', limit: 12 })
 
 /**
  * Further in. The list's leading column goes on counting — page three of
- * twelve opens at 25, not back at 01 — so a row's number means its place in
+ * twelve opens at 25, not back at 1 — so a row's number means its place in
  * the whole result rather than its place on screen.
  */
 export const LaterPage = story({ search: '?e=searches&v=list&p=3', limit: 12 })

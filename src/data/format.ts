@@ -64,13 +64,9 @@ export function formatDate(iso: string): string {
   return `${day}.${month}.${date.getUTCFullYear()}`
 }
 
-/**
- * Ordinal for the leading column of the list and table views: two digits, or
- * the bare number where the schema asks for {@link DomainSchema.plainOrdinals}.
- */
-export function formatOrdinal(index: number, plain = false): string {
-  const ordinal = String(index + 1)
-  return plain ? ordinal : ordinal.padStart(2, '0')
+/** Ordinal for the leading column of the list and table views: 1, 2, 3. */
+export function formatOrdinal(index: number): string {
+  return String(index + 1)
 }
 
 /**

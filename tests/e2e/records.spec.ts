@@ -10,6 +10,7 @@ import { chooseScope, chooseView, gotoStory, listRows, stepPage, viewSelect } fr
 
 const ACTIONS = 'shell-data-shell--entity-actions'
 const TABLE = 'shell-data-shell--entity-actions-table'
+const SELECTION_AT_END = 'shell-data-shell--entity-actions-selection-at-end'
 const RUNNING = 'shell-data-shell--entity-actions-running'
 const GRID = 'shell-data-shell--entity-actions-grid'
 const PAGED = 'shell-data-shell--entity-actions-paged'
@@ -288,6 +289,31 @@ test.describe('Records — ticks in every view that draws rows', () => {
     await bar(page).getByRole('button', { name: 'Clear' }).click()
     await expect(readout(page)).toHaveCount(0)
     await expect(headTick(page)).not.toBeChecked()
+  })
+
+  test('the count and its Clear can sit beside the operations, Clear drawn as one', async ({
+    page,
+  }) => {
+    await gotoStory(page, SELECTION_AT_END)
+    await tableTicks(page).nth(0).click()
+    await tableTicks(page).nth(1).click()
+    await expect(readout(page)).toHaveText('2 selected')
+
+    const clear = bar(page).getByRole('button', { name: 'Clear' })
+    const [clearBox, firstOpBox, countBox] = await Promise.all([
+      clear.boundingBox(),
+      ops(page).first().boundingBox(),
+      readout(page).boundingBox(),
+    ])
+    // Right of the middle, just before the operations, and as tall as they are.
+    const barBox = await bar(page).boundingBox()
+    expect(countBox!.x).toBeGreaterThan(barBox!.x + barBox!.width / 2)
+    expect(firstOpBox!.x - (clearBox!.x + clearBox!.width)).toBeGreaterThan(0)
+    expect(firstOpBox!.x - (clearBox!.x + clearBox!.width)).toBeLessThan(24)
+    expect(clearBox!.height).toBeCloseTo(firstOpBox!.height, 0)
+
+    await clear.click()
+    await expect(readout(page)).toHaveCount(0)
   })
 
   test('a card, a link and the one record a preview shows each carry one', async ({ page }) => {

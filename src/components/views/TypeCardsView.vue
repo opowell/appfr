@@ -320,6 +320,16 @@ const previews = computed(() =>
   cursor: pointer;
 }
 
+/* A card that is only its head — every card on a screen of heads alone — is
+   one button, so the room a stretched card gains goes to the head rather than
+   under it: otherwise the card ends in a strip that is neither the button nor
+   anything else, and its hover stops short of its foot. The lines keep to the
+   top, where a wrapping flex box would spread them down the height. */
+.dc-type__head:only-child {
+  flex: 1;
+  align-content: flex-start;
+}
+
 .dc-type__head:hover {
   background: var(--dc-bg-2);
 }

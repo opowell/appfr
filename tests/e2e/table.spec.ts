@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Locator, Page } from '@playwright/test'
-import { chooseView, gotoStory, termBar, scopeSelect } from './story'
+import { chooseView, gotoStory, termBar, terms, scopeSelect } from './story'
 
 /**
  * The table against a corpus whose names are sentences and whose secondaries
@@ -404,5 +404,59 @@ test.describe('Table — headings that stay put', () => {
       table(page).locator('thead').evaluate((element) => (element as HTMLElement).offsetHeight),
     ])
     expect(stuck).toBe(`${head}px`)
+  })
+})
+
+/*
+ * `rowLinks`: a row that is a link all the way across, so what a browser does
+ * with a link — a middle click, the context menu, the address on hover — it
+ * does anywhere on the row, and not on the name alone.
+ */
+const ROW_LINKS = 'shell-data-shell--table-view-row-links'
+
+test.describe('Table — rows that are links', () => {
+  test('are not, unless the host asks', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--table-view')
+    await expect(page.locator('.dc-table__cell-link')).toHaveCount(0)
+  })
+
+  test('put the row’s one address on every cell, and one link in the tab order', async ({ page }) => {
+    await gotoStory(page, ROW_LINKS)
+    const row = page.locator('.dc-table__row').first()
+    const links = row.locator('.dc-table__cell-link')
+    const hrefs = await links.evaluateAll((elements) => elements.map((element) => element.getAttribute('href')))
+    expect(hrefs.length).toBe(await row.locator('td:not(.dc-table__pick):not(.dc-table__standing)').count())
+    expect(new Set(hrefs).size).toBe(1)
+    expect(hrefs[0]).toBeTruthy()
+    await expect(row.locator('.dc-table__cell-link:not([tabindex="-1"])')).toHaveCount(1)
+  })
+
+  test('take a press on a plain value, and narrow to the record', async ({ page }) => {
+    await gotoStory(page, ROW_LINKS)
+    const row = page.locator('.dc-table__row').first()
+    // Under the pointer at the middle of a plain value is the row's link, not the text.
+    const plain = row.locator('td:has(> .dc-cell__text)').first()
+    const hit = await plain.evaluate((element) => {
+      const box = element.getBoundingClientRect()
+      return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)?.className ?? ''
+    })
+    expect(hit).toContain('dc-table__cell-link')
+    await expect(terms(page)).toHaveCount(0)
+    await plain.click()
+    await expect(terms(page)).toHaveCount(1)
+  })
+
+  test('leave a count pressable above the link, as itself', async ({ page }) => {
+    await gotoStory(page, ROW_LINKS)
+    const drill = page.locator('.dc-table__row').first().locator('.dc-drill').first()
+    const hit = await drill.evaluate((element) => {
+      const box = element.getBoundingClientRect()
+      return element.contains(document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2))
+    })
+    expect(hit).toBe(true)
+    // A count leads to what it counts, so the list it opens is of another type.
+    await drill.click()
+    await expect(page.locator('.dc-table')).toBeVisible()
+    expect(new URL(page.url()).searchParams.get('e')).not.toBe('pieces')
   })
 })

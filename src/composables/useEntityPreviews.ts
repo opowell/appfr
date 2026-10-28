@@ -84,7 +84,7 @@ export function useEntityPreviews(options: UseEntityPreviewsOptions): EntityPrev
   ): EntityPreview => ({
     entity,
     rows: options.limit.value > 0
-      ? result.rows.map((row, index) => presentRow(row, index, entity, options.isPinned(row.id), false, schema.plainOrdinals))
+      ? result.rows.map((row, index) => presentRow(row, index, entity, options.isPinned(row.id)))
       : [],
     total: result.total,
     count: pristine ? entityCount(entity) : formatCount(result.total),

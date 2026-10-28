@@ -40,7 +40,6 @@ const t = (e, s, n, o = !1) => ({
     label: "Entity",
     when: "everything",
     width: "130px",
-    mono: !0,
     truncate: !0,
     hideBelow: 900,
     class: "dc-table__entity"

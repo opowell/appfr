@@ -65,7 +65,8 @@ export declare function dateColumn(key: string, label: string, over?: Over): Col
  * Which type a row is. For the mixed set: under one entity every row would
  * answer it the same way, which is a column of one repeated word, and across
  * every type it is the column that says most. Add `{ when: 'everything' }`
- * where one set serves both.
+ * where one set serves both. Set in the text face: a type's name is a word,
+ * not a figure.
  */
 export declare function entityColumn(over?: Over): ColumnDef;
 /**

@@ -711,9 +711,6 @@ columns: [
 
 Each is a fresh object, so changing one set changes no other.
 
-The ordinal column pads to two digits (`01`, `02`); `plainOrdinals: true` on the
-schema counts `1`, `2` instead.
-
 **Formatting what a tool measures.** `formatBytes` (`28.0 kB`, decimal units),
 `formatDuration` from milliseconds (`640ms`, `12.4s`, `3m 7s`), `formatElapsed`
 from seconds (`1:42`), `formatPercent` from a share (`50%`), `formatDateTime`
@@ -1965,6 +1962,7 @@ own.
 | `within` | `string` | — | An expression the whole shell is read inside — its scope, held here rather than in the URL. See [a shell about one record](#a-shell-about-one-record). |
 | `previewsPerType` | `number` | `3` | Rows inside each type's card on the home screen. `0` draws only each card's heading (name and count, no `create` button), in narrower wrapping columns. |
 | `typeChooser` | `'scoped' \| 'always'` | `'scoped'` | When the strip over the results offers the list of types. `scoped` only once one is filtered to, the home screen's cards naming the types already; `always` keeps it on `Everything` too, for a home screen that opens on records rather than on a card per type. |
+| `selectionPlacement` | `'start' \| 'end'` | `'start'` | Where the strip over the results says how many are ticked, and offers to clear them. `start` leads the strip, after the type and view choosers, with Clear as a quiet word; `end` sets both at the far end beside Duplicate, Delete and the rest, Clear drawn as one of their buttons. |
 | `limit` | `number` | `50` | Rows per page. The header offers the pages this divides the results into. |
 | `pagesNote` | `string` | — | What the count is short of, in your words — `first 1,200 of 30,200 lots`. Goes under the pager's hover text, and keeps the pager up on a single page. See [paging through the results](#paging-through-the-results). |
 | `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | Restricts the offered views. A URL naming one that is not on the list renders the first that is, so an old link cannot reach a view the bar has no way back from. With one on the list there is no View chooser over the results — pass a reactive list to draw each screen one fixed way (`cards` across the corpus, `table` on a type), or a function of `{ entity, records }` and the shell works the screen out for you — see [cards for the records the query names](#cards-for-the-records-the-query-names). |
@@ -1976,6 +1974,7 @@ own.
 | `tokens` | `Record<string, string>` | — | Design tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal` is paper, ink and hairlines with nothing else on — the values the layout stops working without and no more; `auto` follows the system setting; `macos` and `windows` wear that system's design language and follow its scheme; `inherit` brings no palette at all; `mono-size` is `inherit` with the type scale given up too, every word at the host's one size and one weight with only colour and opacity varying. |
 | `rowPress` | `'open' \| 'narrow'` | `'narrow'` | What pressing a row means: add that record to the query, or report it as `activate` and apply nothing. See [narrowing to one record](#narrowing-to-one-record). |
+| `rowLinks` | `boolean` | `false` | Makes every table row a real link to where pressing it goes, so a middle click, the context menu and the address on hover work anywhere on the row rather than on the name alone. Each data cell holds an `<a>` under what it draws; the ticks, the `+ · −`, a count's drill and the marks stay pressable above it, and one link per row (the identity column's) is in the tab order. For a host whose name column is no link of its own (`activate: false`). |
 | `pinnable` | `boolean` | `false` | Offers the star affordance on rows. |
 | `selectable` | `boolean` | `false` | Offers the tick on rows even where the type names no operation for a selection. A type naming `duplicate` or `delete` offers them anyway. |
 | `pinned` | `string[]` | — | `v-model:pinned` to control pinning; omit and the shell holds it. |
@@ -3532,6 +3531,16 @@ header's search box writes its placeholder in `--dc-fg-3`, and
 
 ```vue
 <DataShell theme="dark" :tokens="{ '--dc-search-placeholder': 'var(--dc-fg-2)' }" />
+```
+
+Likewise the `+ · −` beside a row and over the table's head: drawn at the
+row's own `--dc-text-body` and `--dc-leading`, so each sign is a line of text
+tall, with 3px above and below. `--dc-standing-text`, `--dc-standing-leading`
+and `--dc-standing-pad` set another size, leading and vertical padding — the
+table's column widens with the size.
+
+```vue
+<DataShell :tokens="{ '--dc-standing-text': 'var(--dc-text-meta)', '--dc-standing-pad': '1px' }" />
 ```
 
 ### Any single token

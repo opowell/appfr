@@ -153,6 +153,13 @@ const props = withDefaults(
      * too, for a home screen that opens as records rather than as type cards.
      */
     typeChooser?: 'scoped' | 'always'
+    /**
+     * Where the strip over the results says how many are ticked, with its
+     * Clear. `start`, the default, leads the strip after the choosers, the
+     * Clear a quiet word. `end` sets both at the far end beside the operations
+     * they are the count for, the Clear drawn as one of their buttons.
+     */
+    selectionPlacement?: 'start' | 'end'
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string
     /**
@@ -200,6 +207,18 @@ const props = withDefaults(
      */
     rowPress?: 'open' | 'narrow'
     /**
+     * Makes every table row a real link to where pressing it goes, rather than
+     * a row that only answers a click: each cell carries an `<a>` to the
+     * row's {@link ShellContext.pressHref} under what it draws, so a middle
+     * click, the context menu and the status bar's address work anywhere on
+     * the row, as they do on the record's name. The ticks, the `+ · −`, the
+     * counts and the marks stay controls of their own above it.
+     *
+     * Off by default, where only the name is a link; a host whose name column
+     * is no link of its own (`activate: false`) turns this on to keep one.
+     */
+    rowLinks?: boolean
+    /**
      * What the count is short of, in the host's words — `first 1,200 of
      * 30,200 lots` for a seller whose pages are still being fetched, or were
      * given up on part way. The shell counts pages from the rows its source
@@ -213,12 +232,14 @@ const props = withDefaults(
   }>(),
   {
     rowPress: 'narrow',
+    rowLinks: false,
     loading: false,
     pageQuery: 'shell',
     listPath: '/',
     limit: 50,
     previewsPerType: 3,
     typeChooser: 'scoped',
+    selectionPlacement: 'start',
     theme: 'minimal',
     navigationMode: 'push',
     facetNavigationMode: 'replace',
@@ -674,6 +695,7 @@ const shell = provideShellContext({
   selectPage,
   clearSelection,
   narrowsOnPress: computed(() => props.rowPress === 'narrow'),
+  rowLinks: computed(() => props.rowLinks),
   /*
    * The one place a press is read, so every view gets the same answer without
    * knowing which of the two it is: they all call this.
@@ -781,6 +803,7 @@ defineExpose({
       v-if="!slots.page"
       :views="offeredViews"
       :type-chooser="typeChooser"
+      :selection-placement="selectionPlacement"
     />
 
     <slot

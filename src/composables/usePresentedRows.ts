@@ -154,7 +154,6 @@ export function presentRow(
   entity: EntitySchema | null,
   pinned: boolean,
   selected = false,
-  plainOrdinal = false,
 ): PresentedRow {
   const columns = entity?.columns ?? []
   return {
@@ -163,7 +162,7 @@ export function presentRow(
     entityLabel: row.entityLabel,
     entity,
     columns,
-    ordinal: formatOrdinal(index, plainOrdinal),
+    ordinal: formatOrdinal(index),
     parts: presentParts(row, columns),
     pinned,
     selected,
@@ -176,7 +175,7 @@ export function usePresentedRows(): ComputedRef<PresentedRow[]> {
     () => new Map(shell.entities.value.map((entity) => [entity.key, entity])),
   )
   // Offset by where the page starts, so the leading column goes on counting
-  // through the result set — page two of fifty opens at 51, not back at 01.
+  // through the result set — page two of fifty opens at 51, not back at 1.
   return computed(() =>
     shell.rows.value.map((row, index) =>
       presentRow(
@@ -185,7 +184,6 @@ export function usePresentedRows(): ComputedRef<PresentedRow[]> {
         byKey.value.get(row.entityKey) ?? null,
         shell.isPinned(row),
         shell.isSelected(row),
-        shell.schema.value.plainOrdinals,
       ),
     ),
   )

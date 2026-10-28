@@ -100,7 +100,6 @@ const familiarColumns = (input: ColumnNames): ColumnDef[] => [
     label: 'Entity',
     when: 'everything',
     width: '130px',
-    mono: true,
     truncate: true,
     hideBelow: 900,
     class: 'dc-table__entity',

@@ -22,6 +22,8 @@ type __VLS_Props = {
     views?: ViewKind[];
     /** Where the list of types is a control on the bar — see `showTypes`. */
     typeChooser?: 'scoped' | 'always';
+    /** Which end of the bar the count and its Clear sit at — see `selectionAtEnd`. */
+    selectionPlacement?: 'start' | 'end';
 };
 declare const _default: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export default _default;

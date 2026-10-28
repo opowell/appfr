@@ -672,10 +672,10 @@ test.describe('Header — paging through the results', () => {
   test('the rows go on counting across the pages', async ({ page }) => {
     await gotoStory(page, PAGED)
     expect(await rowOrdinals(page)).toEqual(
-      ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
     )
 
-    // Page three of twelve opens at 25, not back at 01.
+    // Page three of twelve opens at 25, not back at 1.
     await gotoStory(page, LATER)
     expect((await rowOrdinals(page))[0]).toBe('25')
     expect((await rowOrdinals(page)).at(-1)).toBe('36')

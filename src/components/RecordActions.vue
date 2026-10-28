@@ -32,6 +32,8 @@ const props = defineProps<{
   views?: ViewKind[]
   /** Where the list of types is a control on the bar — see `showTypes`. */
   typeChooser?: 'scoped' | 'always'
+  /** Which end of the bar the count and its Clear sit at — see `selectionAtEnd`. */
+  selectionPlacement?: 'start' | 'end'
 }>()
 
 const shell = useShellContext()
@@ -217,6 +219,13 @@ const readout = computed(() => {
   return tickInHeader.value ? '' : 'Select all'
 })
 
+/**
+ * Whether the count and its Clear sit at the bar's far end, beside the
+ * operations they are the count for, with the Clear drawn as one of them.
+ * By default they lead the bar, after the choosers, and the Clear is a word.
+ */
+const selectionAtEnd = computed(() => props.selectionPlacement === 'end')
+
 /** An operation says how many it is for, once there are any. */
 function opLabel(label: string): string {
   return count.value ? `${label} ${count.value}` : label
@@ -226,7 +235,7 @@ function opLabel(label: string): string {
 <template>
   <div
     v-if="offered"
-    class="dc-actions"
+    :class="['dc-actions', { 'dc-actions--selection-end': selectionAtEnd }]"
   >
     <!-- Which type, while one is filtered to, with `Everything` in the list
          beside the types so widening back out stays one press. -->
@@ -282,7 +291,7 @@ function opLabel(label: string): string {
       <button
         v-if="count"
         type="button"
-        class="dc-actions__clear"
+        :class="['dc-actions__clear', { 'dc-actions__clear--op': selectionAtEnd }]"
         @click="shell.clearSelection()"
       >
         Clear
@@ -408,6 +417,16 @@ label.dc-actions__all {
   color: var(--dc-fg-1);
 }
 
+/* At the far end, beside the operations: the space the ops would push across
+   goes before the count instead, so the two read as one cluster. */
+.dc-actions--selection-end .dc-actions__select {
+  margin-left: auto;
+}
+
+.dc-actions--selection-end .dc-actions__select + .dc-actions__ops {
+  margin-left: 0;
+}
+
 /* What to do, at the end of the bar: the far side from the records, so nothing
    destructive sits under the pointer on its way to a row. */
 .dc-actions__ops {
@@ -417,7 +436,8 @@ label.dc-actions__all {
   margin-left: auto;
 }
 
-.dc-actions__op {
+.dc-actions__op,
+.dc-actions__clear--op {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -431,7 +451,8 @@ label.dc-actions__all {
   cursor: pointer;
 }
 
-.dc-actions__op:hover:not(:disabled) {
+.dc-actions__op:hover:not(:disabled),
+.dc-actions__clear--op:hover {
   background: var(--dc-bg-2);
   color: var(--dc-fg-0);
 }

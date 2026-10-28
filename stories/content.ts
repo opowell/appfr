@@ -10,7 +10,8 @@ import ShellLog from '../src/components/ShellLog.vue'
 import ShellDialog from '../src/components/ShellDialog.vue'
 import ShellToasts from '../src/components/ShellToasts.vue'
 import { useToasts } from '../src/composables/useToasts'
-import type { LogChunk, PillTone, RecordStatus, ShellTheme, StatusCount } from '../src/types'
+import type { ShellTheme } from 'themes'
+import type { LogChunk, PillTone, RecordStatus, StatusCount } from '../src/types'
 /*
  * Inlined rather than imported for its side effect: an imported stylesheet
  * stays in the story frame for every story shown after it, and this one styles

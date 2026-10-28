@@ -12,12 +12,12 @@
  * with the first toast, since a region that appears with its message in it is
  * one a screen reader may never announce. An error is an alert, which is.
  */
-import '../style/tokens.css'
+import '../style/shell.css'
 
 import { onMounted } from 'vue'
 import { useLayerTheme } from '../composables/useLayerTheme'
 import { useToasts } from '../composables/useToasts'
-import type { ShellTheme } from '../types'
+import type { ShellTheme } from 'themes'
 
 const props = withDefaults(defineProps<{
   /** Where the stack is drawn. */

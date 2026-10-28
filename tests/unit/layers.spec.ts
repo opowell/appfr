@@ -9,7 +9,7 @@ import ShellToasts from '../../src/components/ShellToasts.vue'
 import plugin from '../../src/plugin'
 import { provideShellOwnTheme, provideShellTheme } from '../../src/composables/useLayerTheme'
 import { placePopover } from '../../src/menu/popover'
-import type { ShellTheme } from '../../src/types'
+import type { ShellTheme } from 'themes'
 
 /*
  * The layers drawn in `body`: where they find their theme when they are not

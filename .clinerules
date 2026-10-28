@@ -1,7 +1,8 @@
 # Project rules
 
-A Vue 3 component library — a schema-driven data shell. Published to npm; it has
-no runtime dependencies, only peers (vue ^3.4, vue-router, optionally @nuxt/kit).
+A Vue 3 component library — a schema-driven data shell. Its only runtime
+dependencies are its own siblings, `themes` (the tokens) and `menu-bar` (the
+menus); everything else is a peer (vue ^3.4, vue-router, optionally @nuxt/kit).
 
 ## Stack
 
@@ -15,7 +16,7 @@ no runtime dependencies, only peers (vue ^3.4, vue-router, optionally @nuxt/kit)
 
 - Comments explain *why*, in full sentences, not what the next line does.
   Match the density of the file you are editing.
-- Reuse the types in `src/types.ts` and the tokens in `src/style/tokens.css`.
+- Reuse the types in `src/types.ts` and the tokens in `themes/tokens.css`.
   Do not invent a parallel type or hardcode a colour.
 - No new runtime dependencies. If you think you need one, say so instead of
   adding it to package.json.

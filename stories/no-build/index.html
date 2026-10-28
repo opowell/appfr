@@ -11,33 +11,43 @@
       map names the built artifacts, `<script type="module">` loads them, and
       vue3-sfc-loader compiles the host's own `.vue` files here in the tab.
 
-      `?app=window` mounts the panel grid instead of the shell — a different
-      entry SFC, and two panels of the host's own written as components.
-
       The vendored paths are what npm already put in `node_modules`, served
       verbatim by Storybook's `staticDirs`. Public CDNs are drop-in
       replacements, and the page is otherwise unchanged:
 
-        vue     https://unpkg.com/vue@3/dist/vue.runtime.esm-browser.prod.js
-        loader  https://unpkg.com/vue3-sfc-loader@0.9/dist/vue3-sfc-loader.esm.js
-        shell   https://unpkg.com/appfr/dist/index.js
+        vue       https://unpkg.com/vue@3/dist/vue.runtime.esm-browser.prod.js
+        loader    https://unpkg.com/vue3-sfc-loader@0.9/dist/vue3-sfc-loader.esm.js
+        shell     https://unpkg.com/appfr/dist/index.js
+        menus     https://unpkg.com/menu-bar/dist/index.js
 
       It needs a server — ES modules and `fetch` do not work from `file:`.
       Any static one will do: `npx serve`, `python3 -m http.server`, nginx.
     -->
 
-    <!-- The shipped stylesheet, linked like any other. -->
+    <!-- The shipped stylesheets, linked like any others: the tokens every
+         `.dc-shell` resolves against, the menus the shell's pickers open,
+         and the shell's own. -->
     <link
-      id="dc-style"
+      class="dc-style"
+      rel="stylesheet"
+      href="/vendor/themes/tokens.css"
+    />
+    <link
+      class="dc-style"
+      rel="stylesheet"
+      href="/vendor/menu-bar/style.css"
+    />
+    <link
+      class="dc-style"
       rel="stylesheet"
       href="/dist/style.css"
     />
     <script>
-      /* Negative control: `?no-css` drops the stylesheet before it can apply,
-         so the checklist below has something real to fail on. A checklist that
-         cannot fail is decoration. */
+      /* Negative control: `?no-css` drops the stylesheets before they can
+         apply, so the checklist below has something real to fail on. A
+         checklist that cannot fail is decoration. */
       if (new URLSearchParams(location.search).has('no-css'))
-        document.getElementById('dc-style').remove()
+        for (const link of document.querySelectorAll('.dc-style')) link.remove()
     </script>
 
     <script type="importmap">
@@ -45,7 +55,8 @@
         "imports": {
           "vue": "/vendor/vue/vue.runtime.esm-browser.prod.js",
           "appfr": "/dist/index.js",
-          "appfr/fixtures": "/dist/fixtures.js"
+          "appfr/fixtures": "/dist/fixtures.js",
+          "menu-bar": "/vendor/menu-bar/index.js"
         }
       }
     </script>
@@ -196,44 +207,18 @@
       /** Every `.vue` file the loader asked for, and the text it got back. */
       const sources = new Map()
 
-      /*
-       * The two components a host puts at its root, and how to tell that each
-       * one arrived. Both are in `dist/index.js`, so the page offers both and
-       * `?app=window` picks the second — a different entry SFC, compiled on
-       * demand, rather than a branch inside one.
-       */
-      const entries = {
-        shell: {
-          file: './App.vue',
-          mounted() {
-            const domain = document.querySelector('.dc-header__domain')?.textContent?.trim()
-            const rows = document.querySelectorAll(
-              '.dc-results :is(.dc-type__row, .dc-list__row, .dc-card, .dc-tile, .dc-table__row)',
-            ).length
-            if (!rows) throw new Error('the shell rendered no rows, so nothing matched')
-            return `${domain}: ${rows} records on screen`
-          },
-        },
-        window: {
-          file: './WindowApp.vue',
-          mounted() {
-            const panes = document.querySelectorAll('.dc-pane').length
-            if (!panes) throw new Error('the window rendered no panes')
-            // Whichever view that panel is on — the window's menu and the URL
-            // can both put it on another one.
-            const rows = document.querySelectorAll(
-              '.dc-results :is(.dc-table__row, .dc-list__row, .dc-card, .dc-tile, .dc-link)',
-            ).length
-            if (!rows) throw new Error('the items panel rendered nothing')
-            const names = [...document.querySelectorAll('.dc-tab__name')]
-              .map((element) => element.textContent.trim())
-              .join(', ')
-            return `${panes} panes — ${names} — with ${rows} rows in the first`
-          },
+      /* The host the page mounts, and how to tell that it arrived. */
+      const entry = {
+        file: './App.vue',
+        mounted() {
+          const domain = document.querySelector('.dc-header__domain')?.textContent?.trim()
+          const rows = document.querySelectorAll(
+            '.dc-results :is(.dc-type__row, .dc-list__row, .dc-card, .dc-tile, .dc-table__row)',
+          ).length
+          if (!rows) throw new Error('the shell rendered no rows, so nothing matched')
+          return `${domain}: ${rows} records on screen`
         },
       }
-
-      const entry = entries[params.get('app')] ?? entries.shell
 
       const list = document.getElementById('checks')
       const verdict = document.getElementById('verdict')
@@ -367,19 +352,17 @@
         Vue.createApp(host).mount('#app')
         await Vue.nextTick()
 
-        // Both roots carry `.dc-shell` — the window is a shell surface too,
-        // which is where either of them gets its tokens from.
         if (!document.querySelector('.dc-shell')) throw new Error('no shell in the DOM')
         return `${entry.mounted()}, under ${location.search || 'the default query'}`
       })
 
-      await check('style', 'dist/style.css is doing the layout', async () => {
+      await check('style', 'the stylesheets are doing the layout', async () => {
         const element = document.querySelector('.dc-shell')
         if (!element) throw new Error('no shell to measure')
 
         const style = getComputedStyle(element)
         const surface = style.getPropertyValue('--dc-surface').trim()
-        if (!surface) throw new Error('the shell has no --dc-surface: dist/style.css never applied')
+        if (!surface) throw new Error('the shell has no --dc-surface: tokens.css never applied')
         if (style.containerType !== 'inline-size')
           throw new Error(`the shell is not a query container (container-type: ${style.containerType})`)
 

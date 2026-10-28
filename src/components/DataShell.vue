@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /*
- * The shell's tokens and shared utilities, all namespaced under `.dc-shell`.
- * Imported here rather than from `src/index.ts` so the emitted declaration
- * files stay free of a CSS module consumers cannot resolve; the built package
- * still collects every rule into a single `style.css`.
+ * The shell's shared rules, all namespaced under `.dc-shell`. Imported here
+ * rather than from `src/index.ts` so the emitted declaration files stay free
+ * of a CSS module consumers cannot resolve; the built package still collects
+ * every rule into a single `style.css`.
  */
-import '../style/tokens.css'
+import '../style/shell.css'
 
 import { computed, inject, onBeforeUnmount, onBeforeUpdate, ref, watch } from 'vue'
 import type { Component } from 'vue'
@@ -19,10 +19,10 @@ import type {
   ShellQuery,
   ShellQueryDefaults,
   ShellRow,
-  ShellTheme,
   ViewKind,
   ViewsOption,
 } from '../types'
+import type { ShellTheme } from 'themes'
 import type { RouteAdapter } from '../routing/adapter'
 import { ROUTE_ADAPTER_KEY } from '../routing/adapter'
 import { createHistoryAdapter } from '../routing/history'

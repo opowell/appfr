@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/vue3-vite'
-import '../src/style/tokens.css'
+import 'themes/tokens.css'
+import 'menu-bar/style.css'
 import './preview.css'
 
 const preview: Preview = {

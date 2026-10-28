@@ -30,11 +30,11 @@ const stack: symbol[] = []
  * the host owns whether it is open. Opening puts the focus on the first thing
  * in it that takes focus, and closing gives the focus back to wherever it was.
  */
-import '../style/tokens.css'
+import '../style/shell.css'
 
 import { nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import { useLayerTheme } from '../composables/useLayerTheme'
-import type { ShellTheme } from '../types'
+import type { ShellTheme } from 'themes'
 
 const props = withDefaults(defineProps<{
   /**

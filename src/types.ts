@@ -14,39 +14,6 @@ export type ViewKind = 'list' | 'cards' | 'grid' | 'images' | 'table' | 'links' 
 
 export const VIEW_KINDS = ['list', 'cards', 'grid', 'images', 'table', 'links', 'preview'] as const
 
-/**
- * The palettes the shell ships with, the default first. `minimal` is paper,
- * ink and hairlines with nothing else on — the values the layout stops working
- * without and no more; `auto` follows the system setting; `macos` and
- * `windows` wear that operating system's typeface, corners, accent and shadow,
- * and follow its light and dark schemes the way `auto` does; `inherit` brings
- * no palette at all, taking its background, text colour and font from the host
- * so the shell blends into an app that has its own design; `mono-size` is
- * `inherit` with the type scale given up as well, so every word is set at the
- * host's own size and weight and only colour and opacity separate them — and
- * dark mode is the host's, since the shell holds no colour to switch.
- */
-export type ShellTheme =
-  | 'minimal'
-  | 'mono-size'
-  | 'dark'
-  | 'light'
-  | 'auto'
-  | 'macos'
-  | 'windows'
-  | 'inherit'
-
-export const SHELL_THEMES = [
-  'minimal',
-  'mono-size',
-  'dark',
-  'light',
-  'auto',
-  'macos',
-  'windows',
-  'inherit',
-] as const
-
 /** Lifecycle state of a record, rendered as a pill. */
 export type RecordStatus = 'ok' | 'running' | 'queued' | 'review' | 'failed'
 

@@ -1,0 +1,71 @@
+/**
+ * The shell's own rules that reach into more than one of its components, so
+ * they cannot be scoped to any one of them. Everything here resolves against
+ * the tokens in `themes/tokens.css`, which the page loads once for every
+ * `.dc-shell` on it.
+ */
+
+/*
+ * And the same cell in a table whose rows are already tall — a table with a
+ * picture in it, which TableView marks with `data-dc-wrap`. The depth is paid
+ * for by the picture whether the words use it or not, so a value runs on to
+ * `--dc-table-lines` lines there before it is cut short.
+ *
+ * Three rules because three things have to give. The `td` stops holding its
+ * contents to one line, but cannot be the box that counts them — an element
+ * that is not `display: table-cell` is not a cell, and the column would come
+ * apart. So the box is whichever of the two things a value can be inside it,
+ * and each has to give up the `nowrap` it wears as a `.dc-truncate` of its
+ * own. The ellipsis then comes from the clamp rather than from
+ * `text-overflow`, which is why it lands after a whole word rather than
+ * part-way through one.
+ *
+ * Descended into rather than reached as a child, because the cell that most
+ * needs the room does not hold its value directly: a column that can be
+ * narrowed to puts the mark beside the name, and the two of them in a span. A
+ * cell holds one value however deep it sits, so there is nothing else down
+ * there for this to find.
+ *
+ * These live here rather than in TableView because the elements they reach
+ * are ColumnCell's, and a scoped rule would be looking for another
+ * component's mark on them.
+ */
+.dc-table[data-dc-wrap] td.dc-truncate {
+  white-space: normal;
+}
+
+.dc-table[data-dc-wrap] td.dc-truncate .dc-table__open,
+.dc-table[data-dc-wrap] td.dc-truncate .dc-cell__text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--dc-table-lines);
+  line-clamp: var(--dc-table-lines);
+  white-space: normal;
+  overflow: hidden;
+}
+
+/*
+ * The tick that chooses a record, on a row and at the head of the bar that
+ * acts on what is ticked. The browser's own box, painted in the shell's accent
+ * — a checkbox is the one control every reader already knows, and drawing a
+ * second one out of a span would only make it less recognisable.
+ */
+.dc-tick {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--dc-accent);
+  cursor: pointer;
+}
+
+@keyframes dc-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

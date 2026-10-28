@@ -5,8 +5,6 @@ import ResultsArea from './components/ResultsArea.vue'
 import SegmentedControl from './components/SegmentedControl.vue'
 import ShellHeader from './components/ShellHeader.vue'
 import StatusPill from './components/StatusPill.vue'
-import WindowFrame from './components/WindowFrame.vue'
-import WindowPane from './components/WindowPane.vue'
 import CardsView from './components/views/CardsView.vue'
 import GridView from './components/views/GridView.vue'
 import ImagesView from './components/views/ImagesView.vue'
@@ -18,7 +16,7 @@ import TypeCardsView from './components/views/TypeCardsView.vue'
 import type { RouteAdapter } from './routing/adapter'
 import { ROUTE_ADAPTER_KEY } from './routing/adapter'
 import { provideShellTheme } from './composables/useLayerTheme'
-import type { ShellTheme } from './types'
+import type { ShellTheme } from 'themes'
 
 export interface HeaderContentLayoutOptions {
   /** Prefix for the globally registered component names. */
@@ -47,8 +45,6 @@ const COMPONENTS = {
   ResultsArea,
   SegmentedControl,
   StatusPill,
-  WindowFrame,
-  WindowPane,
   ListView,
   CardsView,
   GridView,

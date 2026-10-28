@@ -11,6 +11,8 @@ const config: StorybookConfig = {
   staticDirs: [
     { from: '../stories/no-build', to: '/no-build' },
     { from: '../dist', to: '/dist' },
+    { from: '../node_modules/themes/dist', to: '/vendor/themes' },
+    { from: '../node_modules/menu-bar/dist', to: '/vendor/menu-bar' },
     { from: '../node_modules/vue/dist', to: '/vendor/vue' },
     { from: '../node_modules/vue3-sfc-loader/dist', to: '/vendor/vue3-sfc-loader' },
   ],

@@ -42,7 +42,6 @@ test('the index lists the expected story groups', async ({ page }) => {
       'Schemas / Same Shell',
       'Routing / URL Bound',
       'Parts / Controls',
-      'Window / Panel Grid',
       'No Build / Static Page',
     ]),
   )

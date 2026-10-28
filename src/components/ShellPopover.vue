@@ -30,13 +30,13 @@ const stack: { root: () => HTMLElement | null }[] = []
  * Its palette is the one a dialog finds — see {@link useLayerTheme}. Any
  * attribute given to it — a class, a role, a label — lands on the box.
  */
-import '../style/tokens.css'
+import '../style/shell.css'
 
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useLayerTheme } from '../composables/useLayerTheme'
 import { placePopover } from '../menu/popover'
 import type { PopoverPlacement } from '../menu/popover'
-import type { ShellTheme } from '../types'
+import type { ShellTheme } from 'themes'
 
 defineOptions({ inheritAttrs: false })
 

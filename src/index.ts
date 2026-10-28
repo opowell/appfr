@@ -12,9 +12,6 @@ export { default as RecordActions } from './components/RecordActions.vue'
 export { default as ShellCard } from './components/ShellCard.vue'
 export { default as ResultsArea } from './components/ResultsArea.vue'
 export { default as SegmentedControl } from './components/SegmentedControl.vue'
-export { default as MenuBar } from './components/MenuBar.vue'
-export { default as MenuButton } from './components/MenuButton.vue'
-export { default as MenuList } from './components/MenuList.vue'
 export { default as StatusPill } from './components/StatusPill.vue'
 
 /* Content: what goes inside a card of the host's — and the layers over it. */
@@ -27,14 +24,6 @@ export { default as ShellLog } from './components/ShellLog.vue'
 export { default as ShellDialog } from './components/ShellDialog.vue'
 export { default as ShellToasts } from './components/ShellToasts.vue'
 export { default as ShellPopover } from './components/ShellPopover.vue'
-
-/* Window */
-export { default as WindowFrame } from './components/WindowFrame.vue'
-/* `WindowNode.vue`, the recursive node renderer, `WindowFloat.vue`, one frame
-   of a float, and `WindowGlyph.vue`, the mark inside a window control, are
-   implementation details of the frame — and their names belong to the tree
-   types below. */
-export { default as WindowPane } from './components/WindowPane.vue'
 
 /* Views */
 export { default as ListView } from './components/views/ListView.vue'
@@ -95,135 +84,6 @@ export type {
   PopoverPlacementOptions,
 } from './menu/popover'
 export type { Toast, ToastKind, ToastsState } from './composables/useToasts'
-
-/* Window model */
-export {
-  activePanel,
-  activeTab,
-  axisOf,
-  cascade,
-  CASCADE_STEP,
-  clampRect,
-  collapseSpace,
-  collapseToTabs,
-  column,
-  defaultLayout,
-  DEFAULT_FRAME,
-  dropIntoSpace,
-  fixedView,
-  float,
-  floatPanel,
-  floatSplit,
-  floatTabs,
-  floatTabsAt,
-  frame,
-  frameAt,
-  frameOf,
-  framePathOf,
-  frontPanel,
-  group,
-  groupOf,
-  groups,
-  hasPanel,
-  headless,
-  insertPanel,
-  isFloat,
-  isGroup,
-  isMaximized,
-  isMinimized,
-  isPanelTab,
-  isSplit,
-  isTabOf,
-  maximizeFrame,
-  maximizeFrameAt,
-  mergeSpace,
-  MIN_FRAME,
-  MINIMIZED_GAP,
-  MINIMIZED_HEIGHT,
-  MINIMIZED_WIDTH,
-  minimizeFrame,
-  minimizeFrameAt,
-  movePanel,
-  moveTab,
-  nodeAt,
-  nodeTitle,
-  normalizeLayout,
-  normalizeSizes,
-  onlySpace,
-  panelIds,
-  panelNode,
-  panelTabs,
-  raisedPath,
-  raiseFrame,
-  raiseFrameAt,
-  reconcileLayout,
-  removePanel,
-  replaceAt,
-  resizeRect,
-  resizeSplit,
-  rootSpace,
-  row,
-  setActivePanel,
-  setFrameRect,
-  setFrameRectAt,
-  setSizesAt,
-  setSplitDirection,
-  sizesOf,
-  spaceChrome,
-  spaceTitle,
-  split,
-  spreadTabs,
-  spreadTabsAt,
-  swapPanels,
-  tabNode,
-  tabPanels,
-  tileFloat,
-  toFloat,
-  toggleMaximized,
-  toggleMinimized,
-  toTiled,
-} from './window/layout'
-export type {
-  DropEdge,
-  FloatFrame,
-  FloatRect,
-  FrameChange,
-  FrameGrip,
-  FrameHandle,
-  PanelMove,
-  SplitDirection,
-  SplitEdge,
-  WindowFloat,
-  WindowGroup,
-  WindowNode,
-  WindowPanelDef,
-  WindowSpace,
-  WindowSplit,
-  WindowTab,
-  WindowView,
-} from './window/types'
-/* Menu model */
-export { isChoosable } from './menu/types'
-export type { MenuAnchor, MenuItemDef } from './menu/types'
-
-export {
-  provideWindowContext,
-  useWindowContext,
-  WINDOW_CONTEXT_KEY,
-} from './composables/windowContext'
-export type { DropTarget, MoveDirection, WindowContext } from './composables/windowContext'
-export {
-  PANE_CONTEXT_KEY,
-  providePaneContext,
-  usePaneContext,
-  usePaneMenu,
-} from './composables/paneMenu'
-export type { PaneContext } from './composables/paneMenu'
-export { useLayoutRoute } from './composables/useLayoutRoute'
-export type { LayoutRoute, UseLayoutRouteOptions } from './composables/useLayoutRoute'
-export { decodeLayout, encodeLayout } from './window/codec'
-export { openPopOut, popOutRect } from './window/popOut'
-export type { PopOutRect } from './window/popOut'
 
 /* Query model */
 export {
@@ -399,7 +259,6 @@ export {
   COLUMN_ROLES,
   PILL_TONES,
   RECORD_STATUSES,
-  SHELL_THEMES,
   VIEW_KINDS,
 } from './types'
 export type {
@@ -432,7 +291,6 @@ export type {
   ShellQuery,
   ShellQueryDefaults,
   ShellRow,
-  ShellTheme,
   SortDef,
   SortDirection,
   StatusCount,

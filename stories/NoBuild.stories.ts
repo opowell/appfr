@@ -39,7 +39,7 @@ const meta = {
           'Proof that `dist/` is usable with no build step at all. The frame',
           'below is a plain HTML file — `stories/no-build/index.html` — served',
           'as it sits on disk. It has an import map, one `<script type=module>`',
-          'and a `<link>` to the shipped stylesheet, and that is the whole of',
+          'and `<link>`s to the shipped stylesheets, and that is the whole of',
           'its machinery.',
           '',
           'The host application is written as a real SFC. It is fetched as',
@@ -47,13 +47,6 @@ const meta = {
           'the code in it is the same code you would write against a bundler —',
           'bare `import` of `appfr`, `<script setup>`, a scoped',
           'style, a relative import of a second component.',
-          '',
-          'Both of the components a host mounts at its root are covered. The',
-          'first stories mount `DataShell`; the `PanelGrid` ones mount',
-          '`WindowFrame` from the same bundle, with two of its panels filled by',
-          'components of the host\'s own — separate `.vue` files, compiled in',
-          'the page, one of them driving real results through the library\'s',
-          'composables.',
           '',
           'The strip across the top is the verification. Each line is a check',
           'the page ran on itself: the artifacts imported, the SFCs compiled',
@@ -92,8 +85,8 @@ export const AnotherSchema: Story = { args: { search: '?schema=LEGO&e=sets&v=lis
 export const WithHostSource: Story = { args: { search: '?source&e=searches&v=list' } }
 
 /**
- * The negative control. `?no-css` removes the `<link>` to `dist/style.css`
- * before it can apply, and the checklist says so: the shell still mounts and
+ * The negative control. `?no-css` removes the `<link>`s to the stylesheets
+ * before they can apply, and the checklist says so: the shell still mounts and
  * still answers the query, but it has no tokens and is not a query container.
  * A checklist that cannot fail is decoration — this is what makes the rest of
  * them mean something.
@@ -102,38 +95,3 @@ export const MissingStylesheet: Story = { args: { search: '?no-css' } }
 
 /** One of the shipped palettes, to show theming needs no build step either. */
 export const Themed: Story = { args: { search: '?schema=Commerce&theme=macos&v=table' } }
-
-/* ------------------------------------------------------------- panel grid */
-
-/**
- * The other root component, and the more demanding of the two: a panel grid,
- * dragged and resized and closed, all of it from `dist/index.js`.
- *
- * Two of the three panels are filled by components the host wrote as its own
- * `.vue` files. `ItemsPanel.vue` is the worked one — it provides the shell
- * context from `useQueryState` and `useResults` and renders `ResultsArea`
- * inside the pane, so what is in that panel is a real query against real rows.
- * `SourcesPanel.vue` is the plainer kind: its own markup, a `StatusPill` from
- * the bundle, and a scoped style the loader injects. The third panel is markup
- * in the slot, to show a panel needs no component at all.
- *
- * Everything the window does is here: drag a header onto another panel, pull a
- * boundary, take the menu on a pane, close one.
- */
-export const PanelGrid: Story = { args: { search: '?app=window' } }
-
-/**
- * The same window with the items panel opened on a different view. The choice
- * is the panel's own — declared in `WindowApp.vue`, offered under *View* in that
- * pane's menu, and handed to the slot, which passes it to `ItemsPanel.vue`.
- */
-export const PanelGridAsCards: Story = { args: { search: '?app=window&view=cards' } }
-
-/**
- * With the three files the loader compiled shown beside the window they
- * became: the entry, and the two panel components it imports.
- */
-export const PanelGridWithHostSource: Story = { args: { search: '?app=window&source' } }
-
-/** And under a shipped palette, which the window takes the same way the shell does. */
-export const PanelGridThemed: Story = { args: { search: '?app=window&theme=windows' } }

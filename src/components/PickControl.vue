@@ -14,8 +14,8 @@
  * label that changes changes in place, and the list stays where it was.
  */
 import { computed, onBeforeUnmount, ref, useId, watch } from 'vue'
-import type { MenuAnchor, MenuItemDef } from '../menu/types'
-import MenuList from './MenuList.vue'
+import { MenuList } from 'menu-bar'
+import type { MenuAnchor, MenuItemDef } from 'menu-bar'
 
 export interface PickOption {
   key: string

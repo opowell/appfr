@@ -91,5 +91,9 @@
     "query",
     "facets",
     "url-state"
-  ]
+  ],
+  "dependencies": {
+    "menu-bar": "github:opowell/menu-bar#v0.1.0",
+    "themes": "github:opowell/themes#v0.1.0"
+  }
 }

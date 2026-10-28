@@ -56,7 +56,12 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['vue', 'vue-router', '@nuxt/kit'],
+      /*
+       * `themes` and `menu-bar` are dependencies rather than parts: their
+       * modules are imported, and their stylesheets are the page's to load
+       * once beside this one rather than copies inside it.
+       */
+      external: ['vue', 'vue-router', '@nuxt/kit', /^themes(\/|$)/, /^menu-bar(\/|$)/],
       output: {
         assetFileNames: 'style.css',
         /*

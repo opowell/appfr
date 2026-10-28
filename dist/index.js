@@ -92,8 +92,9 @@ function al(e) {
   const n = String(t.getUTCDate()).padStart(2, "0"), r = String(t.getUTCMonth() + 1).padStart(2, "0");
   return `${n}.${r}.${t.getUTCFullYear()}`;
 }
-function sl(e) {
-  return String(e + 1).padStart(2, "0");
+function sl(e, t = !1) {
+  const n = String(e + 1);
+  return t ? n : n.padStart(2, "0");
 }
 function Iv(e, t) {
   if (!e) return "—";
@@ -2315,16 +2316,16 @@ function kc(e, t) {
     tint: r ? He(r, e) ?? null : null
   };
 }
-function qs(e, t, n, r, a = !1) {
-  const s = n?.columns ?? [];
+function qs(e, t, n, r, a = !1, s = !1) {
+  const l = n?.columns ?? [];
   return {
     row: e,
     key: wl(e, t),
     entityLabel: e.entityLabel,
     entity: n,
-    columns: s,
-    ordinal: sl(t),
-    parts: kc(e, s),
+    columns: l,
+    ordinal: sl(t, s),
+    parts: kc(e, l),
     pinned: r,
     selected: a
   };
@@ -2340,7 +2341,8 @@ function Pt() {
         e.offset.value + r,
         t.value.get(n.entityKey) ?? null,
         e.isPinned(n),
-        e.isSelected(n)
+        e.isSelected(n),
+        e.schema.value.plainOrdinals
       )
     )
   );
@@ -3346,7 +3348,7 @@ function id(e) {
   let a = 0;
   const s = (o, c, u, m, $) => ({
     entity: o,
-    rows: e.limit.value > 0 ? c.rows.map((w, b) => qs(w, b, o, e.isPinned(w.id))) : [],
+    rows: e.limit.value > 0 ? c.rows.map((w, b) => qs(w, b, o, e.isPinned(w.id), !1, m.plainOrdinals)) : [],
     total: c.total,
     count: u ? Ar(o) : Rn(c.total),
     pinned: cd(m, c, $)

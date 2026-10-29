@@ -4,17 +4,18 @@
 > deprecation period and no migration path. Pin an exact tag, and read the
 > diff before moving to the next one.
 
-A query header over a switchable content area, for data-heavy screens.
+A query bar over a switchable results area, for data-heavy screens.
 
-The header states what the current query is. Clicking it opens the expanded
-query view. The content area shows the matching items in the chosen view and
-sort order. **The query lives in the URL**, so every state the shell can be in
+The bar is where the query is read and edited: each term stands in it as a
+part that a press lifts, and the box after them takes the next one. A strip
+over the results chooses the type and the view, and a table's headings choose
+the sort. **The query lives in the URL**, so every state the shell can be in
 is a link someone can paste, bookmark, or reload into.
 
 It is schema-driven: one `DomainSchema` describes the entities, their facets,
 what their fields are called, and what the columns of each one's table are. The
-same header and seven views serve any schema: swapping the schema swaps
-the vocabulary, not the component.
+same bar and seven views serve any schema: swapping the schema swaps the
+vocabulary, not the component.
 
 For screens that are several things at once there is
 [window-frame](https://github.com/opowell/window-frame): panels in a
@@ -26,11 +27,13 @@ the top of it. Both are packages of their own, and wear the same
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ ◆ iRadar │ [Searches · 38 ▾] [List ▾] [state:running]          ▼│  ← header
+│ [iRadar] [state:running] Search…                  ‹ 1 / 2 ›  │  ← bar
 ├──────────────────────────────────────────────────────────────┤
-│ 01  Competitor pricing pages      909  104  ▬▬▬▬   running   │
-│ 02  Firmware release notes        737  288  ▬▬     ok        │  ← content
-│ 03  Regulatory filings            173  135  ▬▬▬              │
+│ [Searches · 12 ▾] [List ▾]                                   │  ← strip
+├──────────────────────────────────────────────────────────────┤
+│ 01  Competitor pricing pages      909  104  running          │
+│ 02  Security advisories           737  288  running          │  ← results
+│ 03  Firmware release notes        173  135  running          │
 └──────────────────────────────────────────────────────────────┘
 ```
 

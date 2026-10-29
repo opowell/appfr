@@ -125,9 +125,9 @@ part those views leave out.
 under *Colors* lists those twelve — only where the row's entity declares a
 `scope`. `scope` puts the → beside the value. `click(row)` is yours.
 
-**Sorting** is offered only where `sort` names a sort the entity declares. The
-header is the same control as the bar's sort chooser, and the sort is in the
-URL.
+**Sorting** is offered only where `sort` names a sort the entity declares.
+Pressing the header sorts by it, and pressing it again reverses the direction.
+The table's headers are the only sort control; the sort is in the URL.
 
 **Standing down.** `hideBelow` takes a container width from the ladder
 `480 | 620 | 760 | 900 | 1100` (a fixed ladder because the rule is a container
@@ -249,7 +249,7 @@ narrow to `--dc-card-picture` (160px; a record card is 320px).
 ## A type you can make more of
 
 `create` names the action of making one, and puts that button at the foot of
-the type's home-screen card and on the bar over its list:
+the type's home-screen card and on the strip over its list:
 
 ```ts
 { key: 'crawls', label: 'Crawls', create: 'Start new…', /* … */ }

@@ -260,13 +260,10 @@ Only the per-type cards screen draws these slots; choose a type or another view
 and the records replace them. A view of your own reads the scope from
 `useShellContext().within` — it is not part of `query`.
 
-Inside a scope the bar drops controls that would do nothing:
+The per-type screen, inside a scope or not, leaves out cards that would say
+nothing:
 
-- **No ordering** — the cards show every row of each type anyway.
-- **No type chooser while `Everything` and `Cards` are shown** — each card's
-  heading already does that job. It returns once a type is chosen, and always
-  shows in views that draw records. Outside a scope it never hides.
-- **No card for an empty type**, unless the type names `create`.
+- **No card for a type with no matches**, unless the type names `create`.
 - **No card for the type whose one record the query has named** — even with
   `create`. It would repeat the record the bar already names; choose that type
   and the record is listed.
@@ -314,4 +311,4 @@ const views = ({ entity, records }: ViewsContext): ViewKind[] =>
 
 Here a type's list is a table, a screen about a record is cards (where its own
 cards draw), and the corpus offers both. With one view on offer, the view
-chooser leaves the bar.
+picker leaves the strip.

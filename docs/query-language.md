@@ -49,28 +49,29 @@ column's shortcut (`columnShortcutOf`).
 
 ## The parts of a query
 
-The header shows a query as its parts: the entity, the view, the sort, and each
-term of the expression, facets included. Pressing a term's pill lifts it.
+The bar shows each term of the expression, facets included, as a part.
+Pressing a part lifts it.
 
 ```
-[Items · 412 ▾] [List ▾] [updated ▾] [↓] [year>=1988] [release] or [recall]
-                                          ^ press: that constraint is gone
+[year ≥ 1988] [release] or [recall] Search…
+ ^ press: that constraint is gone
 ```
 
-- **Entity** is the first choice. It lists every entity with `Everything` at
-  the top, and stays on the bar even when nothing is filtered.
-- **View** and **sort** are choices on the bar because they are part of the
-  query and the URL. The sort lists the columns that offer an ordering, named
-  as their headings; the arrow beside it flips the direction.
-- **The sort waits for a type.** On `Everything` the sort chooser and its arrow
-  are off the bar, since the schema-level columns hold different things per
-  row. A mixed table's own headings still sort.
-- **Counts.** Each type shows the population its schema publishes (`Items ·
-  10k`); the type in force shows what matched once anything narrows it.
-  `Everything` shows a count only while it is what is listed. A numeric `count`
-  is abbreviated with `formatCount` (`9988` → `10k`); a string is shown as
-  given (`~1.2k`, or `''` while unknown). `formatInteger` is the exact grouped
-  form the pager uses.
+The rest of the query is chosen elsewhere:
+
+- **Type** and **view** are pickers on the strip over the results
+  (`RecordActions`). The type picker lists `Everything` and then every entity;
+  by default it shows only once a type is filtered to (`typeChooser`). Typing
+  `entity:logs` in the bar filters by type too.
+- **Sort** is chosen by pressing a table's column heading, and pressing it
+  again reverses the direction. There is no sort control on the bar.
+- **Counts.** Each type in the picker shows the population its schema
+  publishes (`Items · 10k`). Once anything narrows the query, each shows what
+  matched instead — counted as the picker opens, with a `~` while the count is
+  still arriving. `Everything` carries no count. A numeric `count` is
+  abbreviated with `formatCount` (`9988` → `10k`); a string is shown as given
+  (`~1.2k`, or `''` while unknown). `formatInteger` is the exact grouped form
+  the pager uses.
 - **`OR` groups** are separated by `or`; lifting the last term of one drops
   that alternative.
 

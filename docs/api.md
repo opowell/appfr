@@ -89,7 +89,7 @@ Unlike `results`, a page does not draw the rows. While it is provided:
   list comes back.
 
 Provide it with `v-if`; without it the shell is the list again. The query
-still runs, so the bar's count is how many the page would act on.
+still runs, so `total` on the context is how many the page would act on.
 
 ### A page that is not about the query
 

@@ -25,8 +25,8 @@ few records.
 
 **Entity is a filter, not a mode.** There is no separate logs or settings
 screen: those are records like any other until a filter excludes them. The
-filter is the first part of the query on the bar (`Logs · 184k`, with
-`Everything` among the choices), and choosing a type reveals its facets.
+filter is the Type picker over the results (`Logs · 184k`, with `Everything`
+among the choices), or `entity:logs` typed in the bar.
 
 ```
 Home            →  everything · cards · updated     a card per type

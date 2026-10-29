@@ -29,7 +29,6 @@
     "src/**/*.vue",
     "tests/**/*.ts",
     "stories/**/*.ts",
-    ".storybook/**/*.ts",
-    "*.config.ts"
+    "config/**/*.ts"
   ]
 }

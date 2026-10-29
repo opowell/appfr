@@ -25,8 +25,8 @@ jobs:
 
       - run: npm ci
 
-      # playwright.config.ts asks for the next Chrome rather than the bundled
-      # Chromium, so that is the browser to install.
+      # config/playwright.config.ts asks for the next Chrome rather than the
+      # bundled Chromium, so that is the browser to install.
       - run: npx playwright install --with-deps chrome-beta
 
       - run: npm run lint

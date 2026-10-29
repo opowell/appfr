@@ -30,7 +30,7 @@ function controlsStylesheet(): Plugin {
       this.emitFile({
         type: 'asset',
         fileName: 'controls.css',
-        source: readFileSync(entry('./src/style/controls.css'), 'utf8'),
+        source: readFileSync(entry('../src/style/controls.css'), 'utf8'),
       })
     },
   }
@@ -40,8 +40,8 @@ export default defineConfig({
   plugins: [vue(), controlsStylesheet()],
   resolve: {
     alias: {
-      'appfr/fixtures': entry('./src/fixtures/index.ts'),
-      appfr: entry('./src/index.ts'),
+      'appfr/fixtures': entry('../src/fixtures/index.ts'),
+      appfr: entry('../src/index.ts'),
     },
   },
   build: {
@@ -49,9 +49,9 @@ export default defineConfig({
     cssCodeSplit: false,
     lib: {
       entry: {
-        index: entry('./src/index.ts'),
-        fixtures: entry('./src/fixtures/index.ts'),
-        nuxt: entry('./src/nuxt.ts'),
+        index: entry('../src/index.ts'),
+        fixtures: entry('../src/fixtures/index.ts'),
+        nuxt: entry('../src/nuxt.ts'),
       },
       formats: ['es'],
     },

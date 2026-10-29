@@ -259,6 +259,22 @@ describe('DataShell — brand', () => {
     await flushPromises()
     expect(param(adapter, 'e')).toBeNull()
   })
+
+  it('leaves the name off the bar where the schema has none', async () => {
+    const { label: _, ...unnamed } = schema
+    const w = shell(createMemoryAdapter(''), { schema: unnamed })
+    await flushPromises()
+    expect(w.find('.dc-header__domain').exists()).toBe(false)
+    expect(w.find('.dc-header__search').exists()).toBe(true)
+  })
+
+  it('draws no mark without a name for it to stand for', async () => {
+    const { label: _, ...unnamed } = schema
+    const w = shell(createMemoryAdapter(''), { schema: unnamed }, { brand: () => h('svg', { class: 'mark' }) })
+    await flushPromises()
+    expect(w.find('.dc-header__domain').exists()).toBe(false)
+    expect(w.find('.mark').exists()).toBe(false)
+  })
 })
 
 describe('DataShell — rows that live somewhere', () => {

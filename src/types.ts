@@ -546,7 +546,12 @@ export type ViewsOption = ViewKind[] | ((context: ViewsContext) => ViewKind[])
 
 export interface DomainSchema {
   key: string
-  label: string
+  /**
+   * The name at the left of the bar, which is a button home. Left out, the
+   * bar has no name and starts with the query — and no `brand` mark, which
+   * would be a button with nothing to say it is.
+   */
+  label?: string
   /** One-line description shown beside the domain name. */
   kicker: string
   /** Example expression, used as the expression field's placeholder. */

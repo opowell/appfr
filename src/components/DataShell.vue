@@ -296,7 +296,8 @@ const slots = defineSlots<{
    * The domain's mark at the left end of the bar, drawn in place of its name
    * — a logo, an icon. The name stays the bar's accessible text, read out
    * where the mark is drawn, so the label is still the one place the name is
-   * written; the mark itself is hidden from assistive technology.
+   * written; the mark itself is hidden from assistive technology. A schema
+   * with no `label` has no name on the bar, and so no mark either.
    *
    * Pressed, the name or the mark drawn for it goes home — the schema's
    * defaults, as `reset` does — with or without a mark. A button and not a

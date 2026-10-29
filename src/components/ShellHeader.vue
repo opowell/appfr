@@ -494,11 +494,11 @@ function abandonTyped(event: Event): void {
     <!-- The domain, and the query as it stands: where the query is read and
          edited, and the only place it is. -->
     <div class="dc-header__main">
-      <!-- The name, which is the way home. A host's mark, where it has one,
-           is drawn for the eye and hidden from assistive technology, which
-           reads the name it stands for. -->
+      <!-- The name, which is the way home, where the schema has one. A host's
+           mark, where it has one, is drawn for the eye and hidden from
+           assistive technology, which reads the name it stands for. -->
       <button
-        v-if="slots.brand"
+        v-if="domain.label && slots.brand"
         type="button"
         class="dc-header__domain"
         data-dc-brand
@@ -517,7 +517,7 @@ function abandonTyped(event: Event): void {
         <span class="dc-header__sr">{{ domain.label }}</span>
       </button>
       <button
-        v-else
+        v-else-if="domain.label"
         type="button"
         class="dc-header__domain"
         title="Home"

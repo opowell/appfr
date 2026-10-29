@@ -5,7 +5,8 @@ import type { DomainSchema } from 'appfr'
 
 const schema: DomainSchema = {
   key: 'myApp',
-  label: 'MyApp',
+  // Optional: a name at the left of the bar, pressed to go home.
+  // label: 'MyApp',
   kicker: 'Web monitoring',
   placeholder: 'site:*.shop AND price < 40 AND seen:false',
   entities: [

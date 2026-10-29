@@ -56,9 +56,11 @@
 ## A mark for the name
 
 The domain's name at the left of the bar is a button that resets the shell to
-the schema's defaults, as `reset()` does. The `brand` slot draws a mark in its
+the schema's defaults, as `reset()` does. It is the schema's `label`, and a
+schema without one has no name on the bar. The `brand` slot draws a mark in its
 place; the name stays the accessible text, and the mark takes `currentColor`
-and is handed `label`.
+and is handed `label` — so a mark needs a `label` too, and is not drawn
+without one.
 
 ```vue
 <DataShell :schema="schema">

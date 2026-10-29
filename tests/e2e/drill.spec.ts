@@ -58,6 +58,18 @@ async function listType(page: Page, key: string): Promise<void> {
 }
 
 /**
+ * The address a tab or window opened by a press lands on.
+ *
+ * A new page can open on about:blank and only then navigate, so its first URL
+ * is not yet the one the press asked for.
+ */
+async function openedUrl(opened: Promise<Page>): Promise<URL> {
+  const tab = await opened
+  await tab.waitForURL(u => u.protocol !== 'about:')
+  return new URL(tab.url())
+}
+
+/**
  * Presses the record the query already names, a second time.
  *
  * Its own type's card comes off the screen the moment the query names it, so
@@ -242,9 +254,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     const before = page.url()
     const opened = context.waitForEvent('page')
     await page.locator('.dc-list__open').first().click({ modifiers: ['ControlOrMeta'] })
-    const tab = await opened
-    await tab.waitForLoadState('domcontentloaded')
-    const url = new URL(tab.url())
+    const url = await openedUrl(opened)
     expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
     expect(url.searchParams.get('e')).toBeNull()
     expect(page.url()).toBe(before)
@@ -255,7 +265,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     const before = page.url()
     const opened = context.waitForEvent('page')
     await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Shift'] })
-    const url = new URL((await opened).url())
+    const url = await openedUrl(opened)
     expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
     expect(url.searchParams.get('e')).toBe('p')
     expect(page.url()).toBe(before)
@@ -266,7 +276,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     const before = page.url()
     const opened = context.waitForEvent('page')
     await page.locator('.dc-table__row').first().locator('td').last().click({ modifiers: ['Meta'] })
-    const url = new URL((await opened).url())
+    const url = await openedUrl(opened)
     expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
     expect(page.url()).toBe(before)
   })
@@ -276,7 +286,7 @@ test.describe('Pressing with the browser’s modifiers', () => {
     const before = page.url()
     const opened = context.waitForEvent('page')
     await page.locator('.dc-type__head').first().click({ modifiers: ['ControlOrMeta'] })
-    const url = new URL((await opened).url())
+    const url = await openedUrl(opened)
     expect(url.searchParams.get('e')).not.toBeNull()
     expect(page.url()).toBe(before)
   })

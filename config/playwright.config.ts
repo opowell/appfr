@@ -25,12 +25,8 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chrome-beta',
-      use: {
-        ...devices['Desktop Chrome'],
-        // Verify against the next Chrome rather than the bundled Chromium.
-        channel: 'chrome-beta',
-      },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
   ],
   webServer: {

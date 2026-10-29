@@ -1,14 +1,15 @@
 # Routing
 
-The query is read from the route's search string and written back on every
-change; there is no second copy of the state. How it reaches the URL is
-pluggable:
+A shell's query — type, view, sort, expression and page — is held by a route
+adapter: a search string the shell reads, and `push` and `replace` to write a
+new one. The query is read from it and written back on every change; there is
+no second copy of the state. Which adapter it is decides where the query lives:
 
-| Adapter | Use it for |
+| Adapter | The query lives |
 | --- | --- |
-| `createHistoryAdapter()` | Plain History API. The default when nothing is provided. |
-| `createVueRouterAdapter(router)` | vue-router / Nuxt, so a query change is an ordinary navigation. |
-| `createMemoryAdapter(search?)` | Tests and Storybook, where the address bar must stay untouched. |
+| `createHistoryAdapter()` | In the address bar, through the History API. The default when nothing is provided. |
+| `createVueRouterAdapter(router)` | In the address bar, through vue-router / Nuxt, so a query change is an ordinary navigation. |
+| `createMemoryAdapter(search?)` | In the shell alone; the address bar never changes. For tests, Storybook, and a shell whose query is not the page's — see [one URL, one query](#one-url-one-query). |
 
 ```ts
 import { createVueRouterAdapter, ROUTE_ADAPTER_KEY } from 'appfr'
@@ -25,6 +26,53 @@ query](api.md#a-page-that-is-not-about-the-query), whose first edit goes to the
 list's path. The History adapter drops the hash on a move to another path; the
 vue-router one navigates through the router, so its `base` and hash history
 apply. A custom adapter that ignores `path` stays where it is.
+
+## One URL, one query
+
+A page's URL has one search string, and every shell reads and writes the same
+parameters in it (`e`, `v`, `q`… — see [what the URL looks
+like](#what-the-url-looks-like)). So the URL holds **at most one shell's
+query**, and holding it is a choice rather than a requirement.
+
+**One shell, on the URL.** Every state it can be in is a link: pasted,
+bookmarked or reloaded into, it comes back as it was, and Back steps through
+the queries committed. This suits a shell that is what the page is about, and
+it is what a shell gets when nothing is provided.
+
+**One shell, off the URL.** Given `createMemoryAdapter()`, the shell keeps its
+query to itself. The address bar does not change, a reload starts again from
+the adapter's initial `search`, and Back leaves the page rather than stepping
+back a query.
+
+**Several shells on one page.** At most one of them can be on the URL; give
+every other one a memory adapter of its own. Two shells on the URL do not get
+a query each but share one: under one vue-router adapter both show it, and
+with nothing provided — a History adapter each — each overwrites the other's
+query in the address bar.
+
+```vue
+<script setup lang="ts">
+import { DataShell, createMemoryAdapter } from 'appfr'
+
+const logsRoute = createMemoryAdapter()
+</script>
+
+<template>
+  <DataShell :schema="runsSchema" />                    <!-- the page's query, on the URL -->
+  <DataShell :schema="logsSchema" :route="logsRoute" />  <!-- a query of its own -->
+</template>
+```
+
+An adapter provided app-wide under `ROUTE_ADAPTER_KEY` — by the plugin's
+`route` option, or by the [Nuxt module](../README.md#nuxt) — is the one every
+shell without a `route` of its own uses, so under it each shell but one needs
+`route` set.
+
+**Links from a shell off the URL.** A press that leads somewhere is a link,
+so ⌘/Ctrl-click opens it in a new tab, and its `href` carries the query it
+leads to. The page it opens reads that query only if its own shell is on the
+URL; a shell on a memory adapter there starts from its initial `search`
+instead.
 
 ## Permalinks to a record
 

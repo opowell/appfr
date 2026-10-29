@@ -6,30 +6,20 @@
 
 A query bar over a switchable results area, for data-heavy screens.
 
-The bar is where the query is read and edited: each term stands in it as a
-part that a press lifts, and the box after them takes the next one. A strip
-over the results chooses the type and the view, and a table's headings choose
-the sort. **The query lives in the URL**, so every state the shell can be in
-is a link someone can paste, bookmark, or reload into.
+The bar is where the query is read and edited. A strip over the results
+chooses the type and the view and holds the type's actions, and a table's
+headings choose the sort.
 
 It is schema-driven: one `DomainSchema` describes the entities, their facets,
 what their fields are called, and what the columns of each one's table are. The
 same bar and seven views serve any schema: swapping the schema swaps the
 vocabulary, not the component.
 
-For screens that are several things at once there is
-[window-frame](https://github.com/opowell/window-frame): panels in a
-recursively split grid, tabbed or floating where you want them, with a table
-of items — views and all — being one thing a panel can hold.
-[menu-bar](https://github.com/opowell/menu-bar) is the application menu over
-the top of it. Both are packages of their own, and wear the same
-[themes](https://github.com/opowell/themes).
-
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ [MyApp] [state:running] Search…                   ‹ 1 / 2 ›  │  ← bar
+│ Search…                                           ‹ 1 / 2 ›  │  ← bar
 ├──────────────────────────────────────────────────────────────┤
-│ [Searches · 12 ▾] [List ▾]                                   │  ← strip
+│ [Reports · 12 ▾] [List ▾]                     [+ New report] │  ← strip
 ├──────────────────────────────────────────────────────────────┤
 │ 01  Competitor pricing pages      909  104  running          │
 │ 02  Security advisories           737  288  running          │  ← results
@@ -122,22 +112,14 @@ applies the query in the page for an API that returns whole lists — see
 | --- | --- |
 | [The home screen](docs/home-screen.md) | The card per type the shell opens on |
 | [Wiring it to your data](docs/data-sources.md) | Sources, streaming, rows already in hand |
-| [Routing](docs/routing.md) | Route adapters, permalinks, the URL format |
+| [Routing](docs/routing.md) | Where the query lives, several shells on a page, permalinks, the URL format |
 | [Schemas](docs/schemas.md) | Entities, columns and roles, selection and its operations |
 | [Records](docs/records.md) | Narrowing to a record, `within`, cards of your own |
 | [Card content, layers and controls](docs/cards-and-layers.md) | Facts, pills, code, logs, dialogs, toasts, popovers, `controls.css` |
-| [The expression field](docs/query-language.md) | The query language and the bar it is edited in |
+| [The expression field](docs/query-language.md) | The query language, its terms as parts on the bar, and the field they are edited in |
 | [Component API](docs/api.md) | `<DataShell>` props, events, slots; paging; composables |
 | [No build step](docs/no-build.md) | `dist/` from a static page |
 | [Development](docs/development.md) | Scripts, tests, releasing |
-
-## Windows and menus
-
-Panels in a split grid and the application menu over them are packages of
-their own: [window-frame](https://github.com/opowell/window-frame) and
-[menu-bar](https://github.com/opowell/menu-bar). A shell is one thing a
-window's panel can hold — `ResultsArea` with `useQueryState` and `useResults`
-behind it is the usual way, so the window's menu can switch the panel's view.
 
 ## Theming
 

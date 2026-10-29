@@ -27,7 +27,7 @@ the top of it. Both are packages of their own, and wear the same
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ [iRadar] [state:running] Search…                  ‹ 1 / 2 ›  │  ← bar
+│ [MyApp] [state:running] Search…                   ‹ 1 / 2 ›  │  ← bar
 ├──────────────────────────────────────────────────────────────┤
 │ [Searches · 12 ▾] [List ▾]                                   │  ← strip
 ├──────────────────────────────────────────────────────────────┤
@@ -67,7 +67,7 @@ import 'appfr/style.css'
 ```vue
 <script setup lang="ts">
 import { DataShell } from 'appfr'
-import { iRadarSchema } from 'appfr/fixtures'
+import { myAppSchema } from './schema'   // a DomainSchema — see docs/schemas.md
 import type { ShellRow } from 'appfr'
 import 'themes/tokens.css'
 import 'menu-bar/style.css'
@@ -81,7 +81,7 @@ function open(row: ShellRow) {
 <template>
   <!-- The shell fills the box it is given, so give it a height. -->
   <div style="height: 100vh">
-    <DataShell :schema="iRadarSchema" @activate="open" />
+    <DataShell :schema="myAppSchema" @activate="open" />
   </div>
 </template>
 ```

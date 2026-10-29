@@ -4,8 +4,8 @@
 import type { DomainSchema } from 'appfr'
 
 const schema: DomainSchema = {
-  key: 'iRadar',
-  label: 'iRadar',
+  key: 'myApp',
+  label: 'MyApp',
   kicker: 'Web monitoring',
   placeholder: 'site:*.shop AND price < 40 AND seen:false',
   entities: [

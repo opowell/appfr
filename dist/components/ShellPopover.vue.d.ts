@@ -1,5 +1,5 @@
-import '../style/tokens.css';
-import type { ShellTheme } from '../types';
+import '../style/shell.css';
+import type { ShellTheme } from 'themes';
 declare const _default: __VLS_WithSlots<import("vue").DefineComponent<{
     /** Whether it is up. Bind `v-model:open`. */
     open?: boolean;
@@ -47,8 +47,8 @@ declare const _default: __VLS_WithSlots<import("vue").DefineComponent<{
 }>, {
     accent: string;
     tokens: Record<string, string>;
-    anchor: HTMLElement | null;
     open: boolean;
+    anchor: HTMLElement | null;
     to: string | HTMLElement;
     maxHeight: number;
     theme: ShellTheme;

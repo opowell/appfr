@@ -89,5 +89,5 @@ export declare function presentParts(row: ShellRow, columns: ColumnDef[]): RowPa
  * Resolves one row's display strings. Pure, so the per-type cards on the home
  * screen format their rows exactly as the record views do.
  */
-export declare function presentRow(row: ShellRow, index: number, entity: EntitySchema | null, pinned: boolean, selected?: boolean, plainOrdinal?: boolean): PresentedRow;
+export declare function presentRow(row: ShellRow, index: number, entity: EntitySchema | null, pinned: boolean, selected?: boolean): PresentedRow;
 export declare function usePresentedRows(): ComputedRef<PresentedRow[]>;

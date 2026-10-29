@@ -1,5 +1,5 @@
-import '../style/tokens.css';
-import type { ShellTheme } from '../types';
+import '../style/shell.css';
+import type { ShellTheme } from 'themes';
 declare const _default: __VLS_WithSlots<import("vue").DefineComponent<{
     /**
      * Whether the dialog is up. On unless told otherwise, so a dialog can be

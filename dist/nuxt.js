@@ -1,12 +1,10 @@
-import { defineNuxtModule as a, addComponent as i, addPluginTemplate as p } from "@nuxt/kit";
+import { defineNuxtModule as a, addComponent as s, addPluginTemplate as p } from "@nuxt/kit";
 const u = [
   "DataShell",
   "ShellHeader",
   "ResultsArea",
   "SegmentedControl",
   "StatusPill",
-  "WindowFrame",
-  "WindowPane",
   "ListView",
   "CardsView",
   "GridView",
@@ -15,7 +13,7 @@ const u = [
   "LinksView",
   "PreviewView",
   "TypeCardsView"
-], s = a({
+], o = a({
   meta: {
     name: "appfr",
     configKey: "dataShell",
@@ -26,9 +24,9 @@ const u = [
     router: !0
   },
   setup(e, r) {
-    e.css !== !1 && r.options.css.push("appfr/style.css");
+    e.css !== !1 && r.options.css.push("themes/tokens.css", "menu-bar/style.css", "appfr/style.css");
     for (const t of u)
-      i({
+      s({
         name: `${e.prefix ?? ""}${t}`,
         export: t,
         filePath: "appfr"
@@ -47,5 +45,5 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
 });
 export {
-  s as default
+  o as default
 };

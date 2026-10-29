@@ -1,6 +1,6 @@
 import type { Plugin } from 'vue';
 import type { RouteAdapter } from './routing/adapter';
-import type { ShellTheme } from './types';
+import type { ShellTheme } from 'themes';
 export interface HeaderContentLayoutOptions {
     /** Prefix for the globally registered component names. */
     prefix?: string;

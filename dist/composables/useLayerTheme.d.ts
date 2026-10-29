@@ -1,5 +1,5 @@
 import type { App, ComputedRef, InjectionKey, MaybeRefOrGetter } from 'vue';
-import type { ShellTheme } from '../types';
+import type { ShellTheme } from 'themes';
 /** The three theming props every free-standing part takes. */
 export interface LayerThemeProps {
     theme?: ShellTheme;

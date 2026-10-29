@@ -19,7 +19,8 @@ type Over = Partial<ColumnDef>;
 export declare function ordinalColumn(over?: Over): ColumnDef;
 /**
  * The record's state, as the pill. Usually last, because it is the last thing
- * a row is read for and the first thing it is scanned by.
+ * a row is read for and the first thing it is scanned by — and sorted by
+ * `state`, which puts every row in one state together.
  */
 export declare function stateColumn(over?: Over): ColumnDef;
 /**
@@ -46,7 +47,10 @@ export declare function pictureColumn(over?: Over): ColumnDef;
  * narrowed to is decided per row, by the type the row belongs to.
  */
 export declare function identityColumn(label: string, over?: Over): ColumnDef;
-/** The reference under the name — a path, a host, a part number. */
+/**
+ * The reference under the name — a path, a host, a part number — sorted by
+ * `reference`, the way the name is by `name`.
+ */
 export declare function referenceColumn(label: string, over?: Over): ColumnDef;
 /**
  * One of the numbers a card and a list row show beside the name, sorted by
@@ -71,8 +75,9 @@ export declare function dateColumn(key: string, label: string, over?: Over): Col
 export declare function entityColumn(over?: Over): ColumnDef;
 /**
  * A field of this type alone, as a column — under the same key its facet is
- * offered by, so the column and the facet are one name. Among the first to
- * stand down: it is what this type has besides the parts every type has.
+ * offered by, so the column and the facet are one name — and the sort too.
+ * Among the first to stand down: it is what this type has besides the parts
+ * every type has.
  */
 export declare function facetColumn(key: string, label: string, over?: Over): ColumnDef;
 /**
@@ -82,7 +87,8 @@ export declare function facetColumn(key: string, label: string, over?: Over): Co
  * as one they are the short line that says what is unusual about the row —
  * `crawled, recorded`, and nothing at all for a row that is neither. `names`
  * maps each field to what to call it, in the order to say them; `key` only
- * identifies the column, since its value is computed.
+ * identifies the column, since its value is computed, and the sort, which
+ * groups the rows by what is unusual about them.
  */
 export declare function flagColumn(key: string, label: string, names: Record<string, string>, over?: Over): ColumnDef;
 /** {@link formatBytes}, with nothing at all for a size of `0` — a directory holding nothing. */

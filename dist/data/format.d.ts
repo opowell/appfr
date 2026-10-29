@@ -27,11 +27,8 @@ export declare function formatInteger(value: number): string;
  * renders identically in a test, a story and a screenshot diff.
  */
 export declare function formatDate(iso: string): string;
-/**
- * Ordinal for the leading column of the list and table views: two digits, or
- * the bare number where the schema asks for {@link DomainSchema.plainOrdinals}.
- */
-export declare function formatOrdinal(index: number, plain?: boolean): string;
+/** Ordinal for the leading column of the list and table views: 1, 2, 3. */
+export declare function formatOrdinal(index: number): string;
 /**
  * A date with its time, in the reader's own locale — `Oct 26, 2026, 09:14`.
  *

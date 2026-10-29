@@ -1,6 +1,7 @@
-import '../style/tokens.css';
+import '../style/shell.css';
 import type { Component } from 'vue';
-import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellQuery, ShellQueryDefaults, ShellRow, ShellTheme, ViewsOption } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellQuery, ShellQueryDefaults, ShellRow, ViewsOption } from '../types';
+import type { ShellTheme } from 'themes';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
 type __VLS_Props = {

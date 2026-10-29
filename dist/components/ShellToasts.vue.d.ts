@@ -1,5 +1,5 @@
-import '../style/tokens.css';
-import type { ShellTheme } from '../types';
+import '../style/shell.css';
+import type { ShellTheme } from 'themes';
 type __VLS_Props = {
     /** Where the stack is drawn. */
     to?: string | HTMLElement;

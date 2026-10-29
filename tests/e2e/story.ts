@@ -53,16 +53,24 @@ export const scopeSelect = (page: Page) => page.locator('.dc-actions__type .dc-p
 export const viewSelect = (page: Page) => page.locator('.dc-actions__view .dc-pick__button')
 
 /**
- * What they are ordered by is not on the bar at all: the table's own headings
- * offer it, with the column on screen under them. This is the button in the
- * heading named `label`, which orders by that column — and, pressed again,
- * runs the same order the other way.
+ * What they are ordered by is not on the bar at all. On a table its own
+ * headings offer it, with the column on screen under them. This is the button
+ * in the heading named `label`, which orders by that column — and, pressed
+ * again, runs the same order the other way.
  */
 export const sortHeading = (page: Page, label: string): Locator =>
   page.locator('.dc-table__sort', { hasText: new RegExp(`^${label}$`) })
 
+/**
+ * In every other view there are no headings to press, so the strip offers the
+ * order beside the view: a picker of the sorts, and a button that reverses
+ * the one in force.
+ */
+export const sortSelect = (page: Page) => page.locator('.dc-actions__sort .dc-pick__button')
+export const sortDirection = (page: Page) => page.locator('.dc-actions__dir')
+
 /** What a picker calls its list, which is what the choice is *of*. */
-export type PickName = 'Type' | 'View'
+export type PickName = 'Type' | 'View' | 'Sort'
 
 /** The list one of the pickers has put up. Nothing until the picker is pressed. */
 export const pickList = (page: Page, name: PickName): Locator =>
@@ -91,6 +99,11 @@ async function pick(page: Page, button: Locator, name: PickName, key: string): P
 /** Draws the results another way, by the view's own key. */
 export async function chooseView(page: Page, key: string): Promise<void> {
   await pick(page, viewSelect(page), 'View', key)
+}
+
+/** Orders the results another way, off the table, by the sort's own key. */
+export async function chooseSort(page: Page, key: string): Promise<void> {
+  await pick(page, sortSelect(page), 'Sort', key)
 }
 
 /**

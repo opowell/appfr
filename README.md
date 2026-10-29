@@ -7,8 +7,7 @@
 A query bar over a switchable results area, for data-heavy screens.
 
 The bar is where the query is read and edited. A strip over the results
-chooses the type and the view and holds the type's actions, and a table's
-headings choose the sort.
+manages the view and holds the type's actions.
 
 It is schema-driven: one `DomainSchema` describes the entities, their facets,
 what their fields are called, and what the columns of each one's table are. The

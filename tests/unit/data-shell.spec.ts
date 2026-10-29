@@ -372,3 +372,63 @@ describe('DataShell — a page of the host’s', () => {
     expect(param(adapter, 'p')).toBe('3')
   })
 })
+
+describe('DataShell — the order, off the table', () => {
+  const sorted: DomainSchema = {
+    ...schema,
+    entities: [
+      entity('tests', {
+        columns: [
+          { ...identity, sort: 'name' },
+          { key: 'updated', kind: 'date', label: 'Updated', sort: 'updated' },
+        ],
+      }),
+    ],
+  }
+
+  const sortPick = (w: VueWrapper) => w.find('.dc-actions__sort .dc-pick__button')
+  const direction = (w: VueWrapper) => w.find('.dc-actions__dir')
+
+  it('offers the sorts beside the view, with the one in force chosen', async () => {
+    const adapter = createMemoryAdapter('?e=tests&v=list')
+    const w = shell(adapter, { schema: sorted, source: source(3, sorted) })
+    await flushPromises()
+
+    // Labelled as the columns are, and opening on the recency sort.
+    const labels = sorted.entities[0]!.columns!.map((column) => column.label!.toLowerCase())
+    expect(sortPick(w).text()).toBe(labels[1]!)
+    await sortPick(w).trigger('click')
+    const items = [...document.querySelectorAll<HTMLElement>('.dc-pick__list .dc-menu__item')]
+    expect(items.map((item) => item.querySelector('.dc-menu__label')?.textContent)).toEqual(labels)
+    items[0]!.click()
+    await flushPromises()
+    expect(param(adapter, 's')).not.toBeNull()
+    expect(sortPick(w).text()).toBe(labels[0]!)
+  })
+
+  it('reverses the order from the button beside it', async () => {
+    const adapter = createMemoryAdapter('?e=tests&v=cards')
+    const w = shell(adapter, { schema: sorted, source: source(3, sorted) })
+    await flushPromises()
+
+    expect(direction(w).attributes('aria-label')).toContain('descending')
+    await direction(w).trigger('click')
+    await flushPromises()
+    expect(param(adapter, 'd')).toBe('asc')
+    expect(direction(w).attributes('aria-label')).toContain('ascending')
+  })
+
+  it('leaves the order to the headings on a table', async () => {
+    const w = shell(createMemoryAdapter('?e=tests&v=table'), { schema: sorted, source: source(3, sorted) })
+    await flushPromises()
+    expect(w.find('.dc-actions__sort').exists()).toBe(false)
+    expect(direction(w).exists()).toBe(false)
+  })
+
+  it('offers no order where the type has none', async () => {
+    const w = shell(createMemoryAdapter('?e=tests&v=list'))
+    await flushPromises()
+    expect(w.find('.dc-actions__sort').exists()).toBe(false)
+    expect(direction(w).exists()).toBe(false)
+  })
+})

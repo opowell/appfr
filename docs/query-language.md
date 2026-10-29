@@ -64,7 +64,10 @@ The rest of the query is chosen elsewhere:
   by default it shows only once a type is filtered to (`typeChooser`). Typing
   `entity:logs` in the bar filters by type too.
 - **Sort** is chosen by pressing a table's column heading, and pressing it
-  again reverses the direction. There is no sort control on the bar.
+  again reverses the direction. Every other view has no headings, so the strip
+  offers it beside the view instead: a picker of the type's sorts (left out
+  where there is only one) and a ↓/↑ button that reverses the direction. There
+  is no sort control on the bar.
 - **Counts.** Each type in the picker shows the population its schema
   publishes (`Items · 10k`). Once anything narrows the query, each shows what
   matched instead — counted as the picker opens, with a `~` while the count is

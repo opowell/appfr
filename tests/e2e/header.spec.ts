@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import {
   chooseScope,
+  chooseSort,
   chooseView,
   clearScope,
   expectPage,
@@ -21,7 +22,9 @@ import {
   scopeSelect,
   searchBox,
   searchField,
+  sortDirection,
   sortHeading,
+  sortSelect,
   stepPage,
   termBar,
   terms,
@@ -160,15 +163,38 @@ test.describe('Header — how the results are drawn and ordered', () => {
   })
 
   /*
-   * What the results are ordered by is not on the bar: the table's own
-   * headings offer it, with the column on screen under them, and a chooser on
-   * the bar would be the same choice in the abstract.
+   * What the results are ordered by is not on the bar: it is about the
+   * results as a whole, so it sits over them on the strip, beside the view.
    */
   test('the bar offers no ordering of its own', async ({ page }) => {
     await gotoStory(page, ENTITY)
     await expect(page.locator('.dc-header__sort-select')).toHaveCount(0)
     await expect(page.locator('.dc-header__dir')).toHaveCount(0)
-    await expect(page.getByRole('button', { name: /^Sort/ })).toHaveCount(0)
+    await expect(header(page).getByRole('button', { name: /^Sort/ })).toHaveCount(0)
+  })
+
+  /*
+   * A list has no headings to press, so the strip offers the order beside the
+   * view; a table's headings offer it with the column on screen under them,
+   * and the strip leaves it to them.
+   */
+  test('the strip orders a list, and leaves a table to its headings', async ({ page }) => {
+    await gotoStory(page, ENTITY)
+    await expect(sortSelect(page)).toBeVisible()
+    await expect(sortDirection(page)).toBeVisible()
+
+    await openPick(page, sortSelect(page), 'Sort')
+    const first = (await pickList(page, 'Sort').locator('[data-dc-item]').first().getAttribute('data-dc-item'))!
+    await chooseSort(page, first)
+    await expect(sortSelect(page)).toHaveAttribute('data-dc-value', first)
+    const before = await page.locator('.dc-list__open').allInnerTexts()
+
+    await sortDirection(page).click()
+    await expect(page.locator('.dc-list__open')).not.toHaveText(before)
+
+    await chooseView(page, 'table')
+    await expect(sortSelect(page)).toHaveCount(0)
+    await expect(sortDirection(page)).toHaveCount(0)
   })
 
   test('a table heading orders the content, and pressed again reverses it', async ({ page }) => {

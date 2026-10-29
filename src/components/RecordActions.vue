@@ -10,9 +10,9 @@ import PageTick from './views/PageTick.vue'
 import PickControl from './PickControl.vue'
 
 /**
- * The head of the results: which type they are and how they are drawn, and
- * what can be done with them — make one, tick some, and copy, delete or
- * otherwise operate on what is ticked.
+ * The head of the results: which type they are, how they are drawn and what
+ * they are ordered by, and what can be done with them — make one, tick some,
+ * and copy, delete or otherwise operate on what is ticked.
  *
  * The type and the view are chosen here rather than on the bar above, which
  * is the query's to narrow: both are about the results as a whole, and here
@@ -152,6 +152,36 @@ function chooseView(key: string): void {
   shell.setView(key as ViewKind)
 }
 
+/* ------------------------------------------------------ what they are ordered by */
+
+/**
+ * Whether the order is chosen here. A table's headings offer it, with the
+ * column on screen under them; every other view draws the same rows with no
+ * headings to press, so the order is chosen beside the view instead. A type
+ * that offers no order has nothing to choose.
+ */
+const showOrder = computed(
+  () => records.value && view.value !== 'table' && shell.sorts.value.length > 0,
+)
+
+const sortOptions = computed(() =>
+  shell.sorts.value.map((sort) => ({ key: sort.key, label: sort.label })),
+)
+
+/** One sort on offer is a fact rather than a choice, as one view is. */
+const showSorts = computed(() => showOrder.value && sortOptions.value.length > 1)
+
+const descending = computed(() => shell.query.value.dir === 'desc')
+
+/**
+ * What the direction button says to a screen reader: the order as it stands,
+ * the sort included — where there is one sort on offer, its picker is not
+ * drawn and this is the only place it is named.
+ */
+const directionLabel = computed(
+  () => `Sorted by ${shell.sort.value.label}, ${descending.value ? 'descending' : 'ascending'}`,
+)
+
 /**
  * The type in force. The operations are its own words, so a mixed result set —
  * where no single type's vocabulary applies — offers none of them.
@@ -196,6 +226,7 @@ const offered = computed(
   () =>
     showTypes.value ||
     showViews.value ||
+    showOrder.value ||
     (records.value &&
       (selecting.value ||
       Boolean(
@@ -250,9 +281,7 @@ function opLabel(label: string): string {
       @update:model-value="chooseEntity"
     />
 
-    <!-- And how they are drawn, wherever the host offers more than one way.
-         What they are ordered by is not here, because the table's own
-         headings offer it with the column on screen under them. -->
+    <!-- And how they are drawn, wherever the host offers more than one way. -->
     <PickControl
       v-if="showViews"
       class="dc-actions__pick dc-actions__view"
@@ -261,6 +290,31 @@ function opLabel(label: string): string {
       :options="viewOptions"
       @update:model-value="chooseView"
     />
+
+    <!-- And what they are ordered by, in every view but the table, whose own
+         headings offer it with the column on screen under them. -->
+    <span
+      v-if="showOrder"
+      class="dc-actions__order"
+    >
+      <PickControl
+        v-if="showSorts"
+        class="dc-actions__pick dc-actions__sort"
+        label="Sort"
+        :model-value="shell.sort.value.key"
+        :options="sortOptions"
+        @update:model-value="shell.setSort"
+      />
+      <button
+        type="button"
+        class="dc-actions__dir"
+        :aria-label="directionLabel"
+        :title="directionLabel"
+        @click="shell.toggleDirection()"
+      >
+        {{ descending ? '↓' : '↑' }}
+      </button>
+    </span>
 
     <div
       v-if="selecting && readout"
@@ -380,6 +434,35 @@ function opLabel(label: string): string {
   flex: 0 0 auto;
   font-size: var(--dc-text-code);
   cursor: pointer;
+}
+
+/* The sort and its direction, read as one control. */
+.dc-actions__order {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+/* Drawn as the picker beside it is, at the size of the one glyph it holds. */
+.dc-actions__dir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 3px 6px;
+  background: var(--dc-accent-bg);
+  border: 1px solid var(--dc-accent-dim);
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-accent);
+  font-family: var(--dc-mono);
+  font-size: var(--dc-text-code);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.dc-actions__dir:hover {
+  border-color: var(--dc-accent);
 }
 
 .dc-actions__select {

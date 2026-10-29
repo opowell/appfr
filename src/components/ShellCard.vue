@@ -5,7 +5,7 @@
  * The home screen is a card per type, and a shell that is *about* something —
  * one record, read across every type — usually has things to say that no type
  * holds: the record's own name, the form that acts on it, its metadata, its
- * source. Those go in the [`cards-before`](../../README.md#cards-of-your-own)
+ * source. Those go in the [`cards-before`](../../docs/records.md#cards-of-your-own)
  * and `cards-after` slots, and they have to look like the cards they sit
  * among; the shell's own card chrome is scoped CSS a host cannot reach, so
  * this is that chrome as a component.

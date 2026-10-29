@@ -39,7 +39,14 @@ npm install github:opowell/appfr#v0.70.0
 needed only for the router adapter and the Nuxt module.
 [`themes`](https://github.com/opowell/themes), the tokens the shell resolves
 against, and [`menu-bar`](https://github.com/opowell/menu-bar), whose menus its
-pickers open, come with it.
+pickers open, are peers too: install them beside this package. They are peers
+rather than dependencies because pnpm 11 refuses a git-hosted package that
+another package pulls in (`blockExoticSubdeps`); one the app lists itself is
+fine.
+
+```bash
+npm install github:opowell/themes#v0.1.0 github:opowell/menu-bar#v0.2.0
+```
 
 Each of those ships its own stylesheet and none carries another's, so a page
 loads the tokens once and then the sheet of every package on it, in this

@@ -1,8 +1,8 @@
 import type { ViewKind } from '../types';
 /**
- * The head of the results: which type they are and how they are drawn, and
- * what can be done with them — make one, tick some, and copy, delete or
- * otherwise operate on what is ticked.
+ * The head of the results: which type they are, how they are drawn and what
+ * they are ordered by, and what can be done with them — make one, tick some,
+ * and copy, delete or otherwise operate on what is ticked.
  *
  * The type and the view are chosen here rather than on the bar above, which
  * is the query's to narrow: both are about the results as a whole, and here

@@ -208,7 +208,7 @@ test.describe('Records — a type’s own operations', () => {
     await gotoStory(page, OPERATIONS)
     await expect(op(page, 'Run…')).toBeDisabled()
     await rowTicks(page).first().click()
-    await expect(op(page, 'Run… 1')).toBeEnabled()
+    await expect(op(page, 'Run 1…')).toBeEnabled()
     await expect(op(page, 'Export 1')).toBeEnabled()
   })
 
@@ -218,7 +218,7 @@ test.describe('Records — a type’s own operations', () => {
     await rowTicks(page).nth(0).click()
     await rowTicks(page).nth(1).click()
 
-    await op(page, 'Run… 2').click()
+    await op(page, 'Run 2…').click()
     await expect(asked(page)).toHaveText('asked to run 2')
     await op(page, 'Export 2').click()
     await expect(asked(page)).toHaveText('asked to export 2')

@@ -257,9 +257,16 @@ const readout = computed(() => {
  */
 const selectionAtEnd = computed(() => props.selectionPlacement === 'end')
 
-/** An operation says how many it is for, once there are any. */
+/**
+ * An operation says how many it is for, once there are any. A label ending
+ * in `…` keeps it at the end — `Run 3…`, not `Run… 3` — since the ellipsis
+ * says the press asks something more before it acts.
+ */
 function opLabel(label: string): string {
-  return count.value ? `${label} ${count.value}` : label
+  if (!count.value) return label
+  return label.endsWith('…')
+    ? `${label.slice(0, -1)} ${count.value}…`
+    : `${label} ${count.value}`
 }
 </script>
 

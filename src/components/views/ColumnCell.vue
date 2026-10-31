@@ -119,10 +119,13 @@ const href = computed(() =>
 
   <!-- A span rather than the bare text a cell needs no more of, because a
        cell that wraps is cut short at a line count, and a line count needs a
-       box to count lines in. -->
+       box to count lines in. Truncated itself as well as by the cell: beside
+       a mark it is a flex item, which the cell's ellipsis does not reach, so
+       it would run on under the mark and take the mark off the end. -->
   <span
     v-else
     class="dc-cell__text"
+    :class="{ 'dc-truncate': truncates }"
   >{{ text }}</span>
 </template>
 

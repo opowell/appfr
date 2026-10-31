@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { ColumnDef, PressOptions, ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
 import { isBrowserPress, pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
@@ -246,6 +246,17 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
   if (!columnTruncates(column) || column.activate || column.click) return undefined
   return cellFull(column, entry.row)
 }
+
+const head = ref<HTMLElement | null>(null)
+
+/**
+ * The headings move sideways with the rows. They sit outside the box that
+ * scrolls, so a table wider than the shell would otherwise leave them over
+ * the columns they started over.
+ */
+function followBody(event: Event) {
+  if (head.value) head.value.scrollLeft = (event.target as HTMLElement).scrollLeft
+}
 </script>
 
 <template>
@@ -269,7 +280,10 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
     :data-dc-wrap="wraps ? '' : undefined"
     :data-dc-row-links="shell.rowLinks?.value ? '' : undefined"
   >
-    <thead data-dc-stuck>
+    <thead
+      ref="head"
+      data-dc-stuck
+    >
       <tr>
         <!-- Not a column: the shell declares none, and this is an affordance
              rather than a field of the record — the same tick the other views
@@ -342,7 +356,12 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
         </th>
       </tr>
     </thead>
-    <tbody>
+    <!-- The box that scrolls, marked for the results area, which fades and
+         resets whichever box that is. -->
+    <tbody
+      data-dc-scroll
+      @scroll="followBody"
+    >
       <tr
         v-for="entry in rows"
         :key="entry.key"
@@ -374,6 +393,7 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
           v-for="(column, index) in columns"
           :key="columnKey(column, index)"
           :class="cellClass(column)"
+          :style="{ width: column.width }"
           :data-dc-align="columnAlign(column)"
           :data-dc-hide="column.hideBelow"
           :title="cellTitle(column, entry)"
@@ -441,6 +461,55 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
 }
 
 /*
+ * The headings stay at the top of the results while the rows scroll below
+ * them: a column of numbers is no use once what it is a column of has gone.
+ * Outside the box that scrolls rather than stuck to the top of it, so the
+ * scrollbar runs beside the rows alone.
+ *
+ * The table fills the results area as a column of two blocks, the head and
+ * the body, and the body is what scrolls.
+ */
+.dc-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  /* Separate rather than collapsed, with no gap: every cell draws only its
+     bottom edge, and a collapsed one would belong to the row's table rather
+     than to the cell. Both are inherited by each row's own table. */
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--dc-text-body);
+}
+
+.dc-table thead,
+.dc-table tbody {
+  display: block;
+  /* The body's scrollbar takes its width from the rows whatever kind it is,
+     and the head gives up the same strip, so its columns stay over theirs. */
+  scrollbar-gutter: stable;
+}
+
+/* Sideways too, if the rows are wider than the shell — see `followBody`. The
+   head is laid on the ground rather than on nothing, since `--dc-bg-1` is a
+   veil under the plain themes. */
+.dc-table thead {
+  flex: none;
+  overflow: hidden;
+  background: linear-gradient(var(--dc-bg-1), var(--dc-bg-1)) var(--dc-ground);
+}
+
+.dc-table tbody {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/*
+ * A block does not lay out columns, so each row is a table of its own, laid
+ * out from its own cells — the same widths in the head and in every row, so
+ * the same columns.
+ *
  * Fixed layout, because a table that lays itself out by its content is a table
  * that scrolls sideways: one long name or one long path and every other column
  * is pushed off the right edge, where the state and the date — the two things a
@@ -449,32 +518,17 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
  * table is exactly as wide as the shell however long a value gets. What no
  * longer fits is truncated with the whole of it on hover.
  */
-.dc-table {
+.dc-table tr {
+  display: table;
   width: 100%;
   table-layout: fixed;
-  /* Separate rather than collapsed, with no gap: a collapsed border belongs to
-     the table rather than to the cell, and so scrolls away from under a
-     heading that stays. Every cell draws only its bottom edge either way. */
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: var(--dc-text-body);
 }
 
-/*
- * The headings stay at the top of the results while the rows scroll under
- * them: a column of numbers is no use once what it is a column of has gone.
- * Laid on the ground rather than on nothing, since `--dc-bg-1` is a veil under
- * the plain themes and the rows would read straight through it.
- */
 .dc-table th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   padding: 10px 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   border-bottom: 1px solid var(--dc-line);
-  background: linear-gradient(var(--dc-bg-1), var(--dc-bg-1)) var(--dc-ground);
   color: var(--dc-fg-2);
   font-size: var(--dc-text-micro);
   font-weight: var(--dc-weight-semibold);

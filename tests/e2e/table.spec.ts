@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Locator, Page } from '@playwright/test'
-import { chooseView, gotoStory, termBar, terms, scopeSelect } from './story'
+import { chooseView, expectPage, gotoStory, stepPage, termBar, terms, scopeSelect } from './story'
 
 /**
  * The table against a corpus whose names are sentences and whose secondaries
@@ -372,13 +372,19 @@ test.describe('Columns — as many as the schema declares', () => {
 /*
  * The headings say what each column is, and a column scrolled away from its
  * heading is a column of numbers nobody can read. So they stay at the top of
- * the results while the rows go under them, on a ground the rows do not show
- * through, and the fade that says more is above starts under them.
+ * the results, outside the box the rows scroll in — the scrollbar runs beside
+ * the rows alone — and the fade that says more is above starts under them.
  */
 test.describe('Table — headings that stay put', () => {
   test.use({ viewport: { width: 1100, height: 420 } })
 
-  test('stay at the top of the results as the rows scroll under them', async ({ page }) => {
+  const body = (page: Page) => table(page).locator('tbody')
+  const scrollBody = (page: Page, to: number) =>
+    body(page).evaluate((element, top) => {
+      element.scrollTop = top
+    }, to)
+
+  test('stay at the top of the results as the rows scroll below them', async ({ page }) => {
     await gotoStory(page, LONG)
     const heading = table(page).locator('th').first()
     const top = async () =>
@@ -386,24 +392,69 @@ test.describe('Table — headings that stay put', () => {
         (await heading.boundingBox())!.y - (await results(page).boundingBox())!.y,
       )
     expect(await top()).toBe(0)
-    await results(page).evaluate((element) => {
-      element.scrollTop = 200
-    })
+    await scrollBody(page, 200)
     await expect(results(page)).toHaveAttribute('data-dc-more', /top/)
     expect(await top()).toBe(0)
   })
 
+  test('stand outside the box that scrolls, which starts under them', async ({ page }) => {
+    await gotoStory(page, LONG)
+    await expect(table(page)).toBeVisible()
+    // The rows overrun the box, and it is the body that takes them in.
+    expect(await body(page).evaluate((element) => element.scrollHeight - element.clientHeight))
+      .toBeGreaterThan(0)
+    expect(await results(page).evaluate((element) => element.scrollHeight - element.clientHeight))
+      .toBe(0)
+    const [head, rows] = await Promise.all([
+      table(page).locator('thead').boundingBox(),
+      body(page).boundingBox(),
+    ])
+    expect(Math.round(rows!.y)).toBe(Math.round(head!.y + head!.height))
+  })
+
+  test('stand over the columns they name', async ({ page }) => {
+    await gotoStory(page, LONG)
+    const edges = (cells: Locator) =>
+      cells.evaluateAll((elements) =>
+        elements
+          .filter((element) => getComputedStyle(element).display !== 'none')
+          .map((element) => {
+            const box = element.getBoundingClientRect()
+            return [Math.round(box.left), Math.round(box.width)]
+          }),
+      )
+    const heads = await edges(table(page).locator('th'))
+    expect(heads.length).toBeGreaterThan(2)
+    expect(await edges(body(page).locator('tr').first().locator('td'))).toEqual(heads)
+    expect(await edges(body(page).locator('tr').last().locator('td'))).toEqual(heads)
+  })
+
   test('start the fade over the rows under them, not over themselves', async ({ page }) => {
     await gotoStory(page, LONG)
-    await results(page).evaluate((element) => {
-      element.scrollTop = 200
-    })
+    await scrollBody(page, 200)
     await expect(results(page)).toHaveAttribute('data-dc-more', /top/)
     const [stuck, head] = await Promise.all([
       results(page).evaluate((element) => getComputedStyle(element).getPropertyValue('--dc-results-stuck')),
       table(page).locator('thead').evaluate((element) => (element as HTMLElement).offsetHeight),
     ])
     expect(stuck).toBe(`${head}px`)
+  })
+
+  test('let go of the fade once the rows are scrolled to the end', async ({ page }) => {
+    await gotoStory(page, LONG)
+    await expect(results(page)).toHaveAttribute('data-dc-more', 'bottom')
+    await scrollBody(page, 100000)
+    await expect(results(page)).toHaveAttribute('data-dc-more', 'top')
+  })
+
+  test('open a new page at its first row', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--paged-in-the-table-view')
+    await expectPage(page, '2 / 4')
+    await scrollBody(page, 100000)
+    expect(await body(page).evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+    await stepPage(page, 'Next')
+    await expectPage(page, '3 / 4')
+    expect(await body(page).evaluate((element) => element.scrollTop)).toBe(0)
   })
 })
 

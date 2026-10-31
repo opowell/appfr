@@ -66,6 +66,15 @@ const failed = computed(() => shell.error.value !== null)
 
 const scroller = ref<HTMLElement | null>(null)
 
+/**
+ * The box the results scroll in: this one, unless the view marks one of its
+ * own with `data-dc-scroll` — a table's body, so its headings stay outside
+ * it. Whichever it is, it is the one faded, measured and sent to the top.
+ */
+function scrolling(element: HTMLElement): HTMLElement {
+  return element.querySelector<HTMLElement>('[data-dc-scroll]') ?? element
+}
+
 /*
  * A page turn starts at the top. Where the scroll is belongs to the rows that
  * were there, and the next page is a different set of them: keeping it opens
@@ -81,7 +90,7 @@ watch(
   // The page on screen, which is the draft's own while one is being typed.
   () => shell.liveQuery.value.page,
   () => {
-    if (scroller.value) scroller.value.scrollTop = 0
+    if (scroller.value) scrolling(scroller.value).scrollTop = 0
   },
 )
 
@@ -109,11 +118,12 @@ const gutters = ref({ x: 0, y: 0 })
 const stuck = ref(0)
 
 function measureEdges(): void {
-  const element = scroller.value
-  if (!element) {
+  const outer = scroller.value
+  if (!outer) {
     more.value = ''
     return
   }
+  const element = scrolling(outer)
   // A fraction of a pixel is not somewhere anyone can scroll to.
   const edges = {
     top: element.scrollTop > 1,
@@ -129,7 +139,7 @@ function measureEdges(): void {
     x: element.offsetHeight - element.clientHeight,
     y: element.offsetWidth - element.clientWidth,
   }
-  stuck.value = element.querySelector<HTMLElement>('[data-dc-stuck]')?.offsetHeight ?? 0
+  stuck.value = outer.querySelector<HTMLElement>('[data-dc-stuck]')?.offsetHeight ?? 0
 }
 
 /*
@@ -137,42 +147,52 @@ function measureEdges(): void {
  * is: a timeline leaves its end state applied once the box stops overflowing.
  * And the box is not all that changes it — rows arrive, a view is swapped for
  * another, a picture loads — so what is inside it is watched too: the view's
- * own root, whichever one that is at the time.
+ * own root, whichever one that is at the time, and the rows of a box of the
+ * view's own that scrolls.
+ *
+ * Listened to while capturing, since a scroll does not bubble and the box
+ * that scrolls may be one of the view's own.
  */
 let sizes: ResizeObserver | null = null
 let children: MutationObserver | null = null
 watch(
   scroller,
   (element, previous) => {
-    previous?.removeEventListener('scroll', measureEdges)
+    previous?.removeEventListener('scroll', measureEdges, { capture: true })
     sizes?.disconnect()
     children?.disconnect()
     sizes = null
     children = null
     measureEdges()
     if (!element) return
-    element.addEventListener('scroll', measureEdges, { passive: true })
+    element.addEventListener('scroll', measureEdges, { passive: true, capture: true })
     if (typeof ResizeObserver === 'undefined') return
     const resizes = new ResizeObserver(measureEdges)
+    const mutations =
+      typeof MutationObserver === 'undefined'
+        ? null
+        : new MutationObserver(() => {
+            observe()
+            measureEdges()
+          })
     const observe = () => {
       resizes.disconnect()
-      resizes.observe(element)
-      for (const child of element.children) resizes.observe(child)
+      mutations?.disconnect()
+      for (const box of new Set([element, scrolling(element)])) {
+        resizes.observe(box)
+        for (const child of box.children) resizes.observe(child)
+        mutations?.observe(box, { childList: true })
+      }
     }
     observe()
     sizes = resizes
-    if (typeof MutationObserver === 'undefined') return
-    children = new MutationObserver(() => {
-      observe()
-      measureEdges()
-    })
-    children.observe(element, { childList: true })
+    children = mutations
   },
   { flush: 'post' },
 )
 
 onBeforeUnmount(() => {
-  scroller.value?.removeEventListener('scroll', measureEdges)
+  scroller.value?.removeEventListener('scroll', measureEdges, { capture: true })
   sizes?.disconnect()
   children?.disconnect()
 })

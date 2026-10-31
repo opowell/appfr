@@ -176,10 +176,13 @@ function choose(item: MenuItemDef) {
     >
       <span class="dc-pick__label">{{ chosen?.label }}</span>
     </button>
-    <span
+    <svg
       class="dc-pick__mark"
+      viewBox="0 0 16 16"
       aria-hidden="true"
-    >▾</span>
+    >
+      <path d="M4 6l4 4 4-4" />
+    </svg>
 
     <Teleport
       v-if="anchor && host"
@@ -221,18 +224,19 @@ function choose(item: MenuItemDef) {
 }
 
 /*
- * Drawn as the shell draws the rest of its controls, so that the pills beside
- * it and the box around it are recognisably one row of the same instrument.
+ * Drawn as the toolbar's buttons are, hollow and edged, not as the query's
+ * terms: those are values, filled and round, and pressing one takes it away.
+ * This is a thing that opens, and it has to read as one before it is pressed.
  */
 .dc-pick__button {
   display: inline-flex;
   align-items: center;
   max-width: 24ch;
-  padding: 3px 20px 3px 8px;
-  background: var(--dc-accent-bg);
-  border: 1px solid var(--dc-accent-dim);
+  padding: 3px 24px 3px 8px;
+  background: var(--dc-bg-0);
+  border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
-  color: var(--dc-accent);
+  color: var(--dc-fg-1);
   font-family: inherit;
   font-size: inherit;
   line-height: 1.5;
@@ -242,7 +246,8 @@ function choose(item: MenuItemDef) {
 
 .dc-pick__button:hover,
 .dc-pick__button[aria-expanded='true'] {
-  border-color: var(--dc-accent);
+  background: var(--dc-bg-2);
+  color: var(--dc-fg-0);
 }
 
 .dc-pick__label {
@@ -261,14 +266,19 @@ function choose(item: MenuItemDef) {
   overflow-y: auto;
 }
 
-/* The mark that says there is a list behind the button. It belongs to the
+/* The mark that says there is a list behind the button: a chevron, drawn at
+   the height of the words so it is seen at a glance. It belongs to the
    button, so it never takes the press that should open it. */
 .dc-pick__mark {
   position: absolute;
-  right: 7px;
-  color: var(--dc-accent);
-  font-size: var(--dc-text-eyebrow);
-  line-height: 1;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: var(--dc-fg-2);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   pointer-events: none;
 }
 </style>

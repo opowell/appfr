@@ -828,13 +828,19 @@ function abandonTyped(event: Event): void {
 /*
  * A part of the query, and pressing it takes that part out. The strikethrough
  * on hover is the promise: this is the term, and this is it gone.
+ *
+ * Filled, edgeless and round-ended, where a control beside it (a PickControl)
+ * is hollow, edged and square: a value and a thing that opens are told apart
+ * by their shape, not by colour, which a greyscale accent does not give. The
+ * edge is there but clear, so a term stands as tall as a control. The rounding
+ * is the theme's own, run out to a full pill, so a square theme stays square.
  */
 .dc-term {
   flex: 0 0 auto;
-  padding: 3px 8px;
+  padding: 3px 9px;
   background: var(--dc-accent-bg);
-  border: 1px solid var(--dc-accent-dim);
-  border-radius: var(--dc-radius-sm);
+  border: 1px solid transparent;
+  border-radius: calc(var(--dc-radius-sm) * 99);
   color: var(--dc-accent);
   font-size: var(--dc-text-code);
   line-height: 1.5;
@@ -899,6 +905,7 @@ function abandonTyped(event: Event): void {
 .dc-term--idle {
   background: transparent;
   border-style: dashed;
+  border-color: var(--dc-line-2);
   color: var(--dc-fg-2);
 }
 
@@ -920,10 +927,10 @@ function abandonTyped(event: Event): void {
 
 .dc-within {
   max-width: 34ch;
-  padding: 3px 8px;
+  padding: 3px 9px;
   background: var(--dc-accent-bg);
-  border: 1px solid var(--dc-accent-dim);
-  border-radius: var(--dc-radius-sm);
+  border: 1px solid transparent;
+  border-radius: calc(var(--dc-radius-sm) * 99);
   color: var(--dc-accent);
   font-size: var(--dc-text-code);
   line-height: 1.5;

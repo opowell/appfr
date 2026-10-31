@@ -434,7 +434,7 @@ function opLabel(label: string): string {
   font-size: var(--dc-text-meta);
 }
 
-/* Set as the query's parts are set, being parts of the query too. */
+/* At the type size of the query's parts, being parts of the query too. */
 .dc-actions__pick {
   display: inline-flex;
   align-items: center;
@@ -458,10 +458,10 @@ function opLabel(label: string): string {
   justify-content: center;
   min-width: 24px;
   padding: 3px 6px;
-  background: var(--dc-accent-bg);
-  border: 1px solid var(--dc-accent-dim);
+  background: var(--dc-bg-0);
+  border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
-  color: var(--dc-accent);
+  color: var(--dc-fg-1);
   font-family: var(--dc-mono);
   font-size: var(--dc-text-code);
   line-height: 1.5;
@@ -469,7 +469,8 @@ function opLabel(label: string): string {
 }
 
 .dc-actions__dir:hover {
-  border-color: var(--dc-accent);
+  background: var(--dc-bg-2);
+  color: var(--dc-fg-0);
 }
 
 .dc-actions__select {

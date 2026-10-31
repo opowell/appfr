@@ -4,21 +4,16 @@
 > deprecation period and no migration path. Pin an exact tag, and read the
 > diff before moving to the next one.
 
-A query bar over a switchable results area, for data-heavy screens.
+A query bar, a display and action bar and a results area.
 
-The bar is where the query is read and edited. A strip over the results
-manages the view and holds the type's actions.
-
-It is schema-driven: one `DomainSchema` describes the entities, their facets,
-what their fields are called, and what the columns of each one's table are. The
-same bar and seven views serve any schema: swapping the schema swaps the
-vocabulary, not the component.
+The bar is where the query is read and edited. The display manager determines
+how to sort and display the results. The results area shows the items that match the query.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ Search…                                           ‹ 1 / 2 ›  │  ← bar
+│ Search…                                           ‹ 1 / 2 ›  │  ← query bar
 ├──────────────────────────────────────────────────────────────┤
-│ [Reports · 12 ▾] [List ▾]                     [+ New report] │  ← strip
+│ [Reports · 12 ▾] [List ▾]                     [+ New report] │  ← display and action bar
 ├──────────────────────────────────────────────────────────────┤
 │ 01  Competitor pricing pages      909  104  running          │
 │ 02  Security advisories           737  288  running          │  ← results
@@ -87,6 +82,10 @@ the schema's own samples — enough to see and test the whole thing before a
 backend exists.
 
 ## Wiring it to your data
+It is schema-driven: one `DomainSchema` describes the entities, their facets,
+what their fields are called, and what the columns of each one's table are. The
+same bar and seven views serve any schema: swapping the schema swaps the
+vocabulary, not the component.
 
 Implement `DataSource` and pass it as `source`. A row is `{ id, entityKey,
 entityLabel, fields }`, with `fields` holding the record under whatever names

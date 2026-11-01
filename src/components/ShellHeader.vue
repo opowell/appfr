@@ -98,6 +98,7 @@ const records = useRecordNames({
   source: shell.source,
   schema: shell.schema,
   query: shell.query,
+  loading: shell.loading,
   // The scope's parts as well as the query's: it names a record more often
   // than a typed term does, being what a record's own page is built on.
   terms: computed(() => [...scopeTerms.value, ...shell.terms.value]),

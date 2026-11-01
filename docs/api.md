@@ -15,7 +15,7 @@
 | `limit` | `number` | `50` | Rows per page. |
 | `pagesNote` | `string` | — | What the count is short of (`first 1,200 of 30,200 lots`). Shown in the pager's tooltip; keeps the pager up on a single page. See [paging](#paging-through-the-results). |
 | `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | The offered views. A URL naming one not offered renders the first that is. One view hides the View chooser. A function gets `{ entity, records }` — see [cards for the records the query names](records.md#cards-for-the-records-the-query-names). |
-| `loading` | `boolean` | `false` | The source's answers are not yet the data: shows *Loading…*, hides the pager, corrects nothing from a count. See [while the data is on its way](#while-the-data-is-on-its-way). |
+| `loading` | `boolean` | `false` | The source's answers are not yet the data: shows *Loading…*, hides the pager, looks up no record names, corrects nothing from a count. See [while the data is on its way](#while-the-data-is-on-its-way). |
 | `recordCards` | `Record<string, Component>` | — | A component per type, given `id`, for each record the query names. Shorthand for the `record` slot — see [cards for the records the query names](records.md#cards-for-the-records-the-query-names). |
 | `pageQuery` | `'shell' \| 'detached'` | `'shell'` | Whether a `page` is about the query. `detached` shows the pristine query and sends the first edit to `listPath`. Read only while a `page` is provided — see [a page that is not about the query](#a-page-that-is-not-about-the-query). |
 | `listPath` | `string` | `'/'` | Where a detached page's first edit lands. |
@@ -172,7 +172,8 @@ would correct `?p=7` to page one. Pass `loading` until then:
 ```
 
 While it is true the results say *Loading…*, the pager is hidden and nothing
-is corrected; the bar stays usable. When it turns false the URL is read
+is corrected; the bar stays usable, though a record it narrows to shows its id
+until the data is there — an empty answer is not one worth keeping. When it turns false the URL is read
 against the results as if just mounted: `p=7` stays if there are seven pages,
 else lands on the last.
 

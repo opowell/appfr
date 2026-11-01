@@ -16,12 +16,15 @@ import type { DataSource, QueryRequest, QueryResult, ShellQuery, ShellRow } from
  */
 const YELLOW_CASTLE = 'set%3A%22sets_10007%22'
 
-function setup(search: string, source?: DataSource) {
+function setup(search: string, source?: DataSource | (() => DataSource), loading = ref(false)) {
   const query = ref<ShellQuery>(parseQuery(search, legoSchema))
   const scope = effectScope()
   const state = scope.run(() =>
     useRecordNames({
-      source: computed(() => source ?? createMockDataSource({ seed: 'LEGO' })),
+      source: computed(() =>
+        typeof source === 'function' ? source() : (source ?? createMockDataSource({ seed: 'LEGO' })),
+      ),
+      loading: computed(() => loading.value),
       schema: computed(() => legoSchema),
       query: computed(() => query.value),
       terms: computed(() =>
@@ -221,5 +224,25 @@ describe('useRecordNames', () => {
     }
     const { labels } = setup(`?e=pieces&q=${YELLOW_CASTLE}`, angry)
     expect(labels()).toEqual(['entity:pieces', 'set:sets_10007'])
+  })
+
+  /*
+   * A host whose payloads are still on their way hands the shell a synchronous
+   * source over none of them, and says so with `loading`. Its empty answer is
+   * not an answer: kept, it was never asked again, and the bar went on showing
+   * the id after the rows had landed.
+   */
+  it('asks nothing while the source is loading, and asks once it is not', async () => {
+    const rows = ref<ShellRow[]>([])
+    const loading = ref(true)
+    const asked = vi.fn((request: QueryRequest) => serving(rows.value).query(request))
+    const { labels } = setup(`?e=pieces&q=${YELLOW_CASTLE}`, () => ({ query: (r) => asked(r) as QueryResult }), loading)
+    expect(asked).not.toHaveBeenCalled()
+    expect(labels()).toEqual(['entity:pieces', 'set:sets_10007'])
+
+    rows.value = [set('sets_10007', 'Yellow Castle')]
+    loading.value = false
+    await nextTick()
+    expect(labels()).toEqual(['entity:pieces', 'set:Yellow Castle (sets_10007)'])
   })
 })

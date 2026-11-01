@@ -113,7 +113,8 @@ const props = withDefaults(
      *
      * The header stays up the whole time, so the query can still be read and
      * edited — what it cannot yet say is how many matched, so the pager is off
-     * the bar until it can.
+     * the bar until it can, nor what the records it narrows to are called, so
+     * those are looked up once it is false.
      */
     loading?: boolean
     /**
@@ -685,6 +686,7 @@ const shell = provideShellContext({
   source,
   previewsPerType: computed(() => props.previewsPerType),
   within,
+  loading: computed(() => props.loading),
   pinnable: computed(() => props.pinnable === true),
   isPinned: (row) => pinnedIds.value.has(row.id),
   isPinnedId: (id) => pinnedIds.value.has(id),

@@ -78,6 +78,14 @@ test.describe('Home — a card per item type', () => {
     await expect(card(page, 'Logs').locator('.dc-type__metric-label').first()).toHaveText('Duration')
   })
 
+  test('says that name to screen readers only', async ({ page }) => {
+    await gotoStory(page, HOME)
+    const label = card(page, 'Logs').locator('.dc-type__metric-label').first()
+    const box = await label.boundingBox()
+    expect(box!.width).toBeLessThanOrEqual(1)
+    await expect(card(page, 'Logs').locator('.dc-type__metric-value').first()).toBeVisible()
+  })
+
   test('the number of rows per card is configurable', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home-deeper-cards')
     await expect(card(page, 'Searches').locator('.dc-type__row')).toHaveCount(6)
@@ -100,6 +108,37 @@ test.describe('Home — the cards are navigation', () => {
     await card(page, 'Items').locator('.dc-type__row').first().click()
     // The shell reports the row rather than navigating anywhere itself.
     await expect(page.locator('.dc-types')).toBeVisible()
+  })
+})
+
+test.describe('Home — a row is one press', () => {
+  test('its metric and date open the record, as its name does', async ({ page }) => {
+    await gotoStory(page, HOME)
+    // Logs' Duration counts nothing listable, so it is plain text rather than a control.
+    const row = card(page, 'Logs').locator('.dc-type__row').first()
+    await row.locator('.dc-type__open').evaluate((open) => {
+      open.addEventListener('click', (event) => {
+        event.preventDefault()
+        open.setAttribute('data-pressed', 'true')
+      }, { capture: true })
+    })
+    // Forced: the name's link lies over the number, which is the point — the
+    // click lands where the number is drawn and reaches the link.
+    await row.locator('.dc-type__metric-value').click({ force: true })
+    await expect(row.locator('.dc-type__open')).toHaveAttribute('data-pressed', 'true')
+  })
+
+  test('a metric that counts something still narrows to it instead', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--home-drillable')
+    const row = card(page, 'Sets').locator('.dc-type__row').first()
+    // Hit-tested, so the link stretched over the row must not be what is on top.
+    const drill = row.locator('.dc-drill')
+    const box = await drill.boundingBox()
+    const hit = await page.evaluate(
+      ([x, y]) => document.elementFromPoint(x, y)?.closest('.dc-drill') != null,
+      [box!.x + box!.width / 2, box!.y + box!.height / 2],
+    )
+    expect(hit).toBe(true)
   })
 })
 

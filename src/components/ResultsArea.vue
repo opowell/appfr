@@ -12,6 +12,7 @@ import ListView from './views/ListView.vue'
 import PreviewView from './views/PreviewView.vue'
 import TableView from './views/TableView.vue'
 import TypeCardsView from './views/TypeCardsView.vue'
+import PressLink from './views/PressLink.vue'
 
 const props = defineProps<{
   /**
@@ -41,7 +42,7 @@ const slots = defineSlots<{
   'cards-after'?: () => unknown
 }>()
 
-const VIEWS: Record<ViewKind, Component> = {
+const VIEWS: Record<Exclude<ViewKind, 'record'>, Component> = {
   list: ListView,
   cards: CardsView,
   grid: GridView,
@@ -60,7 +61,10 @@ const isTypeCards = computed(() => isTypeCardsQuery(shell.query.value, props.vie
 
 const kind = computed<ViewKind>(() => resolveView(shell.query.value.view, props.views))
 
-const view = computed(() => VIEWS[kind.value] ?? ListView)
+const view = computed(() => (kind.value === 'record' ? null : VIEWS[kind.value]) ?? ListView)
+
+/** The host's own view of the record, where that is the view in force. */
+const recordView = computed(() => (kind.value === 'record' ? shell.recordView.value : null))
 const hasRows = computed(() => shell.rows.value.length > 0)
 const failed = computed(() => shell.error.value !== null)
 
@@ -238,6 +242,14 @@ onBeforeUnmount(() => {
       </template>
     </TypeCardsView>
 
+    <!-- Nor does the host's view of one record: it is the record, not the
+         rows the query found about it. -->
+    <component
+      :is="recordView.component"
+      v-else-if="recordView"
+      :id="recordView.id"
+    />
+
     <p
       v-else-if="failed"
       class="dc-results__state"
@@ -263,14 +275,14 @@ onBeforeUnmount(() => {
     >
       <span class="dc-results__headline">Nothing matches this query</span>
       <span class="dc-results__detail">{{ shell.summary.value }}</span>
-      <button
+      <PressLink
         v-if="!shell.isPristine.value"
-        type="button"
         class="dc-results__clear"
-        @click="shell.clearFilters()"
+        :href="shell.clearHref()"
+        @press="shell.clearFilters()"
       >
         {{ shell.isEverything.value ? 'Clear filters' : 'Search everything instead' }}
-      </button>
+      </PressLink>
     </div>
 
     <component

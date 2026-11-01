@@ -2,8 +2,9 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useShellContext } from '../composables/context'
 import { useRecordNames } from '../composables/useRecordNames'
+import PressLink from './views/PressLink.vue'
 import { scopedEntity } from '../query/drill'
-import { isTypeCardsQuery } from '../query/schema'
+import { isTypeCardsQuery, resolveView } from '../query/schema'
 import { formatInteger } from '../data/format'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
@@ -389,7 +390,8 @@ const page = computed(() => shell.liveQuery.value.page)
  * Pages are offered when there is more than one and when the results below are
  * what would be paged. The home screen's cards are the exception: a card per
  * type runs its own per-entity query, so the shell's single result set is not
- * what is on screen and stepping through it would move nothing.
+ * what is on screen and stepping through it would move nothing. Nor is a
+ * record's own view, which draws that one record rather than any rows.
  *
  * A note from the host is the other reason to be there: it says the count is
  * short, and the count is what the pager hovers as — so a single page with
@@ -399,7 +401,8 @@ const paged = computed(
   () =>
     !props.hidePages &&
     (shell.pageCount.value > 1 || Boolean(props.pagesNote)) &&
-    !isTypeCardsQuery(shell.query.value, props.views),
+    !isTypeCardsQuery(shell.query.value, props.views) &&
+    resolveView(shell.query.value.view, props.views) !== 'record',
 )
 
 /**
@@ -498,13 +501,13 @@ function abandonTyped(event: Event): void {
       <!-- The name, which is the way home, where the schema has one. A host's
            mark, where it has one, is drawn for the eye and hidden from
            assistive technology, which reads the name it stands for. -->
-      <button
+      <PressLink
         v-if="domain.label && slots.brand"
-        type="button"
         class="dc-header__domain"
         data-dc-brand
         title="Home"
-        @click="shell.reset()"
+        :href="shell.homeHref()"
+        @press="shell.reset()"
       >
         <span
           class="dc-header__brand"
@@ -516,16 +519,16 @@ function abandonTyped(event: Event): void {
           />
         </span>
         <span class="dc-header__sr">{{ domain.label }}</span>
-      </button>
-      <button
+      </PressLink>
+      <PressLink
         v-else-if="domain.label"
-        type="button"
         class="dc-header__domain"
         title="Home"
-        @click="shell.reset()"
+        :href="shell.homeHref()"
+        @press="shell.reset()"
       >
         {{ domain.label }}
-      </button>
+      </PressLink>
 
       <!-- What the shell is read inside, where it is read inside anything: not
            a part of the query and not something to take off, so it sits before
@@ -625,15 +628,17 @@ function abandonTyped(event: Event): void {
       class="dc-header__pages"
       aria-label="Pages"
     >
-      <button
-        type="button"
+      <!-- Links while there is a page to go to, and a disabled button at the
+           end, where there is none: a link cannot be turned off. -->
+      <PressLink
         class="dc-header__step"
         aria-label="Previous page"
+        :href="page > 1 ? shell.hrefFor({ page: page - 1 }) : null"
         :disabled="page <= 1"
-        @click="shell.setPage(page - 1)"
+        @press="shell.setPage(page - 1)"
       >
         <span aria-hidden="true">‹</span>
-      </button>
+      </PressLink>
 
       <span
         class="dc-header__page dc-mono"
@@ -667,15 +672,15 @@ function abandonTyped(event: Event): void {
         aria-live="polite"
       >{{ position }}</span>
 
-      <button
-        type="button"
+      <PressLink
         class="dc-header__step"
         aria-label="Next page"
+        :href="page < shell.pageCount.value ? shell.hrefFor({ page: page + 1 }) : null"
         :disabled="page >= shell.pageCount.value"
-        @click="shell.setPage(page + 1)"
+        @press="shell.setPage(page + 1)"
       >
         <span aria-hidden="true">›</span>
-      </button>
+      </PressLink>
     </nav>
 
     <div

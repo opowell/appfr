@@ -284,6 +284,7 @@ export type {
   QueryUpdate,
   RangeFacet,
   RecordStatus,
+  RecordView,
   Selection,
   SelectionOperation,
   ShellFactItem,

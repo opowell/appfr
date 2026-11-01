@@ -133,6 +133,12 @@ describe('useQueryState — the entity filter', () => {
     expect(setup('?e=items').state.hrefFor({ entity: null })).toBe('/')
   })
 
+  it('builds the hrefs reset and clearFilters would go to', () => {
+    const { state } = setup('?e=items&v=grid&q=climate')
+    expect(state.homeHref()).toBe('/')
+    expect(state.clearHref()).toBe('/?v=grid')
+  })
+
   it('carries the entity term ahead of the terms its facets write', () => {
     const { state } = setup('?e=searches&q=state=running')
     expect(state.terms.value.map((term) => term.label)).toEqual([

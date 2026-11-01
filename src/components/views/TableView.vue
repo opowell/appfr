@@ -200,6 +200,15 @@ function sortBy(key: string | undefined) {
   else shell.setSort(key)
 }
 
+/** Where {@link sortBy} would go, so a header is a link to its ordering. */
+function sortHref(key: string | undefined): string | null {
+  if (!key) return null
+  if (shell.query.value.sort === key) {
+    return shell.hrefFor({ dir: shell.query.value.dir === 'desc' ? 'asc' : 'desc' })
+  }
+  return shell.hrefFor({ sort: key })
+}
+
 /** What to call the scope in the message above, which names what is missing. */
 const scopeName = computed(() => shell.entity.value?.label ?? 'The result set')
 
@@ -329,14 +338,14 @@ function followBody(event: Event) {
           :aria-sort="ariaSort(column)"
           :title="headerTitle(column)"
         >
-          <button
+          <PressLink
             v-if="isSortable(column)"
-            type="button"
             class="dc-table__sort"
-            @click="sortBy(column.sort)"
+            :href="sortHref(column.sort)"
+            @press="sortBy(column.sort)"
           >
             {{ column.label }}
-          </button>
+          </PressLink>
           <template v-else>
             {{ column.label }}
           </template>

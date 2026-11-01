@@ -9,10 +9,29 @@
 
 import type { Component } from 'vue'
 
-/** The result renderers the shell ships with. */
-export type ViewKind = 'list' | 'cards' | 'grid' | 'images' | 'table' | 'links' | 'preview'
+/**
+ * The result renderers the shell ships with, and `record`: the host's own view
+ * of the one record the query narrows to — see {@link RecordView}. It is never
+ * on offer unless the host has one for that record's type, so it is not among
+ * {@link VIEW_KINDS}, the views a shell offers when the host says nothing.
+ */
+export type ViewKind = 'list' | 'cards' | 'grid' | 'images' | 'table' | 'links' | 'preview' | 'record'
 
 export const VIEW_KINDS = ['list', 'cards', 'grid', 'images', 'table', 'links', 'preview'] as const
+
+/**
+ * A view of the host's own for one record of a type — a reader for a document,
+ * a player for a recording: the record itself rather than rows about it. It is
+ * offered in the View chooser as `label`, while the query lists no type and
+ * narrows to that one record alone, and is drawn as `<component :is :id>` in
+ * place of the results.
+ */
+export interface RecordView {
+  /** What the View chooser calls it — `Read`. */
+  label: string
+  /** Given the record's `id`, as a `recordCards` component is. */
+  component: Component
+}
 
 /** Lifecycle state of a record, rendered as a pill. */
 export type RecordStatus = 'ok' | 'running' | 'queued' | 'review' | 'failed'
@@ -691,6 +710,13 @@ export interface ShellRow {
 export interface SelectionOperation {
   key: string
   label: string
+  /**
+   * `false` for one done to the type as a whole rather than to the ticks — an
+   * export, a rebuild. Its button is never off for want of ticks and names no
+   * count, and it alone does not make the records tickable. It is reported
+   * with the selection all the same, which may be empty.
+   */
+  selection?: false
 }
 
 export interface Selection {

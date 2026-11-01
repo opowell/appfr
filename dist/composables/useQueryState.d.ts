@@ -91,8 +91,12 @@ export interface QueryState {
     removeTerm(term: SummaryTerm): void;
     /** Clears the entity filter and the expression, facets and all. */
     clearFilters(): void;
+    /** The browser `href` {@link QueryState.clearFilters} would navigate to. */
+    clearHref(): string;
     /** Returns everything to the schema's defaults — the home screen. */
     reset(): void;
+    /** The browser `href` {@link QueryState.reset} would navigate to. */
+    homeHref(): string;
     /** The `href` a given query change would navigate to. */
     hrefFor(patch: Partial<ShellQuery>): string;
 }

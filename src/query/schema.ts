@@ -51,7 +51,7 @@ export function viewAcross(
 export const DEFAULT_SORT = 'updated'
 
 export function isViewKind(value: unknown): value is ViewKind {
-  return typeof value === 'string' && (VIEW_KINDS as readonly string[]).includes(value)
+  return typeof value === 'string' && (value === 'record' || (VIEW_KINDS as readonly string[]).includes(value))
 }
 
 /**
@@ -68,6 +68,7 @@ export const VIEW_LABELS: Record<ViewKind, string> = {
   table: 'Table',
   links: 'Links',
   preview: 'Preview',
+  record: 'Record',
 }
 
 /**
@@ -76,6 +77,10 @@ export const VIEW_LABELS: Record<ViewKind, string> = {
  * offer, so a link into a restricted shell still lands somewhere it can draw.
  */
 export function resolveView(asked: ViewKind, offered: ViewKind[] | undefined): ViewKind {
+  // A record's own view kept in a link to a screen it is not offered on —
+  // another record, or none — is drawn as the shell's default rather than
+  // as nothing, there being no host's view of that record to draw.
+  if (asked === 'record' && !offered?.includes(asked)) return offered?.[0] ?? DEFAULT_VIEW
   const [fallback] = offered ?? []
   if (fallback === undefined) return asked
   return offered?.includes(asked) ? asked : fallback

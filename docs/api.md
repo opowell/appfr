@@ -17,6 +17,7 @@
 | `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | The offered views. A URL naming one not offered renders the first that is. One view hides the View chooser. A function gets `{ entity, records }` — see [cards for the records the query names](records.md#cards-for-the-records-the-query-names). |
 | `loading` | `boolean` | `false` | The source's answers are not yet the data: shows *Loading…*, hides the pager, looks up no record names, corrects nothing from a count. See [while the data is on its way](#while-the-data-is-on-its-way). |
 | `recordCards` | `Record<string, Component>` | — | A component per type, given `id`, for each record the query names. Shorthand for the `record` slot — see [cards for the records the query names](records.md#cards-for-the-records-the-query-names). |
+| `recordViews` | `Record<string, RecordView>` | — | A view of your own per type, `{ label, component }`, offered after `views` while the query lists no type and names one record of that type. Chosen, it is `v=record` and draws `component` with `id` in place of the results — see [a view of the record itself](records.md#a-view-of-the-record-itself). |
 | `pageQuery` | `'shell' \| 'detached'` | `'shell'` | Whether a `page` is about the query. `detached` shows the pristine query and sends the first edit to `listPath`. Read only while a `page` is provided — see [a page that is not about the query](#a-page-that-is-not-about-the-query). |
 | `listPath` | `string` | `'/'` | Where a detached page's first edit lands. |
 | `accent` | `string` | — | Overrides `--dc-accent`. Shorthand for `tokens`. |
@@ -24,6 +25,8 @@
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal`: paper, ink and hairlines only. `auto` follows the system. `macos` / `windows` wear that system's look and scheme. `inherit` brings no palette; `mono-size` also drops the type scale (one size, one weight). |
 | `rowPress` | `'open' \| 'narrow'` | `'narrow'` | Pressing a row adds the record to the query, or (`open`) emits `activate` and applies nothing. See [narrowing to one record](records.md#narrowing-to-one-record). |
 | `rowLinks` | `boolean` | `false` | Makes every table cell a real link to where pressing the row goes, so middle click and the context menu work anywhere on the row. Controls in the row stay pressable; one link per row is tabbable. For a name column with `activate: false`. |
+| `activateHref` | `(row) => string \| null` | — | Where a reported press (`activate`) leads, as an `href`. Rows of types the shell can't narrow to become real links to the host's page; a plain press is still reported. |
+| `createHref` | `(entity) => string \| null` | — | Where `create` leads, so **New …** is a link to the host's form; a plain press is still reported. |
 | `pinnable` | `boolean` | `false` | Offers the star on rows. |
 | `selectable` | `boolean` | `false` | Offers ticks even where the type names no operation. A type naming `duplicate` or `delete` offers them anyway. |
 | `pinned` | `string[]` | — | `v-model:pinned`; omit and the shell holds it. |

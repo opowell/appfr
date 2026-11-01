@@ -174,7 +174,8 @@ const previews = computed(() =>
 
       <!-- Not one button around the row: the name opens the record and the
            metric beside it narrows to what that number counts, and the two
-           cannot nest. -->
+           cannot nest. The name's link is stretched over the row instead, so
+           whatever in it is not a control of its own opens the record too. -->
       <div
         v-for="entry in preview.rows"
         :key="entry.key"
@@ -191,7 +192,9 @@ const previews = computed(() =>
           </span>
         </PressLink>
         <!-- One number, the first this type declared: a preview row is a
-             glance, and the type's own list is where the rest of them are. -->
+             glance, and the type's own list is where the rest of them are.
+             Its label is for screen readers only — one number under a card's
+             heading needs no caption, and the list's column header has it. -->
         <span class="dc-type__trailing dc-mono">
           <MetricDrill
             v-for="metric in entry.parts.metrics.slice(0, 1)"
@@ -216,18 +219,18 @@ const previews = computed(() =>
       <!-- Under the records rather than beside the count: making one more is
            what comes after the ones there are, and an empty card is then the
            card that most obviously offers it. -->
-      <button
+      <PressLink
         v-if="preview.entity.create && !headsOnly"
-        type="button"
         class="dc-type__new"
-        @click="shell.create(preview.entity)"
+        :href="shell.createHref?.(preview.entity)"
+        @press="shell.create(preview.entity)"
       >
         <span
           class="dc-type__plus"
           aria-hidden="true"
         >+</span>
         {{ preview.entity.create }}
-      </button>
+      </PressLink>
     </section>
 
     <slot name="after" />
@@ -368,7 +371,8 @@ const previews = computed(() =>
   line-height: 1.4;
 }
 
-.dc-type__sr {
+.dc-type__sr,
+.dc-type__metric-label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -388,6 +392,7 @@ const previews = computed(() =>
 }
 
 .dc-type__row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -400,7 +405,21 @@ const previews = computed(() =>
 }
 
 /* The row's own padding, so the whole strip left of the metric opens the
-   record rather than only the words in it. */
+   record rather than only the words in it — and past it, the link's box
+   stretched over the row, so a metric that leads nowhere of its own, or the
+   date, opens the record as well. */
+.dc-type__open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+/* The controls in the row stay above that box: each leads somewhere else. */
+.dc-type__trailing :is(a, button) {
+  position: relative;
+  z-index: 1;
+}
+
 .dc-type__open {
   display: flex;
   flex: 1;
@@ -445,14 +464,6 @@ const previews = computed(() =>
   font-size: var(--dc-text-body);
   font-weight: var(--dc-weight-semibold);
   color: var(--dc-accent);
-}
-
-.dc-type__metric-label {
-  margin-left: 4px;
-  color: var(--dc-fg-3);
-  font-size: var(--dc-text-eyebrow);
-  text-transform: var(--dc-caps);
-  letter-spacing: var(--dc-tracking-caps);
 }
 
 .dc-type__date {

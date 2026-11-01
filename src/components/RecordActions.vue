@@ -7,6 +7,7 @@ import { useEntityCounts } from '../composables/useEntityCounts'
 import { formatCount } from '../data/format'
 import { VIEW_LABELS, entityCount, isTypeCardsQuery, resolveView } from '../query/schema'
 import PageTick from './views/PageTick.vue'
+import PressLink from './views/PressLink.vue'
 import PickControl from './PickControl.vue'
 
 /**
@@ -132,7 +133,10 @@ function chooseEntity(key: string): void {
 /* --------------------------------------------------------- how they are drawn */
 
 const viewOptions = computed<{ key: ViewKind; label: string }[]>(() =>
-  (props.views ?? [...VIEW_KINDS]).map((key) => ({ key, label: VIEW_LABELS[key] })),
+  (props.views ?? [...VIEW_KINDS]).map((key) => ({
+    key,
+    label: key === 'record' ? (shell.recordView.value?.label ?? VIEW_LABELS.record) : VIEW_LABELS[key],
+  })),
 )
 
 /**
@@ -189,11 +193,13 @@ const directionLabel = computed(
 const entity = computed(() => shell.entity.value)
 
 /**
- * The home screen's cards are per type rather than per record, so there is
- * nothing on that screen a tick or a delete would be about. Every other view
- * is rows.
+ * The home screen's cards are per type rather than per record, and a record's
+ * own view is that one record, so there is nothing on either a tick or a
+ * delete would be about. Every other view is rows.
  */
-const records = computed(() => !isTypeCardsQuery(shell.query.value, props.views))
+const records = computed(
+  () => !isTypeCardsQuery(shell.query.value, props.views) && view.value !== 'record',
+)
 
 /* ---------------------------------------------------------- what is ticked */
 
@@ -312,15 +318,15 @@ function opLabel(label: string): string {
         :options="sortOptions"
         @update:model-value="shell.setSort"
       />
-      <button
-        type="button"
+      <PressLink
         class="dc-actions__dir"
         :aria-label="directionLabel"
         :title="directionLabel"
-        @click="shell.toggleDirection()"
+        :href="shell.hrefFor({ dir: descending ? 'asc' : 'desc' })"
+        @press="shell.toggleDirection()"
       >
         {{ descending ? '↓' : '↑' }}
-      </button>
+      </PressLink>
     </span>
 
     <div
@@ -362,18 +368,18 @@ function opLabel(label: string): string {
     <div class="dc-actions__ops">
       <!-- The same request the type's card on the home screen makes, from the
            type's own list: `create(entity)`, and the shell makes nothing. -->
-      <button
+      <PressLink
         v-if="entity?.create"
-        type="button"
         class="dc-actions__op dc-actions__new"
-        @click="shell.create(entity)"
+        :href="shell.createHref?.(entity)"
+        @press="shell.create(entity)"
       >
         <span
           class="dc-actions__plus"
           aria-hidden="true"
         >+</span>
         {{ entity.create }}
-      </button>
+      </PressLink>
 
       <!-- Both of these operate on the ticks, so with none they have nothing to
            operate on and say so. That is a fact about the selection rather than
@@ -389,18 +395,19 @@ function opLabel(label: string): string {
         {{ opLabel(entity.duplicate) }}
       </button>
 
-      <!-- The type's own words for anything else it does to a selection,
-           between the copy and the one that cannot be taken back. -->
+      <!-- The type's own words for anything else it does to a selection, or
+           to the type as a whole, between the copy and the one that cannot be
+           taken back. -->
       <button
         v-for="operation in entity?.operations ?? []"
         :key="operation.key"
         type="button"
         class="dc-actions__op"
         :data-dc-operation="operation.key"
-        :disabled="!count"
+        :disabled="!count && operation.selection !== false"
         @click="shell.operate(operation.key)"
       >
-        {{ opLabel(operation.label) }}
+        {{ operation.selection === false ? operation.label : opLabel(operation.label) }}
       </button>
 
       <button

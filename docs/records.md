@@ -73,7 +73,10 @@ new tab, ⇧-click a new window, a middle click a background tab, and the contex
 menu works. A plain or ⌥ click is the shell's and navigates in place — which is
 why exclusion is ⌥, the one modifier a link doesn't use. Table rows aren't
 links (their cells hold controls), so the row handles modified clicks by hand;
-`rowLinks` makes every cell a link instead. `shell.pressHref(row)` and
+`rowLinks` makes every cell a link instead. A press the shell reports rather
+than applies has no `href` of its own; `activateHref` (rows) and `createHref`
+(**New …**) give it the host's. The name home, the pager, the sort headings and
+arrow, and **Clear filters** are links too. `shell.pressHref(row)` and
 `shell.drillHref(row, entity)` build these hrefs through the route adapter's
 `href(search)`: the History adapter keeps the page's path and hash, and the
 vue-router one asks `router.resolve` (so a hash-history app links to its `#/…`).
@@ -312,3 +315,24 @@ const views = ({ entity, records }: ViewsContext): ViewKind[] =>
 Here a type's list is a table, a screen about a record is cards (where its own
 cards draw), and the corpus offers both. With one view on offer, the view
 picker leaves the strip.
+
+### A view of the record itself
+
+Cards say things *about* a record. Some records are something to look at in
+their own right — a document to read, a recording to play — and `recordViews`
+gives a type a view that is the record, under a label of your choosing:
+
+```vue
+<DataShell
+  :schema="schema"
+  :record-views="{ documents: { label: 'Read', component: DocumentReader } }" />
+```
+
+The View chooser offers it after the others while the query lists no type and
+names exactly one record of a type in the map; on any other screen it is not
+offered, and a link that kept `v=record` draws the first view on offer (or
+Cards). Chosen, the URL says `v=record` and the component is drawn with the
+record's `id` in place of the results — with no pager, sort or ticks over it,
+there being no rows under them. It fills the results area, which scrolls as
+it does for any view; a component that pages instead sizes itself to the area
+(`height: 100%`).

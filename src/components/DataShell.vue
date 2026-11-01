@@ -15,6 +15,7 @@ import type {
   EntitySchema,
   NarrowedRecord,
   PressOptions,
+  RecordView,
   Selection,
   ShellQuery,
   ShellQueryDefaults,
@@ -22,6 +23,7 @@ import type {
   ViewKind,
   ViewsOption,
 } from '../types'
+import { VIEW_KINDS } from '../types'
 import type { ShellTheme } from 'themes'
 import type { RouteAdapter } from '../routing/adapter'
 import { ROUTE_ADAPTER_KEY } from '../routing/adapter'
@@ -148,6 +150,16 @@ const props = withDefaults(
      */
     recordCards?: Record<string, Component>
     /**
+     * A view of the host's own per record type — `{ documents: { label:
+     * 'Read', component: DocumentReader } }` — the record itself rather than
+     * rows about it. The View chooser offers it beside the shell's own while
+     * the query lists no type and narrows to one record of a type named here,
+     * and nothing else; chosen, it is `v=record` in the URL and is drawn as
+     * `<component :is :id>` in place of the results, with no pager, sort or
+     * ticks over it, there being no rows under them.
+     */
+    recordViews?: Record<string, RecordView>
+    /**
      * Where the bar offers the list of types. `scoped`, the default, only
      * while one is filtered to — on `Everything` the home screen's cards are
      * each headed by their type already. `always` keeps it on `Everything`
@@ -219,6 +231,19 @@ const props = withDefaults(
      * is no link of its own (`activate: false`) turns this on to keep one.
      */
     rowLinks?: boolean
+    /**
+     * Where a press the shell reports as {@link activate} leads, as a browser
+     * `href` — the host's page for the record, or null where it leads nowhere.
+     * It goes on the row's link ({@link ShellContext.pressHref}), so ⌘-click,
+     * a middle click and the context menu open the host's page elsewhere; a
+     * plain press is still reported, and the host navigates as before.
+     */
+    activateHref?: (row: ShellRow) => string | null
+    /**
+     * The same for {@link create}: where asking for a new record of a type
+     * leads, so the button that asks is a link to the host's form.
+     */
+    createHref?: (entity: EntitySchema) => string | null
     /**
      * What the count is short of, in the host's words — `first 1,200 of
      * 30,200 lots` for a seller whose pages are still being fetched, or were
@@ -489,14 +514,30 @@ function cardedRecords() {
 /* ------------------------------------------------------------------ views */
 
 /**
+ * The host's own view of the record the query is about, where it is about one
+ * alone: a view of one record has nothing to say of a screen about two, and
+ * a type listed is a list of that type, not a record.
+ */
+const recordView = computed<(RecordView & { id: string }) | null>(() => {
+  const [record, ...others] = recordEntries.value
+  if (!record || others.length || query.entity.value !== null) return null
+  const view = props.recordViews?.[record.entityKey]
+  return view ? { ...view, id: record.id } : null
+})
+
+/**
  * The views on offer, as every part reads them: the host's list as it is, or
- * what its function says of this screen. Asked afresh only when the type or
- * the records change, being all the function is told.
+ * what its function says of this screen — with the record's own view after
+ * them where there is one, and never where there is not. Asked afresh only
+ * when the type or the records change, being all the function is told.
  */
 const offeredViews = computed<ViewKind[] | undefined>(() => {
-  const offered = props.views
-  if (typeof offered !== 'function') return offered
-  return offered({ entity: query.entity.value, records: records.value })
+  const asked = props.views
+  const offered = typeof asked === 'function'
+    ? asked({ entity: query.entity.value, records: records.value })
+    : asked
+  if (recordView.value) return [...(offered ?? VIEW_KINDS).filter((kind) => kind !== 'record'), 'record']
+  return offered?.filter((kind) => kind !== 'record')
 })
 
 /*
@@ -554,7 +595,7 @@ function togglePin(row: ShellRow) {
 const selectable = computed(() => {
   if (props.selectable === true) return true
   const entity = query.entity.value
-  return Boolean(entity?.duplicate || entity?.delete || entity?.operations?.length)
+  return Boolean(entity?.duplicate || entity?.delete || entity?.operations?.some(operation => operation.selection !== false))
 })
 
 const selectedIds = computed(() => new Set(selected.value))
@@ -687,6 +728,7 @@ const shell = provideShellContext({
   previewsPerType: computed(() => props.previewsPerType),
   within,
   loading: computed(() => props.loading),
+  recordView,
   pinnable: computed(() => props.pinnable === true),
   isPinned: (row) => pinnedIds.value.has(row.id),
   isPinnedId: (id) => pinnedIds.value.has(id),
@@ -720,7 +762,7 @@ const shell = provideShellContext({
   pressHref: (row) =>
     narrowsHere(row)
       ? query.narrowHref(drillExpression(props.schema, query.query.value, row), null, 'cards')
-      : recordHref(row),
+      : (recordHref(row) ?? props.activateHref?.(row) ?? null),
   recordHref,
   drillHref: (row, entity) =>
     scopeTermFor(props.schema, row)
@@ -731,6 +773,7 @@ const shell = provideShellContext({
         )
       : null,
   create: (entity) => emit('create', entity),
+  createHref: (entity) => props.createHref?.(entity) ?? null,
   duplicate: () => emit('duplicate', selection.value),
   delete: () => emit('delete', selection.value),
   operate: (key) => emit('operate', key, selection.value),

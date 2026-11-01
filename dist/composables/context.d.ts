@@ -1,5 +1,5 @@
 import type { ComputedRef, InjectionKey, Ref, ShallowRef } from 'vue';
-import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellQuery, ShellRow } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, Selection, ShellQuery, ShellRow } from '../types';
 import type { QueryState } from './useQueryState';
 /**
  * Everything the header, the query panel and the result views need. Provided
@@ -73,6 +73,14 @@ export interface ShellContext extends QueryState {
      * be kept.
      */
     loading: ComputedRef<boolean>;
+    /**
+     * The host's own view of the one record the query narrows to, with that
+     * record's id, or null where there is none to offer — see `recordViews` on
+     * `DataShell`.
+     */
+    recordView: ComputedRef<(RecordView & {
+        id: string;
+    }) | null>;
     /** Whether the star affordance is offered on rows. */
     pinnable: ComputedRef<boolean>;
     isPinned(row: ShellRow): boolean;
@@ -130,6 +138,12 @@ export interface ShellContext extends QueryState {
      */
     create(entity: EntitySchema): void;
     /**
+     * Where {@link ShellContext.create} leads, as a browser `href` — the host's
+     * `createHref` — or null. Optional, so a context a host built before there
+     * was any such thing is still one.
+     */
+    createHref?(entity: EntitySchema): string | null;
+    /**
      * Copying the ticked records, and deleting them — the two operations
      * {@link EntitySchema.duplicate} and {@link EntitySchema.delete} name. Both
      * are reported with the {@link Selection} they are for and nothing else
@@ -158,9 +172,9 @@ export interface ShellContext extends QueryState {
      */
     drill(row: ShellRow, entity: EntitySchema | null, options?: PressOptions): void;
     /**
-     * Where pressing the row would go, as a browser `href` — null where the
-     * press goes nowhere of the shell's (it is reported, or the type declares no
-     * scope). A view puts it on the row's link, which is what makes ⌘-click,
+     * Where pressing the row would go, as a browser `href` — the host's
+     * `activateHref` where the press is reported, and null where it goes
+     * nowhere. A view puts it on the row's link, which is what makes ⌘-click,
      * ⇧-click and a middle click open it elsewhere as on any other link.
      */
     pressHref(row: ShellRow): string | null;

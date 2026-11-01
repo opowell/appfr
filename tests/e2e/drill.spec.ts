@@ -126,6 +126,12 @@ test.describe('A metric that counts something listable', () => {
 })
 
 test.describe('Pressing a row', () => {
+  test('on a card, its metric still narrows to what it counts', async ({ page }) => {
+    await gotoStory(page, HOME)
+    await card(page, 'Sets').locator('.dc-type__row').first().locator('.dc-drill').click()
+    expect(entityOf(page)).toBe('p')
+  })
+
   /*
    * In a list, one record is a one-row list of the row just pressed — the press going nowhere.
    * The screen narrowing to a record is worth making is the card per type.

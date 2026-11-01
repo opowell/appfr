@@ -118,8 +118,12 @@ export interface QueryState {
   removeTerm(term: SummaryTerm): void
   /** Clears the entity filter and the expression, facets and all. */
   clearFilters(): void
+  /** The browser `href` {@link QueryState.clearFilters} would navigate to. */
+  clearHref(): string
   /** Returns everything to the schema's defaults — the home screen. */
   reset(): void
+  /** The browser `href` {@link QueryState.reset} would navigate to. */
+  homeHref(): string
   /** The `href` a given query change would navigate to. */
   hrefFor(patch: Partial<ShellQuery>): string
 }
@@ -173,7 +177,11 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
    */
   const linkTo = (patch: Partial<ShellQuery>): string => {
     const page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
-    const search = serializeQuery({ ...query.value, ...patch, page }, schema.value, defaults.value, adapter.search.value)
+    return linkToQuery({ ...query.value, ...patch, page })
+  }
+
+  const linkToQuery = (next: ShellQuery): string => {
+    const search = serializeQuery(next, schema.value, defaults.value, adapter.search.value)
     return adapter.href ? adapter.href(search) : `${adapter.path.value}${search}`
   }
 
@@ -286,9 +294,11 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     clearFilters() {
       commit({ ...entityPatch(null), expr: '' }, primaryMode())
     },
+    clearHref: () => linkTo({ ...entityPatch(null), expr: '' }),
     reset() {
       navigate(defaultQuery(schema.value, defaults.value), primaryMode())
     },
+    homeHref: () => linkToQuery(defaultQuery(schema.value, defaults.value)),
     hrefFor(patch) {
       const next = { ...query.value, ...patch }
       // A link to another type lands in the view choosing that type would.
@@ -298,7 +308,7 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
       // The same rule the mutations follow, so a link built for a change goes
       // exactly where clicking through to that change would have gone.
       next.page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
-      return `${adapter.path.value}${serializeQuery(next, schema.value, defaults.value, adapter.search.value)}`
+      return linkToQuery(next)
     },
   }
 }

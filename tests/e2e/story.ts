@@ -182,8 +182,9 @@ export async function typePage(page: Page, wanted: string): Promise<void> {
   await pageBox(page).press('Enter')
 }
 
+/** A link while there is a page to step to, and a disabled button where there is none. */
 export const pageStep = (page: Page, which: 'Previous' | 'Next') =>
-  pager(page).getByRole('button', { name: `${which} page` })
+  pager(page).locator(`.dc-header__step[aria-label="${which} page"]`)
 
 /** Steps a page and waits for the readout to say it has moved. */
 export async function stepPage(page: Page, which: 'Previous' | 'Next'): Promise<void> {

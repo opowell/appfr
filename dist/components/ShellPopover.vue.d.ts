@@ -47,8 +47,8 @@ declare const _default: __VLS_WithSlots<import("vue").DefineComponent<{
 }>, {
     accent: string;
     tokens: Record<string, string>;
-    open: boolean;
     anchor: HTMLElement | null;
+    open: boolean;
     to: string | HTMLElement;
     maxHeight: number;
     theme: ShellTheme;

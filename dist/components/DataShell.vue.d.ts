@@ -1,6 +1,6 @@
 import '../style/shell.css';
 import type { Component } from 'vue';
-import type { DataSource, DomainSchema, EntitySchema, PressOptions, Selection, ShellQuery, ShellQueryDefaults, ShellRow, ViewsOption } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, Selection, ShellQuery, ShellQueryDefaults, ShellRow, ViewsOption } from '../types';
 import type { ShellTheme } from 'themes';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
@@ -112,6 +112,16 @@ type __VLS_Props = {
      */
     recordCards?: Record<string, Component>;
     /**
+     * A view of the host's own per record type — `{ documents: { label:
+     * 'Read', component: DocumentReader } }` — the record itself rather than
+     * rows about it. The View chooser offers it beside the shell's own while
+     * the query lists no type and narrows to one record of a type named here,
+     * and nothing else; chosen, it is `v=record` in the URL and is drawn as
+     * `<component :is :id>` in place of the results, with no pager, sort or
+     * ticks over it, there being no rows under them.
+     */
+    recordViews?: Record<string, RecordView>;
+    /**
      * Where the bar offers the list of types. `scoped`, the default, only
      * while one is filtered to — on `Everything` the home screen's cards are
      * each headed by their type already. `always` keeps it on `Everything`
@@ -183,6 +193,19 @@ type __VLS_Props = {
      * is no link of its own (`activate: false`) turns this on to keep one.
      */
     rowLinks?: boolean;
+    /**
+     * Where a press the shell reports as {@link activate} leads, as a browser
+     * `href` — the host's page for the record, or null where it leads nowhere.
+     * It goes on the row's link ({@link ShellContext.pressHref}), so ⌘-click,
+     * a middle click and the context menu open the host's page elsewhere; a
+     * plain press is still reported, and the host navigates as before.
+     */
+    activateHref?: (row: ShellRow) => string | null;
+    /**
+     * The same for {@link create}: where asking for a new record of a type
+     * leads, so the button that asks is a link to the host's form.
+     */
+    createHref?: (entity: EntitySchema) => string | null;
     /**
      * What the count is short of, in the host's words — `first 1,200 of
      * 30,200 lots` for a seller whose pages are still being fetched, or were

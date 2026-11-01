@@ -219,11 +219,11 @@ test.describe('Columns — as many as the schema declares', () => {
     await expect(termBar(page)).toContainText('Piece:')
   })
 
-  test('heads a column with a button only where that sort is offered', async ({ page }) => {
+  test('heads a column with a link only where that sort is offered', async ({ page }) => {
     await gotoStory(page, COLUMNS)
     // `sort` is declared on Piece, Colors and In sets; Shape names none.
-    await expect(headings(page).filter({ hasText: 'Piece' }).locator('button')).toHaveCount(1)
-    await expect(headings(page).filter({ hasText: 'Shape' }).locator('button')).toHaveCount(0)
+    await expect(headings(page).filter({ hasText: 'Piece' }).locator('a.dc-table__sort')).toHaveCount(1)
+    await expect(headings(page).filter({ hasText: 'Shape' }).locator('.dc-table__sort')).toHaveCount(0)
   })
 
   test('columns still stand down in the order the schema put them in', async ({ page }) => {
@@ -253,7 +253,7 @@ test.describe('Columns — as many as the schema declares', () => {
     await first.check()
 
     // Re-sorting rebuilds the rows; the tick is the host's state, not theirs.
-    await headings(page).filter({ hasText: 'Links' }).locator('button').click()
+    await headings(page).filter({ hasText: 'Links' }).locator('.dc-table__sort').click()
     await expect(page.locator('.dc-table input[type="checkbox"]:checked')).toHaveCount(1)
   })
 

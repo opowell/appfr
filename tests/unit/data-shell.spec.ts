@@ -166,6 +166,35 @@ describe('DataShell — a record’s own cards', () => {
     expect(w.findAll('.test-cards').map((card) => card.text())).toEqual(['a.spec'])
   })
 
+  it('offers a record view of the host\'s own, for one record of a type it names', async () => {
+    const TestReader = {
+      props: { id: { type: String, required: true } },
+      setup: (props: { id: string }) => () => h('div', { class: 'test-reader' }, props.id),
+    }
+    const recordViews = markRaw({ tests: { label: 'Read', component: TestReader } })
+    const adapter = createMemoryAdapter('?q=test%3D%22a.spec%22')
+    const w = shell(adapter, { recordViews })
+    await flushPromises()
+
+    // Offered last, under the host's label, and not drawn until chosen.
+    const options = w.findAllComponents({ name: 'PickControl' })
+      .find((pick) => pick.props('label') === 'View')!
+      .props('options') as { key: string; label: string }[]
+    expect(options.at(-1)).toEqual({ key: 'record', label: 'Read' })
+    expect(w.find('.test-reader').exists()).toBe(false)
+
+    adapter.push('?q=test%3D%22a.spec%22&v=record')
+    await flushPromises()
+    expect(w.find('.test-reader').text()).toBe('a.spec')
+    expect(w.find('.dc-types').exists()).toBe(false)
+
+    // Two records are no one record's screen: the link draws the default.
+    adapter.push('?q=test%3D%22a.spec%22 test%3D%22b.spec%22&v=record')
+    await flushPromises()
+    expect(w.find('.test-reader').exists()).toBe(false)
+    expect(w.find('.dc-types').exists()).toBe(true)
+  })
+
   it('draws nothing of its own where the query names no record', async () => {
     const adapter = createMemoryAdapter('?v=cards')
     const w = shell(adapter, {}, { record: recordSlot })
@@ -327,6 +356,51 @@ describe('DataShell — rows that live somewhere', () => {
     await w.find('.dc-list__open').trigger('click')
     expect(w.emitted('activate')).toHaveLength(1)
   })
+
+  it('links a reported row to the host’s activateHref, and still reports a plain press', async () => {
+    const plain: DomainSchema = { ...schema, entities: [entity('plain')] }
+    const w = shell(createMemoryAdapter('?e=plain&v=list'), {
+      schema: plain,
+      source: source(3, plain),
+      activateHref: (row: ShellRow) => `#/plain/${row.id}`,
+    })
+    await flushPromises()
+    const link = w.find('.dc-list__open')
+    expect(link.element.tagName).toBe('A')
+    expect(link.attributes('href')).toBe('#/plain/plain-0')
+    await link.trigger('click')
+    expect(w.emitted('activate')).toHaveLength(1)
+  })
+
+  it('makes every cell of a reported row a link under rowLinks', async () => {
+    const plain: DomainSchema = { ...schema, entities: [entity('plain', { columns: [{ ...identity, activate: false }] })] }
+    const w = shell(createMemoryAdapter('?e=plain&v=table'), {
+      schema: plain,
+      source: source(3, plain),
+      rowLinks: true,
+      activateHref: (row: ShellRow) => `#/plain/${row.id}`,
+    })
+    await flushPromises()
+    const link = w.find('.dc-table__row .dc-table__cell-link')
+    expect(link.attributes('href')).toBe('#/plain/plain-0')
+  })
+})
+
+describe('DataShell — presses that change the URL are links', () => {
+  it('links the name home, the pager to its pages and New to the host’s form', async () => {
+    const creatable: DomainSchema = { ...schema, entities: [entity('tests', { scope: 'test', create: 'New test…' })] }
+    const w = shell(createMemoryAdapter('?e=tests&v=list&p=2'), {
+      schema: creatable,
+      source: source(120, creatable),
+      createHref: () => '#/tests/new',
+    })
+    await flushPromises()
+    expect(w.find('.dc-header__domain').attributes('href')).toBe('/')
+    const [previous, next] = w.findAll('.dc-header__step')
+    expect(previous!.attributes('href')).toBe('/?e=t&v=list')
+    expect(next!.attributes('href')).toBe('/?e=t&v=list&p=3')
+    expect(w.find('.dc-actions__new').attributes('href')).toBe('#/tests/new')
+  })
 })
 
 describe('DataShell — a page of the host’s', () => {
@@ -430,5 +504,26 @@ describe('DataShell — the order, off the table', () => {
     await flushPromises()
     expect(w.find('.dc-actions__sort').exists()).toBe(false)
     expect(direction(w).exists()).toBe(false)
+  })
+})
+
+describe('DataShell — operations on the type as a whole', () => {
+  const exportable: DomainSchema = {
+    ...schema,
+    entities: [entity('tests', {
+      scope: 'test',
+      operations: [{ key: 'export', label: 'Export all', selection: false }],
+    })],
+  }
+
+  it('offers the button with nothing ticked, names no count and offers no ticks', async () => {
+    const w = shell(createMemoryAdapter('?e=tests&v=list'), { schema: exportable, source: source(3, exportable) })
+    await flushPromises()
+    const button = w.find('[data-dc-operation="export"]')
+    expect(button.text()).toBe('Export all')
+    expect(button.attributes('disabled')).toBeUndefined()
+    expect(w.find('input[type="checkbox"]').exists()).toBe(false)
+    await button.trigger('click')
+    expect(w.emitted('operate')?.[0]).toEqual(['export', { ids: [], rows: [], entity: exportable.entities[0] }])
   })
 })

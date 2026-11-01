@@ -344,6 +344,16 @@ Deleted rows disappear when the source stops returning them.
 bulk action is its own: it reads `v-model:selected`, and the bar shows only the
 count and Clear.
 
+`operations` names anything else done to the ticks, each a button between
+*Duplicate* and *Delete*, emitted as `operate(key, selection)`. One with
+`selection: false` is done to the type as a whole instead — an export, a
+rebuild: its button is never disabled and names no count, and it alone offers
+no ticks.
+
+```ts
+{ key: 'settings', label: 'Settings', operations: [{ key: 'export', label: 'Export database', selection: false }] }
+```
+
 ## A facet a row holds several of
 
 A chips facet is one value per row unless marked `multiple`; then a row may

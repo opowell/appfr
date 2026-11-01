@@ -135,8 +135,8 @@ test.describe('Home — a row is one press', () => {
     const drill = row.locator('.dc-drill')
     const box = await drill.boundingBox()
     const hit = await page.evaluate(
-      ([x, y]) => document.elementFromPoint(x, y)?.closest('.dc-drill') != null,
-      [box!.x + box!.width / 2, box!.y + box!.height / 2],
+      ({ x, y }) => document.elementFromPoint(x, y)?.closest('.dc-drill') != null,
+      { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 },
     )
     expect(hit).toBe(true)
   })

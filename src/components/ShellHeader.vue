@@ -4,28 +4,8 @@ import { useShellContext } from '../composables/context'
 import { useRecordNames } from '../composables/useRecordNames'
 import PressLink from './views/PressLink.vue'
 import { scopedEntity } from '../query/drill'
-import { isTypeCardsQuery, resolveView } from '../query/schema'
-import { formatInteger } from '../data/format'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
-import type { ViewKind } from '../types'
-
-const props = defineProps<{
-  /** Views to offer, when the host restricts them. Defaults to all six. */
-  views?: ViewKind[]
-  /**
-   * What the count is short of, in the host's words — `first 1,200 of 30,200
-   * lots`. Said where the count is, which is the pager's hover text, rather
-   * than on the bar beside it.
-   */
-  pagesNote?: string
-  /**
-   * Leave the pager off the bar — while the results are not yet the data
-   * (`loading` on `DataShell`), or under a page of the host's, where there
-   * is nothing to page.
-   */
-  hidePages?: boolean
-}>()
 
 const slots = defineSlots<{
   /** Extra controls at the right end of the bar. */
@@ -381,116 +361,6 @@ watch([terms, at], measureTerms, { flush: 'post' })
 
 onBeforeUnmount(() => watching?.disconnect())
 
-/* -------------------------------------------------------------------- pages */
-
-/** The page on screen — the draft's own, while one is being typed. */
-const page = computed(() => shell.liveQuery.value.page)
-
-/**
- * Pages are offered when there is more than one and when the results below are
- * what would be paged. The home screen's cards are the exception: a card per
- * type runs its own per-entity query, so the shell's single result set is not
- * what is on screen and stepping through it would move nothing. Nor is a
- * record's own view, which draws that one record rather than any rows.
- *
- * A note from the host is the other reason to be there: it says the count is
- * short, and the count is what the pager hovers as — so a single page with
- * more of it to come is still worth the readout, steps and all.
- */
-const paged = computed(
-  () =>
-    !props.hidePages &&
-    (shell.pageCount.value > 1 || Boolean(props.pagesNote)) &&
-    !isTypeCardsQuery(shell.query.value, props.views) &&
-    resolveView(shell.query.value.view, props.views) !== 'record',
-)
-
-/**
- * How many pages there are, as far as is known. While the source is still
- * counting the total is what it has found so far, and a streaming source finds
- * more — so the count is said as one that may yet grow, `~4` rather than `4`.
- * Not while it only fetches another page of a query it has counted: the rows
- * are on their way, but the number of pages is known.
- */
-const pages = computed(() =>
-  `${shell.counting.value ? '~' : ''}${formatInteger(shell.pageCount.value)}`,
-)
-
-/**
- * Where this page sits in the whole result. The bar shows the short form and
- * says this much to a tooltip and a screen reader, since `2 / 5` on its own
- * does not say what it is counting — and the host's note under it, since what
- * the count is short of is a fact about the same number.
- */
-const position = computed(() => {
-  let place = `Page ${formatInteger(page.value)} of ${pages.value}`
-  const shown = shell.rows.value.length
-  if (shown) {
-    const first = shell.offset.value + 1
-    const total = `${shell.counting.value ? '~' : ''}${formatInteger(shell.total.value)}`
-    place += ` — rows ${formatInteger(first)} to ${formatInteger(first + shown - 1)} of ${total}`
-  }
-  return props.pagesNote ? `${place}\n${props.pagesNote}` : place
-})
-
-/**
- * What the box holds: the page being typed while it is being typed, and the
- * query's own page at every other moment. Nothing tells the box to catch up
- * after a step, a new query or a Back — it was never holding its own number.
- */
-const draft = ref<string | null>(null)
-const typed = computed(() => draft.value ?? String(page.value))
-
-/**
- * Room for the last page's digits and no more, so the field neither grows
- * under the typing hand nor leaves the steps sitting apart from it. The
- * padding is added back on: the shell borders every box, so the width it is
- * given is the outside of one and the digits would be squeezed out of it.
- */
-const boxWidth = computed(
-  () => `calc(${Math.max(2, String(shell.pageCount.value).length)}ch + 10px)`,
-)
-
-/** Typing over the number is the point, so a click offers it up whole. */
-function offerAll(event: FocusEvent): void {
-  const box = event.target as HTMLInputElement
-  box.select()
-}
-
-/** Pages are counted in digits, and the box holds nothing else. */
-function keepDigits(event: Event): void {
-  const box = event.target as HTMLInputElement
-  const digits = box.value.replace(/[^0-9]/g, '')
-  /* Held in the element as well as the ref: Vue re-renders from `typed`, which
-     a rejected keystroke leaves unchanged, and the box would keep it. */
-  if (box.value !== digits) box.value = digits
-  draft.value = digits
-}
-
-/**
- * A typed page lands on one that exists. Past the end is the last page, the
- * same place the steps stop at; a box left empty, or holding what is not a
- * page at all, is a page not asked for and leaves this one where it is.
- */
-function jumpToTyped(event: Event): void {
-  const box = event.target as HTMLInputElement
-  const wanted = Number(draft.value)
-  draft.value = null
-  const landed =
-    Number.isFinite(wanted) && wanted >= 1
-      ? Math.min(Math.trunc(wanted), Math.max(1, shell.pageCount.value))
-      : page.value
-  box.value = String(landed)
-  if (landed !== page.value) shell.setPage(landed)
-}
-
-/** Escape is the way out of a half-typed number: the page it left stands. */
-function abandonTyped(event: Event): void {
-  const box = event.target as HTMLInputElement
-  draft.value = null
-  box.value = String(page.value)
-  box.blur()
-}
 </script>
 
 <template>
@@ -621,68 +491,6 @@ function abandonTyped(event: Event): void {
       </div>
     </div>
 
-    <!-- Beside the query rather than in it: stepping through pages is not
-         part of the query. -->
-    <nav
-      v-if="paged"
-      class="dc-header__pages"
-      aria-label="Pages"
-    >
-      <!-- Links while there is a page to go to, and a disabled button at the
-           end, where there is none: a link cannot be turned off. -->
-      <PressLink
-        class="dc-header__step"
-        aria-label="Previous page"
-        :href="page > 1 ? shell.hrefFor({ page: page - 1 }) : null"
-        :disabled="page <= 1"
-        @press="shell.setPage(page - 1)"
-      >
-        <span aria-hidden="true">‹</span>
-      </PressLink>
-
-      <span
-        class="dc-header__page dc-mono"
-        :title="position"
-      >
-        <!-- The page is typed as well as stepped: page 30 is twenty-nine
-             presses away and one number wide. A text box rather than a number
-             one, because the spinner a number box brings is already here,
-             either side of it, counting in pages it knows the end of. -->
-        <input
-          class="dc-header__page-box dc-mono"
-          type="text"
-          inputmode="numeric"
-          autocomplete="off"
-          aria-label="Page"
-          :style="{ width: boxWidth }"
-          :value="typed"
-          @focus="offerAll"
-          @input="keepDigits"
-          @keydown.enter.prevent="jumpToTyped"
-          @keydown.esc.prevent="abandonTyped"
-          @blur="jumpToTyped"
-        >
-        <span
-          class="dc-header__page-total"
-          aria-hidden="true"
-        >/ {{ pages }}</span>
-      </span>
-      <span
-        class="dc-header__sr"
-        aria-live="polite"
-      >{{ position }}</span>
-
-      <PressLink
-        class="dc-header__step"
-        aria-label="Next page"
-        :href="page < shell.pageCount.value ? shell.hrefFor({ page: page + 1 }) : null"
-        :disabled="page >= shell.pageCount.value"
-        @press="shell.setPage(page + 1)"
-      >
-        <span aria-hidden="true">›</span>
-      </PressLink>
-    </nav>
-
     <div
       v-if="slots.actions"
       class="dc-header__actions"
@@ -792,7 +600,7 @@ function abandonTyped(event: Event): void {
   min-width: 0;
   padding: 2px 0;
   /* One line, scrolled rather than wrapped: the bar is one row high, and a
-     query long enough to wrap would push the pager off it. */
+     query long enough to wrap would push the actions off it. */
   overflow-x: auto;
   scrollbar-width: none;
   white-space: nowrap;
@@ -973,91 +781,6 @@ function abandonTyped(event: Event): void {
    takes no room: not a box of nothing with the bar's gap before it. */
 .dc-header__actions:empty {
   display: none;
-}
-
-/*
- * A divider, so the bar reads as one row of instruments rather than a summary
- * with something stuck on the end.
- */
-.dc-header__pages {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex: 0 0 auto;
-  padding-left: 12px;
-  border-left: 1px solid var(--dc-line);
-}
-
-.dc-header__step {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  background: var(--dc-bg-0);
-  border: 1px solid var(--dc-line);
-  border-radius: var(--dc-radius-sm);
-  color: var(--dc-fg-1);
-  font-size: var(--dc-text-meta);
-  line-height: 1;
-  cursor: pointer;
-}
-
-.dc-header__step:hover:not(:disabled) {
-  background: var(--dc-bg-2);
-  color: var(--dc-fg-0);
-}
-
-/*
- * There is no page before the first, and the button says so. This is not the
- * shell forbidding a move — it is the end of the results, which is a fact
- * about them and reads as one.
- */
-.dc-header__step:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.dc-header__page {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  /* Held to a width, so stepping 9 → 10 does not shuffle the buttons. */
-  min-width: 46px;
-  justify-content: center;
-  font-size: var(--dc-text-micro);
-  color: var(--dc-fg-3);
-}
-
-/*
- * A number on the bar until it is used: no frame, no fill, sized to its digits.
- * The readout is what it has to look like, because that is what it is for all
- * but the few seconds a page is being typed into it.
- */
-.dc-header__page-box {
-  min-width: 0;
-  padding: 1px 2px;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: var(--dc-radius-sm);
-  color: var(--dc-fg-1);
-  font-size: var(--dc-text-micro);
-  line-height: 1;
-  text-align: center;
-}
-
-.dc-header__page-box:hover {
-  border-color: var(--dc-line);
-}
-
-/* Under the caret it is a field and is filled like one. The accent ring is the
-   shell's own, which every focused thing here wears, so the border stays the
-   quiet one rather than doubling it. */
-.dc-header__page-box:focus {
-  background: var(--dc-bg-0);
-  border-color: var(--dc-line);
-  color: var(--dc-fg-0);
 }
 
 /*

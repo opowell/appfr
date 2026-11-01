@@ -115,8 +115,8 @@ const props = withDefaults(
      *
      * The header stays up the whole time, so the query can still be read and
      * edited — what it cannot yet say is how many matched, so the pager is off
-     * the bar until it can, nor what the records it narrows to are called, so
-     * those are looked up once it is false.
+     * the strip over the results until it can, nor what the records it
+     * narrows to are called, so those are looked up once it is false.
      */
     loading?: boolean
     /**
@@ -368,8 +368,8 @@ const slots = defineSlots<{
    * it there edits it here.
    *
    * Unlike `results`, which is handed the rows to draw in its own way, a page
-   * is not a drawing of the rows: the bar carries no pager and no View
-   * chooser, there being nothing under it to page or to draw differently;
+   * is not a drawing of the rows: there is no pager and no View chooser,
+   * there being nothing under it to page or to draw differently;
    * the type's operations are not offered over it; and nothing corrects the
    * URL's page from a count. Provide it conditionally — `<template v-if="…"
    * #page>` — and the shell is the list again the moment it is not.
@@ -805,11 +805,7 @@ defineExpose({
     :style="style"
   >
     <div class="dc-shell__head">
-      <ShellHeader
-        :views="offeredViews"
-        :pages-note="pagesNote"
-        :hide-pages="loading || hasPage"
-      >
+      <ShellHeader>
         <template
           v-if="slots.brand"
           #brand="brandProps"
@@ -850,6 +846,7 @@ defineExpose({
       :views="offeredViews"
       :type-chooser="typeChooser"
       :selection-placement="selectionPlacement"
+      :pages-note="pagesNote"
     />
 
     <slot

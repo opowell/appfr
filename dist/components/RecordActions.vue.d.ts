@@ -6,7 +6,8 @@ import type { ViewKind } from '../types';
  *
  * The type and the view are chosen here rather than on the bar above, which
  * is the query's to narrow: both are about the results as a whole, and here
- * they are over the results they change.
+ * they are over the results they change. So are the pages, which step through
+ * the results rather than narrowing the query.
  *
  * The bar over the results rather than a menu on each row, because three of
  * the four are about a *set* of records — and the fourth, making one, is what
@@ -24,6 +25,8 @@ type __VLS_Props = {
     typeChooser?: 'scoped' | 'always';
     /** Which end of the bar the count and its Clear sit at — see `selectionAtEnd`. */
     selectionPlacement?: 'start' | 'end';
+    /** What the count is short of, in the host's words — see `ShellPager`. */
+    pagesNote?: string;
 };
 declare const _default: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export default _default;

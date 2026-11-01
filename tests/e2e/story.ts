@@ -147,20 +147,20 @@ export async function clearScope(page: Page): Promise<void> {
 export const listRows = (page: Page) => page.locator('.dc-list__row')
 
 /**
- * The header's paging control, which is only in the bar when there is more
+ * The paging control on the bar over the results, only there when there is more
  * than one page — so its absence is an assertion worth making too.
  */
-export const pager = (page: Page) => page.locator('.dc-header__pages')
+export const pager = (page: Page) => page.locator('.dc-pager')
 
 /**
  * Its readout, which carries the hover text — but not, any more, the page it
  * is on: that half of `3 / 4` is a box with a number in it.
  */
-export const pageReadout = (page: Page) => page.locator('.dc-header__page')
+export const pageReadout = (page: Page) => page.locator('.dc-pager__page')
 
 /** The box the page is in, and the count it is out of, beside it. */
-export const pageBox = (page: Page) => page.locator('.dc-header__page-box')
-export const pageTotal = (page: Page) => page.locator('.dc-header__page-total')
+export const pageBox = (page: Page) => page.locator('.dc-pager__box')
+export const pageTotal = (page: Page) => page.locator('.dc-pager__total')
 
 /** The readout as the bar says it — the box's number and the total together. */
 export async function expectPage(
@@ -184,7 +184,7 @@ export async function typePage(page: Page, wanted: string): Promise<void> {
 
 /** A link while there is a page to step to, and a disabled button where there is none. */
 export const pageStep = (page: Page, which: 'Previous' | 'Next') =>
-  pager(page).locator(`.dc-header__step[aria-label="${which} page"]`)
+  pager(page).locator(`.dc-pager__step[aria-label="${which} page"]`)
 
 /** Steps a page and waits for the readout to say it has moved. */
 export async function stepPage(page: Page, which: 'Previous' | 'Next'): Promise<void> {

@@ -1,6 +1,7 @@
 export { default as DataShell } from './components/DataShell.vue';
 export { default as ShellHeader } from './components/ShellHeader.vue';
 export { default as RecordActions } from './components/RecordActions.vue';
+export { default as ShellPager } from './components/ShellPager.vue';
 export { default as ShellCard } from './components/ShellCard.vue';
 export { default as ResultsArea } from './components/ResultsArea.vue';
 export { default as SegmentedControl } from './components/SegmentedControl.vue';

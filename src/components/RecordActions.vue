@@ -9,6 +9,7 @@ import { VIEW_LABELS, entityCount, isTypeCardsQuery, resolveView } from '../quer
 import PageTick from './views/PageTick.vue'
 import PressLink from './views/PressLink.vue'
 import PickControl from './PickControl.vue'
+import ShellPager from './ShellPager.vue'
 
 /**
  * The head of the results: which type they are, how they are drawn and what
@@ -17,7 +18,8 @@ import PickControl from './PickControl.vue'
  *
  * The type and the view are chosen here rather than on the bar above, which
  * is the query's to narrow: both are about the results as a whole, and here
- * they are over the results they change.
+ * they are over the results they change. So are the pages, which step through
+ * the results rather than narrowing the query.
  *
  * The bar over the results rather than a menu on each row, because three of
  * the four are about a *set* of records — and the fourth, making one, is what
@@ -35,6 +37,8 @@ const props = defineProps<{
   typeChooser?: 'scoped' | 'always'
   /** Which end of the bar the count and its Clear sit at — see `selectionAtEnd`. */
   selectionPlacement?: 'start' | 'end'
+  /** What the count is short of, in the host's words — see `ShellPager`. */
+  pagesNote?: string
 }>()
 
 const shell = useShellContext()
@@ -201,6 +205,27 @@ const records = computed(
   () => !isTypeCardsQuery(shell.query.value, props.views) && view.value !== 'record',
 )
 
+/* ---------------------------------------------------------------- pages */
+
+/**
+ * Pages are offered when there is more than one and when the results below are
+ * what would be paged — rows, and the data rather than the source's answers
+ * before it has any (`loading` on `DataShell`). The home screen's cards are
+ * not: a card per type runs its own per-entity query, so the shell's single
+ * result set is not what is on screen and stepping through it would move
+ * nothing. Nor is a record's own view, which draws that one record.
+ *
+ * A note from the host is the other reason to be there: it says the count is
+ * short, and the count is what the pager hovers as — so a single page with
+ * more of it to come is still worth the readout, steps and all.
+ */
+const paged = computed(
+  () =>
+    records.value &&
+    !shell.loading.value &&
+    (shell.pageCount.value > 1 || Boolean(props.pagesNote)),
+)
+
 /* ---------------------------------------------------------- what is ticked */
 
 /** How many records are ticked, on this page and every other. */
@@ -233,6 +258,7 @@ const offered = computed(
     showTypes.value ||
     showViews.value ||
     showOrder.value ||
+    paged.value ||
     (records.value &&
       (selecting.value ||
       Boolean(
@@ -420,6 +446,14 @@ function opLabel(label: string): string {
         {{ opLabel(entity.delete) }}
       </button>
     </div>
+
+    <!-- At the very end, past what acts on the records: stepping through
+         them acts on nothing. -->
+    <ShellPager
+      v-if="paged"
+      class="dc-actions__pages"
+      :pages-note="pagesNote"
+    />
   </div>
 </template>
 
@@ -553,6 +587,13 @@ label.dc-actions__all {
 .dc-actions__clear--op:hover {
   background: var(--dc-bg-2);
   color: var(--dc-fg-0);
+}
+
+/* A divider from the operations, where there are any, so the pages read as
+   their own instrument rather than one more thing to do to the records. */
+.dc-actions__ops:not(:empty) + .dc-actions__pages {
+  padding-left: 12px;
+  border-left: 1px solid var(--dc-line);
 }
 
 /* Nothing is ticked, so there is nothing for this to be for. */

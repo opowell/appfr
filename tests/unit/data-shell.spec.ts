@@ -101,14 +101,14 @@ describe('DataShell — loading', () => {
     expect(param(adapter, 'p')).toBe('7')
     expect(w.find('.dc-results__state--loading').text()).toBe('Loading…')
     // Nor is the pager on the bar, saying `7 / 1` of a count of nothing.
-    expect(w.find('.dc-header__pages').exists()).toBe(false)
+    expect(w.find('.dc-pager').exists()).toBe(false)
 
     // The data lands, and with it the pages the link was to.
     await w.setProps({ source: source(100), loading: false })
     await flushPromises()
     expect(param(adapter, 'p')).toBe('7')
     expect(w.find('.dc-results__state--loading').exists()).toBe(false)
-    expect(w.find('.dc-header__page-box').element).toHaveProperty('value', '7')
+    expect(w.find('.dc-pager__box').element).toHaveProperty('value', '7')
   })
 
   it('corrects the page once loading ends, as on a mount, where the data is short of it', async () => {
@@ -396,7 +396,7 @@ describe('DataShell — presses that change the URL are links', () => {
     })
     await flushPromises()
     expect(w.find('.dc-header__domain').attributes('href')).toBe('/')
-    const [previous, next] = w.findAll('.dc-header__step')
+    const [previous, next] = w.findAll('.dc-pager__step')
     expect(previous!.attributes('href')).toBe('/?e=t&v=list')
     expect(next!.attributes('href')).toBe('/?e=t&v=list&p=3')
     expect(w.find('.dc-actions__new').attributes('href')).toBe('#/tests/new')
@@ -416,7 +416,7 @@ describe('DataShell — a page of the host’s', () => {
     expect(w.find('.dc-shell__page .host-page').text()).toBe('for tests')
     expect(w.find('.dc-results').exists()).toBe(false)
     expect(w.find('.dc-actions__view').exists()).toBe(false)
-    expect(w.find('.dc-header__pages').exists()).toBe(false)
+    expect(w.find('.dc-pager').exists()).toBe(false)
     // A page pages nothing, so the URL's page is not corrected under it.
     expect(param(adapter, 'p')).toBe('7')
   })

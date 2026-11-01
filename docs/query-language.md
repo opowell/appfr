@@ -60,7 +60,7 @@ Pressing a part lifts it.
 The rest of the query is chosen elsewhere:
 
 - **Type** and **view** are pickers on the strip over the results
-  (`RecordActions`). The type picker lists `Everything` and then every entity;
+  (`RecordActions`), which also carries the pager. The type picker lists `Everything` and then every entity;
   by default it shows only once a type is filtered to (`typeChooser`). Typing
   `entity:logs` in the bar filters by type too.
 - **Sort** is chosen by pressing a table's column heading, and pressing it

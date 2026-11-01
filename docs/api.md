@@ -88,8 +88,8 @@ report about the query (run every spec it matches, export every row).
 
 Unlike `results`, a page does not draw the rows. While it is provided:
 
-- the bar has **no pager**, and there is **no strip over the results** (no
-  Type or View chooser, no [operations](schemas.md#records-you-can-copy-and-delete));
+- there is **no strip over the results** (no Type or View chooser, no pager,
+  no [operations](schemas.md#records-you-can-copy-and-delete));
 - **nothing corrects the URL's page** from a count, so `p` is intact when the
   list comes back.
 
@@ -145,8 +145,9 @@ this, for a host wiring `useQueryState` to its own chrome.
 
 ## Paging through the results
 
-`limit` is a page size, not a ceiling. When results run past it the bar gains
-a pager (`‹ 3 / 4 ›`), and the page is in the URL as `p`.
+`limit` is a page size, not a ceiling. When results run past it the strip
+over the results gains a pager (`‹ 3 / 4 ›`) at its far end, and the page is
+in the URL as `p`.
 
 - **Shown only when there is somewhere to go** — not for one page, and not on
   the home screen's type cards.
@@ -265,7 +266,8 @@ The context also carries:
 - **the selection** — `selectable`, `selection`, `isSelected`, `toggleSelect`,
   `selectPage`, `clearSelection`, plus `create`, `duplicate` and `delete`, so
   a view of your own can offer ticks. `<RecordActions>` is the strip over the
-  results (Type and View choosers) for a host laying out the parts itself;
+  results (Type and View choosers, pager) for a host laying out the parts
+  itself, and `<ShellPager>` the pager alone;
 - **`within`**, the shell's scope, which is not on `query`. `useResults` and
   `useEntityPreviews` take it as an option, to keep your own results area in
   the same scope;

@@ -8,6 +8,13 @@ export interface UseRecordNamesOptions {
     query: ComputedRef<ShellQuery>;
     /** The terms to read: whichever of them name a record are looked up. */
     terms: ComputedRef<SummaryTerm[]>;
+    /**
+     * Whether the source is not yet answering with the data. Nothing is looked
+     * up meanwhile: a source over no rows yet answers every lookup with nothing,
+     * and nothing is kept as an answer — the name would never be asked for
+     * again. The lookups are made when it turns false.
+     */
+    loading: ComputedRef<boolean>;
 }
 export interface RecordNamesState {
     /** The names found so far, keyed by type and id. */

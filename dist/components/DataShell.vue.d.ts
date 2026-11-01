@@ -77,7 +77,8 @@ type __VLS_Props = {
      *
      * The header stays up the whole time, so the query can still be read and
      * edited — what it cannot yet say is how many matched, so the pager is off
-     * the bar until it can.
+     * the bar until it can, nor what the records it narrows to are called, so
+     * those are looked up once it is false.
      */
     loading?: boolean;
     /**
@@ -319,10 +320,10 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
 }>, {
     limit: number;
     previewsPerType: number;
+    loading: boolean;
     rowLinks: boolean;
     typeChooser: "scoped" | "always";
     selectionPlacement: "start" | "end";
-    loading: boolean;
     pageQuery: "shell" | "detached";
     listPath: string;
     theme: ShellTheme;

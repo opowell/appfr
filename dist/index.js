@@ -1440,6 +1440,7 @@ function so(e) {
     const c = Ye(ve(i.columns ?? [], "identity"), r);
     return c === me || ia(c, r.id) ? "" : c;
   }, l = () => {
+    if (e.loading.value) return;
     const i = /* @__PURE__ */ new Map();
     for (const d of e.terms.value) {
       const m = a(d);
@@ -1466,7 +1467,7 @@ function so(e) {
       for (const { reference: d } of r) n.delete(d.key);
     });
   };
-  return se([e.source, e.schema, e.terms], () => {
+  return se([e.source, e.schema, e.terms, e.loading], () => {
     try {
       l();
     } catch {
@@ -1527,6 +1528,7 @@ const oo = { class: "dc-header" }, lo = { class: "dc-header__main" }, ro = {
       source: a.source,
       schema: a.schema,
       query: a.query,
+      loading: a.loading,
       // The scope's parts as well as the query's: it names a record more often
       // than a typed term does, being what a record's own page is built on.
       terms: f(() => [...o.value, ...a.terms.value])
@@ -1793,7 +1795,7 @@ ${t.pagesNote}` : E;
   for (const [a, s] of t)
     n[a] = s;
   return n;
-}, ca = /* @__PURE__ */ W(Co, [["__scopeId", "data-v-91063b26"]]);
+}, ca = /* @__PURE__ */ W(Co, [["__scopeId", "data-v-c265bc2d"]]);
 function Eo(e) {
   const t = ye(/* @__PURE__ */ new Map()), n = I(!0);
   let a = 0, s;
@@ -3699,6 +3701,7 @@ const Br = ["data-dc-pending", "data-dc-heads-only"], qr = {
       source: x,
       previewsPerType: f(() => a.previewsPerType),
       within: k,
+      loading: f(() => a.loading),
       pinnable: f(() => a.pinnable === !0),
       isPinned: (L) => ne.value.has(L.id),
       isPinnedId: (L) => ne.value.has(L),
@@ -3827,7 +3830,7 @@ const Br = ["data-dc-pending", "data-dc-heads-only"], qr = {
       ], !0, 2)
     ], 12, ui));
   }
-}), pi = /* @__PURE__ */ W(vi, [["__scopeId", "data-v-07767e0e"]]), hi = ["data-dc-muted", "data-dc-collapsed"], mi = ["data-dc-collapsible"], yi = ["aria-expanded", "aria-controls"], _i = { class: "dc-shell-card__sr" }, gi = {
+}), pi = /* @__PURE__ */ W(vi, [["__scopeId", "data-v-59c58497"]]), hi = ["data-dc-muted", "data-dc-collapsed"], mi = ["data-dc-collapsible"], yi = ["aria-expanded", "aria-controls"], _i = { class: "dc-shell-card__sr" }, gi = {
   key: 0,
   class: "dc-shell-card__identity"
 }, ki = { class: "dc-shell-card__title dc-shell-card__name" }, wi = {

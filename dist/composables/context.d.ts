@@ -67,6 +67,12 @@ export interface ShellContext extends QueryState {
      * results has to ask for it separately.
      */
     within: ComputedRef<string>;
+    /**
+     * `DataShell`'s `loading`: what the source answers is not yet the data, so
+     * an empty answer from it is not an answer — nothing read from it now is to
+     * be kept.
+     */
+    loading: ComputedRef<boolean>;
     /** Whether the star affordance is offered on rows. */
     pinnable: ComputedRef<boolean>;
     isPinned(row: ShellRow): boolean;

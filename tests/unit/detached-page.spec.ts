@@ -115,6 +115,17 @@ describe('DataShell — a page that is not about the query', () => {
     expect(w.findAll('.dc-term').map((term) => term.text())).toEqual(['digest'])
   })
 
+  it('goes home to the list from the name, though the query it reads is already pristine', async () => {
+    const adapter = createMemoryAdapter('?crawl=run-1', '/crawl-report')
+    const { w } = host(adapter, 'detached')
+    await flushPromises()
+
+    await w.find('.dc-header__domain').trigger('click')
+    await flushPromises()
+    expect(adapter.history).toEqual(['/crawl-report?crawl=run-1', '/'])
+    expect(w.find('.host-page').exists()).toBe(false)
+  })
+
   it('lands on the list path it is given', async () => {
     const adapter = createMemoryAdapter('', '/app/crawls/new')
     const Host = {

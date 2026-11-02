@@ -41,6 +41,7 @@ export function detachableAdapter(
   return {
     search: search as RouteAdapter['search'],
     path: path as RouteAdapter['path'],
+    elsewhere: detached,
     push(next, to) {
       if (detached.value) adapter.push(next, to ?? options.path())
       else adapter.push(next, to)

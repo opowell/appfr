@@ -150,7 +150,7 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
   /** Whether it went anywhere: a query that serialises to the URL already there does not. */
   const navigate = (next: ShellQuery, mode: NavigationMode): boolean => {
     const search = serializeQuery(next, schema.value, defaults.value, adapter.search.value)
-    if (search === adapter.search.value) return false
+    if (search === adapter.search.value && !adapter.elsewhere?.value) return false
     if (mode === 'push') adapter.push(search)
     else adapter.replace(search)
     return true

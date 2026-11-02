@@ -10,6 +10,14 @@ export interface RouteAdapter {
     /** Current path, used when building a full location to navigate to. */
     readonly path: Ref<string>;
     /**
+     * Whether a write lands somewhere other than the location on screen — a
+     * detached page's adapter, which reads the pristine query but writes to the
+     * list. A navigation that leaves the query as it reads then still goes
+     * there, rather than being dropped as a change to nothing. Optional: without
+     * it, writes land where the adapter reads.
+     */
+    readonly elsewhere?: Ref<boolean>;
+    /**
      * Navigate, adding a history entry. `path`, where given, is where to go
      * instead of the current path — how a page under the shell's bar that is
      * not about the query hands the first change to it back to the list (see

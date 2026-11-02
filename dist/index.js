@@ -46,6 +46,7 @@ function Ma(e, t) {
   return {
     search: a,
     path: s,
+    elsewhere: n,
     push(o, l) {
       n.value ? e.push(o, l ?? t.path()) : e.push(o, l);
     },
@@ -1167,7 +1168,7 @@ function Vs(e, t, n = null) {
 function Ds(e) {
   const { adapter: t } = e, n = f(() => we(e.schema)), a = f(() => we(e.defaults) ?? {}), s = f(() => Ls(t.search.value, n.value, a.value)), o = f(() => Ne(n.value, s.value.entity)), l = f(() => o.value ?? Pn(n.value, a.value)), i = f(() => rt(o.value, n.value)), r = f(() => _e(o.value, s.value.sort, n.value)), c = (g, v) => {
     const _ = yn(g, n.value, a.value, t.search.value);
-    return _ === t.search.value ? !1 : (v === "push" ? t.push(_) : t.replace(_), !0);
+    return _ === t.search.value && !t.elsewhere?.value ? !1 : (v === "push" ? t.push(_) : t.replace(_), !0);
   }, d = () => we(e.navigationMode) ?? "push", m = () => we(e.facetNavigationMode) ?? "replace", b = (g, v) => {
     const _ = g.page ?? (_t(g) ? 1 : s.value.page);
     return c({ ...s.value, ...g, page: _ }, v);

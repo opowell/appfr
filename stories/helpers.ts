@@ -62,6 +62,8 @@ export interface ShellStoryArgs {
   limit?: number
   /** What the count is short of, in the host's words, under the pager's hover. */
   pagesNote?: string
+  /** The shell's width from which the bar and the strip are one row, or never. */
+  oneStripFrom?: number | false
   /** Rows inside each type's card on the home screen. */
   previewsPerType?: number
   /**
@@ -135,6 +137,7 @@ export function renderShell(args: ShellStoryArgs) {
           ...(args.typeChooser ? { typeChooser: args.typeChooser } : {}),
           ...(args.selectionPlacement ? { selectionPlacement: args.selectionPlacement } : {}),
           ...(args.pagesNote ? { pagesNote: args.pagesNote } : {}),
+          ...(args.oneStripFrom !== undefined ? { oneStripFrom: args.oneStripFrom } : {}),
           ...(args.within ? { within: args.within } : {}),
           ...(args.rowPress ? { rowPress: args.rowPress } : {}),
           ...(args.rowLinks ? { rowLinks: args.rowLinks } : {}),

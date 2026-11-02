@@ -306,8 +306,10 @@ test.describe('Records — ticks in every view that draws rows', () => {
       readout(page).boundingBox(),
     ])
     // Right of the middle, just before the operations, and as tall as they are.
-    const barBox = await bar(page).boundingBox()
-    expect(countBox!.x).toBeGreaterThan(barBox!.x + barBox!.width / 2)
+    // The shell's middle rather than the strip's: a wide shell draws the strip
+    // beside the query, only as wide as what is on it.
+    const shellBox = await page.locator('.dc-shell').first().boundingBox()
+    expect(countBox!.x).toBeGreaterThan(shellBox!.x + shellBox!.width / 2)
     expect(firstOpBox!.x - (clearBox!.x + clearBox!.width)).toBeGreaterThan(0)
     expect(firstOpBox!.x - (clearBox!.x + clearBox!.width)).toBeLessThan(24)
     expect(clearBox!.height).toBeCloseTo(firstOpBox!.height, 0)

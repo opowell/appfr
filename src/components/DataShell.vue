@@ -7,7 +7,7 @@
  */
 import '../style/shell.css'
 
-import { computed, inject, onBeforeUnmount, onBeforeUpdate, ref, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, onBeforeUpdate, onMounted, ref, watch } from 'vue'
 import type { Component } from 'vue'
 import type {
   DataSource,
@@ -173,6 +173,14 @@ const props = withDefaults(
      * they are the count for, the Clear drawn as one of their buttons.
      */
     selectionPlacement?: 'start' | 'end'
+    /**
+     * The shell's width, in pixels, from which the query bar and the strip
+     * over the results are drawn as one strip — the query, then what is
+     * chosen and done over the results, on one row — rather than the strip
+     * under the bar. Below it they stack, the strip having no room beside a
+     * query. `false` always stacks them.
+     */
+    oneStripFrom?: number | false
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string
     /**
@@ -266,6 +274,7 @@ const props = withDefaults(
     previewsPerType: 3,
     typeChooser: 'scoped',
     selectionPlacement: 'start',
+    oneStripFrom: 1200,
     theme: 'minimal',
     navigationMode: 'push',
     facetNavigationMode: 'replace',
@@ -793,6 +802,41 @@ const style = computed(() => {
   return { ...props.tokens, ...(props.accent ? { '--dc-accent': props.accent } : {}) }
 })
 
+/* ------------------------------------------------------------------ layout */
+
+/**
+ * How wide the shell is drawn, measured rather than read off the viewport: a
+ * shell in a window of its own is as wide as the window, not the screen.
+ * Zero until it is mounted, which stacks the bars — the layout that fits
+ * anywhere.
+ */
+const root = ref<HTMLElement | null>(null)
+const width = ref(0)
+
+let sizing: ResizeObserver | null = null
+onMounted(() => {
+  const element = root.value
+  if (!element) return
+  width.value = element.getBoundingClientRect().width
+  if (typeof ResizeObserver === 'undefined') return
+  sizing = new ResizeObserver(([entry]) => {
+    width.value = entry!.contentRect.width
+  })
+  sizing.observe(element)
+})
+onBeforeUnmount(() => sizing?.disconnect())
+
+/** Whether the strip over the results sits on the bar's row — see `oneStripFrom`. */
+const oneStrip = computed(() => props.oneStripFrom !== false && width.value >= props.oneStripFrom)
+
+/** The strip's props, the same wherever it is drawn. */
+const recordActions = computed(() => ({
+  views: offeredViews.value,
+  typeChooser: props.typeChooser,
+  selectionPlacement: props.selectionPlacement,
+  pagesNote: props.pagesNote,
+}))
+
 defineExpose({
   query: query.query,
 })
@@ -800,11 +844,15 @@ defineExpose({
 
 <template>
   <div
+    ref="root"
     class="dc-shell"
     :data-dc-theme="theme"
     :style="style"
   >
-    <div class="dc-shell__head">
+    <div
+      class="dc-shell__head"
+      :class="{ 'dc-shell__head--one-strip': oneStrip }"
+    >
       <ShellHeader>
         <template
           v-if="slots.brand"
@@ -822,6 +870,14 @@ defineExpose({
           <slot name="actions" />
         </template>
       </ShellHeader>
+
+      <!-- Where the shell is wide enough, the strip over the results goes on
+           the bar's row, after the query: the same controls, a row less over
+           the records. -->
+      <RecordActions
+        v-if="oneStrip && !slots.page"
+        v-bind="recordActions"
+      />
     </div>
 
 
@@ -842,11 +898,8 @@ defineExpose({
          them. It renders nothing where there is nothing to choose or do, and
          stays put while the results scroll. -->
     <RecordActions
-      v-if="!slots.page"
-      :views="offeredViews"
-      :type-chooser="typeChooser"
-      :selection-placement="selectionPlacement"
-      :pages-note="pagesNote"
+      v-if="!oneStrip && !slots.page"
+      v-bind="recordActions"
     />
 
     <slot
@@ -915,5 +968,31 @@ defineExpose({
   position: relative;
   z-index: 30;
   flex: 0 0 auto;
+}
+
+/*
+ * The bar and the strip on one row, read as one bar: its surface and its
+ * hairline, held by the row rather than by either of them. The query gives
+ * way first, being the one of the two that scrolls what it cannot show.
+ */
+.dc-shell__head--one-strip {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--dc-line);
+  background: var(--dc-bg-0);
+}
+
+.dc-shell__head--one-strip > .dc-header {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-bottom: none;
+}
+
+/* The bar's own padding is the gap before it. */
+.dc-shell__head--one-strip > .dc-actions {
+  flex: 0 0 auto;
+  padding-left: 0;
+  border-bottom: none;
+  background: none;
 }
 </style>

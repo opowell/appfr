@@ -785,3 +785,48 @@ test.describe('Header — paging through the results', () => {
     await expect(pager(page)).toBeVisible()
   })
 })
+
+test.describe('Header — one strip on a wide shell', () => {
+  const strip = (page: Page) => page.locator('.dc-actions')
+
+  test('from 1200px the strip over the results sits on the bar’s row, after the query', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await gotoStory(page, ENTITY)
+
+    const [bar, actions, field] = await Promise.all([
+      header(page).boundingBox(),
+      strip(page).boundingBox(),
+      searchField(page).boundingBox(),
+    ])
+    expect(actions!.y).toBeCloseTo(bar!.y, 0)
+    expect(actions!.height).toBeCloseTo(bar!.height, 0)
+    expect(actions!.x).toBeGreaterThanOrEqual(field!.x + field!.width)
+    await expect(page.locator('.dc-shell__head .dc-actions')).toHaveCount(1)
+  })
+
+  test('narrower, it goes back under the bar', async ({ page }) => {
+    await page.setViewportSize({ width: 1100, height: 720 })
+    await gotoStory(page, ENTITY)
+
+    const [bar, actions] = await Promise.all([header(page).boundingBox(), strip(page).boundingBox()])
+    expect(actions!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height - 1)
+    await expect(page.locator('.dc-shell__head .dc-actions')).toHaveCount(0)
+  })
+
+  test('and moves as the shell is resized across the width', async ({ page }) => {
+    await page.setViewportSize({ width: 1100, height: 720 })
+    await gotoStory(page, ENTITY)
+    await expect(page.locator('.dc-shell__head .dc-actions')).toHaveCount(0)
+
+    await page.setViewportSize({ width: 1300, height: 720 })
+    await expect(page.locator('.dc-shell__head .dc-actions')).toHaveCount(1)
+  })
+
+  test('`oneStripFrom: false` always stacks them', async ({ page }) => {
+    await page.setViewportSize({ width: 1600, height: 720 })
+    await gotoStory(page, 'shell-data-shell--entity-list-stacked')
+
+    await expect(strip(page)).toBeVisible()
+    await expect(page.locator('.dc-shell__head .dc-actions')).toHaveCount(0)
+  })
+})

@@ -399,6 +399,9 @@ export const ExcludeByExpression = story({ search: '?v=list&q=entity:logs' })
 /** One entity picked out of the corpus. The header says so as a term. */
 export const EntityList = story({ search: '?e=searches&v=list' })
 
+/** The same, with the strip kept under the bar however wide the shell is. */
+export const EntityListStacked = story({ search: '?e=searches&v=list', oneStripFrom: false })
+
 /** Logs are records like any other, with their own facets once scoped. */
 export const LogsEntity = story({ search: '?e=logs&v=list' })
 

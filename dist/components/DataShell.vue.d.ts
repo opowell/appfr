@@ -135,6 +135,14 @@ type __VLS_Props = {
      * they are the count for, the Clear drawn as one of their buttons.
      */
     selectionPlacement?: 'start' | 'end';
+    /**
+     * The shell's width, in pixels, from which the query bar and the strip
+     * over the results are drawn as one strip — the query, then what is
+     * chosen and done over the results, on one row — rather than the strip
+     * under the bar. Below it they stack, the strip having no room beside a
+     * query. `false` always stacks them.
+     */
+    oneStripFrom?: number | false;
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string;
     /**
@@ -349,6 +357,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     selectionPlacement: "start" | "end";
     pageQuery: "shell" | "detached";
     listPath: string;
+    oneStripFrom: number | false;
     theme: ShellTheme;
     rowPress: "open" | "narrow";
     navigationMode: NavigationMode;

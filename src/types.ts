@@ -348,6 +348,21 @@ export interface ColumnDef {
    */
   click?: (row: ShellRow, options?: PressOptions) => void
   /**
+   * Whether a press on the value narrows the list to rows like it — on unless
+   * said `false`. A number adds `field<=value` or `field>=value`, whichever
+   * end of its range it is nearer; a value of a chips facet `field=value`;
+   * each of a {@link ColumnDef.flags} column's words `field:true`. ⌥ held
+   * leaves those rows out instead. A column that `activate`s, `click`s or
+   * `drill`s is pressed for that, and is not offered this as well; nor is a
+   * value no term could say — text that is no facet's, a date, a status.
+   */
+  narrow?: boolean
+  /**
+   * The boolean fields a {@link flagColumn} names, each with the word it is
+   * shown as — what lets a press on one word narrow to that field alone.
+   */
+  flags?: Record<string, string>
+  /**
    * The component a `component` cell renders, given `{ row, entry, value,
    * column }`. Anything a host wants a cell to be — a sparkline, a thumbnail
    * stack, a set of buttons — without a string of HTML anywhere near it.

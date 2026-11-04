@@ -116,6 +116,8 @@ part those views leave out.
 | `width` / `height` / `align` / `mono` / `muted` / `truncate` | how it is drawn |
 | `sort` | the `SortDef` key this header sorts by |
 | `activate` / `click` / `drill` / `scope` | what pressing it does |
+| `narrow` | `false` keeps the value from narrowing the list — see below |
+| `flags` | the boolean fields a `flagColumn` names; set by it |
 | `when` | `always`, or only in one of the two scopes |
 | `hideBelow` | the container width it stands down at |
 | `component` | what a `component` cell renders |
@@ -125,6 +127,21 @@ part those views leave out.
 (`activate(row)`). `drill` names the entity the value counts, so pressing `12`
 under *Colors* lists those twelve — only where the row's entity declares a
 `scope`. `scope` puts the → beside the value. `click(row)` is yours.
+
+**Pressing a value narrows to the rows like it**, in every column that is not
+pressed for one of those, unless it says `narrow: false`. The value is
+underlined dotted, as a drilling count is, and the press ANDs a term on to the
+query, keeping the type and the view:
+
+| Cell | Adds |
+| --- | --- |
+| a number | `field<=value` where it is nearer the bottom of its range, `field>=value` nearer the top. The range is the column's range facet's, else the rows on screen. A fraction is rounded outwards to four places, so the row pressed stays in |
+| a value of a chips facet on the column's key | `field=value`; each of a list its own press |
+| a word of a `flagColumn` | `field:true` for that word's field alone |
+
+⌥ held leaves those rows out instead (`-field<=value`). Text no facet holds, a
+date, a status, a picture and a component cell narrow nothing.
+`cellNarrowings(column, row, entity, range)` says what a cell offers.
 
 **Sorting** is offered only where `sort` names a sort the entity declares.
 Pressing the header sorts by it, and pressing it again reverses the direction.

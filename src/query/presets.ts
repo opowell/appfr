@@ -172,6 +172,7 @@ export function flagColumn(
       Object.entries(names)
         .filter(([field]) => row.fields[field] === true)
         .map(([, name]) => name),
+    flags: names,
     sort: key,
     muted: true,
     truncate: true,

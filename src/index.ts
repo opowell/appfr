@@ -171,6 +171,8 @@ export {
 export { chipsFrom, niceMax, rangeFrom, toggleFacet, usefulFacets } from './query/facets'
 export { completeDraft } from './query/completion'
 export type { Completion } from './query/completion'
+export { cellNarrowings, columnNarrows, numberRange } from './query/narrowing'
+export type { CellNarrowing, NumberRange } from './query/narrowing'
 export {
   addTerm,
   drillExpression,

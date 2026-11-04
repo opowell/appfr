@@ -1,12 +1,27 @@
+<script lang="ts">
+/** Each column's range over a page of rows, for as long as that page is the one on screen. */
+const ranges = new WeakMap<readonly ShellRow[], Map<ColumnDef, NumberRange | null>>()
+
+function rangeOver(rows: readonly ShellRow[], column: ColumnDef): NumberRange | null {
+  let page = ranges.get(rows)
+  if (!page) ranges.set(rows, (page = new Map()))
+  if (!page.has(column)) page.set(column, numberRange(column, rows))
+  return page.get(column)!
+}
+</script>
+
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ColumnDef, PressOptions, RecordStatus } from '../../types'
+import type { ColumnDef, PressOptions, RecordStatus, ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
 import { pressOptions } from '../../query/drill'
 import PressLink from './PressLink.vue'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { cellFull, cellText, cellValue, columnTruncates } from '../../query/columns'
 import MetricDrill from './MetricDrill.vue'
+import CellNarrow from './CellNarrow.vue'
+import { cellNarrowings, columnNarrows, numberRange } from '../../query/narrowing'
+import type { NumberRange } from '../../query/narrowing'
 import RowPicture from './RowPicture.vue'
 import StatusPill from '../StatusPill.vue'
 
@@ -48,6 +63,17 @@ const truncates = computed(() => columnTruncates(props.column))
  * cell that would otherwise carry it.
  */
 const title = computed(() => cellFull(props.column, props.entry.row))
+
+/**
+ * What a press on the value narrows to — see `cellNarrowings`. A number is
+ * measured against the column's range over the rows on screen, worked out
+ * once per page of rows rather than once per cell.
+ */
+const narrowings = computed(() => {
+  if (!columnNarrows(props.column)) return []
+  const range = typeof value.value === 'number' ? rangeOver(shell.rows.value, props.column) : null
+  return cellNarrowings(props.column, props.entry.row, props.entry.entity ?? null, range)
+})
 
 /**
  * Stops the click reaching the row, which would open the record — a cell that
@@ -116,6 +142,16 @@ const href = computed(() =>
   >
     {{ text }}
   </PressLink>
+
+  <!-- A value the rows like this one share: pressed, it narrows the list to
+       them — `deployed`, `dO`, `0%`. -->
+  <CellNarrow
+    v-else-if="narrowings.length"
+    :entry="entry"
+    :column="column"
+    :narrowings="narrowings"
+    :truncates="truncates"
+  />
 
   <!-- A span rather than the bare text a cell needs no more of, because a
        cell that wraps is cut short at a line count, and a line count needs a

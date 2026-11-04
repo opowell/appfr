@@ -125,8 +125,9 @@ front of a box, where the next term is typed.
 
 | Key | Does |
 | --- | --- |
-| Enter | ANDs the draft on to the query (`refineExpression`: added to each `OR` alternative; `-set:a` on `set:a` turns the term round) and empties the box. Lands at the end of the query wherever the box is |
-| Escape | Gives up the draft |
+| Enter | ANDs the draft on to the query (`refineExpression`: added to each `OR` alternative; `-set:a` on `set:a` turns the term round) and empties the box. Lands at the end of the query wherever the box is. With a [completion](#completions) stepped to, puts that in the box instead |
+| Escape | Gives up the draft, and takes the completions down |
+| ↓ / ↑ | Step through the completions, and past the last back to none. ↓ brings them back up where they were down |
 | ← / → | Step the box past the parts |
 | Backspace at the start | Lifts the part before the box |
 | Delete at the end | Lifts the part after it |
@@ -154,3 +155,33 @@ The shell context carries the draft for a view of your own: `draft`,
 typed), `drafting`, `commitDraft` and `abandonDraft`. A view running its own
 query should read `liveQuery`. `useDraft` is the same as a composable, for a
 host putting the header over results of its own.
+
+### Completions
+
+A facet is set with a term, and a term nobody knows is there is one nobody
+types. So the box offers the listed type's facets under it, from the moment it
+has the focus:
+
+```
+[deployed:true] | cov                                    |
+                  covered:   Only hosts some spec navigates to
+                  ^ pick it, and the list becomes covered:true · covered:false
+```
+
+- **Nothing typed** lists every facet, in the schema's order, each with what it
+  takes: a toggle's `text`, a chips facet's first options, a range's bounds.
+- **Part of a name** lists the facets whose key or label has it in it. A
+  leading `-` is kept, so `-cov` offers `-covered:`.
+- **`field:` or `field=`** lists that facet's values: `true` and `false` for a
+  toggle, the options for a chips facet, with the comparator typed. A range
+  lists none — its value is typed.
+- **Only the last word is completed**; what is typed before it stays.
+- **A pick goes in the box, not on the query.** A field goes on to its values;
+  a whole term waits for Enter, the results already narrowed by it. Enter with
+  nothing stepped to commits what is typed, as it always did.
+- **None on the home screen**, which lists no one type, or for a type with no
+  facets.
+
+The box is a `combobox` and the list a `listbox` named *Completions*.
+`completeDraft(draft, facets)` is what the box offers, for a header of your
+own.

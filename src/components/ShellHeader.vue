@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useShellContext } from '../composables/context'
 import { useRecordNames } from '../composables/useRecordNames'
+import ShellPopover from './ShellPopover.vue'
 import PressLink from './views/PressLink.vue'
+import { completeDraft } from '../query/completion'
+import type { Completion } from '../query/completion'
 import { scopedEntity } from '../query/drill'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
@@ -169,16 +172,93 @@ function keepBox(element: unknown): void {
   searchBox.value = element instanceof HTMLInputElement ? element : null
 }
 
-/** Escape gives up on what is half-typed: the query stands as it was. */
+/**
+ * Escape gives up on what is half-typed: the query stands as it was. The
+ * completions go with it.
+ */
 function abandonSearch(): void {
   shell.abandonDraft()
   searchBox.value?.blur()
 }
 
-/** Enter adds what is typed on to the query, and the part lands at the end. */
+/**
+ * Enter adds what is typed on to the query, and the part lands at the end —
+ * or, with a completion stepped to, puts that in the box instead.
+ */
 function commitSearch(): void {
+  const offer = completions.value[active.value]
+  if (offering.value && offer) {
+    pick(offer)
+    return
+  }
   caret.value = null
+  completing.value = false
   shell.commitDraft()
+}
+
+/* ---------------------------------------------------- finishing the word */
+
+/**
+ * The listed type's facets, offered under the box as the word is typed — see
+ * {@link completeDraft}. The bar is the only place the query is written, and
+ * this is how a facet is found there: with nothing typed, the box lists every
+ * one; with `covered:`, its values.
+ *
+ * Up while the box has the focus, from the moment it gets it. Down once a
+ * part is committed, or a whole term picked — the box then holds what Enter
+ * will add, and the results already show what that is — and up again with
+ * the next key typed, or ↓.
+ */
+const completing = ref(false)
+
+/** The completion stepped to with the arrow keys, or `-1` for none: Enter then commits what is typed. */
+const active = ref(-1)
+
+const completions = computed<Completion[]>(() => {
+  const facets = shell.entity.value?.facets ?? []
+  return facets.length ? completeDraft(shell.draft.value, facets) : []
+})
+
+const offering = computed(() => completing.value && completions.value.length > 0)
+
+watch(completions, () => {
+  active.value = -1
+})
+
+const listId = `${useId() ?? 'dc-header'}-completions`
+
+/**
+ * Puts a completion in the box. A field goes on to its values; a whole term
+ * waits there for Enter, the results already narrowed by it.
+ */
+function pick(offer: Completion): void {
+  shell.draft.value = offer.draft
+  completing.value = !offer.complete
+  active.value = -1
+  void nextTick(() => {
+    const box = searchBox.value
+    box?.focus()
+    box?.setSelectionRange(offer.draft.length, offer.draft.length)
+  })
+}
+
+/**
+ * ↓ and ↑ step through the completions, and past the last of them back to
+ * none — the box's own text. ↓ also brings the list back up where it was down.
+ */
+function stepCompletions(event: KeyboardEvent, by: 1 | -1): void {
+  if (event.isComposing || !completions.value.length) return
+  event.preventDefault()
+  if (!completing.value) {
+    completing.value = true
+    return
+  }
+  const slots = completions.value.length + 1
+  active.value = ((active.value + 1 + by + slots) % slots) - 1
+}
+
+function optionId(at: number): string {
+  return `${listId}-${at}`
 }
 
 /* ------------------------------------------------- where the box sits */
@@ -302,6 +382,7 @@ function pressField(event: MouseEvent): void {
 
 /** Nothing typed and nowhere to be: the box goes back to the end. */
 function leaveSearch(): void {
+  completing.value = false
   if (!shell.draft.value) caret.value = null
 }
 
@@ -480,9 +561,18 @@ onBeforeUnmount(() => watching?.disconnect())
                 spellcheck="false"
                 :placeholder="between ? '' : 'Search…'"
                 aria-label="Search"
+                role="combobox"
+                aria-autocomplete="list"
+                :aria-expanded="offering"
+                :aria-controls="listId"
+                :aria-activedescendant="offering && active >= 0 ? optionId(active) : undefined"
                 @keydown.enter.prevent="commitSearch"
                 @keydown.esc.prevent="abandonSearch"
+                @keydown.down="stepCompletions($event, 1)"
+                @keydown.up="stepCompletions($event, -1)"
                 @keydown="stepThrough"
+                @focus="completing = true"
+                @input="completing = true"
                 @blur="leaveSearch"
               >
             </template>
@@ -490,6 +580,38 @@ onBeforeUnmount(() => watching?.disconnect())
         </div>
       </div>
     </div>
+
+    <!-- The completions: the type's facets, and the values of the one
+         named. A press keeps the focus in the box, as a part's does. -->
+    <ShellPopover
+      :id="listId"
+      :open="offering"
+      :anchor="searchBox"
+      :min-width="0"
+      :max-height="320"
+      class="dc-completions"
+      role="listbox"
+      aria-label="Completions"
+      @close="completing = false"
+    >
+      <div
+        v-for="(offer, place) in completions"
+        :id="optionId(place)"
+        :key="offer.label"
+        class="dc-completion"
+        :class="{ 'dc-completion--active': place === active }"
+        role="option"
+        :aria-selected="place === active"
+        @mousedown.prevent
+        @click="pick(offer)"
+      >
+        <span class="dc-completion__term dc-mono">{{ offer.label }}</span>
+        <span
+          v-if="offer.hint"
+          class="dc-completion__hint"
+        >{{ offer.hint }}</span>
+      </div>
+    </ShellPopover>
 
     <div
       v-if="slots.actions"
@@ -748,6 +870,43 @@ onBeforeUnmount(() => watching?.disconnect())
   color: var(--dc-accent);
   font-size: var(--dc-text-code);
   line-height: 1.5;
+}
+
+/*
+ * The completions, under the box. The box is the popover's own, drawn in
+ * `body`, and takes none of this component's scope — hence `:global` for it.
+ * The options inside are this component's, and scoped as usual.
+ */
+:global(.dc-completions) {
+  padding: 4px;
+}
+
+.dc-completion {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 4px 8px;
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-fg-1);
+  cursor: pointer;
+}
+
+.dc-completion:hover,
+.dc-completion--active {
+  background: var(--dc-bg-3);
+  color: var(--dc-fg-0);
+}
+
+.dc-completion__term {
+  flex: 0 0 auto;
+  font-size: var(--dc-text-code);
+}
+
+.dc-completion__hint {
+  margin-left: auto;
+  color: var(--dc-fg-3);
+  font-size: var(--dc-text-micro);
+  white-space: nowrap;
 }
 
 /* The one thing here that is not a term: what separates two alternatives. */

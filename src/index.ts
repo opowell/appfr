@@ -169,6 +169,8 @@ export {
   tintColumn,
 } from './query/presets'
 export { chipsFrom, niceMax, rangeFrom, toggleFacet, usefulFacets } from './query/facets'
+export { completeDraft } from './query/completion'
+export type { Completion } from './query/completion'
 export {
   addTerm,
   drillExpression,

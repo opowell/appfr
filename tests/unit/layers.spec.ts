@@ -48,6 +48,10 @@ describe('placePopover', () => {
     expect(at.maxHeight).toBe(800 - 130 - 4 - 8)
   })
 
+  it('takes its own width from a wide anchor where told it may be narrower', () => {
+    expect(placePopover(anchor(100, 100, 900), 0, viewport, { minWidth: 0 }).minWidth).toBe(0)
+  })
+
   it('caps the height at maxHeight where there is more room than that', () => {
     expect(placePopover(anchor(100), 0, viewport, { maxHeight: 340 }).maxHeight).toBe(340)
   })

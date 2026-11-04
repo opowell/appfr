@@ -236,12 +236,14 @@ multi-select, a filter, a date picker), for anything that is not a plain menu.
 | `side` | `'below' \| 'above'` | `'below'` | Preferred side, when it has room. |
 | `align` | `'start' \| 'end'` | `'start'` | Align the left edges, or the right edges. |
 | `maxHeight` | `number` | — | Tallest it grows; the room on its side caps it too. |
+| `minWidth` | `number` | anchor's width | Narrowest it is drawn. `0` takes its own width under a wide anchor. |
 | `to` | `string \| HTMLElement` | `'body'` | Teleport target. |
 | `theme`, `accent`, `tokens` | | | As a dialog's. |
 
 - Placed `position: fixed` from the anchor's box: below, or above when below
-  has under 180px and above has more. At least as wide as the anchor, no wider
-  than the window, never taller than its side's room (the rest scrolls).
+  has under 180px and above has more. At least as wide as the anchor (or
+  `minWidth`), no wider than the window, never taller than its side's room
+  (the rest scrolls).
 - Follows the anchor on scroll, resize and its own content resizing.
 - Escape closes only the topmost popover (one in a dialog closes before the
   dialog) and returns focus to the anchor if focus was inside. Presses in a

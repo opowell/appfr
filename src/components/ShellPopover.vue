@@ -51,6 +51,8 @@ const props = withDefaults(defineProps<{
   align?: 'start' | 'end'
   /** The tallest it grows, in pixels, before the room it has cuts it down. */
   maxHeight?: number
+  /** The narrowest it is drawn, in pixels. The anchor's width unless given. */
+  minWidth?: number
   /** Where it is drawn. */
   to?: string | HTMLElement
   /** The theme, where it is not the one {@link useLayerTheme} finds. */
@@ -65,6 +67,7 @@ const props = withDefaults(defineProps<{
   side: 'below',
   align: 'start',
   maxHeight: undefined,
+  minWidth: undefined,
   to: 'body',
   theme: undefined,
   accent: undefined,
@@ -95,7 +98,7 @@ function place(): void {
     anchor.getBoundingClientRect(),
     root.value?.offsetWidth ?? 0,
     { width: window.innerWidth, height: window.innerHeight },
-    { side: props.side, align: props.align, maxHeight: props.maxHeight },
+    { side: props.side, align: props.align, maxHeight: props.maxHeight, minWidth: props.minWidth },
   )
 }
 

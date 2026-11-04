@@ -31,6 +31,12 @@ export interface PopoverPlacementOptions {
   /** The tallest it may be, before the room on its side cuts it down. */
   maxHeight?: number
   /**
+   * The narrowest it is drawn. The anchor's width unless told otherwise: a
+   * popover opened from a wide control — a field running the width of a bar —
+   * can say `0` and take its own width instead.
+   */
+  minWidth?: number
+  /**
    * Less room than this on the chosen side, and it opens on the other side
    * instead — where that has more. A threshold for choosing a side only, and
    * never a floor on the height: a window shorter than it would otherwise
@@ -47,7 +53,7 @@ export interface PopoverPlacement {
   /** Set when it opens above: its bottom edge's distance from the window's. */
   bottom?: number
   maxHeight: number
-  /** The anchor's width — a popover is never narrower than what opened it. */
+  /** The anchor's width — a popover is never narrower than what opened it, unless told otherwise. */
   minWidth: number
   maxWidth: number
 }
@@ -83,7 +89,7 @@ export function placePopover(
   const maxHeight = Math.min(options.maxHeight ?? Infinity, Math.max(0, room[side]))
 
   const maxWidth = Math.max(0, viewport.width - margin * 2)
-  const minWidth = Math.min(anchor.width, maxWidth)
+  const minWidth = Math.min(options.minWidth ?? anchor.width, maxWidth)
   const drawn = Math.min(Math.max(width, minWidth), maxWidth)
   const wanted = options.align === 'end' ? anchor.right - drawn : anchor.left
   const left = Math.max(margin, Math.min(wanted, viewport.width - drawn - margin))

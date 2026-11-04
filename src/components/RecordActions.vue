@@ -5,7 +5,7 @@ import { VIEW_KINDS } from '../types'
 import { useShellContext } from '../composables/context'
 import { useEntityCounts } from '../composables/useEntityCounts'
 import { formatCount } from '../data/format'
-import { VIEW_LABELS, entityCount, isTypeCardsQuery, resolveView } from '../query/schema'
+import { VIEW_ICONS, VIEW_LABELS, entityCount, isTypeCardsQuery, resolveView } from '../query/schema'
 import PageTick from './views/PageTick.vue'
 import PressLink from './views/PressLink.vue'
 import PickControl from './PickControl.vue'
@@ -136,10 +136,11 @@ function chooseEntity(key: string): void {
 
 /* --------------------------------------------------------- how they are drawn */
 
-const viewOptions = computed<{ key: ViewKind; label: string }[]>(() =>
+const viewOptions = computed<{ key: ViewKind; label: string; icon: string }[]>(() =>
   (props.views ?? [...VIEW_KINDS]).map((key) => ({
     key,
     label: key === 'record' ? (shell.recordView.value?.label ?? VIEW_LABELS.record) : VIEW_LABELS[key],
+    icon: VIEW_ICONS[key],
   })),
 )
 

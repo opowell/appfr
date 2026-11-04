@@ -4,6 +4,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import type { VueWrapper } from '@vue/test-utils'
 import DataShell from '../../src/components/DataShell.vue'
 import { createMemoryAdapter } from '../../src/routing/memory'
+import { VIEW_ICONS } from '../../src/query/schema'
 import type { MemoryAdapter } from '../../src/routing/memory'
 import type {
   DataSource,
@@ -180,7 +181,7 @@ describe('DataShell — a record’s own cards', () => {
     const options = w.findAllComponents({ name: 'PickControl' })
       .find((pick) => pick.props('label') === 'View')!
       .props('options') as { key: string; label: string }[]
-    expect(options.at(-1)).toEqual({ key: 'record', label: 'Read' })
+    expect(options.at(-1)).toEqual({ key: 'record', label: 'Read', icon: VIEW_ICONS.record })
     expect(w.find('.test-reader').exists()).toBe(false)
 
     adapter.push('?q=test%3D%22a.spec%22&v=record')

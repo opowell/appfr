@@ -126,6 +126,7 @@ export {
   resolveView,
   RESULT_FIELDS,
   sortsFor,
+  VIEW_ICONS,
   VIEW_LABELS,
 } from './query/schema'
 export {

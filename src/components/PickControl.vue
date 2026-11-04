@@ -20,6 +20,11 @@ import type { MenuAnchor, MenuItemDef } from 'menu-bar'
 export interface PickOption {
   key: string
   label: string
+  /**
+   * Drawn before the label in the list — a menu item's `icon`. Not on the
+   * button, which says the choice in as little room as the bar can spare.
+   */
+  icon?: string
 }
 
 const props = defineProps<{
@@ -84,6 +89,7 @@ const items = computed<MenuItemDef[]>(() =>
   props.options.map((option) => ({
     id: option.key,
     label: option.label,
+    icon: option.icon,
     checked: option.key === props.modelValue,
   })),
 )

@@ -72,6 +72,25 @@ export const VIEW_LABELS: Record<ViewKind, string> = {
 }
 
 /**
+ * What each view looks like wherever one is offered as a choice, beside its
+ * {@link VIEW_LABELS} name: the `d` of an SVG path in a 16×16 box, stroked and
+ * never filled — a menu item's `icon`. Each is a small drawing of the view
+ * itself, so the seven read apart at a glance.
+ */
+export const VIEW_ICONS: Record<ViewKind, string> = {
+  list: 'M6 4h7.5M6 8h7.5M6 12h7.5M2.5 4h.01M2.5 8h.01M2.5 12h.01',
+  cards: 'M2.5 2.5h11v4.5h-11zM2.5 9h11v4.5h-11z',
+  grid: 'M2.5 2.5h4.5v4.5h-4.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5h-4.5zM9 9h4.5v4.5H9z',
+  images: 'M2.5 3h11v10h-11zM2.5 11l3.5-3.5 2.5 2.5 2-2 3 3M10.5 5.75h.01',
+  table: 'M2.5 3h11v10h-11zM2.5 6.5h11M2.5 9.75h11M6.5 6.5V13',
+  links:
+    'M6.75 9.25a2.5 2.5 0 0 0 3.54 0l2.12-2.12a2.5 2.5 0 0 0-3.54-3.54l-.7.7' +
+    'M9.25 6.75a2.5 2.5 0 0 0-3.54 0L3.59 8.87a2.5 2.5 0 0 0 3.54 3.54l.7-.7',
+  preview: 'M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8zM6 8a2 2 0 1 0 4 0 2 2 0 1 0-4 0',
+  record: 'M4 2h5.5L12 4.5V14H4zM9.5 2v2.5H12M6 8h4M6 10.5h4',
+}
+
+/**
  * The view actually drawn, given what the query asks for and what the host
  * offers. A URL naming a view a host has withheld falls back to the first on
  * offer, so a link into a restricted shell still lands somewhere it can draw.

@@ -57,6 +57,30 @@ describe('PickControl', () => {
     shell.remove()
   })
 
+  it('draws each option’s icon beside its name in the list, and none on the button', async () => {
+    const icons = { a: 'M2 2h12', b: 'M2 8h12' }
+    wrapper = mount(PickControl, {
+      props: {
+        modelValue: 'b',
+        options: options.map((option) => ({ ...option, icon: icons[option.key as 'a' | 'b'] })),
+        label: 'View',
+      },
+      attachTo: document.body,
+    })
+    expect(wrapper.find('.dc-pick__button svg').exists()).toBe(false)
+    await wrapper.find('.dc-pick__button').trigger('click')
+    for (const key of ['a', 'b'] as const) {
+      const path = document.querySelector(`.dc-pick__list [data-dc-item="${key}"] .dc-menu__icon path`)
+      expect(path?.getAttribute('d')).toBe(icons[key])
+    }
+  })
+
+  it('draws no icon where the options name none', async () => {
+    const pick = picker()
+    await pick.find('.dc-pick__button').trigger('click')
+    expect(document.querySelector('.dc-pick__list .dc-menu__icon')).toBeNull()
+  })
+
   it('says nothing of a list that was never up', async () => {
     const pick = picker()
     document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }))

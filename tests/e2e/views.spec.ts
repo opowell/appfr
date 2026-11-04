@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { chooseView, gotoStory, openPick, pickOptions, viewSelect } from './story'
+import { chooseView, gotoStory, openPick, pickList, pickOptions, viewSelect } from './story'
 
 const RESTRICTED = 'shell-data-shell--restricted-views'
 const UNOFFERED_LINK = 'shell-data-shell--restricted-views-unoffered-link'
@@ -75,6 +75,15 @@ test.describe('Views — every one of them, when the host says nothing', () => {
       'Links',
       'Preview',
     ])
+  })
+
+  test('each view is offered with its own icon', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--home')
+    await openPick(page, viewSelect(page), 'View')
+    const icons = pickList(page, 'View').locator('.dc-menu__icon path')
+    await expect(icons).toHaveCount(7)
+    const drawn = await icons.evaluateAll((paths) => paths.map((path) => path.getAttribute('d')))
+    expect(new Set(drawn).size).toBe(7)
   })
 })
 

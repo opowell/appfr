@@ -4,6 +4,7 @@ import type { ColumnDef, PressOptions } from '../../types'
 import { useShellContext } from '../../composables/context'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { formatTerm, refineExpression } from '../../data/expression'
+import { pressPreviewOn } from '../../composables/usePressPreview'
 import { cellText } from '../../query/columns'
 import type { CellNarrowing } from '../../query/narrowing'
 import PressLink from './PressLink.vue'
@@ -68,29 +69,36 @@ function press(narrowing: CellNarrowing, options: PressOptions, event: MouseEven
         class="dc-narrow"
         :href="hrefOf(narrowing)"
         :title="titleOf(narrowing)"
+        selectable
+        v-on="pressPreviewOn(shell, { term: termOf(narrowing) })"
         @press="(options, event) => press(narrowing, options, event)"
-      >{{ narrowing.label ?? text }}</PressLink>
+      ><slot>{{ narrowing.label ?? text }}</slot></PressLink>
     </template>
   </span>
 </template>
 
 <style scoped>
-/* Underlined as a count that drills is (`MetricDrill`): a place to press, not a value flagged. */
+/* Text until the pointer finds it, or marked out at rest where the host's
+   `valuePress` asks for buttons among plain text. */
 .dc-narrow {
   display: inline;
   padding: 0;
   border: none;
+  border-radius: var(--dc-radius-sm);
   background: transparent;
   color: inherit;
   font: inherit;
   letter-spacing: inherit;
   cursor: pointer;
-  text-decoration: underline dotted var(--dc-fg-3);
-  text-underline-offset: 3px;
 }
 
 .dc-narrow:hover {
+  background: var(--dc-accent-bg);
   color: var(--dc-accent);
-  text-decoration-color: var(--dc-accent);
+}
+
+[data-dc-value-press='button'] .dc-narrow {
+  color: var(--dc-accent);
+  font-weight: var(--dc-weight-medium);
 }
 </style>

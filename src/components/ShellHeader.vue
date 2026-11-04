@@ -6,6 +6,7 @@ import ShellPopover from './ShellPopover.vue'
 import PressLink from './views/PressLink.vue'
 import { completeDraft } from '../query/completion'
 import type { Completion } from '../query/completion'
+import { refineExpression } from '../data/expression'
 import { scopedEntity } from '../query/drill'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
 import type { SummaryTerm } from '../query/summary'
@@ -140,6 +141,26 @@ function titleOf(entry: { term: SummaryTerm; idle: boolean }): string {
   const address = entry.term.address
   return address && address !== label ? `${action}\nWritten ${address} in the address and the search box` : action
 }
+
+/**
+ * The parts a press on the value under the pointer would add, said as they will
+ * be once it is pressed. None where the query already holds it.
+ */
+const previewed = computed(() => {
+  const preview = shell.pressPreview?.value
+  if (!preview) return []
+  const query = shell.query.value
+  const held = new Set(shell.terms.value.map((term) => term.address))
+  return summaryTerms(
+    { ...query, expr: refineExpression(query.expr, preview.term) },
+    shell.entity.value,
+    shell.schema.value,
+  )
+    .filter((term) => term.address !== undefined && !held.has(term.address))
+    .map((term) =>
+      preview.name ? `${fieldLabelOf(term.field!)}: ${withoutOwnId(preview.name)}` : term.label,
+    )
+})
 
 /* ------------------------------------------------------- adding to the query */
 
@@ -546,6 +567,15 @@ onBeforeUnmount(() => watching?.disconnect())
                     {{ labelOf(entry.term) }}
                   </button>
                 </template>
+                <!-- What a press on the value under the pointer would add. -->
+                <template v-if="run.key === 'before'">
+                  <span
+                    v-for="label in previewed"
+                    :key="label"
+                    class="dc-term dc-term--preview dc-mono"
+                    aria-hidden="true"
+                  >{{ label }}</span>
+                </template>
               </span>
 
               <!-- Between the two runs, and the same element wherever the
@@ -790,6 +820,14 @@ onBeforeUnmount(() => watching?.disconnect())
 .dc-term:focus-visible {
   opacity: 0.5;
   text-decoration: line-through;
+}
+
+.dc-term--preview,
+.dc-term--preview:hover {
+  opacity: 0.5;
+  text-decoration: none;
+  cursor: default;
+  pointer-events: none;
 }
 
 /*

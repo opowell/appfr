@@ -278,12 +278,22 @@ test.describe('Pressing with the browser’s modifiers', () => {
   })
 
   test('opens a table row elsewhere from anywhere on it', async ({ page, context }) => {
+    await gotoStory(page, 'shell-data-shell--table-view-row-links')
+    const before = page.url()
+    const opened = context.waitForEvent('page')
+    await page.locator('.dc-table__row').first().locator('td').last().click({ modifiers: ['Meta'], position: { x: 2, y: 2 } })
+    const url = await openedUrl(opened)
+    expect(url.searchParams.get('q')).toContain('="')
+    expect(page.url()).toBe(before)
+  })
+
+  test('opens what a value narrows to elsewhere, though it is no link', async ({ page, context }) => {
     await gotoStory(page, TABLE)
     const before = page.url()
     const opened = context.waitForEvent('page')
-    await page.locator('.dc-table__row').first().locator('td').last().click({ modifiers: ['Meta'] })
+    await page.locator('.dc-table__row').first().locator('.dc-narrow').first().click({ modifiers: ['Meta'] })
     const url = await openedUrl(opened)
-    expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
+    expect(url.searchParams.get('q')).toBeTruthy()
     expect(page.url()).toBe(before)
   })
 

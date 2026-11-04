@@ -234,6 +234,26 @@ export function withStanding(
 }
 
 /**
+ * Does by hand what the browser does with a modified click on a link, for what
+ * cannot be one: ⌘/Ctrl opens `href` in a new tab, ⇧ in a new window.
+ */
+export function openElsewhere(href: string, event: MouseEvent): void {
+  const features = event.shiftKey
+    ? `noopener,popup,width=${window.outerWidth},height=${window.outerHeight}`
+    : 'noopener'
+  window.open(href, '_blank', features)
+}
+
+/**
+ * Whether the press now ending made a selection: a drag across text ends in a
+ * click, on whatever it ended over, and that click is not a press.
+ */
+export function hasTextSelection(): boolean {
+  const selection = window.getSelection?.()
+  return Boolean(selection) && !selection!.isCollapsed
+}
+
+/**
  * Whether a press on a link is the browser's to handle: ⌘/Ctrl opens it in a
  * new tab, ⇧ in a new window, and any button but the main one is the
  * browser's too. A press that leads somewhere is a real link (`PressLink`),

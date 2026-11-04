@@ -27,7 +27,7 @@ export const termBar = (page: Page) => page.locator('.dc-header__terms')
 export const searchField = (page: Page) => page.locator('.dc-header__field')
 
 /** Each part, as its own button. Pressing one takes that part out of the query. */
-export const terms = (page: Page) => page.locator('.dc-term')
+export const terms = (page: Page) => page.locator('.dc-term:not(.dc-term--preview)')
 
 /**
  * The box in that row, where the next part is written: a draft the results

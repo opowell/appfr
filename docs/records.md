@@ -24,6 +24,7 @@ each name its host. Two schema fields say so — `scope` on the entity, and
 | Pressing | Does |
 | --- | --- |
 | the row's **name** | narrows to the record without picking a type, and switches to the cards view, so each type's card reports what it holds of the record |
+| anywhere on the **row**, with `rowLinks` on | the same as its name |
 | a **metric** | narrows to what its column's `drill` counts (`12` under *Tests* lists those twelve), keeping the current view |
 
 The shell **applies** both, unlike `activate` and `create`: narrowing is a

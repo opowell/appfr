@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PressOptions } from '../../types'
-import { isBrowserPress, pressOptions } from '../../query/drill'
+import { hasTextSelection, isBrowserPress, openElsewhere, pressOptions } from '../../query/drill'
 
 /**
  * A press that leads somewhere, as a real link.
@@ -14,11 +14,28 @@ import { isBrowserPress, pressOptions } from '../../query/drill'
  *
  * Without an `href` there is nowhere for a link to go — the press is reported
  * to the host rather than applied — so it is a button, as before.
+ *
+ * `selectable` is for a value worth copying. Neither a link's text nor, in
+ * Firefox, a button's can be selected by dragging across it, so it is neither:
+ * a span in the role of a link, the click ending a drag pressing nothing and
+ * the modified presses done by hand. All the browser keeps to itself is its
+ * context menu for links.
  */
 
-const props = defineProps<{ href?: string | null }>()
+const props = defineProps<{ href?: string | null; selectable?: boolean }>()
 
 const emit = defineEmits<{ press: [options: PressOptions, event: MouseEvent] }>()
+
+function clickText(event: MouseEvent) {
+  event.stopPropagation()
+  if (hasTextSelection()) return
+  if (props.href && isBrowserPress(event)) openElsewhere(props.href, event)
+  else emit('press', pressOptions(event), event)
+}
+
+function middleClickText(event: MouseEvent) {
+  if (props.href && event.button === 1) openElsewhere(props.href, event)
+}
 
 function click(event: MouseEvent) {
   if (props.href && isBrowserPress(event)) {
@@ -32,8 +49,17 @@ function click(event: MouseEvent) {
 </script>
 
 <template>
+  <span
+    v-if="selectable"
+    role="link"
+    tabindex="0"
+    class="dc-press"
+    @click="clickText"
+    @auxclick="middleClickText"
+    @keydown.enter="($event.currentTarget as HTMLElement).click()"
+  ><slot /></span>
   <a
-    v-if="href"
+    v-else-if="href"
     :href="href"
     class="dc-press"
     @click="click"

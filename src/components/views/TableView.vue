@@ -2,9 +2,10 @@
 import { computed, ref } from 'vue'
 import type { ColumnDef, PressOptions, ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
-import { isBrowserPress, pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
+import { hasTextSelection, isBrowserPress, openElsewhere, pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
 import type { TermStanding } from '../../query/drill'
 import { useColumns } from '../../composables/useColumns'
+import { pressPreviewOn, recordPressPreview } from '../../composables/usePressPreview'
 import { columnShortcutOf } from '../../data/expression'
 import { usePresentedRows } from '../../composables/usePresentedRows'
 import type { PresentedRow } from '../../composables/usePresentedRows'
@@ -38,7 +39,8 @@ const columns = useColumns()
  * **Price ratio** without being told.
  */
 /**
- * A press on a row anywhere but the links in it.
+ * A press on a row anywhere but the links in it, which leads somewhere only
+ * where the host asked for rows that are links (`rowLinks`).
  *
  * A table row cannot be a link — its cells hold ticks, marks and counts of
  * their own — so what the browser does with a modified click on a link is
@@ -48,12 +50,10 @@ const columns = useColumns()
  * context menu — are.
  */
 function pressRow(row: ShellRow, event: MouseEvent) {
+  if (!shell.rowLinks?.value || hasTextSelection()) return
   const href = shell.pressHref(row)
   if (href && isBrowserPress(event)) {
-    const features = event.shiftKey
-      ? `noopener,popup,width=${window.outerWidth},height=${window.outerHeight}`
-      : 'noopener'
-    window.open(href, '_blank', features)
+    openElsewhere(href, event)
     return
   }
   shell.activate(row, pressOptions(event))
@@ -418,6 +418,7 @@ function followBody(event: Event) {
             :tabindex="column === linkColumn ? undefined : -1"
             :aria-hidden="column === linkColumn ? undefined : 'true'"
             :aria-label="column === linkColumn ? entry.parts.identity : undefined"
+            v-on="pressPreviewOn(shell, recordPressPreview(shell, entry))"
             @press="(options, event) => pressCell(entry.row, options, event)"
           />
           <!-- The mark is a sibling of the value, not a wrapper around it:
@@ -566,7 +567,7 @@ function followBody(event: Event) {
   padding-right: var(--dc-gutter);
 }
 
-.dc-table__row {
+.dc-table[data-dc-row-links] .dc-table__row {
   cursor: pointer;
 }
 

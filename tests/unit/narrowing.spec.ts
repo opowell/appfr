@@ -65,9 +65,15 @@ describe('narrowing from a cell', () => {
     expect(terms(container, rows[1]!)).toEqual([['dO', 'container=dO'], ['l2', 'container=l2']])
   })
 
-  it('offers nothing for text no facet holds, nor for a date', () => {
-    expect(terms({ key: 'host', label: 'Host' }, row({ host: 'a.example' }))).toEqual([])
+  it('narrows to text no facet holds, and to a status, whole', () => {
+    expect(terms({ key: 'host', label: 'Host' }, row({ host: 'a.example' }))).toEqual([[null, 'host=a.example']])
+    expect(terms({ key: 'state', kind: 'status' }, row({ state: 'running' }))).toEqual([[null, 'state=running']])
+    expect(terms({ key: 'host', label: 'Host' }, row({ host: '' }))).toEqual([])
+  })
+
+  it('leaves a date and the column naming the row alone', () => {
     expect(columnNarrows({ key: 'updatedAt', kind: 'date' })).toBe(false)
+    expect(columnNarrows({ key: 'name', role: 'identity' })).toBe(false)
   })
 
   it('leaves a column pressed for something else, or one that says not to, alone', () => {

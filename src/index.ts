@@ -47,7 +47,7 @@ export { default as ColumnCell } from './components/views/ColumnCell.vue'
 
 /* Composables */
 export { provideShellContext, useShellContext, SHELL_CONTEXT_KEY } from './composables/context'
-export type { ShellContext, ShellContextInput } from './composables/context'
+export type { PressPreview, ShellContext, ShellContextInput } from './composables/context'
 export { useQueryState } from './composables/useQueryState'
 export type { NavigationMode, QueryState, UseQueryStateOptions } from './composables/useQueryState'
 export { useResults } from './composables/useResults'

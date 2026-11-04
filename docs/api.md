@@ -24,7 +24,8 @@
 | `tokens` | `Record<string, string>` | — | Tokens set on the shell element, e.g. `{ '--dc-surface': '#101418' }`. |
 | `theme` | `'minimal' \| 'mono-size' \| 'dark' \| 'light' \| 'auto' \| 'macos' \| 'windows' \| 'inherit'` | `'minimal'` | `minimal`: paper, ink and hairlines only. `auto` follows the system. `macos` / `windows` wear that system's look and scheme. `inherit` brings no palette; `mono-size` also drops the type scale (one size, one weight). |
 | `rowPress` | `'open' \| 'narrow'` | `'narrow'` | Pressing a row adds the record to the query, or (`open`) emits `activate` and applies nothing. See [narrowing to one record](records.md#narrowing-to-one-record). |
-| `rowLinks` | `boolean` | `false` | Makes every table cell a real link to where pressing the row goes, so middle click and the context menu work anywhere on the row. Controls in the row stay pressable; one link per row is tabbable. For a name column with `activate: false`. |
+| `rowLinks` | `boolean` | `false` | Makes a press anywhere on a table row go where pressing its name goes, and every cell a real link there, so middle click and the context menu work anywhere on the row. Off, only the values in a row can be pressed. Controls in the row stay pressable; one link per row is tabbable. For a name column with `activate: false`. |
+| `valuePress` | `'text' \| 'button'` | `'button'` | How a value that can be pressed says so in a table: marked out among plain text at rest, or plain text with a hover effect. |
 | `activateHref` | `(row) => string \| null` | — | Where a reported press (`activate`) leads, as an `href`. Rows of types the shell can't narrow to become real links to the host's page; a plain press is still reported. |
 | `createHref` | `(entity) => string \| null` | — | Where `create` leads, so **New …** is a link to the host's form; a plain press is still reported. |
 | `pinnable` | `boolean` | `false` | Offers the star on rows. |

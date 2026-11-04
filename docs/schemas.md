@@ -129,18 +129,24 @@ under *Colors* lists those twelve — only where the row's entity declares a
 `scope`. `scope` puts the → beside the value. `click(row)` is yours.
 
 **Pressing a value narrows to the rows like it**, in every column that is not
-pressed for one of those, unless it says `narrow: false`. The value is
-underlined dotted, as a drilling count is, and the press ANDs a term on to the
-query, keeping the type and the view:
+pressed for one of those and that does not name the row, unless it says
+`narrow: false`. The shell's `valuePress` says how the value shows it can be
+pressed: `text` is plain until the pointer finds it, `button` is marked out at
+rest. While the pointer or the focus is on it, the term it would add stands
+faintly in the search bar. The press ANDs that term on to the query, keeping the
+type and the view, and dragging across the value selects its text instead. Being selectable, it is
+a span in the role of a link, so it has no context menu for links:
 
 | Cell | Adds |
 | --- | --- |
 | a number | `field<=value` where it is nearer the bottom of its range, `field>=value` nearer the top. The range is the column's range facet's, else the rows on screen. A fraction is rounded outwards to four places, so the row pressed stays in |
-| a value of a chips facet on the column's key | `field=value`; each of a list its own press |
+| text or a status | `field=value`; each of a list its own press |
 | a word of a `flagColumn` | `field:true` for that word's field alone |
 
-⌥ held leaves those rows out instead (`-field<=value`). Text no facet holds, a
-date, a status, a picture and a component cell narrow nothing.
+⌥ held leaves those rows out instead (`-field<=value`). The identity column, a
+date, a picture and a component cell narrow nothing. A press on the identity
+goes to the record, so an id column that is not the identity says `activate:
+true` to do the same. The term is written with the column's `field` or `key`.
 `cellNarrowings(column, row, entity, range)` says what a cell offers.
 
 **Sorting** is offered only where `sort` names a sort the entity declares.

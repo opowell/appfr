@@ -11,12 +11,14 @@ import type { FieldTerm } from '../data/expression';
  * - **A number** keeps its end of the range: `recorded<=0` for 0%, where the
  *   range runs from 0 to 1, and `recorded>=0.99` for 99%. The range is the
  *   column's facet's where it has one, and the rows on screen otherwise.
- * - **A value of a chips facet** keeps that value: `container=dO`.
+ * - **Any other value** keeps that value, whole: `container=dO`,
+ *   `source=news.ycombinator.com`.
  * - **A flag** keeps the rows it is set on: `deployed:true`, one term per word
  *   of a {@link ColumnDef.flags} column, each word its own press.
  *
- * Nothing else: text that is no facet's could only be matched by containment,
- * and a date, a status or a picture has no term a press could mean. Pure, so
+ * The identity is not one of these: it says which row this is, not which rows
+ * are like it, so a press on it goes to the record. Nor is a date, which is
+ * rarely shared, or a picture, which has no term a press could mean. Pure, so
  * what each cell offers is tested without a browser.
  */
 /** One press in a cell: what it is on, and the term it adds. */
@@ -32,7 +34,8 @@ export interface NumberRange {
 }
 /**
  * Whether a column's cells are offered as presses at all. Not where the
- * column says not, nor where the cell is pressed for something else already.
+ * column says not, nor where the cell names the row or is pressed for something
+ * else already.
  */
 export declare function columnNarrows(column: ColumnDef): boolean;
 /**

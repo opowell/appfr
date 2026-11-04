@@ -7,7 +7,7 @@
  */
 import '../style/shell.css'
 
-import { computed, inject, onBeforeUnmount, onBeforeUpdate, onMounted, ref, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, onBeforeUpdate, onMounted, ref, shallowRef, watch } from 'vue'
 import type { Component } from 'vue'
 import type {
   DataSource,
@@ -33,6 +33,7 @@ import { createMockDataSource } from '../data/mock'
 import { drillExpression, recordsIn, scopeTermFor } from '../query/drill'
 import { resolveView } from '../query/schema'
 import { provideShellContext } from '../composables/context'
+import type { PressPreview } from '../composables/context'
 import { provideShellOwnTheme } from '../composables/useLayerTheme'
 import { useQueryState } from '../composables/useQueryState'
 import type { NavigationMode } from '../composables/useQueryState'
@@ -244,6 +245,11 @@ const props = withDefaults(
      */
     rowLinks?: boolean
     /**
+     * How a value that can be pressed says so: `text` is plain until the
+     * pointer finds it, `button` is marked out among plain text at rest.
+     */
+    valuePress?: 'text' | 'button'
+    /**
      * Where a press the shell reports as {@link activate} leads, as a browser
      * `href` — the host's page for the record, or null where it leads nowhere.
      * It goes on the row's link ({@link ShellContext.pressHref}), so ⌘-click,
@@ -271,6 +277,7 @@ const props = withDefaults(
   {
     rowPress: 'narrow',
     rowLinks: false,
+    valuePress: 'button',
     loading: false,
     pageQuery: 'shell',
     listPath: '/',
@@ -777,6 +784,12 @@ function recordHref(row: ShellRow): string | null {
   return entity?.href?.(row) || null
 }
 
+const pressPreview = shallowRef<PressPreview | null>(null)
+// A press takes the value away from under the pointer without it ever leaving.
+watch(query.query, () => {
+  pressPreview.value = null
+})
+
 const shell = provideShellContext({
   ...query,
   draft: draft.text,
@@ -820,6 +833,7 @@ const shell = provideShellContext({
   clearSelection,
   narrowsOnPress: computed(() => props.rowPress === 'narrow'),
   rowLinks: computed(() => props.rowLinks),
+  pressPreview,
   /*
    * The one place a press is read, so every view gets the same answer without
    * knowing which of the two it is: they all call this.
@@ -930,6 +944,7 @@ defineExpose({
     ref="root"
     class="dc-shell"
     :data-dc-theme="theme"
+    :data-dc-value-press="valuePress"
     :style="style"
   >
     <div

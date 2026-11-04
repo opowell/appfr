@@ -204,6 +204,11 @@ type __VLS_Props = {
      */
     rowLinks?: boolean;
     /**
+     * How a value that can be pressed says so: `text` is plain until the
+     * pointer finds it, `button` is marked out among plain text at rest.
+     */
+    valuePress?: 'text' | 'button';
+    /**
      * Where a press the shell reports as {@link activate} leads, as a browser
      * `href` — the host's page for the record, or null where it leads nowhere.
      * It goes on the row's link ({@link ShellContext.pressHref}), so ⌘-click,
@@ -362,6 +367,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     listPath: string;
     oneStripFrom: number | false;
     rowPress: "open" | "narrow";
+    valuePress: "text" | "button";
     navigationMode: NavigationMode;
     facetNavigationMode: NavigationMode;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;

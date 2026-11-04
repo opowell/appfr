@@ -13,12 +13,14 @@ import { cellValue } from './columns'
  * - **A number** keeps its end of the range: `recorded<=0` for 0%, where the
  *   range runs from 0 to 1, and `recorded>=0.99` for 99%. The range is the
  *   column's facet's where it has one, and the rows on screen otherwise.
- * - **A value of a chips facet** keeps that value: `container=dO`.
+ * - **Any other value** keeps that value, whole: `container=dO`,
+ *   `source=news.ycombinator.com`.
  * - **A flag** keeps the rows it is set on: `deployed:true`, one term per word
  *   of a {@link ColumnDef.flags} column, each word its own press.
  *
- * Nothing else: text that is no facet's could only be matched by containment,
- * and a date, a status or a picture has no term a press could mean. Pure, so
+ * The identity is not one of these: it says which row this is, not which rows
+ * are like it, so a press on it goes to the record. Nor is a date, which is
+ * rarely shared, or a picture, which has no term a press could mean. Pure, so
  * what each cell offers is tested without a browser.
  */
 
@@ -35,8 +37,8 @@ export interface NumberRange {
   max: number
 }
 
-/** Kinds whose values no term says: a position, a state, a picture, a host's own cell, a date. */
-const UNSAID = new Set(['ordinal', 'status', 'image', 'component', 'date'])
+/** Kinds whose values no term says: a position, a picture, a host's own cell, a date. */
+const UNSAID = new Set(['ordinal', 'image', 'component', 'date'])
 
 /** How many decimals a bound is written to — rounded outwards, so the row pressed is still in. */
 const BOUND_DECIMALS = 4
@@ -48,10 +50,11 @@ function fieldOf(column: ColumnDef): string | undefined {
 
 /**
  * Whether a column's cells are offered as presses at all. Not where the
- * column says not, nor where the cell is pressed for something else already.
+ * column says not, nor where the cell names the row or is pressed for something
+ * else already.
  */
 export function columnNarrows(column: ColumnDef): boolean {
-  if (column.narrow === false) return false
+  if (column.narrow === false || column.role === 'identity') return false
   if (column.activate || column.click || column.drill) return false
   return !UNSAID.has(column.kind ?? 'text') && fieldOf(column) !== undefined
 }
@@ -119,7 +122,6 @@ export function cellNarrowings(
     }]
   }
 
-  if (facet?.kind !== 'chips') return []
   const values = (Array.isArray(value) ? value : [value]).filter(
     (entry): entry is string => typeof entry === 'string' && entry !== '',
   )

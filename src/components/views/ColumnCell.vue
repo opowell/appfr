@@ -14,6 +14,7 @@ function rangeOver(rows: readonly ShellRow[], column: ColumnDef): NumberRange | 
 import { computed } from 'vue'
 import type { ColumnDef, PressOptions, RecordStatus, ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
+import { pressPreviewOn, recordPressPreview } from '../../composables/usePressPreview'
 import { pressOptions } from '../../query/drill'
 import PressLink from './PressLink.vue'
 import type { PresentedRow } from '../../composables/usePresentedRows'
@@ -109,6 +110,15 @@ const href = computed(() =>
     :value="value"
     :column="column"
   />
+  <CellNarrow
+    v-else-if="kind === 'status' && narrowings.length"
+    :entry="entry"
+    :column="column"
+    :narrowings="narrowings"
+    :truncates="false"
+  >
+    <StatusPill :status="status" />
+  </CellNarrow>
   <StatusPill
     v-else-if="kind === 'status'"
     :status="status"
@@ -138,6 +148,7 @@ const href = computed(() =>
     :class="{ 'dc-truncate': truncates }"
     :href="href"
     :title="title"
+    v-on="column.activate ? pressPreviewOn(shell, recordPressPreview(shell, entry)) : {}"
     @press="(options, event) => { event.stopPropagation(); pressWith(options) }"
   >
     {{ text }}
@@ -173,6 +184,9 @@ const href = computed(() =>
   color: var(--dc-accent);
   font: inherit;
   font-weight: var(--dc-weight-medium);
+  /* Off the baseline: a truncated inline-block has none of its own, and would
+     sit above the text beside it. */
+  vertical-align: bottom;
   /* Inherited rather than left-aligned: a pressable number belongs at the
      right-hand edge of its column with the numbers above and below it. */
   text-align: inherit;
@@ -182,6 +196,16 @@ const href = computed(() =>
 /* A button, so a tint rather than an underline. */
 .dc-table__open:hover {
   background: var(--dc-accent-bg);
+}
+
+/* Text until the pointer finds it, as the host's `valuePress` asks. */
+[data-dc-value-press='text'] .dc-table__open {
+  color: inherit;
+  font-weight: inherit;
+}
+
+[data-dc-value-press='text'] .dc-table__open:hover {
+  color: var(--dc-accent);
 }
 
 .dc-cell__image {

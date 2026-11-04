@@ -11,15 +11,24 @@ import type { PressOptions } from '../../types';
  *
  * Without an `href` there is nowhere for a link to go — the press is reported
  * to the host rather than applied — so it is a button, as before.
+ *
+ * `selectable` is for a value worth copying. Neither a link's text nor, in
+ * Firefox, a button's can be selected by dragging across it, so it is neither:
+ * a span in the role of a link, the click ending a drag pressing nothing and
+ * the modified presses done by hand. All the browser keeps to itself is its
+ * context menu for links.
  */
 type __VLS_Props = {
     href?: string | null;
+    selectable?: boolean;
 };
-declare var __VLS_1: {}, __VLS_3: {};
+declare var __VLS_1: {}, __VLS_3: {}, __VLS_5: {};
 type __VLS_Slots = {} & {
     default?: (props: typeof __VLS_1) => any;
 } & {
     default?: (props: typeof __VLS_3) => any;
+} & {
+    default?: (props: typeof __VLS_5) => any;
 };
 declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     press: (options: PressOptions, event: MouseEvent) => any;

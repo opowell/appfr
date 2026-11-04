@@ -1,6 +1,11 @@
 import type { ComputedRef, InjectionKey, Ref, ShallowRef } from 'vue';
 import type { DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, Selection, ShellQuery, ShellRow } from '../types';
 import type { QueryState } from './useQueryState';
+/** A press being considered: the term it would add, and the record it names, if any. */
+export interface PressPreview {
+    term: string;
+    name?: string;
+}
 /**
  * Everything the header, the query panel and the result views need. Provided
  * once by `DataShell` so the parts stay independently testable without a chain
@@ -120,6 +125,12 @@ export interface ShellContext extends QueryState {
      * such thing is still one: without it only the name is a link.
      */
     rowLinks?: ComputedRef<boolean>;
+    /**
+     * What the value under the pointer would add to the query if pressed, which
+     * the header shows faintly among the query's terms. Optional, as
+     * {@link ShellContext.rowLinks} is.
+     */
+    pressPreview?: Ref<PressPreview | null>;
     /**
      * A row was pressed. Narrows to the record where that is what a press means
      * and the record's type can be narrowed to; reported to the host otherwise —

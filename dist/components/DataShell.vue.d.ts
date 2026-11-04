@@ -353,12 +353,12 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     previewsPerType: number;
     loading: boolean;
     rowLinks: boolean;
+    theme: ShellTheme;
     typeChooser: "scoped" | "always";
     selectionPlacement: "start" | "end";
     pageQuery: "shell" | "detached";
     listPath: string;
     oneStripFrom: number | false;
-    theme: ShellTheme;
     rowPress: "open" | "narrow";
     navigationMode: NavigationMode;
     facetNavigationMode: NavigationMode;

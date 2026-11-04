@@ -11,6 +11,8 @@ declare const _default: __VLS_WithSlots<import("vue").DefineComponent<{
     align?: "start" | "end";
     /** The tallest it grows, in pixels, before the room it has cuts it down. */
     maxHeight?: number;
+    /** The narrowest it is drawn, in pixels. The anchor's width unless given. */
+    minWidth?: number;
     /** Where it is drawn. */
     to?: string | HTMLElement;
     /** The theme, where it is not the one {@link useLayerTheme} finds. */
@@ -33,6 +35,8 @@ declare const _default: __VLS_WithSlots<import("vue").DefineComponent<{
     align?: "start" | "end";
     /** The tallest it grows, in pixels, before the room it has cuts it down. */
     maxHeight?: number;
+    /** The narrowest it is drawn, in pixels. The anchor's width unless given. */
+    minWidth?: number;
     /** Where it is drawn. */
     to?: string | HTMLElement;
     /** The theme, where it is not the one {@link useLayerTheme} finds. */
@@ -47,13 +51,14 @@ declare const _default: __VLS_WithSlots<import("vue").DefineComponent<{
 }>, {
     accent: string;
     tokens: Record<string, string>;
-    anchor: HTMLElement | null;
     open: boolean;
-    to: string | HTMLElement;
-    maxHeight: number;
-    theme: ShellTheme;
+    anchor: HTMLElement | null;
     side: "below" | "above";
     align: "start" | "end";
+    maxHeight: number;
+    minWidth: number;
+    to: string | HTMLElement;
+    theme: ShellTheme;
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>, {
     default?: () => unknown;
 }>;

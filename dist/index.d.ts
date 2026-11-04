@@ -65,6 +65,10 @@ export { facetField, facetValue, hasActiveFacets, withFacetValue, withoutFacet, 
 export { cellFull, cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, EMPTY_CELL, roleColumn, roleColumns, rowKey, } from './query/columns';
 export { bytesCell, dateColumn, durationCell, elapsedCell, entityColumn, facetColumn, flagColumn, identityColumn, metricColumn, ordinalColumn, percentCell, pictureColumn, referenceColumn, stateColumn, tintColumn, } from './query/presets';
 export { chipsFrom, niceMax, rangeFrom, toggleFacet, usefulFacets } from './query/facets';
+export { completeDraft } from './query/completion';
+export type { Completion } from './query/completion';
+export { cellNarrowings, columnNarrows, numberRange } from './query/narrowing';
+export type { CellNarrowing, NumberRange } from './query/narrowing';
 export { addTerm, drillExpression, excludingTerm, fieldTerm, idsExpression, liftTerm, narrowPatch, pressOptions, recordsIn, recordTerm, scopedEntity, scopeTerm, scopeTermFor, termStanding, withoutOwnScope, withStanding, } from './query/drill';
 export type { SearchPatch, TermStanding } from './query/drill';
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary';

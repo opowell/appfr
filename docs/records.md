@@ -328,11 +328,21 @@ gives a type a view that is the record, under a label of your choosing:
   :record-views="{ documents: { label: 'Read', component: DocumentReader } }" />
 ```
 
-The View chooser offers it after the others while the query lists no type and
-names exactly one record of a type in the map; on any other screen it is not
-offered, and a link that kept `v=record` draws the first view on offer (or
-Cards). Chosen, the URL says `v=record` and the component is drawn with the
-record's `id` in place of the results — with no pager, sort or ticks over it,
-there being no rows under them. It fills the results area, which scrolls as
-it does for any view; a component that pages instead sizes itself to the area
-(`height: 100%`).
+The View chooser offers it after the others in two places, and a link that
+kept `v=record` anywhere else draws the first view on offer (or Cards):
+
+- **A list of the type** (`e=documents`, filtered however it is). Read is then
+  a view of that list like any other, a record at a time: the same query, the
+  same order, a page apiece, so the pager steps from one to the next
+  (`‹ 3 / 164 ›`) and the sort stays on offer. Switching to it starts at the
+  first row of the page you were on; switching back lands on the page holding
+  the record you were reading. A press on a row of the type reads it, in its
+  place — ahead of `href` and `activate`, though not of narrowing to a type
+  with a scope.
+- **One record of the type**, where the query lists no type and names exactly
+  that record. There is nothing to step through, so there is no pager.
+
+Chosen, the URL says `v=record` and the component is drawn with the record's
+`id` in place of the results, with no ticks over it. It fills the results
+area, which scrolls as it does for any view; a component that pages instead
+sizes itself to the area (`height: 100%`).

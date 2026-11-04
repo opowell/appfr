@@ -31,6 +31,7 @@ import { createHistoryAdapter } from '../routing/history'
 import { detachableAdapter } from '../routing/detached'
 import { createMockDataSource } from '../data/mock'
 import { drillExpression, recordsIn, scopeTermFor } from '../query/drill'
+import { resolveView } from '../query/schema'
 import { provideShellContext } from '../composables/context'
 import { provideShellOwnTheme } from '../composables/useLayerTheme'
 import { useQueryState } from '../composables/useQueryState'
@@ -153,11 +154,13 @@ const props = withDefaults(
     /**
      * A view of the host's own per record type — `{ documents: { label:
      * 'Read', component: DocumentReader } }` — the record itself rather than
-     * rows about it. The View chooser offers it beside the shell's own while
-     * the query lists no type and narrows to one record of a type named here,
-     * and nothing else; chosen, it is `v=record` in the URL and is drawn as
-     * `<component :is :id>` in place of the results, with no pager, sort or
-     * ticks over it, there being no rows under them.
+     * rows about it. The View chooser offers it beside the shell's own where
+     * the query lists a type named here, or lists no type and narrows to one
+     * record of one; chosen, it is `v=record` in the URL and is drawn as
+     * `<component :is :id>` in place of the results, with no ticks over it.
+     * A type listed is read a record at a time: the query's rows, in its
+     * order, a page apiece, so the pager steps from each to the next — and a
+     * press on a row of that type opens it there, in its place.
      */
     recordViews?: Record<string, RecordView>
     /**
@@ -471,15 +474,6 @@ const draft = useDraft({
   setExpression: query.setExpression,
 })
 
-const results = useResults({
-  source,
-  query: draft.live,
-  schema: computed(() => props.schema),
-  entity: query.entity,
-  limit: computed(() => props.limit),
-  within,
-})
-
 watch(query.query, (value) => emit('query-change', value))
 
 /* ----------------------------------------------------------------- records */
@@ -525,14 +519,23 @@ function cardedRecords() {
 
 /**
  * The host's own view of the record the query is about, where it is about one
- * alone: a view of one record has nothing to say of a screen about two, and
- * a type listed is a list of that type, not a record.
+ * alone: a view of one record has nothing to say of a screen about two.
  */
-const recordView = computed<(RecordView & { id: string }) | null>(() => {
+const namedRecordView = computed<(RecordView & { id: string }) | null>(() => {
   const [record, ...others] = recordEntries.value
   if (!record || others.length || query.entity.value !== null) return null
   const view = props.recordViews?.[record.entityKey]
   return view ? { ...view, id: record.id } : null
+})
+
+/**
+ * The host's own view of the type listed, where it has one: the query's rows
+ * drawn as that view, a record at a time — the same rows, in the same order,
+ * as the list it is another view of.
+ */
+const listedRecordView = computed<RecordView | null>(() => {
+  const key = query.entity.value?.key
+  return (key && props.recordViews?.[key]) || null
 })
 
 /**
@@ -546,9 +549,74 @@ const offeredViews = computed<ViewKind[] | undefined>(() => {
   const offered = typeof asked === 'function'
     ? asked({ entity: query.entity.value, records: records.value })
     : asked
-  if (recordView.value) return [...(offered ?? VIEW_KINDS).filter((kind) => kind !== 'record'), 'record']
+  if (namedRecordView.value || listedRecordView.value) {
+    return [...(offered ?? VIEW_KINDS).filter((kind) => kind !== 'record'), 'record']
+  }
   return offered?.filter((kind) => kind !== 'record')
 })
+
+/**
+ * Whether the rows are being read a record at a time: the type listed has a
+ * view of its own and it is the one in force. A page is then one record, so
+ * the pager steps from each to the next as it steps through pages elsewhere.
+ */
+const reading = computed(
+  () => listedRecordView.value !== null && resolveView(query.query.value.view, offeredViews.value) === 'record',
+)
+
+/** Rows a page: the host's `limit`, and one while they are read a record at a time. */
+const limit = computed(() => (reading.value ? 1 : props.limit))
+
+const results = useResults({
+  source,
+  query: draft.live,
+  schema: computed(() => props.schema),
+  entity: query.entity,
+  limit,
+  within,
+})
+
+/**
+ * What the record view draws: the record the query names, or the row on the
+ * page while the type listed is read — and while that row is on its way, the
+ * view with no record yet, so the results say they are running.
+ */
+const recordView = computed<(RecordView & { id: string | null }) | null>(() => {
+  if (namedRecordView.value) return namedRecordView.value
+  const view = listedRecordView.value
+  return view ? { ...view, id: results.rows.value[0]?.id ?? null } : null
+})
+
+/**
+ * Changes the view, keeping the place in the results where reading changes
+ * how many rows a page holds: from a page of rows to its first one, and from
+ * a record back to the page of rows it is on.
+ */
+function setView(view: ViewKind): void {
+  const into = listedRecordView.value !== null && resolveView(view, offeredViews.value) === 'record'
+  if (into === reading.value) {
+    query.setView(view)
+    return
+  }
+  const page = draft.live.value.page
+  const target = into ? (page - 1) * props.limit + 1 : Math.ceil(page / props.limit)
+  if (draft.drafting.value) {
+    query.setView(view)
+    draft.setPage(target)
+  } else {
+    query.setView(view, target)
+  }
+}
+
+/**
+ * Where a press on a row reads it: in the record view, on the page that is
+ * that row — for a type with a view of its own, listed.
+ */
+function readPage(row: ShellRow): number | null {
+  if (!listedRecordView.value || reading.value) return null
+  const index = results.rows.value.indexOf(row)
+  return index === -1 ? null : results.offset.value + index + 1
+}
 
 /*
  * A page past the end of the results — a bookmark to a query that has since
@@ -724,11 +792,12 @@ const shell = provideShellContext({
     if (draft.drafting.value) draft.setPage(page)
     else query.setPage(page, mode)
   },
+  setView,
   schema: computed(() => props.schema),
   entities: computed(() => props.schema.entities),
   rows: results.rows,
   total: results.total,
-  limit: computed(() => props.limit),
+  limit,
   offset: results.offset,
   pageCount: results.pageCount,
   pending: results.pending,
@@ -760,6 +829,18 @@ const shell = provideShellContext({
       drill(row, null, options)
       return
     }
+    // A record of a type with a view of its own is read there, in its place
+    // among the rows — the list it was pressed in, a record at a time.
+    const place = readPage(row)
+    if (place !== null) {
+      if (draft.drafting.value) {
+        query.setView('record')
+        draft.setPage(place)
+      } else {
+        query.setView('record', place)
+      }
+      return
+    }
     // A record that lives somewhere opens there rather than being reported —
     // beside the shell, which keeps the reader's place in it.
     const away = recordHref(row)
@@ -769,10 +850,12 @@ const shell = provideShellContext({
     }
     emit('activate', row)
   },
-  pressHref: (row) =>
-    narrowsHere(row)
-      ? query.narrowHref(drillExpression(props.schema, query.query.value, row), null, 'cards')
-      : (recordHref(row) ?? props.activateHref?.(row) ?? null),
+  pressHref: (row) => {
+    if (narrowsHere(row)) return query.narrowHref(drillExpression(props.schema, query.query.value, row), null, 'cards')
+    const place = readPage(row)
+    if (place !== null) return query.hrefFor({ view: 'record', page: place })
+    return recordHref(row) ?? props.activateHref?.(row) ?? null
+  },
   recordHref,
   drillHref: (row, entity) =>
     scopeTermFor(props.schema, row)

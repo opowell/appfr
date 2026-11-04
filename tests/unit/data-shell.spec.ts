@@ -196,6 +196,59 @@ describe('DataShell — a record’s own cards', () => {
     expect(w.find('.dc-types').exists()).toBe(true)
   })
 
+  it('reads the type listed a record at a time, in the place the list was at', async () => {
+    const TestReader = {
+      props: { id: { type: String, required: true } },
+      setup: (props: { id: string }) => () => h('div', { class: 'test-reader' }, props.id),
+    }
+    const recordViews = markRaw({ tests: { label: 'Read', component: TestReader } })
+    const adapter = createMemoryAdapter('?e=tests&v=list&p=2')
+    const w = shell(adapter, { recordViews })
+    await flushPromises()
+
+    const viewPick = () => w.findAllComponents({ name: 'PickControl' })
+      .find((pick) => pick.props('label') === 'View')!
+    expect((viewPick().props('options') as { key: string }[]).at(-1)).toMatchObject({ key: 'record', label: 'Read' })
+
+    // From the second page of ten, the first row on it.
+    viewPick().vm.$emit('update:modelValue', 'record')
+    await flushPromises()
+    expect(param(adapter, 'v')).toBe('record')
+    expect(param(adapter, 'p')).toBe('11')
+    expect(w.find('.test-reader').text()).toBe('tests-10')
+
+    // The pager steps a record at a time, through the same query's rows.
+    expect(w.find('.dc-pager__total').text()).toBe('/ 30')
+    expect(w.find('.dc-pager__page').attributes('title')).toBe('Record 11 of 30')
+    await w.find('[aria-label="Next page"]').trigger('click')
+    await flushPromises()
+    expect(w.find('.test-reader').text()).toBe('tests-11')
+
+    // And back to the list, on the page that record is on.
+    viewPick().vm.$emit('update:modelValue', 'list')
+    await flushPromises()
+    expect(param(adapter, 'p')).toBe('2')
+  })
+
+  it('reads a row pressed in a list of a type with a view of its own', async () => {
+    const TestReader = {
+      props: { id: { type: String, required: true } },
+      setup: (props: { id: string }) => () => h('div', { class: 'test-reader' }, props.id),
+    }
+    const recordViews = markRaw({ notes: { label: 'Read', component: TestReader } })
+    const adapter = createMemoryAdapter('?e=notes&v=list&p=3')
+    const w = shell(adapter, { recordViews })
+    await flushPromises()
+
+    const third = w.findAll('.dc-list__open')[2]!
+    expect(third.attributes('href')).toContain('p=23')
+    await third.trigger('click')
+    await flushPromises()
+    expect(param(adapter, 'v')).toBe('record')
+    expect(w.find('.test-reader').text()).toBe('notes-22')
+    expect(w.emitted('activate')).toBeUndefined()
+  })
+
   it('draws nothing of its own where the query names no record', async () => {
     const adapter = createMemoryAdapter('?v=cards')
     const w = shell(adapter, {}, { record: recordSlot })

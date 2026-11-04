@@ -76,7 +76,11 @@ export interface QueryState {
   entityHref(key: string | null): string
   /** Clears the entity filter — back to everything. */
   clearEntity(): void
-  setView(view: ViewKind): void
+  /**
+   * Draws the results another way — on the page given, where the new view
+   * pages them differently (`Read` is a record a page), in the same navigation.
+   */
+  setView(view: ViewKind, page?: number): void
   setSort(key: string): void
   toggleDirection(): void
   /**
@@ -234,8 +238,8 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
     setEntity,
     entityHref: (key) => linkTo(entityPatch(key)),
     clearEntity: () => setEntity(null),
-    setView(view) {
-      commit({ view }, primaryMode())
+    setView(view, page) {
+      commit(page === undefined ? { view } : { view, page: Math.max(1, Math.floor(page)) }, primaryMode())
     },
     setSort(key) {
       commit({ sort: findSort(entity.value, key, schema.value).key }, primaryMode())

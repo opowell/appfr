@@ -53,7 +53,7 @@ const view = computed(() => resolveView(shell.query.value.view, props.views))
  * that offers no order has nothing to choose.
  */
 const showOrder = computed(
-  () => records.value && view.value !== 'table' && shell.sorts.value.length > 0,
+  () => (records.value || reading.value) && view.value !== 'table' && shell.sorts.value.length > 0,
 )
 
 const sortOptions = computed(() =>
@@ -89,6 +89,13 @@ const records = computed(
   () => !isTypeCardsQuery(shell.query.value, props.views) && view.value !== 'record',
 )
 
+/**
+ * The rows of the type listed, read a record at a time in its own view: no
+ * rows on screen to tick, but the query's rows still, in its order, a page
+ * apiece — so the order and the pages are offered as they are over a list.
+ */
+const reading = computed(() => view.value === 'record' && shell.query.value.entity !== null)
+
 /* ---------------------------------------------------------------- pages */
 
 /**
@@ -97,7 +104,8 @@ const records = computed(
  * before it has any (`loading` on `DataShell`). The home screen's cards are
  * not: a card per type runs its own per-entity query, so the shell's single
  * result set is not what is on screen and stepping through it would move
- * nothing. Nor is a record's own view, which draws that one record.
+ * nothing. Nor is a record's own view of the one record a query names —
+ * though the type listed, read a record at a time, is paged a record a page.
  *
  * A note from the host is the other reason to be there: it says the count is
  * short, and the count is what the pager hovers as — so a single page with
@@ -105,7 +113,7 @@ const records = computed(
  */
 const paged = computed(
   () =>
-    records.value &&
+    (records.value || reading.value) &&
     !shell.loading.value &&
     (shell.pageCount.value > 1 || Boolean(props.pagesNote)),
 )

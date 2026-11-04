@@ -114,11 +114,13 @@ type __VLS_Props = {
     /**
      * A view of the host's own per record type — `{ documents: { label:
      * 'Read', component: DocumentReader } }` — the record itself rather than
-     * rows about it. The View chooser offers it beside the shell's own while
-     * the query lists no type and narrows to one record of a type named here,
-     * and nothing else; chosen, it is `v=record` in the URL and is drawn as
-     * `<component :is :id>` in place of the results, with no pager, sort or
-     * ticks over it, there being no rows under them.
+     * rows about it. The View chooser offers it beside the shell's own where
+     * the query lists a type named here, or lists no type and narrows to one
+     * record of one; chosen, it is `v=record` in the URL and is drawn as
+     * `<component :is :id>` in place of the results, with no ticks over it.
+     * A type listed is read a record at a time: the query's rows, in its
+     * order, a page apiece, so the pager steps from each to the next — and a
+     * press on a row of that type opens it there, in its place.
      */
     recordViews?: Record<string, RecordView>;
     /**

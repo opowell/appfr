@@ -41,6 +41,11 @@ const pages = computed(() =>
  * the count is short of is a fact about the same number.
  */
 const position = computed(() => {
+  // Read a record at a time, a page is a record and the rows say nothing more.
+  if (shell.limit.value === 1) {
+    const place = `Record ${formatInteger(page.value)} of ${pages.value}`
+    return props.pagesNote ? `${place}\n${props.pagesNote}` : place
+  }
   let place = `Page ${formatInteger(page.value)} of ${pages.value}`
   const shown = shell.rows.value.length
   if (shown) {

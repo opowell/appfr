@@ -86,11 +86,13 @@ export interface ShellContext extends QueryState {
    */
   loading: ComputedRef<boolean>
   /**
-   * The host's own view of the one record the query narrows to, with that
-   * record's id, or null where there is none to offer — see `recordViews` on
+   * The host's own view of a record, with the id of the record it draws: the
+   * one record the query narrows to, or the row on the page while the type
+   * listed is read a record at a time — null as the id while that row is on
+   * its way. Null where there is no such view to offer — see `recordViews` on
    * `DataShell`.
    */
-  recordView: ComputedRef<(RecordView & { id: string }) | null>
+  recordView: ComputedRef<(RecordView & { id: string | null }) | null>
   /** Whether the star affordance is offered on rows. */
   pinnable: ComputedRef<boolean>
   isPinned(row: ShellRow): boolean

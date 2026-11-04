@@ -49,7 +49,11 @@ export interface QueryState {
     entityHref(key: string | null): string;
     /** Clears the entity filter — back to everything. */
     clearEntity(): void;
-    setView(view: ViewKind): void;
+    /**
+     * Draws the results another way — on the page given, where the new view
+     * pages them differently (`Read` is a record a page), in the same navigation.
+     */
+    setView(view: ViewKind, page?: number): void;
     setSort(key: string): void;
     toggleDirection(): void;
     /**

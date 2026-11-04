@@ -243,10 +243,11 @@ onBeforeUnmount(() => {
     </TypeCardsView>
 
     <!-- Nor does the host's view of one record: it is the record, not the
-         rows the query found about it. -->
+         rows the query found about it. Read a record at a time, the record is
+         the row on the page, and until there is one the states below say why. -->
     <component
       :is="recordView.component"
-      v-else-if="recordView"
+      v-else-if="recordView?.id"
       :id="recordView.id"
     />
 

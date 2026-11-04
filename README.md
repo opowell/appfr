@@ -40,7 +40,7 @@ another package pulls in (`blockExoticSubdeps`); one the app lists itself is
 fine.
 
 ```bash
-npm install github:opowell/themes#v0.1.0 github:opowell/menu-bar#v0.2.0
+npm install github:opowell/themes#v0.1.0 github:opowell/menu-bar#v0.3.0
 ```
 
 Each of those ships its own stylesheet and none carries another's, so a page

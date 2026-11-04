@@ -1,10 +1,7 @@
 export interface PickOption {
     key: string;
     label: string;
-    /**
-     * Drawn before the label in the list — a menu item's `icon`. Not on the
-     * button, which says the choice in as little room as the bar can spare.
-     */
+    /** Drawn before the label, in the list and on the button — a menu item's `icon`. */
     icon?: string;
 }
 type __VLS_Props = {

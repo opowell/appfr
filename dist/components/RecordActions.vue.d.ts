@@ -1,13 +1,10 @@
 import type { ViewKind } from '../types';
 /**
- * The head of the results: which type they are, how they are drawn and what
- * they are ordered by, and what can be done with them — make one, tick some,
- * and copy, delete or otherwise operate on what is ticked.
- *
- * The type and the view are chosen here rather than on the bar above, which
- * is the query's to narrow: both are about the results as a whole, and here
- * they are over the results they change. So are the pages, which step through
- * the results rather than narrowing the query.
+ * The head of the results: what they are ordered by, and what can be done
+ * with them — make one, tick some, and copy, delete or otherwise operate on
+ * what is ticked. Which type they are and how they are drawn are chosen on the
+ * bar, before the query — see `RecordChoosers`. The pages are here, stepping
+ * through the results rather than narrowing the query.
  *
  * The bar over the results rather than a menu on each row, because three of
  * the four are about a *set* of records — and the fourth, making one, is what
@@ -15,14 +12,12 @@ import type { ViewKind } from '../types';
  *
  * Every one of them is named by the entity rather than assumed: a type that
  * says nothing about deleting is a type that is not deleted from here, and the
- * bar is one control shorter. A type that says nothing at all, with no choice
- * of type or view to offer either, has no bar.
+ * bar is one control shorter. A type that says nothing at all, with no order
+ * or pages to offer either, has no bar.
  */
 type __VLS_Props = {
     /** The views on offer, as `DataShell` was told them — see `ResultsArea`. */
     views?: ViewKind[];
-    /** Where the list of types is a control on the bar — see `showTypes`. */
-    typeChooser?: 'scoped' | 'always';
     /** Which end of the bar the count and its Clear sit at — see `selectionAtEnd`. */
     selectionPlacement?: 'start' | 'end';
     /** What the count is short of, in the host's words — see `ShellPager`. */

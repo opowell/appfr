@@ -130,7 +130,7 @@ type __VLS_Props = {
     typeChooser?: 'scoped' | 'always';
     /**
      * Where the strip over the results says how many are ticked, with its
-     * Clear. `start`, the default, leads the strip after the choosers, the
+     * Clear. `start`, the default, leads the strip after the sort, the
      * Clear a quiet word. `end` sets both at the far end beside the operations
      * they are the count for, the Clear drawn as one of their buttons.
      */
@@ -354,8 +354,8 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     loading: boolean;
     rowLinks: boolean;
     theme: ShellTheme;
-    typeChooser: "scoped" | "always";
     selectionPlacement: "start" | "end";
+    typeChooser: "scoped" | "always";
     pageQuery: "shell" | "detached";
     listPath: string;
     oneStripFrom: number | false;

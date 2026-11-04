@@ -1,6 +1,8 @@
 type __VLS_Slots = {
     /** Extra controls at the right end of the bar. */
     actions?: () => unknown;
+    /** Controls before the query, after the domain's name. */
+    lead?: () => unknown;
     /**
      * The domain's mark, drawn in place of its name — see `brand` on
      * `DataShell`. The name stays the bar's accessible text.

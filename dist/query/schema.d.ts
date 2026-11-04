@@ -29,6 +29,13 @@ export declare function isViewKind(value: unknown): value is ViewKind;
  */
 export declare const VIEW_LABELS: Record<ViewKind, string>;
 /**
+ * What each view looks like wherever one is offered as a choice, beside its
+ * {@link VIEW_LABELS} name: the `d` of an SVG path in a 16×16 box, stroked and
+ * never filled — a menu item's `icon`. Each is a small drawing of the view
+ * itself, so the seven read apart at a glance.
+ */
+export declare const VIEW_ICONS: Record<ViewKind, string>;
+/**
  * The view actually drawn, given what the query asks for and what the host
  * offers. A URL naming a view a host has withheld falls back to the first on
  * offer, so a link into a restricted shell still lands somewhere it can draw.

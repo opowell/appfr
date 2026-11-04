@@ -340,6 +340,16 @@ kept `v=record` anywhere else draws the first view on offer (or Cards):
   the record you were reading. A press on a row of the type reads it, in its
   place — ahead of `href` and `activate`, though not of narrowing to a type
   with a scope.
+
+  The record on screen stays until the reader moves, whatever the rows do
+  under it: where rows land before it the place follows it, without a new
+  history entry, and where it leaves the results it stays, still counted, until
+  stepped away from — so a step lands on the record either side rather than
+  over one. The place is looked for 50 rows either side of where it was, in
+  one `query`; further away than that it reads as having left. A source that
+  changes while it is being read needs only to keep its ids stable — and to
+  have its first rows land together, or under `loading`, since the first row
+  seen at a place is the one held.
 - **One record of the type**, where the query lists no type and names exactly
   that record. There is nothing to step through, so there is no pager.
 

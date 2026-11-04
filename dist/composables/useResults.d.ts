@@ -16,6 +16,8 @@ export interface UseResultsOptions {
      */
     within?: ComputedRef<string>;
 }
+/** How far from its place {@link ResultsState.locate} looks for a row. */
+export declare const LOCATE_REACH = 50;
 export interface ResultsState {
     rows: ShallowRef<ShellRow[]>;
     /** Rows matching the query, of which the current page is one `limit`. */
@@ -38,6 +40,13 @@ export interface ResultsState {
     counting: Ref<boolean>;
     error: ShallowRef<unknown>;
     refresh(): void;
+    /**
+     * Where a row now sits in the results, counted from 1, looking
+     * {@link LOCATE_REACH} rows either side of `place`: one request, of a size
+     * that does not grow with the results. Null where it is not among them,
+     * which is not to say it is nowhere — or where the source could not say.
+     */
+    locate(id: string, place: number): Promise<number | null>;
 }
 /**
  * Runs the current query against the data source.

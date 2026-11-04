@@ -32,6 +32,9 @@ export interface UseResultsOptions {
   within?: ComputedRef<string>
 }
 
+/** How far from its place {@link ResultsState.locate} looks for a row. */
+export const LOCATE_REACH = 50
+
 export interface ResultsState {
   rows: ShallowRef<ShellRow[]>
   /** Rows matching the query, of which the current page is one `limit`. */
@@ -54,6 +57,13 @@ export interface ResultsState {
   counting: Ref<boolean>
   error: ShallowRef<unknown>
   refresh(): void
+  /**
+   * Where a row now sits in the results, counted from 1, looking
+   * {@link LOCATE_REACH} rows either side of `place`: one request, of a size
+   * that does not grow with the results. Null where it is not among them,
+   * which is not to say it is nowhere — or where the source could not say.
+   */
+  locate(id: string, place: number): Promise<number | null>
 }
 
 /**
@@ -317,5 +327,22 @@ export function useResults(options: UseResultsOptions): ResultsState {
     teardown()
   }, true)
 
-  return { rows, total, offset, pageCount, pending, counting, error, refresh: run }
+  const locate = async (id: string, place: number): Promise<number | null> => {
+    const offset = Math.max(0, place - 1 - LOCATE_REACH)
+    try {
+      const { rows: near } = await options.source.value.query({
+        query: asks(),
+        schema: options.schema.value,
+        entity: options.entity.value,
+        limit: LOCATE_REACH * 2 + 1,
+        offset,
+      })
+      const at = near.findIndex((row) => row.id === id)
+      return at === -1 ? null : offset + at + 1
+    } catch {
+      return null
+    }
+  }
+
+  return { rows, total, offset, pageCount, pending, counting, error, refresh: run, locate }
 }

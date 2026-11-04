@@ -249,6 +249,148 @@ describe('DataShell — a record’s own cards', () => {
     expect(w.emitted('activate')).toBeUndefined()
   })
 
+  describe('holding the record being read while the rows change', () => {
+    const TestReader = {
+      props: { id: { type: String, required: true } },
+      setup: (props: { id: string }) => () => h('div', { class: 'test-reader' }, props.id),
+    }
+    const recordViews = markRaw({ tests: { label: 'Read', component: TestReader } })
+
+    /** A source of exactly these rows, in this order. */
+    const listing = (ids: string[]): DataSource => ({
+      query: ({ offset, limit }: QueryRequest) => ({
+        rows: ids.slice(offset, offset + limit).map((id) => row('tests', id)),
+        total: ids.length,
+        unfiltered: true,
+      }),
+    })
+    const ids = ['a', 'b', 'c', 'd', 'e']
+    const read = async (page: number, from = ids) => {
+      const adapter = createMemoryAdapter(`?e=tests&v=record&p=${page}`)
+      const w = shell(adapter, { recordViews, source: listing(from) })
+      await flushPromises()
+      return { adapter, w }
+    }
+    const reading = (w: VueWrapper) => w.find('.test-reader').text()
+    const place = (w: VueWrapper) => (w.find('.dc-pager__box').element as HTMLInputElement).value
+    const count = (w: VueWrapper) => w.find('.dc-pager__total').text()
+    const next = (w: VueWrapper) => w.find('[aria-label="Next page"]')
+    const previous = (w: VueWrapper) => w.find('[aria-label="Previous page"]')
+
+    it('stays on a record that leaves the results, however often they change', async () => {
+      const { adapter, w } = await read(3)
+      await w.setProps({ source: listing(['a', 'b', 'd', 'e']) })
+      await flushPromises()
+      await w.setProps({ source: listing(['a', 'b', 'd', 'e']) })
+      await flushPromises()
+
+      expect(reading(w)).toBe('c')
+      expect(param(adapter, 'p')).toBe('3')
+      // Still counted, so nothing is stepped over.
+      expect(count(w)).toBe('/ 5')
+    })
+
+    it('steps from a record that has gone to the ones either side of it', async () => {
+      const { adapter, w } = await read(3)
+      await w.setProps({ source: listing(['a', 'b', 'd', 'e']) })
+      await flushPromises()
+
+      await next(w).trigger('click')
+      await flushPromises()
+      expect(reading(w)).toBe('d')
+      expect(param(adapter, 'p')).toBe('3')
+      expect(count(w)).toBe('/ 4')
+
+      await w.setProps({ source: listing(['a', 'b', 'e']) })
+      await flushPromises()
+      await previous(w).trigger('click')
+      await flushPromises()
+      expect(reading(w)).toBe('b')
+      expect(param(adapter, 'p')).toBe('2')
+    })
+
+    it('steps on one record at a time as each read leaves the results', async () => {
+      const { w } = await read(1)
+      const seen = [reading(w)]
+      let left = ids
+      for (let at = 0; at < 4; at++) {
+        left = left.slice(1)
+        await w.setProps({ source: listing(left) })
+        await flushPromises()
+        expect(reading(w)).toBe(seen.at(-1))
+        await next(w).trigger('click')
+        await flushPromises()
+        seen.push(reading(w))
+      }
+      expect(seen).toEqual(ids)
+    })
+
+    it('stays on the last record when it leaves, and goes back from there', async () => {
+      const { adapter, w } = await read(5)
+      await w.setProps({ source: listing(['a', 'b', 'c', 'd']) })
+      await flushPromises()
+      expect(reading(w)).toBe('e')
+      expect(param(adapter, 'p')).toBe('5')
+      expect(next(w).attributes('disabled')).toBeDefined()
+
+      await previous(w).trigger('click')
+      await flushPromises()
+      expect(reading(w)).toBe('d')
+    })
+
+    it('moves the place with the record when rows land before it, without a step in history', async () => {
+      const { adapter, w } = await read(2)
+      const push = vi.spyOn(adapter, 'push')
+      await w.setProps({ source: listing(['new', 'a', 'b', 'c', 'd', 'e']) })
+      await flushPromises()
+
+      expect(reading(w)).toBe('b')
+      expect(param(adapter, 'p')).toBe('3')
+      expect(push).not.toHaveBeenCalled()
+
+      await next(w).trigger('click')
+      await flushPromises()
+      expect(reading(w)).toBe('c')
+    })
+
+    it('steps on past a record that has gone, though rows have landed before it since', async () => {
+      const { adapter, w } = await read(3)
+      await w.setProps({ source: listing(['a', 'b', 'd', 'e']) })
+      await flushPromises()
+      await w.setProps({ source: listing(['new', 'a', 'b', 'd', 'e']) })
+      await flushPromises()
+      expect(reading(w)).toBe('c')
+      expect(param(adapter, 'p')).toBe('4')
+
+      await next(w).trigger('click')
+      await flushPromises()
+      expect(reading(w)).toBe('d')
+    })
+
+    it('holds a record that moved further than it looks, as one that has gone', async () => {
+      const filler = Array.from({ length: 200 }, (_, at) => `row-${at}`)
+      const { adapter, w } = await read(1)
+      await w.setProps({ source: listing([...filler, ...ids]) })
+      await flushPromises()
+      expect(reading(w)).toBe('a')
+      expect(param(adapter, 'p')).toBe('1')
+    })
+
+    it('lets go when the reader moves, or the list is another', async () => {
+      const { adapter, w } = await read(2)
+      adapter.push('?e=tests&v=record&p=4')
+      await flushPromises()
+      expect(reading(w)).toBe('d')
+
+      adapter.push('?e=tests&v=record&p=4&s=name&d=asc')
+      await flushPromises()
+      await w.setProps({ source: listing([...ids].reverse()) })
+      await flushPromises()
+      expect(reading(w)).toBe('d')
+      expect(place(w)).toBe('2')
+    })
+  })
+
   it('draws nothing of its own where the query names no record', async () => {
     const adapter = createMemoryAdapter('?v=cards')
     const w = shell(adapter, {}, { record: recordSlot })

@@ -38,6 +38,7 @@ import { provideShellOwnTheme } from '../composables/useLayerTheme'
 import { useQueryState } from '../composables/useQueryState'
 import type { NavigationMode } from '../composables/useQueryState'
 import { useResults } from '../composables/useResults'
+import { useHeldRecord } from '../composables/useHeldRecord'
 import { useDraft } from '../composables/useDraft'
 import ShellHeader from './ShellHeader.vue'
 import RecordActions from './RecordActions.vue'
@@ -583,15 +584,36 @@ const results = useResults({
   within,
 })
 
+/** The record being read, which the rows moving under it does not change. */
+const held = useHeldRecord({
+  // Not before the data has landed: what is there until then is no place to hold.
+  active: computed(() => reading.value && !props.loading),
+  rows: results.rows,
+  pending: results.pending,
+  page: computed(() => draft.live.value.page),
+  list: computed(() => {
+    const { entity, expr, sort, dir } = draft.live.value
+    return JSON.stringify([entity, expr, sort, dir])
+  }),
+  locate: results.locate,
+  moveTo: (page) => {
+    if (draft.drafting.value) draft.setPage(page)
+    else query.setPage(page, 'replace')
+  },
+})
+
+/** How many pages there are to step through: a record that has gone still counts until it is left. */
+const pageCount = computed(() => results.pageCount.value + (held.gone.value ? 1 : 0))
+
 /**
- * What the record view draws: the record the query names, or the row on the
- * page while the type listed is read — and while that row is on its way, the
- * view with no record yet, so the results say they are running.
+ * What the record view draws: the record the query names, or the one being
+ * read while the type listed is — and while that is on its way, the view with
+ * no record yet, so the results say they are running.
  */
 const recordView = computed<(RecordView & { id: string | null }) | null>(() => {
   if (namedRecordView.value) return namedRecordView.value
   const view = listedRecordView.value
-  return view ? { ...view, id: results.rows.value[0]?.id ?? null } : null
+  return view ? { ...view, id: held.id.value ?? results.rows.value[0]?.id ?? null } : null
 })
 
 /**
@@ -635,7 +657,7 @@ function readPage(row: ShellRow): number | null {
  * back to the page that was corrected and forward again.
  */
 watch(
-  [results.pageCount, results.pending, query.query, draft.drafting, () => props.loading, hasPage],
+  [pageCount, results.pending, query.query, draft.drafting, () => props.loading, hasPage, held.holding],
   () => {
     // A draft's pages are the draft's: the count is of its results, not of
     // the query's, and correcting the URL by it would write a page the query
@@ -647,8 +669,12 @@ watch(
     // same as on a mount. A page of the host's pages nothing, so the URL's
     // page is left for the list to read when it is back.
     if (props.loading || hasPage.value) return
-    const last = results.pageCount.value
-    if (query.query.value.page > last) query.setPage(last, 'replace')
+    const last = pageCount.value
+    if (query.query.value.page <= last) return
+    // A record being read goes where it has gone, which is not for the count
+    // to say: it is being looked for, or has left and only its place moves.
+    if (held.gone.value) held.moveTo(last)
+    else if (!held.holding.value) query.setPage(last, 'replace')
   },
   // Immediately, since a pasted URL is past the end before anything changes;
   // and after the render, so the correction is a navigation the mounted shell
@@ -801,7 +827,9 @@ const shell = provideShellContext({
    * A page of what is on screen: the draft's, while one is live, which are
    * held beside it rather than in the URL — see `liveQuery`.
    */
-  setPage: (page, mode) => {
+  setPage: (asked, mode) => {
+    const page = held.step(asked)
+    if (page === null) return
     if (draft.drafting.value) draft.setPage(page)
     else query.setPage(page, mode)
   },
@@ -812,7 +840,7 @@ const shell = provideShellContext({
   total: results.total,
   limit,
   offset: results.offset,
-  pageCount: results.pageCount,
+  pageCount,
   pending: results.pending,
   counting: results.counting,
   error: results.error,

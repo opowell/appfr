@@ -57,7 +57,7 @@ describe('PickControl', () => {
     shell.remove()
   })
 
-  it('draws each option’s icon beside its name in the list, and none on the button', async () => {
+  it('draws each option’s icon beside its name in the list, and the chosen one’s on the button', async () => {
     const icons = { a: 'M2 2h12', b: 'M2 8h12' }
     wrapper = mount(PickControl, {
       props: {
@@ -67,7 +67,7 @@ describe('PickControl', () => {
       },
       attachTo: document.body,
     })
-    expect(wrapper.find('.dc-pick__button svg').exists()).toBe(false)
+    expect(wrapper.find('.dc-pick__button .dc-pick__icon path').attributes('d')).toBe(icons.b)
     await wrapper.find('.dc-pick__button').trigger('click')
     for (const key of ['a', 'b'] as const) {
       const path = document.querySelector(`.dc-pick__list [data-dc-item="${key}"] .dc-menu__icon path`)
@@ -77,6 +77,7 @@ describe('PickControl', () => {
 
   it('draws no icon where the options name none', async () => {
     const pick = picker()
+    expect(pick.find('.dc-pick__icon').exists()).toBe(false)
     await pick.find('.dc-pick__button').trigger('click')
     expect(document.querySelector('.dc-pick__list .dc-menu__icon')).toBeNull()
   })

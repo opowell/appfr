@@ -20,10 +20,7 @@ import type { MenuAnchor, MenuItemDef } from 'menu-bar'
 export interface PickOption {
   key: string
   label: string
-  /**
-   * Drawn before the label in the list — a menu item's `icon`. Not on the
-   * button, which says the choice in as little room as the bar can spare.
-   */
+  /** Drawn before the label, in the list and on the button — a menu item's `icon`. */
   icon?: string
 }
 
@@ -180,6 +177,14 @@ function choose(item: MenuItemDef) {
       @click="onClick"
       @keydown="onKeydown"
     >
+      <svg
+        v-if="chosen?.icon"
+        class="dc-pick__icon"
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+      >
+        <path :d="chosen.icon" />
+      </svg>
       <span class="dc-pick__label">{{ chosen?.label }}</span>
     </button>
     <svg
@@ -254,6 +259,19 @@ function choose(item: MenuItemDef) {
 .dc-pick__button[aria-expanded='true'] {
   background: var(--dc-bg-2);
   color: var(--dc-fg-0);
+}
+
+/* The chosen option's picture, drawn as the list draws it beside the name. */
+.dc-pick__icon {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .dc-pick__label {

@@ -77,8 +77,9 @@ test.describe('Views — every one of them, when the host says nothing', () => {
     ])
   })
 
-  test('each view is offered with its own icon', async ({ page }) => {
+  test('each view is offered with its own icon, and the chosen one’s is on the button', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--home')
+    await expect(viewSelect(page).locator('.dc-pick__icon path')).toHaveCount(1)
     await openPick(page, viewSelect(page), 'View')
     const icons = pickList(page, 'View').locator('.dc-menu__icon path')
     await expect(icons).toHaveCount(7)

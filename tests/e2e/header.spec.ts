@@ -592,20 +592,20 @@ test.describe('Header — what a press on the bar does', () => {
   })
 
   test('the header is reachable and operable from the keyboard alone', async ({ page }) => {
-    // A type in force, so both choosers are over the results: on Everything
-    // the content names the types and there is no type chooser to reach.
+    // A type in force, so both choosers are on the bar: on Everything the
+    // content names the types and there is no type chooser to reach.
     await gotoStory(page, ENTITY)
     // The name first, being the way home and the first thing on the bar. Then
-    // the box the next part of the query is written in, and then, over the
-    // results, which type is listed and how it is drawn.
+    // which type is listed and how it is drawn, and then the box the next
+    // part of the query is written in.
     await page.keyboard.press('Tab')
     await expect(page.locator('.dc-header__domain')).toBeFocused()
-    await page.keyboard.press('Tab')
-    await expect(searchBox(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(scopeSelect(page)).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(viewSelect(page)).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(searchBox(page)).toBeFocused()
     await searchBox(page).focus()
     await searchBox(page).fill('state=running')
     await page.keyboard.press('Enter')
@@ -821,6 +821,28 @@ test.describe('Header — one strip on a wide shell', () => {
     await page.setViewportSize({ width: 1300, height: 720 })
     await expect(page.locator('.dc-shell__head .dc-actions')).toHaveCount(1)
   })
+
+  for (const width of [1280, 1100]) {
+    test(`at ${width}px the type and the view are on the bar, before the search field`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 720 })
+      await gotoStory(page, ENTITY)
+
+      await expect(header(page).locator('.dc-actions__type')).toHaveCount(1)
+      await expect(header(page).locator('.dc-actions__view')).toHaveCount(1)
+      const [bar, field, type, view] = await Promise.all([
+        header(page).boundingBox(),
+        searchField(page).boundingBox(),
+        scopeSelect(page).boundingBox(),
+        viewSelect(page).boundingBox(),
+      ])
+      for (const pick of [type!, view!]) {
+        expect(pick.y).toBeGreaterThanOrEqual(bar!.y)
+        expect(pick.y + pick.height).toBeLessThanOrEqual(bar!.y + bar!.height)
+        expect(pick.x + pick.width).toBeLessThanOrEqual(field!.x)
+      }
+      expect(type!.x + type!.width).toBeLessThanOrEqual(view!.x)
+    })
+  }
 
   test('`oneStripFrom: false` always stacks them', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 720 })

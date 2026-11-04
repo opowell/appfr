@@ -39,6 +39,7 @@ import { useResults } from '../composables/useResults'
 import { useDraft } from '../composables/useDraft'
 import ShellHeader from './ShellHeader.vue'
 import RecordActions from './RecordActions.vue'
+import RecordChoosers from './RecordChoosers.vue'
 import ResultsArea from './ResultsArea.vue'
 
 const props = withDefaults(
@@ -168,7 +169,7 @@ const props = withDefaults(
     typeChooser?: 'scoped' | 'always'
     /**
      * Where the strip over the results says how many are ticked, with its
-     * Clear. `start`, the default, leads the strip after the choosers, the
+     * Clear. `start`, the default, leads the strip after the sort, the
      * Clear a quiet word. `end` sets both at the far end beside the operations
      * they are the count for, the Clear drawn as one of their buttons.
      */
@@ -832,7 +833,6 @@ const oneStrip = computed(() => props.oneStripFrom !== false && width.value >= p
 /** The strip's props, the same wherever it is drawn. */
 const recordActions = computed(() => ({
   views: offeredViews.value,
-  typeChooser: props.typeChooser,
   selectionPlacement: props.selectionPlacement,
   pagesNote: props.pagesNote,
 }))
@@ -854,6 +854,18 @@ defineExpose({
       :class="{ 'dc-shell__head--one-strip': oneStrip }"
     >
       <ShellHeader>
+        <!-- Which type the records are and how they are drawn, before the
+             query that narrows them. Not over a host's page, which draws no
+             rows. -->
+        <template
+          v-if="!slots.page"
+          #lead
+        >
+          <RecordChoosers
+            :views="offeredViews"
+            :type-chooser="typeChooser"
+          />
+        </template>
         <template
           v-if="slots.brand"
           #brand="brandProps"
@@ -893,10 +905,10 @@ defineExpose({
       />
     </div>
 
-    <!-- Which type the records are, how they are drawn, and what can be done
-         with them, over the records themselves and under the query that found
-         them. It renders nothing where there is nothing to choose or do, and
-         stays put while the results scroll. -->
+    <!-- How the records are ordered and what can be done with them, over the
+         records themselves and under the query that found them. It renders
+         nothing where there is nothing to choose or do, and stays put while
+         the results scroll. -->
     <RecordActions
       v-if="!oneStrip && !slots.page"
       v-bind="recordActions"

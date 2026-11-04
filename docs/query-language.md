@@ -59,13 +59,13 @@ Pressing a part lifts it.
 
 The rest of the query is chosen elsewhere:
 
-- **Type** and **view** are pickers on the strip over the results
-  (`RecordActions`), which also carries the pager. The type picker lists `Everything` and then every entity;
+- **Type** and **view** are pickers on the bar, before the search field
+  (`RecordChoosers`). The type picker lists `Everything` and then every entity;
   by default it shows only once a type is filtered to (`typeChooser`). Typing
   `entity:logs` in the bar filters by type too.
 - **Sort** is chosen by pressing a table's column heading, and pressing it
   again reverses the direction. Every other view has no headings, so the strip
-  offers it beside the view instead: a picker of the type's sorts (left out
+  offers it instead: a picker of the type's sorts (left out
   where there is only one) and a ↓/↑ button that reverses the direction. There
   is no sort control on the bar.
 - **Counts.** Each type in the picker shows the population its schema

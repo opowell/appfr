@@ -266,8 +266,9 @@ The context also carries:
 - **the selection** — `selectable`, `selection`, `isSelected`, `toggleSelect`,
   `selectPage`, `clearSelection`, plus `create`, `duplicate` and `delete`, so
   a view of your own can offer ticks. `<RecordActions>` is the strip over the
-  results (Type and View choosers, pager) for a host laying out the parts
-  itself, and `<ShellPager>` the pager alone;
+  results (sort, ticks, operations, pager) and `<RecordChoosers>` the Type and
+  View choosers on the bar, for a host laying out the parts itself, and
+  `<ShellPager>` the pager alone;
 - **`within`**, the shell's scope, which is not on `query`. `useResults` and
   `useEntityPreviews` take it as an option, to keep your own results area in
   the same scope;

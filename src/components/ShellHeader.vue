@@ -13,6 +13,8 @@ import type { SummaryTerm } from '../query/summary'
 const slots = defineSlots<{
   /** Extra controls at the right end of the bar. */
   actions?: () => unknown
+  /** Controls before the query, after the domain's name. */
+  lead?: () => unknown
   /**
    * The domain's mark, drawn in place of its name — see `brand` on
    * `DataShell`. The name stays the bar's accessible text.
@@ -481,6 +483,9 @@ onBeforeUnmount(() => watching?.disconnect())
         {{ domain.label }}
       </PressLink>
 
+      <!-- Controls of the host's that come before the query. -->
+      <slot name="lead" />
+
       <!-- What the shell is read inside, where it is read inside anything: not
            a part of the query and not something to take off, so it sits before
            the query rather than in the row of parts that scrolls. -->
@@ -497,9 +502,7 @@ onBeforeUnmount(() => watching?.disconnect())
         >{{ labelOf(term) }}</span>
       </span>
 
-      <!-- The query: everything narrowing what is listed. Which type it is,
-           and how it is drawn, are chosen over the results — see
-           `RecordActions`. -->
+      <!-- The query: everything narrowing what is listed. -->
       <div class="dc-header__query">
         <!-- The search field, with the parts already in it: each one a
              button that takes itself out, and the box wherever the caret has

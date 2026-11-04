@@ -620,6 +620,13 @@ export interface ShellQueryDefaults {
      * for, where a card per type is what the whole corpus is for.
      */
     entityView?: ViewKind;
+    /**
+     * The view a change of type lands in. `'chosen'` (the default) carries a
+     * view somebody picked across the change, and moves only one left at its
+     * default; `'default'` always lands on the default of where the query is
+     * going, so a type picked from the home screen's cards opens as its table.
+     */
+    viewAcrossTypes?: 'chosen' | 'default';
     sort?: string;
     dir?: SortDirection;
     /**

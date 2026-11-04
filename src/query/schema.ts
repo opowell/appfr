@@ -38,7 +38,8 @@ export function defaultViewFor(entity: string | null, defaults: ShellQueryDefaul
 /**
  * The view a change of type lands in. A view left at its default was nobody's
  * choice, so it becomes the default of where the query is going; one somebody
- * chose is theirs, and goes with them.
+ * chose is theirs, and goes with them — unless the host says a change of type
+ * always lands on its default (`viewAcrossTypes: 'default'`).
  */
 export function viewAcross(
   view: ViewKind,
@@ -46,7 +47,8 @@ export function viewAcross(
   to: string | null,
   defaults: ShellQueryDefaults = {},
 ): ViewKind {
-  return view === defaultViewFor(from, defaults) ? defaultViewFor(to, defaults) : view
+  const carried = defaults.viewAcrossTypes !== 'default' && view !== defaultViewFor(from, defaults)
+  return carried ? view : defaultViewFor(to, defaults)
 }
 export const DEFAULT_SORT = 'updated'
 

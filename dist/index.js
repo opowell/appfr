@@ -133,7 +133,7 @@ function De(e, t = {}) {
   return n(t.entityView) ?? a ?? Ja;
 }
 function pn(e, t, n, a = {}) {
-  return e === De(t, a) ? De(n, a) : e;
+  return a.viewAcrossTypes !== "default" && e !== De(t, a) ? e : De(n, a);
 }
 const Bt = "updated";
 function qn(e) {

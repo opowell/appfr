@@ -7,7 +7,7 @@
 | `schema` | `DomainSchema` | — | Required. |
 | `source` | `DataSource` | mock over the schema | Where rows come from. |
 | `route` | `RouteAdapter` | injected, else History API | How the query reaches the URL. |
-| `defaults` | `ShellQueryDefaults` | home, `cards` (one type: `table`), `updated`, `desc` | Fallbacks for fields the URL omits. `landing: 'entity'` opens on one entity's list in `view`; `entityView` is the view a type opens in. |
+| `defaults` | `ShellQueryDefaults` | home, `cards` (one type: `table`), `updated`, `desc` | Fallbacks for fields the URL omits. `landing: 'entity'` opens on one entity's list in `view`; `entityView` is the view a type opens in. `viewAcrossTypes: 'default'` lands every change of type on its default view instead of carrying a chosen one. |
 | `within` | `string` | — | An expression every query is read inside, held here rather than in the URL. See [a shell about one record](records.md#a-shell-about-one-record). |
 | `previewsPerType` | `number` | `3` | Rows in each home-screen type card. `0` draws headings only (name and count, no `create`), in narrower wrapping columns. |
 | `typeChooser` | `'scoped' \| 'always'` | `'scoped'` | `scoped` offers the type list only once a type is filtered to; `always` offers it on `Everything` too. |

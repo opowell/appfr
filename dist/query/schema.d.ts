@@ -16,7 +16,8 @@ export declare function defaultViewFor(entity: string | null, defaults?: ShellQu
 /**
  * The view a change of type lands in. A view left at its default was nobody's
  * choice, so it becomes the default of where the query is going; one somebody
- * chose is theirs, and goes with them.
+ * chose is theirs, and goes with them — unless the host says a change of type
+ * always lands on its default (`viewAcrossTypes: 'default'`).
  */
 export declare function viewAcross(view: ViewKind, from: string | null, to: string | null, defaults?: ShellQueryDefaults): ViewKind;
 export declare const DEFAULT_SORT = "updated";

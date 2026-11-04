@@ -120,6 +120,19 @@ describe('useQueryState — the entity filter', () => {
     expect(cards.adapter.search.value).toBe('?e=l&v=cards')
   })
 
+  it('lands every change of type on its default when the host asks', () => {
+    const defaults = { viewAcrossTypes: 'default' as const }
+    const { state, adapter } = setup('?e=items&v=list', { defaults })
+    state.setEntity('logs')
+    expect(adapter.search.value).toBe('?e=l')
+
+    const home = setup('?v=grid', { defaults })
+    expect(home.state.hrefFor({ entity: 'items' })).toBe('/?e=i')
+    home.state.setEntity('items')
+    expect(home.adapter.search.value).toBe('?e=i')
+    expect(home.state.query.value.view).toBe('table')
+  })
+
   it('opens a metric drill from the home screen as a table of what it counts', () => {
     const { state, adapter } = setup('')
     state.narrow('search:"s1"', 'items')

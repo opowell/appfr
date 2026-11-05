@@ -2,6 +2,9 @@ import type { ColumnDef, EntitySchema, ShellRow } from '../types'
 import type { FieldTerm } from '../data/expression'
 import { cellValue } from './columns'
 
+/** The fields that say a row's type, which a query reads as `entity`. */
+const TYPE_FIELDS = new Set(['entitykey', 'entitylabel'])
+
 /**
  * What pressing a cell's value narrows the list to.
  *
@@ -17,6 +20,9 @@ import { cellValue } from './columns'
  *   `source=news.ycombinator.com`.
  * - **A flag** keeps the rows it is set on: `deployed:true`, one term per word
  *   of a {@link ColumnDef.flags} column, each word its own press.
+ * - **The row's type** — a column on `entityKey` or `entityLabel`, like
+ *   `entityColumn()`'s — keeps the rows of that type: `entity=results`.
+ *   The label is no field a query can read; `entity` is the term for a type.
  *
  * The identity is not one of these: it says which row this is, not which rows
  * are like it, so a press on it goes to the record. Nor is a date, which is
@@ -98,6 +104,12 @@ export function cellNarrowings(
 ): CellNarrowing[] {
   if (!columnNarrows(column)) return []
   const field = fieldOf(column)!
+
+  if (TYPE_FIELDS.has(field) && !column.value) {
+    return row.entityKey
+      ? [{ label: null, term: { kind: 'field', field: 'entity', comparator: '=', value: row.entityKey } }]
+      : []
+  }
 
   if (column.flags) {
     return Object.entries(column.flags)

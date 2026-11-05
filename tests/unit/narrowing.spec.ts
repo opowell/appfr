@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { cellNarrowings, columnNarrows, numberRange } from '../../src/query/narrowing'
 import { chipsFrom, rangeFrom, toggleFacet } from '../../src/query/facets'
-import { facetColumn, flagColumn, metricColumn, percentCell } from '../../src/query/presets'
+import { entityColumn, facetColumn, flagColumn, metricColumn, percentCell } from '../../src/query/presets'
 import { formatTerm } from '../../src/data/expression'
 import type { ColumnDef, EntitySchema, ShellRow } from '../../src/types'
 
@@ -52,6 +52,11 @@ describe('narrowing from a cell', () => {
   it('measures against the column’s range facet where it has one, not the rows', () => {
     // 3 of a facet running 0..100 is near the bottom, though it is mid-way between 0 and 55.
     expect(terms(metricColumn('tests', 'Tests'), rows[1]!)).toEqual([[null, 'tests<=3']])
+  })
+
+  it('keeps the rows of the type for a column saying the row’s type, which a query reads as entity', () => {
+    expect(terms(entityColumn(), rows[0]!)).toEqual([[null, 'entity=tenants']])
+    expect(terms({ key: 'kind', field: 'entityKey', label: 'Kind' }, rows[0]!)).toEqual([[null, 'entity=tenants']])
   })
 
   it('names each set flag as a press of its own', () => {

@@ -15,6 +15,9 @@ import type { FieldTerm } from '../data/expression';
  *   `source=news.ycombinator.com`.
  * - **A flag** keeps the rows it is set on: `deployed:true`, one term per word
  *   of a {@link ColumnDef.flags} column, each word its own press.
+ * - **The row's type** — a column on `entityKey` or `entityLabel`, like
+ *   `entityColumn()`'s — keeps the rows of that type: `entity=results`.
+ *   The label is no field a query can read; `entity` is the term for a type.
  *
  * The identity is not one of these: it says which row this is, not which rows
  * are like it, so a press on it goes to the record. Nor is a date, which is

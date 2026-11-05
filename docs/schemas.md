@@ -142,7 +142,7 @@ a span in the role of a link, so it has no context menu for links:
 | a number | `field<=value` where it is nearer the bottom of its range, `field>=value` nearer the top. The range is the column's range facet's, else the rows on screen. A fraction is rounded outwards to four places, so the row pressed stays in |
 | text or a status | `field=value`; each of a list its own press |
 | a word of a `flagColumn` | `field:true` for that word's field alone |
-| the row's type (`entityKey` or `entityLabel`, as `entityColumn()`) | `entity=key`, the rows of that type |
+| the row's type (`entityKey` or `entityLabel`, as `entityColumn()`) | no term: it moves to that type, keeping the query, as the Type chooser does |
 
 ⌥ held leaves those rows out instead (`-field<=value`). The identity column, a
 date, a picture and a component cell narrow nothing. A press on the identity

@@ -36,7 +36,7 @@ const coverage = flagColumn('reach', 'Coverage', { deployed: 'deployed', covered
 
 /** What a press on each part of the cell adds, written as the query writes it. */
 function terms(column: ColumnDef, at: ShellRow): Array<[string | null, string]> {
-  return cellNarrowings(column, at, entity, numberRange(column, rows)).map((n) => [n.label, formatTerm(n.term)])
+  return cellNarrowings(column, at, entity, numberRange(column, rows)).map((n) => [n.label, n.term ? formatTerm(n.term) : `→ ${n.entity}`])
 }
 
 describe('narrowing from a cell', () => {
@@ -54,9 +54,10 @@ describe('narrowing from a cell', () => {
     expect(terms(metricColumn('tests', 'Tests'), rows[1]!)).toEqual([[null, 'tests<=3']])
   })
 
-  it('keeps the rows of the type for a column saying the row’s type, which a query reads as entity', () => {
-    expect(terms(entityColumn(), rows[0]!)).toEqual([[null, 'entity=tenants']])
-    expect(terms({ key: 'kind', field: 'entityKey', label: 'Kind' }, rows[0]!)).toEqual([[null, 'entity=tenants']])
+  it('moves to the row’s type for a column saying it, adding no term', () => {
+    const at = (column: ColumnDef) => cellNarrowings(column, rows[0]!, entity)
+    expect(at(entityColumn())).toEqual([{ label: null, entity: 'tenants' }])
+    expect(at({ key: 'kind', field: 'entityKey', label: 'Kind' })).toEqual([{ label: null, entity: 'tenants' }])
   })
 
   it('names each set flag as a press of its own', () => {

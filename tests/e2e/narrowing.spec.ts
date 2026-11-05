@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { gotoStory, terms } from './story'
+import { gotoStory, scopeSelect, searchBox, terms } from './story'
 
 /**
  * A value in a table cell narrows the list to the rows sharing it: a number
@@ -96,5 +96,20 @@ test.describe('Table — a value narrows to the rows like it', () => {
     await narrows(page).first().click({ modifiers: ['Alt'] })
     await expect(terms(page)).toHaveCount(1)
     await expect(terms(page).first()).toHaveText(/^-/)
+  })
+
+  test('a press on the row’s type moves to that type, keeping the query and adding no term', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--home-type-chooser')
+    await searchBox(page).fill('digest')
+    await searchBox(page).press('Enter')
+    await expect(terms(page)).toHaveCount(1)
+    const type = page.locator('.dc-table .dc-table__entity .dc-narrow').first()
+    const label = (await type.innerText()).trim()
+    await type.hover()
+    await expect(page.locator('.dc-term--preview')).toHaveCount(0)
+    await type.click()
+    await expect(scopeSelect(page)).toContainText(label)
+    await expect(terms(page)).toHaveCount(1)
+    await expect(terms(page).first()).toContainText('digest')
   })
 })

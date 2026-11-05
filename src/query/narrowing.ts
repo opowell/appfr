@@ -2,7 +2,7 @@ import type { ColumnDef, EntitySchema, ShellRow } from '../types'
 import type { FieldTerm } from '../data/expression'
 import { cellValue } from './columns'
 
-/** The fields that say a row's type, which a query reads as `entity`. */
+/** The fields that say a row's type, whose press moves to that type. */
 const TYPE_FIELDS = new Set(['entitykey', 'entitylabel'])
 
 /**
@@ -21,8 +21,9 @@ const TYPE_FIELDS = new Set(['entitykey', 'entitylabel'])
  * - **A flag** keeps the rows it is set on: `deployed:true`, one term per word
  *   of a {@link ColumnDef.flags} column, each word its own press.
  * - **The row's type** — a column on `entityKey` or `entityLabel`, like
- *   `entityColumn()`'s — keeps the rows of that type: `entity=results`.
- *   The label is no field a query can read; `entity` is the term for a type.
+ *   `entityColumn()`'s — adds no term: it moves to that type, as the Type
+ *   chooser does, keeping the query. A list of one type is that type's list,
+ *   with its own columns and views, not the mixed set filtered down.
  *
  * The identity is not one of these: it says which row this is, not which rows
  * are like it, so a press on it goes to the record. Nor is a date, which is
@@ -30,12 +31,23 @@ const TYPE_FIELDS = new Set(['entitykey', 'entitylabel'])
  * what each cell offers is tested without a browser.
  */
 
-/** One press in a cell: what it is on, and the term it adds. */
-export interface CellNarrowing {
-  /** The word it is on, for a cell of several; null for the cell's text as a whole. */
-  label: string | null
-  term: FieldTerm
-}
+/**
+ * One press in a cell: what it is on, and either the term it adds or the type
+ * it moves to.
+ */
+export type CellNarrowing =
+  | {
+      /** The word it is on, for a cell of several; null for the cell's text as a whole. */
+      label: string | null
+      term: FieldTerm
+      entity?: undefined
+    }
+  | {
+      label: string | null
+      /** The type the press moves to, keeping the query: the row's `entityKey`. */
+      entity: string
+      term?: undefined
+    }
 
 /** The lowest and highest a number column runs to. */
 export interface NumberRange {
@@ -107,7 +119,7 @@ export function cellNarrowings(
 
   if (TYPE_FIELDS.has(field) && !column.value) {
     return row.entityKey
-      ? [{ label: null, term: { kind: 'field', field: 'entity', comparator: '=', value: row.entityKey } }]
+      ? [{ label: null, entity: row.entityKey }]
       : []
   }
 

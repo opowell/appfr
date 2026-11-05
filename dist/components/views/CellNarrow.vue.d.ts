@@ -10,7 +10,8 @@ import type { CellNarrowing } from '../../query/narrowing';
  * The term is ANDed on to the query, as one typed in the box is: added to
  * each alternative, and turning a term the query holds the other way round.
  * The type and the view stay; it is a refinement of this list, not a move to
- * another.
+ * another. The one exception is a cell saying the row's type, whose press is
+ * that move: to the type, the query as it is, as the Type chooser makes it.
  */
 type __VLS_Props = {
     entry: PresentedRow;

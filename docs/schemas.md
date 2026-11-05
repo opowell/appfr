@@ -245,8 +245,8 @@ columns: [
 | `facetColumn(key, label)` | a field of this type alone, under its facet's key |
 | `flagColumn(key, label, names)` | the true ones of a row's boolean fields, named: `crawled, recorded` |
 
-**Formatters.** `formatBytes` (`28.0 kB`, decimal), `formatDuration` from ms
-(`640ms`, `12.4s`, `3m 7s`), `formatElapsed` from seconds (`1:42`),
+**Formatters.** `formatBytes` (`28 kB`, decimal), `formatDuration` from ms
+(`640ms`, `12s`, `3m 7s`), `formatElapsed` from seconds (`1:42`),
 `formatPercent` from a share (`50%`), `formatDateTime` (reader's locale;
 `formatDate` is fixed, UTC) and `stripAnsi` write `—` for a missing value. As
 a column's `format`: `bytesCell`, `durationCell`, `elapsedCell` and

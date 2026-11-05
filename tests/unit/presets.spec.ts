@@ -111,7 +111,7 @@ describe('column presets', () => {
 
 describe('cell formats', () => {
   it('format a number held however a row holds it', () => {
-    expect(bytesCell(28_000)).toBe('28.0 kB')
+    expect(bytesCell(28_000)).toBe('28 kB')
     expect(bytesCell('1200000')).toBe('1.2 MB')
     expect(durationCell(640)).toBe('640ms')
     expect(elapsedCell(102)).toBe('1:42')

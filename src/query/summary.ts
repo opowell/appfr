@@ -8,6 +8,7 @@ import {
   parseExpression,
   rangeOf,
 } from '../data/expression'
+import { formatDigits } from '../data/format'
 import { findSort, isPristineQuery } from './schema'
 
 /** One removable term in the header's query summary. */
@@ -53,6 +54,16 @@ export const EXPRESSION_TERM = 'expr'
 const SYMBOLS: Partial<Record<string, string>> = { '>=': '≥', '<=': '≤', '>': '>', '<': '<' }
 
 /**
+ * A bound as the cells it is measured against read: `Score ≥ 2.6` beside a cell
+ * saying `2.6`, where the term holds `2.5882`. The pill's hover has it exactly.
+ * Whole numbers stay as written, and so does a bound that is not a number.
+ */
+function readBound(bound: string | number | null): string {
+  const value = Number(bound)
+  return Number.isFinite(value) && !Number.isInteger(value) ? formatDigits(value) : String(bound)
+}
+
+/**
  * A term as a pill says it: the field under the name it has on screen, as it
  * is written there, and a range or a comparison in the signs it is read in —
  * `Price ≤ 5`, `1 ≤ Quantity ≤ 50`. A join key, a bare word and a field the entity does
@@ -71,14 +82,14 @@ function describeTerm(
   if (range) {
     const said =
       range.min !== null && range.max !== null
-        ? `${range.min} ≤ ${name} ≤ ${range.max}`
+        ? `${readBound(range.min)} ≤ ${name} ≤ ${readBound(range.max)}`
         : range.max !== null
-          ? `${name} ≤ ${range.max}`
-          : `${name} ≥ ${range.min}`
+          ? `${name} ≤ ${readBound(range.max)}`
+          : `${name} ≥ ${readBound(range.min)}`
     return sign + said
   }
   const symbol = SYMBOLS[term.comparator]
-  if (symbol) return `${sign}${name} ${symbol} ${term.value}`
+  if (symbol) return `${sign}${name} ${symbol} ${readBound(term.value)}`
   return formatTerm({ ...term, field: name })
 }
 

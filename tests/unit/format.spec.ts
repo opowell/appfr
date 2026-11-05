@@ -3,9 +3,11 @@ import {
   formatBytes,
   formatCount,
   formatDateTime,
+  formatDigits,
   formatDuration,
   formatElapsed,
   formatInteger,
+  formatMetric,
   formatOrdinal,
   formatPercent,
   stripAnsi,
@@ -22,7 +24,7 @@ describe('formatCount', () => {
     expect(formatCount(1700)).toBe('1.7k')
     expect(formatCount(3214)).toBe('3.2k')
     expect(formatCount(198_689)).toBe('199k')
-    expect(formatCount(23_500_000)).toBe('23.5m')
+    expect(formatCount(23_500_000)).toBe('24m')
   })
 
   it('rolls over at the rounding rather than at the bound', () => {
@@ -31,6 +33,8 @@ describe('formatCount', () => {
     expect(formatCount(9988)).toBe('10k')
     expect(formatCount(999_499)).toBe('999k')
     expect(formatCount(999_600)).toBe('1.0m')
+    expect(formatCount(9_949_000)).toBe('9.9m')
+    expect(formatCount(9_988_000)).toBe('10m')
   })
 
   it('says nothing of a number that is not one', () => {
@@ -60,12 +64,54 @@ describe('formatOrdinal', () => {
   })
 })
 
+describe('formatDigits', () => {
+  it('keeps two significant digits, at any size below the whole ones', () => {
+    expect(formatDigits(2.5882)).toBe('2.6')
+    expect(formatDigits(2.04)).toBe('2.0')
+    expect(formatDigits(0.041_27)).toBe('0.041')
+    expect(formatDigits(12.4)).toBe('12')
+    expect(formatDigits(-2.5882)).toBe('-2.6')
+  })
+
+  it('never gives up a whole digit to get there', () => {
+    expect(formatDigits(99.6)).toBe('100')
+    expect(formatDigits(243.4)).toBe('243')
+  })
+
+  it('says nothing of a number that is not one', () => {
+    expect(formatDigits(Number.NaN)).toBe('—')
+  })
+})
+
+describe('formatMetric', () => {
+  it('keeps the digits of a fraction, which rounding to a whole would lose', () => {
+    expect(formatMetric(2.5882)).toBe('2.6')
+    expect(formatMetric(0.5)).toBe('0.50')
+  })
+
+  it('leaves a whole number whole', () => {
+    expect(formatMetric(3)).toBe('3')
+    expect(formatMetric(940)).toBe('940')
+  })
+
+  it('abbreviates past a thousand as a count does', () => {
+    expect(formatMetric(999.6)).toBe('1.0k')
+    expect(formatMetric(1_240)).toBe('1.2k')
+    expect(formatMetric(12_345)).toBe('12k')
+    expect(formatMetric(3_400_000)).toBe('3.4m')
+  })
+
+  it('says nothing of a number that is not one', () => {
+    expect(formatMetric(Number.POSITIVE_INFINITY)).toBe('—')
+  })
+})
+
 describe('formatBytes', () => {
   it('writes a size in decimal units, a decimal place below 100 of one', () => {
     expect(formatBytes(0)).toBe('0 B')
     expect(formatBytes(999)).toBe('999 B')
     expect(formatBytes(1000)).toBe('1.0 kB')
-    expect(formatBytes(28_000)).toBe('28.0 kB')
+    expect(formatBytes(28_000)).toBe('28 kB')
     expect(formatBytes(123_456)).toBe('123 kB')
     expect(formatBytes(1_200_000)).toBe('1.2 MB')
     expect(formatBytes(3.4e9)).toBe('3.4 GB')
@@ -83,7 +129,8 @@ describe('formatBytes', () => {
 describe('formatDuration', () => {
   it('keeps the precision that is read', () => {
     expect(formatDuration(640.4)).toBe('640ms')
-    expect(formatDuration(12_400)).toBe('12.4s')
+    expect(formatDuration(1_240)).toBe('1.2s')
+    expect(formatDuration(12_400)).toBe('12s')
     expect(formatDuration(187_000)).toBe('3m 7s')
   })
 

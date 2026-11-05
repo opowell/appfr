@@ -252,6 +252,7 @@ export {
   formatInteger,
   formatDate,
   formatDateTime,
+  formatDigits,
   formatDuration,
   formatElapsed,
   formatMetric,

@@ -11,17 +11,35 @@ export function fnv1a(seed: string): number {
   return Math.abs(h)
 }
 
-/** Compact metric formatting: `940`, `1.2k`, `3.4m`. */
-export function formatMetric(value: number): string {
+const TWO_DIGITS = new Intl.NumberFormat('en-US', {
+  minimumSignificantDigits: 2,
+  maximumSignificantDigits: 2,
+  useGrouping: false,
+})
+
+/**
+ * Two significant digits, which is what every rounded number here is read to:
+ * `2.6`, `0.041`, `2.0`, `12`. Whole digits are not given up to get there, so
+ * `243` stays `243` rather than becoming `240`.
+ */
+export function formatDigits(value: number): string {
   if (!Number.isFinite(value)) return '—'
-  const abs = Math.abs(value)
-  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}m`
-  if (abs >= 1_000) return `${(value / 1_000).toFixed(1)}k`
-  return String(Math.round(value))
+  return Math.abs(value) < 100 ? TWO_DIGITS.format(value) : String(Math.round(value))
 }
 
 /**
- * A population, abbreviated: `240`, `1.7k`, `199k`, `23.5m`.
+ * Compact metric formatting: `940`, `2.6`, `1.2k`, `12k`, `3.4m`.
+ *
+ * A whole number stays whole, and anything else keeps the two digits that a
+ * score of `2.5882` would lose by being rounded to `3`.
+ */
+export function formatMetric(value: number): string {
+  if (!Number.isFinite(value)) return '—'
+  return Number.isInteger(value) || Math.abs(value) >= 100 ? formatCount(value) : formatDigits(value)
+}
+
+/**
+ * A population, abbreviated: `240`, `1.7k`, `199k`, `24m`.
  *
  * What {@link EntitySchema.count} is expected to hold, and what the shell
  * formats its own live counts with, so a control that carries both — the list
@@ -39,7 +57,8 @@ export function formatCount(value: number): string {
   // `10k` rather than `10.0k`, and `999,600` is `1.0m` rather than `1000k`.
   if (size < 9_950) return `${(whole / 1_000).toFixed(1)}k`
   if (size < 999_500) return `${Math.round(whole / 1_000)}k`
-  return `${(whole / 1_000_000).toFixed(1)}m`
+  if (size < 9_950_000) return `${(whole / 1_000_000).toFixed(1)}m`
+  return `${Math.round(whole / 1_000_000)}m`
 }
 
 /**
@@ -98,13 +117,13 @@ export function formatDateTime(
 }
 
 /**
- * `28.0 kB`, `1.2 MB`, `3.4 GB` — a size as a reader takes it in, rather than
+ * `28 kB`, `1.2 MB`, `3.4 GB` — a size as a reader takes it in, rather than
  * a count of bytes whose order of magnitude has to be worked out from its
  * digits.
  *
  * Decimal units, as file managers and the browser's own download list show
- * them. One decimal place below 100 of a unit and none above, which keeps a
- * column the same few characters wide across five orders of magnitude. Under
+ * them. Two digits of a unit, which keeps a column the same few characters
+ * wide across five orders of magnitude. Under
  * a kilobyte it is the bytes themselves — `0 B` for nothing — and `—` for a
  * size that is missing or negative.
  */
@@ -118,14 +137,14 @@ export function formatBytes(bytes: number | null | undefined): string {
     value /= 1000
     unit += 1
   }
-  return `${value < 100 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`
+  return `${formatDigits(value)} ${units[unit]}`
 }
 
 /**
- * How long something took, from milliseconds: `640ms`, `12.4s`, `3m 7s`.
+ * How long something took, from milliseconds: `640ms`, `1.2s`, `12s`, `3m 7s`.
  *
- * Precision where it is read — a test's milliseconds, a step's tenths of a
- * second — and none where it is not: past a minute the seconds are whole.
+ * Precision where it is read — a test's milliseconds, a quick step's tenths of
+ * a second — and none where it is not: past ten seconds they are whole.
  * `—` for nothing, which includes `0`: a duration nobody measured is far
  * more common than one that took no time at all.
  */
@@ -134,7 +153,7 @@ export function formatDuration(ms: number | null | undefined): string {
   if (ms < 1000) return `${Math.round(ms)}ms`
   const seconds = ms / 1000
   return seconds < 60
-    ? `${seconds.toFixed(1)}s`
+    ? `${formatDigits(seconds)}s`
     : `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`
 }
 

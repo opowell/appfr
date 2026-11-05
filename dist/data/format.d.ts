@@ -3,10 +3,21 @@
  * data stable across runs — stories and snapshots stay meaningful.
  */
 export declare function fnv1a(seed: string): number;
-/** Compact metric formatting: `940`, `1.2k`, `3.4m`. */
+/**
+ * Two significant digits, which is what every rounded number here is read to:
+ * `2.6`, `0.041`, `2.0`, `12`. Whole digits are not given up to get there, so
+ * `243` stays `243` rather than becoming `240`.
+ */
+export declare function formatDigits(value: number): string;
+/**
+ * Compact metric formatting: `940`, `2.6`, `1.2k`, `12k`, `3.4m`.
+ *
+ * A whole number stays whole, and anything else keeps the two digits that a
+ * score of `2.5882` would lose by being rounded to `3`.
+ */
 export declare function formatMetric(value: number): string;
 /**
- * A population, abbreviated: `240`, `1.7k`, `199k`, `23.5m`.
+ * A population, abbreviated: `240`, `1.7k`, `199k`, `24m`.
  *
  * What {@link EntitySchema.count} is expected to hold, and what the shell
  * formats its own live counts with, so a control that carries both — the list
@@ -42,22 +53,22 @@ export declare function formatOrdinal(index: number): string;
  */
 export declare function formatDateTime(iso: string | null | undefined, locale?: string | string[]): string;
 /**
- * `28.0 kB`, `1.2 MB`, `3.4 GB` — a size as a reader takes it in, rather than
+ * `28 kB`, `1.2 MB`, `3.4 GB` — a size as a reader takes it in, rather than
  * a count of bytes whose order of magnitude has to be worked out from its
  * digits.
  *
  * Decimal units, as file managers and the browser's own download list show
- * them. One decimal place below 100 of a unit and none above, which keeps a
- * column the same few characters wide across five orders of magnitude. Under
+ * them. Two digits of a unit, which keeps a column the same few characters
+ * wide across five orders of magnitude. Under
  * a kilobyte it is the bytes themselves — `0 B` for nothing — and `—` for a
  * size that is missing or negative.
  */
 export declare function formatBytes(bytes: number | null | undefined): string;
 /**
- * How long something took, from milliseconds: `640ms`, `12.4s`, `3m 7s`.
+ * How long something took, from milliseconds: `640ms`, `1.2s`, `12s`, `3m 7s`.
  *
- * Precision where it is read — a test's milliseconds, a step's tenths of a
- * second — and none where it is not: past a minute the seconds are whole.
+ * Precision where it is read — a test's milliseconds, a quick step's tenths of
+ * a second — and none where it is not: past ten seconds they are whole.
  * `—` for nothing, which includes `0`: a duration nobody measured is far
  * more common than one that took no time at all.
  */

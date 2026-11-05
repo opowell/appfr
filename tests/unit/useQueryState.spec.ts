@@ -614,4 +614,20 @@ describe('useQueryState — the parts a pill says', () => {
       ['Links ≥ 3', 'l:3..'],
     ])
   })
+
+  it('reads a bound to the digits of the cells it measures, and keeps it whole on hover', () => {
+    const { state } = setup('?e=items')
+    state.setExpression('metric2>=2.5882 metric1:0.125..1.5')
+    const parts = state.terms.value.filter((term) => term.facetKey === 'expr')
+    expect(parts.map((term) => [term.label, term.address])).toEqual([
+      ['Score ≥ 2.6', 's>=2.5882'],
+      ['0.13 ≤ Links ≤ 1.5', 'l:0.125..1.5'],
+    ])
+  })
+
+  it('leaves a bound that is no fraction as it was written', () => {
+    const { state } = setup('?e=items')
+    state.setExpression('metric2>=1500')
+    expect(state.terms.value.map((term) => term.label)).toContain('Score ≥ 1500')
+  })
 })

@@ -89,7 +89,7 @@ export { createMemoryDataSource, queryAll } from './data/memory';
 export type { QueryAllRequest } from './data/memory';
 export { andExpression, columnShortcut, columnShortcutOf, compactShortcuts, expandShortcuts, fieldHeading, formatRange, isRangeTerm, rangeOf, readDraft, refineExpression, formatExpression, formatTerm, joinExpression, matchesExpression, negateTerm, oppositeTerm, parseExpression, sameTerm, splitExpression, withoutTerm, } from './data/expression';
 export type { Comparator, Expression, ExpressionSplit, FieldTerm, RangeBounds, Term, TextTerm, } from './data/expression';
-export { fnv1a, formatBytes, formatCount, formatInteger, formatDate, formatDateTime, formatDuration, formatElapsed, formatMetric, formatOrdinal, formatPercent, stripAnsi, } from './data/format';
+export { fnv1a, formatBytes, formatCount, formatInteger, formatDate, formatDateTime, formatDigits, formatDuration, formatElapsed, formatMetric, formatOrdinal, formatPercent, stripAnsi, } from './data/format';
 export { COLUMN_BREAKPOINTS, COLUMN_ROLES, PILL_TONES, RECORD_STATUSES, VIEW_KINDS, } from './types';
 export type { CardKind, ChipsFacet, ColumnAlign, ColumnBreakpoint, ColumnDef, ColumnKind, ColumnRole, DataSource, DomainSchema, EntitySchema, FacetDef, FacetValue, LogChunk, NarrowedRecord, PillTone, PressOptions, QueryRequest, QueryResult, QuerySink, QueryUpdate, RangeFacet, RecordStatus, RecordView, Selection, SelectionOperation, ShellFactItem, ShellFactValue, ShellQuery, ShellQueryDefaults, ShellRow, SortDef, SortDirection, StatusCount, StreamingDataSource, SyncDataSource, ToggleFacet, ViewKind, ViewsContext, ViewsOption, } from './types';
 export { default as HeaderContentLayoutPlugin } from './plugin';

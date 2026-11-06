@@ -13,6 +13,7 @@ import {
   termStanding,
   withStanding,
   withoutOwnScope,
+  withWhere,
 } from '../../src/query/drill'
 import { createMockDataSource, generateRows } from '../../src/data/mock'
 import { formatExpression, parseExpression } from '../../src/data/expression'
@@ -313,6 +314,13 @@ describe('drillExpression', () => {
     )
   })
 
+  it('adds a column\'s drillWhere beside the record\'s own term', () => {
+    const query = { ...defaultQuery(legoSchema), expr: 'theme:space' }
+    expect(drillExpression(legoSchema, query, row(), {}, 'outcome=passed')).toBe(
+      'theme:space category="categories_10007" outcome=passed',
+    )
+  })
+
   it('leaves an unscopable row out of nothing, as it narrows to nothing', () => {
     const query = { ...defaultQuery(legoSchema), expr: 'theme:space' }
     expect(drillExpression(legoSchema, query, row({ entityKey: 'inventories' }), { exclude: true })).toBe(
@@ -391,5 +399,33 @@ describe('a record term', () => {
     const term = recordTerm(categories, 'categories_10007')
     expect(termStanding('category:"categories_10007"', term)).toBe('in')
     expect(addTerm('category:"categories_10007"', term)).toBe('category:"categories_10007"')
+  })
+})
+
+describe('withWhere', () => {
+  it('is the expression unchanged without terms to add', () => {
+    expect(withWhere('theme:space', undefined)).toBe('theme:space')
+    expect(withWhere('theme:space', '  ')).toBe('theme:space')
+  })
+
+  it('is the terms alone for an empty expression', () => {
+    expect(withWhere('', 'outcome=failed outcome=timedOut')).toBe('outcome=failed outcome=timedOut')
+  })
+
+  it('replaces a positive term on a field it names rather than joining it as any-of', () => {
+    expect(withWhere('run="r1" outcome=failed', 'outcome=passed')).toBe('run=r1 outcome=passed')
+    expect(withWhere('outcome:pass', 'outcome=passed')).toBe('outcome=passed')
+  })
+
+  it('keeps negated and comparing terms on the same field', () => {
+    expect(withWhere('-outcome=skipped seconds>5', 'outcome=passed seconds<60')).toBe(
+      '-outcome=skipped seconds>5 outcome=passed seconds<60',
+    )
+  })
+
+  it('adds the terms to every OR group', () => {
+    expect(withWhere('run="a" OR run="b"', 'outcome=passed')).toBe(
+      'run=a outcome=passed OR run=b outcome=passed',
+    )
   })
 })

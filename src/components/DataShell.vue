@@ -765,7 +765,7 @@ watch(() => query.query.value.entity, clearSelection)
  * (`drills`), and the rest is a query change, which is the shell's own. The
  * event still goes out, so a host can follow it; it does not have to.
  */
-function drill(row: ShellRow, entity: EntitySchema | null, options: PressOptions = {}) {
+function drill(row: ShellRow, entity: EntitySchema | null, options: PressOptions = {}, where?: string) {
   /*
    * One navigation, not two: a route change is not synchronous, so setting the expression and
    * then the entity would serialise the second from the query the first had not yet written.
@@ -780,7 +780,7 @@ function drill(row: ShellRow, entity: EntitySchema | null, options: PressOptions
    * missing from, the same type in the same view, one row shorter. Only a metric still pivots,
    * being a press on what the number counts — those tests, without this host's.
    */
-  const expr = drillExpression(props.schema, query.query.value, row, options)
+  const expr = drillExpression(props.schema, query.query.value, row, options, where)
   if (options.exclude) {
     query.narrow(expr, entity?.key ?? query.query.value.entity)
   } else {
@@ -899,10 +899,10 @@ const shell = provideShellContext({
     return recordHref(row) ?? props.activateHref?.(row) ?? null
   },
   recordHref,
-  drillHref: (row, entity) =>
+  drillHref: (row, entity, where) =>
     scopeTermFor(props.schema, row)
       ? query.narrowHref(
-          drillExpression(props.schema, query.query.value, row),
+          drillExpression(props.schema, query.query.value, row, {}, where),
           entity?.key ?? null,
           entity ? undefined : 'cards',
         )

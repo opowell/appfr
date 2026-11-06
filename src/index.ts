@@ -192,6 +192,7 @@ export {
   termStanding,
   withoutOwnScope,
   withStanding,
+  withWhere,
 } from './query/drill'
 export type { SearchPatch, TermStanding } from './query/drill'
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary'

@@ -1,6 +1,6 @@
 import type { DomainSchema, EntitySchema, NarrowedRecord, PressOptions, ShellRow, ViewKind } from '../types'
 import type { FieldTerm, Term } from '../data/expression'
-import { formatExpression, negateTerm, parseExpression, sameTerm } from '../data/expression'
+import { formatExpression, formatTerm, negateTerm, parseExpression, sameTerm } from '../data/expression'
 import { PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_VIEW } from './codec'
 
 /**
@@ -289,9 +289,44 @@ export function drillExpression(
   query: { expr: string },
   row: ShellRow,
   options: PressOptions = {},
+  where?: string,
 ): string {
   const term = scopeTermFor(schema, row)
-  return addTerm(query.expr, options.exclude ? excludingTerm(term) : term)
+  return withWhere(addTerm(query.expr, options.exclude ? excludingTerm(term) : term), where)
+}
+
+/**
+ * `expr` with a drill's {@link ColumnDef.drillWhere} added to every `OR` group.
+ *
+ * A positive `:` or `=` term already there on one of its fields goes first:
+ * two such terms on a field are any-of, so `outcome=failed` left in beside a
+ * drill's `outcome=passed` would list both rather than what was counted. A
+ * negated or comparing term stays — it narrows, and says nothing the drill
+ * contradicts by being there.
+ */
+export function withWhere(expr: string, where: string | undefined): string {
+  const added = where?.trim() ? parseExpression(where).flat() : []
+  if (!added.length) return expr
+  const fields = new Set(added.flatMap((term) => (term.kind === 'field' ? [term.field] : [])))
+  const replaced = (term: Term) =>
+    term.kind === 'field' &&
+    !term.negated &&
+    (term.comparator === ':' || term.comparator === '=') &&
+    fields.has(term.field)
+  const current = expr.trim()
+  const groups = current ? parseExpression(current) : [[]]
+  // The text as written where nothing in it goes: a drill's own term keeps the quotes it was
+  // given, as `addTerm` keeps them.
+  if (groups.length === 1 && !groups[0]!.some(replaced)) {
+    const fresh = added.filter((term) => !groups[0]!.some((existing) => sameTerm(existing, term)))
+    return [current, ...fresh.map(formatTerm)].filter(Boolean).join(' ')
+  }
+  return formatExpression(
+    groups.map((group) => {
+      const kept = group.filter((term) => !replaced(term))
+      return [...kept, ...added.filter((term) => !kept.some((existing) => sameTerm(existing, term)))]
+    }),
+  )
 }
 
 /**

@@ -43,12 +43,14 @@ const text = computed(() => cellText(props.column, props.entry.row))
 
 /** Stops the click reaching the row, which would open the record instead. */
 /** Where the number leads, so it is a link the browser can open elsewhere too. */
-const href = computed(() => (target.value ? shell.drillHref(props.entry.row, target.value) : null))
+const href = computed(() =>
+  target.value ? shell.drillHref(props.entry.row, target.value, props.column.drillWhere) : null,
+)
 
 function drill(options: PressOptions, event: MouseEvent) {
   // The row's own press would open the record — a count leads somewhere of its own.
   event.stopPropagation()
-  if (target.value) shell.drill(props.entry.row, target.value, options)
+  if (target.value) shell.drill(props.entry.row, target.value, options, props.column.drillWhere)
 }
 </script>
 

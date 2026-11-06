@@ -340,6 +340,18 @@ export interface ColumnDef {
    */
   drill?: string
   /**
+   * Terms the {@link ColumnDef.drill} adds to the record's own, for a count of
+   * some of what that entity holds rather than all of it: **Passed** counting
+   * a run's results with one outcome is `drill: 'results'` and
+   * `drillWhere: 'outcome=passed'`. Several terms on one field are any-of, as
+   * anywhere in the expression — `outcome=failed outcome=timedOut`.
+   *
+   * A term the query already holds on a field named here is replaced rather
+   * than joined: the number counted these, so these are what pressing it
+   * lists, whatever the list it was pressed in was narrowed to.
+   */
+  drillWhere?: string
+  /**
    * Called with the row when the cell is pressed, for a column that means
    * something only the host knows. The shell reports and applies nothing, as
    * it does for {@link ColumnDef.activate}. How the press was made comes with

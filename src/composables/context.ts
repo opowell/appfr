@@ -193,8 +193,11 @@ export interface ShellContext extends QueryState {
    *
    * `exclude` as on {@link ShellContext.activate}: the record left out of what
    * is listed rather than narrowed to.
+   *
+   * `where` is the pressed column's {@link ColumnDef.drillWhere}: terms added
+   * with the record's own, for a count of some of `entity`'s records.
    */
-  drill(row: ShellRow, entity: EntitySchema | null, options?: PressOptions): void
+  drill(row: ShellRow, entity: EntitySchema | null, options?: PressOptions, where?: string): void
   /**
    * Where pressing the row would go, as a browser `href` — the host's
    * `activateHref` where the press is reported, and null where it goes
@@ -203,7 +206,7 @@ export interface ShellContext extends QueryState {
    */
   pressHref(row: ShellRow): string | null
   /** The same for {@link ShellContext.drill}: a metric's, or the `→`'s. */
-  drillHref(row: ShellRow, entity: EntitySchema | null): string | null
+  drillHref(row: ShellRow, entity: EntitySchema | null, where?: string): string | null
   /**
    * Where the row's record lives outside the shell — what its type's
    * {@link EntitySchema.href} says of it — or null. Where a press on the row

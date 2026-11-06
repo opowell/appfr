@@ -164,7 +164,17 @@ export declare function pressOptions(event: MouseEvent | KeyboardEvent): PressOp
  */
 export declare function drillExpression(schema: DomainSchema, query: {
     expr: string;
-}, row: ShellRow, options?: PressOptions): string;
+}, row: ShellRow, options?: PressOptions, where?: string): string;
+/**
+ * `expr` with a drill's {@link ColumnDef.drillWhere} added to every `OR` group.
+ *
+ * A positive `:` or `=` term already there on one of its fields goes first:
+ * two such terms on a field are any-of, so `outcome=failed` left in beside a
+ * drill's `outcome=passed` would list both rather than what was counted. A
+ * negated or comparing term stays — it narrows, and says nothing the drill
+ * contradicts by being there.
+ */
+export declare function withWhere(expr: string, where: string | undefined): string;
 /**
  * `expr` less any term on `entity`'s own {@link EntitySchema.scope} field.
  *

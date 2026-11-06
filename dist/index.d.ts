@@ -70,7 +70,7 @@ export { completeDraft } from './query/completion';
 export type { Completion } from './query/completion';
 export { cellNarrowings, columnNarrows, numberRange } from './query/narrowing';
 export type { CellNarrowing, NumberRange } from './query/narrowing';
-export { addTerm, drillExpression, excludingTerm, fieldTerm, idsExpression, liftTerm, narrowPatch, pressOptions, recordsIn, recordTerm, scopedEntity, scopeTerm, scopeTermFor, termStanding, withoutOwnScope, withStanding, } from './query/drill';
+export { addTerm, drillExpression, excludingTerm, fieldTerm, idsExpression, liftTerm, narrowPatch, pressOptions, recordsIn, recordTerm, scopedEntity, scopeTerm, scopeTermFor, termStanding, withoutOwnScope, withStanding, withWhere, } from './query/drill';
 export type { SearchPatch, TermStanding } from './query/drill';
 export { ENTITY_TERM, EXPRESSION_TERM, summarizeQuery, summaryTerms } from './query/summary';
 export type { SummaryTerm } from './query/summary';

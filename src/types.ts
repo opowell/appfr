@@ -362,13 +362,15 @@ export interface ColumnDef {
   /**
    * Whether a press on the value narrows the list to rows like it — on unless
    * said `false`. A number adds `field<=value` or `field>=value`, whichever
-   * end of its range it is nearer; a value of a chips facet `field=value`;
+   * end of its range it is nearer — or always the one named, `'>='` or
+   * `'<='`, for a column read one way only, like a score where higher is
+   * better; a value of a chips facet `field=value`;
    * each of a {@link ColumnDef.flags} column's words `field:true`. ⌥ held
    * leaves those rows out instead. A column that `activate`s, `click`s or
    * `drill`s is pressed for that, and is not offered this as well; nor is a
    * value no term could say — text that is no facet's, a date, a status.
    */
-  narrow?: boolean
+  narrow?: boolean | '>=' | '<='
   /**
    * The boolean fields a {@link flagColumn} names, each with the word it is
    * shown as — what lets a press on one word narrow to that field alone.

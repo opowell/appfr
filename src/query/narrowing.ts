@@ -15,7 +15,8 @@ const TYPE_FIELDS = new Set(['entitykey', 'entitylabel'])
  *
  * - **A number** keeps its end of the range: `recorded<=0` for 0%, where the
  *   range runs from 0 to 1, and `recorded>=0.99` for 99%. The range is the
- *   column's facet's where it has one, and the rows on screen otherwise.
+ *   column's facet's where it has one, and the rows on screen otherwise. A
+ *   column naming an end — `narrow: '>='` — keeps that end for every value.
  * - **Any other value** keeps that value, whole: `container=dO`,
  *   `source=news.ycombinator.com`.
  * - **A flag** keeps the rows it is set on: `deployed:true`, one term per word
@@ -138,8 +139,9 @@ export function cellNarrowings(
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) return []
     const spans = facet?.kind === 'range' ? { min: facet.min, max: facet.max } : range
-    // Nearer the bottom keeps the bottom; a tie, and a range of one value, too.
-    const low = !spans || value - spans.min <= spans.max - value
+    // The end the column names; else nearer the bottom keeps the bottom, a tie and a range of one value too.
+    const low = column.narrow === '<=' || (column.narrow !== '>='
+      && (!spans || value - spans.min <= spans.max - value))
     return [{
       label: null,
       term: { kind: 'field', field, comparator: low ? '<=' : '>=', value: String(bound(value, low)) },

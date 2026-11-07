@@ -116,7 +116,7 @@ part those views leave out.
 | `width` / `height` / `align` / `mono` / `muted` / `truncate` | how it is drawn |
 | `sort` | the `SortDef` key this header sorts by |
 | `activate` / `click` / `drill` / `scope` | what pressing it does |
-| `narrow` | `false` keeps the value from narrowing the list — see below |
+| `narrow` | `false` keeps the value from narrowing the list; `'>='` or `'<='` has a number always keep that end — see below |
 | `flags` | the boolean fields a `flagColumn` names; set by it |
 | `when` | `always`, or only in one of the two scopes |
 | `hideBelow` | the container width it stands down at |
@@ -139,7 +139,7 @@ a span in the role of a link, so it has no context menu for links:
 
 | Cell | Adds |
 | --- | --- |
-| a number | `field<=value` where it is nearer the bottom of its range, `field>=value` nearer the top. The range is the column's range facet's, else the rows on screen. A fraction is rounded outwards to four places, so the row pressed stays in |
+| a number | `field<=value` where it is nearer the bottom of its range, `field>=value` nearer the top — or always the end a `narrow: '>='` or `'<='` column names. The range is the column's range facet's, else the rows on screen. A fraction is rounded outwards to four places, so the row pressed stays in |
 | text or a status | `field=value`; each of a list its own press |
 | a word of a `flagColumn` | `field:true` for that word's field alone |
 | the row's type (`entityKey` or `entityLabel`, as `entityColumn()`) | no term: it moves to that type, keeping the query, as the Type chooser does |

@@ -49,6 +49,11 @@ describe('narrowing from a cell', () => {
     expect(terms(recorded, rows[2]!)).toEqual([[null, 'recorded>=1']])
   })
 
+  it('keeps the end a column names, wherever in its range the value is', () => {
+    expect(terms({ ...recorded, narrow: '>=' }, rows[0]!)).toEqual([[null, 'recorded>=0']])
+    expect(terms({ ...recorded, narrow: '<=' }, rows[1]!)).toEqual([[null, 'recorded<=0.9913']])
+  })
+
   it('measures against the column’s range facet where it has one, not the rows', () => {
     // 3 of a facet running 0..100 is near the bottom, though it is mid-way between 0 and 55.
     expect(terms(metricColumn('tests', 'Tests'), rows[1]!)).toEqual([[null, 'tests<=3']])

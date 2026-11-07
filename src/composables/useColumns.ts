@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 import type { ColumnDef } from '../types'
 import { columnsFor } from '../query/columns'
+import { withoutPinned } from '../query/pinned'
 import { useShellContext } from './context'
 
 /**
@@ -14,8 +15,17 @@ import { useShellContext } from './context'
  * row under them, which is why that set is the schema's rather than any
  * entity's — while each row's own cells are still read through its own type's
  * columns, from {@link PresentedRow.columns}.
+ *
+ * A column the query holds to one value (`category=Poetry`) stands down, every
+ * row saying the same there — see {@link withoutPinned}.
  */
 export function useColumns(): ComputedRef<ColumnDef[]> {
   const shell = useShellContext()
-  return computed(() => columnsFor(shell.schema.value, shell.entity.value))
+  return computed(() =>
+    withoutPinned(
+      columnsFor(shell.schema.value, shell.entity.value),
+      shell.liveQuery.value.expr,
+      shell.rows.value,
+    ),
+  )
 }

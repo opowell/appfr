@@ -10,5 +10,8 @@ import type { ColumnDef } from '../types';
  * row under them, which is why that set is the schema's rather than any
  * entity's — while each row's own cells are still read through its own type's
  * columns, from {@link PresentedRow.columns}.
+ *
+ * A column the query holds to one value (`category=Poetry`) stands down, every
+ * row saying the same there — see {@link withoutPinned}.
  */
 export declare function useColumns(): ComputedRef<ColumnDef[]>;

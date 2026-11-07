@@ -158,6 +158,12 @@ The table's headers are the only sort control; the sort is in the URL.
 `480 | 620 | 760 | 900 | 1100` (a fixed ladder because the rule is a container
 query in the stylesheet). Columns without it are always shown.
 
+A column also stands down while the query holds its field to one value: under
+`category=Poetry` every row's Category says the same, so the bar says it once
+instead. Only an unnegated `=` ANDed on pins a field, not `:`, a range, or a
+query of `OR`ed parts. A column of lists stays, as `tags=sea` keeps rows whose
+tags still differ, and so does the identity.
+
 **A cell of your own.** `kind: 'component'` renders your component with
 `{ row, entry, value, column }` — a sparkline, a thumbnail stack, a checkbox.
 The shell has no selection model here; it passes the row. Your component must

@@ -10,7 +10,8 @@ import type { FieldTerm } from '../data/expression';
  *
  * - **A number** keeps its end of the range: `recorded<=0` for 0%, where the
  *   range runs from 0 to 1, and `recorded>=0.99` for 99%. The range is the
- *   column's facet's where it has one, and the rows on screen otherwise.
+ *   column's facet's where it has one, and the rows on screen otherwise. A
+ *   column naming an end — `narrow: '>='` — keeps that end for every value.
  * - **Any other value** keeps that value, whole: `container=dO`,
  *   `source=news.ycombinator.com`.
  * - **A flag** keeps the rows it is set on: `deployed:true`, one term per word

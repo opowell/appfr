@@ -3483,7 +3483,7 @@ function mi(e, t, n, a = null) {
   const l = ie(e, t), o = n?.facets.find((r) => r.key.toLowerCase() === s);
   if (typeof l == "number") {
     if (!Number.isFinite(l)) return [];
-    const r = o?.kind === "range" ? { min: o.min, max: o.max } : a, c = !r || l - r.min <= r.max - l;
+    const r = o?.kind === "range" ? { min: o.min, max: o.max } : a, c = e.narrow === "<=" || e.narrow !== ">=" && (!r || l - r.min <= r.max - l);
     return [{
       label: null,
       term: { kind: "field", field: s, comparator: c ? "<=" : ">=", value: String(pi(l, c)) }

@@ -243,7 +243,8 @@ function choose(item: MenuItemDef) {
   display: inline-flex;
   align-items: center;
   max-width: 24ch;
-  padding: 3px 24px 3px 8px;
+  min-height: var(--dc-control-height);
+  padding: 0 24px 0 8px;
   background: var(--dc-bg-0);
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);

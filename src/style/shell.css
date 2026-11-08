@@ -59,6 +59,17 @@
   cursor: pointer;
 }
 
+/*
+ * How tall a control on the bar is — the name, the pickers, the search field,
+ * the sort, the operations and the pager's steps — so the row reads as one row
+ * of controls rather than a run of boxes each sized by its own padding. Every
+ * one of them is at least this tall, and grows past it only where a theme's
+ * type does not fit. Zero specificity, so a theme or a host sets its own.
+ */
+:where(.dc-shell) {
+  --dc-control-height: 32px;
+}
+
 @keyframes dc-pop-in {
   from {
     opacity: 0;

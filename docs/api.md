@@ -74,6 +74,16 @@ without one.
 </DataShell>
 ```
 
+## One height for the bar's controls
+
+Every control on the bar — the name, the type and view pickers, the search
+field, the sort and its direction, the operations, the pager's steps, and a
+host's own `<button>` in `#actions` once `controls.css` is imported — is at
+least `--dc-control-height` tall (32px), so the row lines up as one row. A theme
+or host sets its own on `.dc-shell`; a control grows past it only where its
+type does not fit. The query's parts sit inside the search field, a few pixels
+shorter than it.
+
 ## A page of your own under the bar
 
 The `page` slot replaces the results under the same bar, for a form or

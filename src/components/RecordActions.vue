@@ -359,13 +359,14 @@ function opLabel(label: string): string {
   flex: 0 0 auto;
 }
 
-/* Drawn as the picker beside it is, at the size of the one glyph it holds. */
+/* Drawn as the picker beside it is, and as tall: square, holding one glyph. */
 .dc-actions__dir {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
-  padding: 3px 6px;
+  min-width: var(--dc-control-height);
+  min-height: var(--dc-control-height);
+  padding: 0 6px;
   background: var(--dc-bg-0);
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
@@ -440,7 +441,8 @@ label.dc-actions__all {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 11px;
+  min-height: var(--dc-control-height);
+  padding: 0 11px;
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
   background: var(--dc-bg-0);

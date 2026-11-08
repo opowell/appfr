@@ -684,11 +684,14 @@ onBeforeUnmount(() => watching?.disconnect())
 /*
  * The name, and the way home: a button like any other, face and edge at rest,
  * so that it reads as a press before the pointer finds it — `controls.css`'s
- * button, held to the bar's height.
+ * button, at the height of every other control on the bar.
  */
 .dc-header__domain {
+  display: inline-flex;
+  align-items: center;
   flex: 0 0 auto;
-  padding: 3px 8px;
+  min-height: var(--dc-control-height);
+  padding: 0 8px;
   border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius-sm);
   background: var(--dc-bg-2);
@@ -730,8 +733,10 @@ onBeforeUnmount(() => watching?.disconnect())
  */
 .dc-header__field {
   display: flex;
+  align-items: center;
   flex: 1 1 auto;
   min-width: 12ch;
+  min-height: var(--dc-control-height);
   padding: 0 3px;
   background: var(--dc-field);
   border: 1px solid var(--dc-line);
@@ -753,7 +758,6 @@ onBeforeUnmount(() => watching?.disconnect())
   flex: 1;
   gap: 5px;
   min-width: 0;
-  padding: 2px 0;
   /* One line, scrolled rather than wrapped: the bar is one row high, and a
      query long enough to wrap would push the actions off it. */
   overflow-x: auto;
@@ -801,12 +805,16 @@ onBeforeUnmount(() => watching?.disconnect())
  * Filled, edgeless and round-ended, where a control beside it (a PickControl)
  * is hollow, edged and square: a value and a thing that opens are told apart
  * by their shape, not by colour, which a greyscale accent does not give. The
- * edge is there but clear, so a term stands as tall as a control. The rounding
+ * edge is there but clear. It sits inside the field, so it is the field's
+ * height less the field's edge and a few pixels' margin. The rounding
  * is the theme's own, run out to a full pill, so a square theme stays square.
  */
 .dc-term {
+  display: inline-flex;
+  align-items: center;
   flex: 0 0 auto;
-  padding: 3px 9px;
+  min-height: calc(var(--dc-control-height) - 8px);
+  padding: 0 9px;
   background: var(--dc-accent-bg);
   border: 1px solid transparent;
   border-radius: calc(var(--dc-radius-sm) * 99);
@@ -840,7 +848,7 @@ onBeforeUnmount(() => watching?.disconnect())
 .dc-header__search {
   flex: 1 1 auto;
   min-width: 8ch;
-  padding: 3px 3px;
+  padding: 0 3px;
   background: none;
   border: none;
   color: var(--dc-fg-1);
@@ -904,13 +912,14 @@ onBeforeUnmount(() => watching?.disconnect())
 
 .dc-within {
   max-width: 34ch;
-  padding: 3px 9px;
+  padding: 0 9px;
   background: var(--dc-accent-bg);
   border: 1px solid transparent;
   border-radius: calc(var(--dc-radius-sm) * 99);
   color: var(--dc-accent);
   font-size: var(--dc-text-code);
-  line-height: 1.5;
+  /* Centred by its line rather than by flex, which would undo the ellipsis. */
+  line-height: calc(var(--dc-control-height) - 2px);
 }
 
 /*

@@ -52,6 +52,12 @@
   cursor: not-allowed;
 }
 
+/* On the bar, a host's button is as tall as the shell's controls beside it. */
+:where(.dc-shell .dc-header__actions) :where(button:not([class*='dc-'])) {
+  min-height: var(--dc-control-height);
+  padding-block: 0;
+}
+
 /* The one thing the form is for. Filled with the accent, as the query
    panel's Run is. */
 :where(.dc-shell) :where(button.primary:not([class*='dc-'])) {

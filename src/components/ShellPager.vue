@@ -189,8 +189,8 @@ function abandonTyped(event: Event): void {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: var(--dc-control-height);
+  height: var(--dc-control-height);
   padding: 0;
   background: var(--dc-bg-0);
   border: 1px solid var(--dc-line);

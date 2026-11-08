@@ -224,8 +224,13 @@ test.describe('Content — states other than a full result set', () => {
     await expect(page.locator('.dc-results__clear')).toHaveText('Search everything instead')
 
     await page.locator('.dc-results__clear').click()
-    // Back to the whole corpus, so the bar has no type chooser to show.
+    // Back to the whole corpus, so the bar has no type chooser to show, and
+    // the query kept: it is only the type that is lifted.
     await expect(scopeSelect(page)).toHaveCount(0)
+    await expect(page.locator('.dc-results__detail')).toContainText('nothingmatchesthis')
+    await expect(page.locator('.dc-results__clear')).toHaveText('Clear filters')
+
+    await page.locator('.dc-results__clear').click()
     await expect(listRows(page).first()).toBeVisible()
   })
 

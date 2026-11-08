@@ -279,8 +279,8 @@ onBeforeUnmount(() => {
       <PressLink
         v-if="!shell.isPristine.value"
         class="dc-results__clear"
-        :href="shell.clearHref()"
-        @press="shell.clearFilters()"
+        :href="shell.isEverything.value ? shell.clearHref() : shell.entityHref(null)"
+        @press="shell.isEverything.value ? shell.clearFilters() : shell.clearEntity()"
       >
         {{ shell.isEverything.value ? 'Clear filters' : 'Search everything instead' }}
       </PressLink>

@@ -152,6 +152,10 @@ const previews = computed(() =>
         <span class="dc-type__name">{{ preview.entity.label }}</span>
         <span class="dc-type__count dc-mono">{{ preview.count }}</span>
         <span
+          v-if="preview.entity.note"
+          class="dc-type__note dc-mono"
+        >{{ preview.entity.note }}</span>
+        <span
           class="dc-type__go"
           aria-hidden="true"
         >→</span>
@@ -346,6 +350,18 @@ const previews = computed(() =>
 .dc-type__count {
   font-size: var(--dc-text-meta);
   color: var(--dc-fg-3);
+}
+
+/* Beside the count and in its hand, a dot apart: the same kind of thing said
+   about the same type, so one line rather than one more under the name. */
+.dc-type__note {
+  font-size: var(--dc-text-meta);
+  color: var(--dc-fg-3);
+}
+
+.dc-type__note::before {
+  content: '·';
+  margin-right: 10px;
 }
 
 .dc-type__go {

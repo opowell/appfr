@@ -427,6 +427,14 @@ export interface EntitySchema {
    */
   description?: string
   /**
+   * A few words beside the type's count on its card — `'42 unread'`: a second
+   * number the host keeps about the type, said where the first one is rather
+   * than as a card of its own. Drawn as given, in the count's quiet hand.
+   *
+   * Left out, the card is its name and count as before.
+   */
+  note?: string
+  /**
    * Total population. A number is written by the shell, in the same hand as
    * the live counts beside it — `formatCount`, so `9988` reads `10k`. A string
    * is shown as given, for what is not a number yet: an estimate (`~1.2k`),

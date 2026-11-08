@@ -130,7 +130,11 @@ const describedSchema: DomainSchema = {
       return { ...entity, description: 'A saved query, and the items it has found so far.' }
     }
     if (entity.key === 'items') {
-      return { ...entity, description: 'One listing a search turned up, as last scraped.' }
+      return {
+        ...entity,
+        description: 'One listing a search turned up, as last scraped.',
+        note: '42 unread',
+      }
     }
     if (entity.key === 'scrapers') {
       return { ...entity, description: 'What fetches listings from one marketplace.' }

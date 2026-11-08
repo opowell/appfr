@@ -272,6 +272,16 @@ test.describe('Home — what a type is', () => {
     expect(name && description && description.y >= name.y + name.height - 1).toBe(true)
   })
 
+  test('a note sits beside the count, and only where one is given', async ({ page }) => {
+    await gotoStory(page, HEADS_ONLY_DESCRIBED)
+    const head = card(page, 'Items')
+    await expect(head.locator('.dc-type__note')).toHaveText('42 unread')
+    const count = await head.locator('.dc-type__count').boundingBox()
+    const note = await head.locator('.dc-type__note').boundingBox()
+    expect(count && note && note.x > count.x && Math.abs(note.y - count.y) < 4).toBe(true)
+    await expect(card(page, 'Searches').locator('.dc-type__note')).toHaveCount(0)
+  })
+
   test('is part of the head, so pressing it filters to the type', async ({ page }) => {
     await gotoStory(page, HEADS_ONLY_DESCRIBED)
     await card(page, 'Scrapers').locator('.dc-type__description').click()

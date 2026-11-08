@@ -1,6 +1,6 @@
 import { ref as q, computed as f, inject as rn, provide as on, getCurrentInstance as Zn, shallowRef as he, toValue as Ee, watch as ae, onScopeDispose as Ct, getCurrentScope as ea, defineComponent as W, onMounted as it, onBeforeUnmount as _e, openBlock as u, createBlock as I, Teleport as Pt, createElementVNode as S, mergeProps as qe, unref as w, renderSlot as Y, createCommentVNode as M, nextTick as Ye, createElementBlock as h, withKeys as Me, useSlots as Et, useId as Mt, withCtx as X, toDisplayString as E, createTextVNode as te, Fragment as K, renderList as J, withModifiers as Le, normalizeClass as ue, withDirectives as Ut, normalizeStyle as oe, vModelText as Ja, createVNode as Q, reactive as Sn, toHandlers as cn, resolveDynamicComponent as Xe, createSlots as Qt, useModel as Cn, onBeforeUpdate as Za, normalizeProps as Dt, guardReactiveProps as es, mergeModels as Pn, vShow as En, Comment as ts, Text as ns, readonly as as, watchEffect as ss } from "vue";
 import { MenuList as ls } from "menu-bar";
-const un = ["list", "cards", "grid", "images", "table", "links", "preview"], Qe = ["ok", "running", "queued", "review", "failed"], uu = [...Qe, "neutral", "accent"], du = [
+const un = ["list", "cards", "grid", "images", "table", "links", "preview"], Qe = ["ok", "running", "queued", "review", "failed"], du = [...Qe, "neutral", "accent"], fu = [
   "identity",
   "reference",
   "metric",
@@ -8,7 +8,7 @@ const un = ["list", "cards", "grid", "images", "table", "links", "preview"], Qe 
   "updated",
   "image",
   "tint"
-], fu = [480, 620, 760, 900, 1100], ta = Symbol("dc.routeAdapter");
+], vu = [480, 620, 760, 900, 1100], ta = Symbol("dc.routeAdapter");
 function de(e) {
   if (!e) return "";
   const t = e.replace(/^[?]/, "");
@@ -93,7 +93,7 @@ function us(e) {
 function ds(e) {
   return String(e + 1);
 }
-function vu(e, t) {
+function pu(e, t) {
   if (!e) return "—";
   const n = new Date(e);
   return Number.isNaN(n.getTime()) ? "—" : n.toLocaleString(t, {
@@ -219,7 +219,7 @@ function ks(e) {
 function dn(e) {
   return e.entity === null && e.expr.trim() === "";
 }
-function pu(e) {
+function hu(e) {
   return e.entity !== null;
 }
 function ra(e, t) {
@@ -571,7 +571,7 @@ function pe(e) {
 function Vs(e, t, n) {
   return e.map((a, s) => s === t ? a.filter((l, o) => o !== n) : a).filter((a) => a.length);
 }
-function hu(e) {
+function mu(e) {
   const t = re(e);
   if (t.length > 1) return { parts: [], text: e.trim() };
   const n = t[0] ?? [];
@@ -580,7 +580,7 @@ function hu(e) {
     text: n.filter((a) => a.kind === "text").map(ge).join(" ")
   };
 }
-function mu(e, t) {
+function yu(e, t) {
   return [...e.map(ge), t.trim()].filter(Boolean).join(" ");
 }
 const Vn = (e, t) => e.toLowerCase() === t.toLowerCase();
@@ -662,7 +662,7 @@ const gt = [
   "oklch(0.35 0.07 30)",
   "oklch(0.34 0.05 200)"
 ];
-function yu(e) {
+function gu(e) {
   return gt[Ge(e) % gt.length];
 }
 function ga(e, t) {
@@ -856,7 +856,7 @@ function Kn(e, t, n = {}, a = "") {
   ];
   return d.length ? `?${d.map(([v, _]) => _ === "" ? v : `${v}=${_}`).join("&")}` : "";
 }
-function gu(e) {
+function _u(e) {
   const t = [];
   for (const [n, a] of Object.entries(e))
     for (const s of Array.isArray(a) ? a : [a]) {
@@ -866,7 +866,7 @@ function gu(e) {
     }
   return t.length ? `?${t.join("&")}` : "";
 }
-function _u(e, t) {
+function wu(e, t) {
   const n = new Map(yn(e)), a = n.get(Oe), s = a === void 0 ? "" : ye(a);
   if (!t) return s;
   const l = n.get(Ke);
@@ -886,7 +886,7 @@ function ka(e, t) {
 function ba(e, t) {
   return `${e}="${t.replace(/"/g, "")}"`;
 }
-function wu(e, t) {
+function ku(e, t) {
   const n = typeof e == "string" ? e : e?.scope;
   if (!n) return null;
   const a = t.filter((s) => s.replace(/"/g, "") !== "").map((s) => ba(n, s));
@@ -1005,7 +1005,7 @@ function cl(e, t) {
     }
   return n;
 }
-function ku(e, t, n = "cards") {
+function bu(e, t, n = "cards") {
   return {
     // An expression with nothing in it is no parameter, as the shell writes it.
     [Oe]: dt(e, t) || void 0,
@@ -1155,7 +1155,7 @@ function Na(e, t, n) {
   ]);
   return pe(l);
 }
-function bu(e, t) {
+function $u(e, t) {
   return Na(e, t, ws(t));
 }
 function yl(e, t) {
@@ -3926,16 +3926,19 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
 }, qi = {
   key: 2,
   class: "dc-types__state"
-}, Fi = ["data-dc-empty"], Vi = { class: "dc-type__name" }, Di = { class: "dc-type__count dc-mono" }, Ki = { class: "dc-type__sr" }, Wi = {
+}, Fi = ["data-dc-empty"], Vi = { class: "dc-type__name" }, Di = { class: "dc-type__count dc-mono" }, Ki = {
   key: 0,
+  class: "dc-type__note dc-mono"
+}, Wi = { class: "dc-type__sr" }, zi = {
+  key: 1,
   class: "dc-type__description"
-}, zi = {
+}, ji = {
   key: 0,
   class: "dc-type__empty"
-}, ji = { class: "dc-type__identity" }, Ui = { class: "dc-type__primary dc-truncate" }, Qi = { class: "dc-type__secondary dc-mono dc-truncate" }, Gi = { class: "dc-type__trailing dc-mono" }, Yi = { class: "dc-type__metric-value" }, Xi = { class: "dc-type__metric-label" }, Ji = {
+}, Ui = { class: "dc-type__identity" }, Qi = { class: "dc-type__primary dc-truncate" }, Gi = { class: "dc-type__secondary dc-mono dc-truncate" }, Yi = { class: "dc-type__trailing dc-mono" }, Xi = { class: "dc-type__metric-value" }, Ji = { class: "dc-type__metric-label" }, Zi = {
   key: 0,
   class: "dc-type__date"
-}, Zi = /* @__PURE__ */ W({
+}, ec = /* @__PURE__ */ W({
   __name: "TypeCardsView",
   setup(e) {
     const t = ne(), { previews: n, pending: a, error: s } = Ai({
@@ -3975,16 +3978,17 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
           default: X(() => [
             S("span", Vi, E(d.entity.label), 1),
             S("span", Di, E(d.count), 1),
+            d.entity.note ? (u(), h("span", Ki, E(d.entity.note), 1)) : M("", !0),
             c[0] || (c[0] = S("span", {
               class: "dc-type__go",
               "aria-hidden": "true"
             }, "→", -1)),
-            S("span", Ki, "Show only " + E(d.entity.label.toLowerCase()), 1),
-            d.entity.description ? (u(), h("span", Wi, E(d.entity.description), 1)) : M("", !0)
+            S("span", Wi, "Show only " + E(d.entity.label.toLowerCase()), 1),
+            d.entity.description ? (u(), h("span", zi, E(d.entity.description), 1)) : M("", !0)
           ]),
           _: 2
         }, 1032, ["href", "onPress"]),
-        d.total ? M("", !0) : (u(), h("p", zi, E(l.value ? "No matches" : "Nothing here yet"), 1)),
+        d.total ? M("", !0) : (u(), h("p", ji, E(l.value ? "No matches" : "Nothing here yet"), 1)),
         (u(!0), h(K, null, J(d.rows, (v) => (u(), h("div", {
           key: v.key,
           class: "dc-type__row"
@@ -3995,14 +3999,14 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
             onPress: (_) => w(t).activate(v.row, _)
           }, {
             default: X(() => [
-              S("span", ji, [
-                S("span", Ui, E(v.parts.identity), 1),
-                S("span", Qi, E(v.parts.reference), 1)
+              S("span", Ui, [
+                S("span", Qi, E(v.parts.identity), 1),
+                S("span", Gi, E(v.parts.reference), 1)
               ])
             ]),
             _: 2
           }, 1032, ["href", "onPress"]),
-          S("span", Gi, [
+          S("span", Yi, [
             (u(!0), h(K, null, J(v.parts.metrics.slice(0, 1), (_) => (u(), I(ft, {
               key: _.column.key ?? _.label,
               class: "dc-type__metric",
@@ -4010,12 +4014,12 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
               column: _.column
             }, {
               default: X(() => [
-                S("span", Yi, E(_.text), 1),
-                S("span", Xi, E(_.label), 1)
+                S("span", Xi, E(_.text), 1),
+                S("span", Ji, E(_.label), 1)
               ]),
               _: 2
             }, 1032, ["entry", "column"]))), 128)),
-            v.parts.updated ? (u(), h("span", Ji, E(v.parts.updated), 1)) : M("", !0),
+            v.parts.updated ? (u(), h("span", Zi, E(v.parts.updated), 1)) : M("", !0),
             Q(kn, { entry: v }, null, 8, ["entry"]),
             Q(pt, { entry: v }, null, 8, ["entry"]),
             Q(vt, { entry: v }, null, 8, ["entry"])
@@ -4040,22 +4044,22 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       Y(r.$slots, "after", {}, void 0, !0)
     ], 8, Ri));
   }
-}), Qa = /* @__PURE__ */ U(Zi, [["__scopeId", "data-v-d73c6777"]]), ec = ["data-dc-pending", "data-dc-more"], tc = {
+}), Qa = /* @__PURE__ */ U(ec, [["__scopeId", "data-v-6f5fc1b0"]]), tc = ["data-dc-pending", "data-dc-more"], nc = {
   key: 0,
   class: "dc-results__state dc-results__state--loading",
   "aria-live": "polite"
-}, nc = {
+}, ac = {
   key: 3,
   class: "dc-results__state",
   role: "alert"
-}, ac = { class: "dc-results__detail" }, sc = {
+}, sc = { class: "dc-results__detail" }, lc = {
   key: 4,
   class: "dc-results__state",
   "aria-live": "polite"
-}, lc = {
+}, rc = {
   key: 5,
   class: "dc-results__state"
-}, rc = { class: "dc-results__detail" }, oc = /* @__PURE__ */ W({
+}, oc = { class: "dc-results__detail" }, ic = /* @__PURE__ */ W({
   __name: "ResultsArea",
   props: {
     views: {},
@@ -4131,7 +4135,7 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
         "--dc-results-stuck": `${p.value}px`
       })
     }, [
-      e.loading ? (u(), h("p", tc, [...b[1] || (b[1] = [
+      e.loading ? (u(), h("p", nc, [...b[1] || (b[1] = [
         S("span", { class: "dc-results__detail" }, "Loading…", -1)
       ])])) : l.value ? (u(), I(Qa, { key: 1 }, Qt({ _: 2 }, [
         a["cards-before"] ? {
@@ -4151,14 +4155,14 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       ]), 1024)) : r.value?.id ? (u(), I(Xe(r.value.component), {
         key: 2,
         id: r.value.id
-      }, null, 8, ["id"])) : d.value ? (u(), h("p", nc, [
+      }, null, 8, ["id"])) : d.value ? (u(), h("p", ac, [
         b[2] || (b[2] = S("span", { class: "dc-results__headline" }, "Could not load results", -1)),
-        S("span", ac, E(w(n).error.value instanceof Error ? w(n).error.value.message : "The data source failed."), 1)
-      ])) : !c.value && w(n).pending.value ? (u(), h("p", sc, [...b[3] || (b[3] = [
+        S("span", sc, E(w(n).error.value instanceof Error ? w(n).error.value.message : "The data source failed."), 1)
+      ])) : !c.value && w(n).pending.value ? (u(), h("p", lc, [...b[3] || (b[3] = [
         S("span", { class: "dc-results__detail" }, "Running query…", -1)
-      ])])) : c.value ? (u(), I(Xe(i.value), { key: 6 })) : (u(), h("div", lc, [
+      ])])) : c.value ? (u(), I(Xe(i.value), { key: 6 })) : (u(), h("div", rc, [
         b[4] || (b[4] = S("span", { class: "dc-results__headline" }, "Nothing matches this query", -1)),
-        S("span", rc, E(w(n).summary.value), 1),
+        S("span", oc, E(w(n).summary.value), 1),
         w(n).isPristine.value ? M("", !0) : (u(), I(se, {
           key: 0,
           class: "dc-results__clear",
@@ -4171,12 +4175,12 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
           _: 1
         }, 8, ["href"]))
       ]))
-    ], 12, ec));
+    ], 12, tc));
   }
-}), Ga = /* @__PURE__ */ U(oc, [["__scopeId", "data-v-4484c328"]]), ic = ["data-dc-theme", "data-dc-value-press"], cc = {
+}), Ga = /* @__PURE__ */ U(ic, [["__scopeId", "data-v-4484c328"]]), cc = ["data-dc-theme", "data-dc-value-press"], uc = {
   key: 0,
   class: "dc-shell__page"
-}, uc = /* @__PURE__ */ W({
+}, dc = /* @__PURE__ */ W({
   __name: "DataShell",
   props: /* @__PURE__ */ Pn({
     schema: {},
@@ -4500,7 +4504,7 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
         ]), 1024),
         Vt.value && !i.page ? (u(), I(an, Dt(qe({ key: 0 }, $n.value)), null, 16)) : M("", !0)
       ], 2),
-      i.page ? (u(), h("div", cc, [
+      i.page ? (u(), h("div", uc, [
         Y($.$slots, "page", {
           query: w(H).query.value
         }, void 0, !0)
@@ -4546,24 +4550,24 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
           } : void 0
         ]), 1032, ["views", "loading"])
       ], !0, 2)
-    ], 12, ic));
+    ], 12, cc));
   }
-}), dc = /* @__PURE__ */ U(uc, [["__scopeId", "data-v-502d2386"]]), fc = ["data-dc-muted", "data-dc-collapsed"], vc = ["data-dc-collapsible"], pc = ["aria-expanded", "aria-controls"], hc = { class: "dc-shell-card__sr" }, mc = {
+}), fc = /* @__PURE__ */ U(dc, [["__scopeId", "data-v-502d2386"]]), vc = ["data-dc-muted", "data-dc-collapsed"], pc = ["data-dc-collapsible"], hc = ["aria-expanded", "aria-controls"], mc = { class: "dc-shell-card__sr" }, yc = {
   key: 0,
   class: "dc-shell-card__identity"
-}, yc = { class: "dc-shell-card__title dc-shell-card__name" }, gc = {
+}, gc = { class: "dc-shell-card__title dc-shell-card__name" }, _c = {
   key: 0,
   class: "dc-shell-card__ref dc-mono"
-}, _c = {
+}, wc = {
   key: 1,
   class: "dc-shell-card__title"
-}, wc = {
+}, kc = {
   key: 2,
   class: "dc-shell-card__count dc-mono"
-}, kc = {
+}, bc = {
   key: 1,
   class: "dc-shell-card__aside"
-}, bc = ["data-dc-flush"], $c = /* @__PURE__ */ W({
+}, $c = ["data-dc-flush"], xc = /* @__PURE__ */ W({
   __name: "ShellCard",
   props: {
     title: {},
@@ -4647,23 +4651,23 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
           }, [
             S("path", { d: "M2 3.5 5 6.5 8 3.5" })
           ], -1)),
-          S("span", hc, E(e.name || e.title || "Card"), 1)
-        ], 8, pc)) : M("", !0),
+          S("span", mc, E(e.name || e.title || "Card"), 1)
+        ], 8, hc)) : M("", !0),
         Y(R.$slots, "head", {}, () => [
-          e.name ? (u(), h("div", mc, [
-            S("h2", yc, E(e.name), 1),
-            y.value ? (u(), h("span", gc, [
+          e.name ? (u(), h("div", yc, [
+            S("h2", gc, E(e.name), 1),
+            y.value ? (u(), h("span", _c, [
               Y(R.$slots, "reference", {}, () => [
                 te(E(e.reference), 1)
               ], !0)
             ])) : M("", !0)
-          ])) : (u(), h("h2", _c, E(e.title), 1)),
-          e.count !== void 0 ? (u(), h("span", wc, E(e.count), 1)) : M("", !0)
+          ])) : (u(), h("h2", wc, E(e.title), 1)),
+          e.count !== void 0 ? (u(), h("span", kc, E(e.count), 1)) : M("", !0)
         ], !0),
-        d.value ? (u(), h("span", kc, [
+        d.value ? (u(), h("span", bc, [
           Y(R.$slots, "aside", {}, void 0, !0)
         ])) : M("", !0)
-      ], 8, vc)) : M("", !0),
+      ], 8, pc)) : M("", !0),
       v.value ? Ut((u(), h("div", {
         key: 1,
         id: x,
@@ -4671,7 +4675,7 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
         "data-dc-flush": e.flush ? "true" : "false"
       }, [
         Y(R.$slots, "default", {}, void 0, !0)
-      ], 8, bc)), [
+      ], 8, $c)), [
         [En, !p.value]
       ]) : M("", !0),
       _.value ? Ut((u(), h("footer", {
@@ -4683,9 +4687,9 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       ], 512)), [
         [En, !p.value]
       ]) : M("", !0)
-    ], 12, fc));
+    ], 12, vc));
   }
-}), $u = /* @__PURE__ */ U($c, [["__scopeId", "data-v-073304c8"]]), xc = ["aria-label"], Sc = ["aria-checked", "data-dc-active", "tabindex", "onClick", "onKeydown"], Cc = /* @__PURE__ */ W({
+}), xu = /* @__PURE__ */ U(xc, [["__scopeId", "data-v-073304c8"]]), Sc = ["aria-label"], Cc = ["aria-checked", "data-dc-active", "tabindex", "onClick", "onKeydown"], Pc = /* @__PURE__ */ W({
   __name: "SegmentedControl",
   props: {
     modelValue: {},
@@ -4722,10 +4726,10 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
         tabindex: r.key === e.modelValue ? 0 : -1,
         onClick: (d) => a("update:modelValue", r.key),
         onKeydown: (d) => l(d, c)
-      }, E(r.label), 43, Sc))), 128))
-    ], 8, xc));
+      }, E(r.label), 43, Cc))), 128))
+    ], 8, Sc));
   }
-}), Pc = /* @__PURE__ */ U(Cc, [["__scopeId", "data-v-63fb5482"]]), Ec = { class: "dc-fact__label" }, Mc = ["title"], Lc = /* @__PURE__ */ W({
+}), Ec = /* @__PURE__ */ U(Pc, [["__scopeId", "data-v-63fb5482"]]), Mc = { class: "dc-fact__label" }, Lc = ["title"], Tc = /* @__PURE__ */ W({
   __name: "ShellFact",
   props: {
     label: {},
@@ -4747,7 +4751,7 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       class: "dc-fact",
       style: oe(a.value)
     }, [
-      S("dt", Ec, [
+      S("dt", Mc, [
         Y(s.$slots, "label", {}, () => [
           te(E(e.label), 1)
         ], !0)
@@ -4764,10 +4768,10 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
             class: "dc-fact__line"
           }, E(o), 1))), 128))
         ], !0)
-      ], 8, Mc)
+      ], 8, Lc)
     ], 4));
   }
-}), Tc = /* @__PURE__ */ U(Lc, [["__scopeId", "data-v-1f6d25e6"]]), Oc = /* @__PURE__ */ W({
+}), Oc = /* @__PURE__ */ U(Tc, [["__scopeId", "data-v-1f6d25e6"]]), Nc = /* @__PURE__ */ W({
   __name: "ShellFacts",
   props: {
     items: { default: () => [] },
@@ -4779,7 +4783,7 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       class: "dc-facts",
       style: oe(n.value)
     }, [
-      (u(!0), h(K, null, J(e.items, (l, o) => (u(), I(Tc, {
+      (u(!0), h(K, null, J(e.items, (l, o) => (u(), I(Oc, {
         key: `${o}:${l.label}`,
         label: l.label,
         value: l.value,
@@ -4789,10 +4793,10 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       Y(a.$slots, "default", {}, void 0, !0)
     ], 4));
   }
-}), xu = /* @__PURE__ */ U(Oc, [["__scopeId", "data-v-17455afa"]]), Nc = { class: "dc-counts" }, Ac = ["data-dc-tone"], Ic = {
+}), Su = /* @__PURE__ */ U(Nc, [["__scopeId", "data-v-17455afa"]]), Ac = { class: "dc-counts" }, Ic = ["data-dc-tone"], Rc = {
   key: 0,
   class: "dc-counts__empty"
-}, Rc = /* @__PURE__ */ W({
+}, Bc = /* @__PURE__ */ W({
   __name: "StatusCounts",
   props: {
     counts: {},
@@ -4800,26 +4804,26 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
   },
   setup(e) {
     const t = e, n = f(() => t.counts.filter((a) => a.count > 0));
-    return (a, s) => (u(), h("span", Nc, [
+    return (a, s) => (u(), h("span", Ac, [
       (u(!0), h(K, null, J(n.value, (l) => (u(), h("span", {
         key: l.label,
         class: "dc-counts__count",
         "data-dc-tone": l.tone ?? "neutral"
-      }, E(l.count) + " " + E(l.label), 9, Ac))), 128)),
-      n.value.length === 0 ? (u(), h("span", Ic, E(e.empty), 1)) : M("", !0)
+      }, E(l.count) + " " + E(l.label), 9, Ic))), 128)),
+      n.value.length === 0 ? (u(), h("span", Rc, E(e.empty), 1)) : M("", !0)
     ]));
   }
-}), Su = /* @__PURE__ */ U(Rc, [["__scopeId", "data-v-5553a9e2"]]), Bc = ["data-dc-copied", "title", "aria-label"], Hc = {
+}), Cu = /* @__PURE__ */ U(Bc, [["__scopeId", "data-v-5553a9e2"]]), Hc = ["data-dc-copied", "title", "aria-label"], qc = {
   key: 0,
   class: "dc-copy__mark",
   viewBox: "0 0 16 16",
   "aria-hidden": "true"
-}, qc = {
+}, Fc = {
   key: 1,
   class: "dc-copy__mark",
   viewBox: "0 0 16 16",
   "aria-hidden": "true"
-}, Fc = 1500, Vc = /* @__PURE__ */ W({
+}, Vc = 1500, Dc = /* @__PURE__ */ W({
   __name: "CopyButton",
   props: {
     text: {},
@@ -4840,7 +4844,7 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       }
       s.value = !0, clearTimeout(l), l = setTimeout(() => {
         s.value = !1;
-      }, Fc), a("copied", i);
+      }, Vc), a("copied", i);
     }
     return _e(() => clearTimeout(l)), (i, r) => (u(), h("button", {
       type: "button",
@@ -4850,9 +4854,9 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       "aria-label": e.label,
       onClick: o
     }, [
-      s.value ? (u(), h("svg", qc, [...r[1] || (r[1] = [
+      s.value ? (u(), h("svg", Fc, [...r[1] || (r[1] = [
         S("path", { d: "M3 8.5l3.2 3L13 4.5" }, null, -1)
-      ])])) : (u(), h("svg", Hc, [...r[0] || (r[0] = [
+      ])])) : (u(), h("svg", qc, [...r[0] || (r[0] = [
         S("rect", {
           x: "5.5",
           y: "5.5",
@@ -4862,9 +4866,9 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
         }, null, -1),
         S("path", { d: "M10.5 3.5v-1a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h1" }, null, -1)
       ])]))
-    ], 8, Bc));
+    ], 8, Hc));
   }
-}), Dc = /* @__PURE__ */ U(Vc, [["__scopeId", "data-v-f4249d7f"]]), Kc = ["data-dc-copy", "data-dc-wrap", "data-dc-tone"], Wc = /* @__PURE__ */ W({
+}), Kc = /* @__PURE__ */ U(Dc, [["__scopeId", "data-v-f4249d7f"]]), Wc = ["data-dc-copy", "data-dc-wrap", "data-dc-tone"], zc = /* @__PURE__ */ W({
   __name: "ShellCode",
   props: {
     code: { default: void 0 },
@@ -4896,7 +4900,7 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
           te(E(e.code), 1)
         ], !0)
       ], 4),
-      e.copy ? (u(), I(Dc, {
+      e.copy ? (u(), I(Kc, {
         key: 0,
         class: "dc-code__copy",
         text: o,
@@ -4904,9 +4908,9 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
         onCopied: r[0] || (r[0] = (c) => a("copied", c)),
         onError: r[1] || (r[1] = (c) => a("error", c))
       }, null, 8, ["label"])) : M("", !0)
-    ], 8, Kc));
+    ], 8, Wc));
   }
-}), Cu = /* @__PURE__ */ U(Wc, [["__scopeId", "data-v-67b371dd"]]), zc = 24, jc = /* @__PURE__ */ W({
+}), Pu = /* @__PURE__ */ U(zc, [["__scopeId", "data-v-67b371dd"]]), jc = 24, Uc = /* @__PURE__ */ W({
   __name: "ShellLog",
   props: {
     fetchChunk: {},
@@ -4924,7 +4928,7 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
     async function c() {
       const { chunk: _, offset: y } = await n.fetchChunk(o);
       if (o = y, !_) return;
-      const g = l.value, p = !g || g.scrollTop + g.clientHeight >= g.scrollHeight - zc;
+      const g = l.value, p = !g || g.scrollTop + g.clientHeight >= g.scrollHeight - jc;
       a.value += _, p && (await Ye(), l.value && (l.value.scrollTop = l.value.scrollHeight));
     }
     function d() {
@@ -4938,10 +4942,10 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       style: oe(v.value)
     }, E(s.value), 5));
   }
-}), Pu = /* @__PURE__ */ U(jc, [["__scopeId", "data-v-2c86947e"]]), Uc = ["data-dc-theme"], Qc = ["aria-labelledby", "aria-label"], Gc = {
+}), Eu = /* @__PURE__ */ U(Uc, [["__scopeId", "data-v-2c86947e"]]), Qc = ["data-dc-theme"], Gc = ["aria-labelledby", "aria-label"], Yc = {
   key: 1,
   class: "dc-dialog__actions"
-}, Ue = [], Yc = /* @__PURE__ */ W({
+}, Ue = [], Xc = /* @__PURE__ */ W({
   __name: "ShellDialog",
   props: {
     open: { type: Boolean, default: !0 },
@@ -5026,14 +5030,14 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
           }, [
             Y(m.$slots, "default", {}, void 0, !0)
           ], 2),
-          m.$slots.actions ? (u(), h("div", Gc, [
+          m.$slots.actions ? (u(), h("div", Yc, [
             Y(m.$slots, "actions", {}, void 0, !0)
           ])) : M("", !0)
-        ], 10, Qc)
-      ], 44, Uc)
+        ], 10, Gc)
+      ], 44, Qc)
     ], 8, ["to"])) : M("", !0);
   }
-}), Eu = /* @__PURE__ */ U(Yc, [["__scopeId", "data-v-0cccf313"]]), Xc = 4500, Jc = 9e3, ot = q([]);
+}), Mu = /* @__PURE__ */ U(Xc, [["__scopeId", "data-v-0cccf313"]]), Jc = 4500, Zc = 9e3, ot = q([]);
 let Xn = 0;
 function Ya(e) {
   ot.value = ot.value.filter((t) => t.id !== e);
@@ -5041,15 +5045,15 @@ function Ya(e) {
 function Xa(e, t = "ok") {
   Xn += 1;
   const n = Xn;
-  ot.value = [...ot.value, { id: n, message: e, kind: t }], setTimeout(() => Ya(n), t === "err" ? Jc : Xc);
+  ot.value = [...ot.value, { id: n, message: e, kind: t }], setTimeout(() => Ya(n), t === "err" ? Zc : Jc);
 }
-function Zc(e) {
+function eu(e) {
   Xa(e instanceof Error ? e.message : String(e), "err");
 }
-function eu() {
-  return { toasts: as(ot), toast: Xa, toastError: Zc, dismiss: Ya };
+function tu() {
+  return { toasts: as(ot), toast: Xa, toastError: eu, dismiss: Ya };
 }
-const tu = ["data-dc-theme"], nu = ["data-dc-kind", "role"], au = /* @__PURE__ */ W({
+const nu = ["data-dc-theme"], au = ["data-dc-kind", "role"], su = /* @__PURE__ */ W({
   __name: "ShellToasts",
   props: {
     to: { default: "body" },
@@ -5058,7 +5062,7 @@ const tu = ["data-dc-theme"], nu = ["data-dc-kind", "role"], au = /* @__PURE__ *
     tokens: { default: void 0 }
   },
   setup(e) {
-    const t = e, { toasts: n } = eu(), { theme: a, style: s, adopt: l } = _n(t);
+    const t = e, { toasts: n } = tu(), { theme: a, style: s, adopt: l } = _n(t);
     return it(l), (o, i) => (u(), I(Pt, { to: e.to }, [
       S("div", {
         class: "dc-shell dc-layer dc-toasts",
@@ -5071,12 +5075,12 @@ const tu = ["data-dc-theme"], nu = ["data-dc-kind", "role"], au = /* @__PURE__ *
           class: "dc-toast",
           "data-dc-kind": r.kind,
           role: r.kind === "err" ? "alert" : void 0
-        }, E(r.message), 9, nu))), 128))
-      ], 12, tu)
+        }, E(r.message), 9, au))), 128))
+      ], 12, nu)
     ], 8, ["to"]));
   }
-}), Mu = /* @__PURE__ */ U(au, [["__scopeId", "data-v-d970211c"]]);
-function Lu(e, t) {
+}), Lu = /* @__PURE__ */ U(su, [["__scopeId", "data-v-d970211c"]]);
+function Tu(e, t) {
   const n = q(!1);
   let a = null, s = !1, l = 0;
   const o = () => {
@@ -5102,7 +5106,7 @@ function Lu(e, t) {
     s = !0, o();
   }, !0), { start: c, stop: o, polling: n };
 }
-function Tu(e, t = {}) {
+function Ou(e, t = {}) {
   const n = t.key ?? ((l) => JSON.stringify(l)), a = he();
   let s = null;
   return ss(() => {
@@ -5110,19 +5114,19 @@ function Tu(e, t = {}) {
     o !== s && (s = o, a.value = l);
   }), a;
 }
-function Ou(e = {}) {
+function Nu(e = {}) {
   return { key: "ordinal", kind: "ordinal", label: "#", width: "52px", ...e };
 }
-function Nu(e = {}) {
+function Au(e = {}) {
   return { key: "status", role: "state", kind: "status", label: "State", sort: "state", width: "104px", ...e };
 }
-function Au(e = {}) {
+function Iu(e = {}) {
   return { key: "tint", role: "tint", ...e };
 }
-function Iu(e = {}) {
+function Ru(e = {}) {
   return { key: "picture", role: "image", kind: "image", width: "56px", height: "40px", ...e };
 }
-function Ru(e, t = {}) {
+function Bu(e, t = {}) {
   return {
     key: "primary",
     role: "identity",
@@ -5133,7 +5137,7 @@ function Ru(e, t = {}) {
     ...t
   };
 }
-function Bu(e, t = {}) {
+function Hu(e, t = {}) {
   return {
     key: "secondary",
     role: "reference",
@@ -5145,7 +5149,7 @@ function Bu(e, t = {}) {
     ...t
   };
 }
-function Hu(e, t, n = {}) {
+function qu(e, t, n = {}) {
   return {
     key: e,
     role: "metric",
@@ -5157,10 +5161,10 @@ function Hu(e, t, n = {}) {
     ...n
   };
 }
-function qu(e, t, n = {}) {
+function Fu(e, t, n = {}) {
   return { key: e, kind: "date", label: t, sort: e, width: "104px", mono: !0, muted: !0, ...n };
 }
-function Fu(e = {}) {
+function Vu(e = {}) {
   return {
     key: "entityLabel",
     label: "Entity",
@@ -5171,10 +5175,10 @@ function Fu(e = {}) {
     ...e
   };
 }
-function Vu(e, t, n = {}) {
+function Du(e, t, n = {}) {
   return { key: e, label: t, sort: e, truncate: !0, hideBelow: 900, ...n };
 }
-function Du(e, t, n, a = {}) {
+function Ku(e, t, n, a = {}) {
   return {
     key: e,
     label: t,
@@ -5190,30 +5194,30 @@ function Du(e, t, n, a = {}) {
 function qt(e) {
   return typeof e == "number" ? e : typeof e == "string" && e.trim() !== "" ? Number(e) : Number.NaN;
 }
-function Ku(e) {
+function Wu(e) {
   const t = qt(e);
   return Number.isFinite(t) && t > 0 ? fs(t) : we;
 }
-function Wu(e) {
+function zu(e) {
   const t = qt(e);
   return Number.isFinite(t) && t > 0 ? vs(t) : we;
 }
-function zu(e) {
+function ju(e) {
   const t = qt(e);
   return Number.isFinite(t) && t > 0 ? ps(t) : we;
 }
-function ju(e) {
+function Uu(e) {
   const t = qt(e);
   return Number.isFinite(t) ? hs(t) : we;
 }
-function su(e) {
+function lu(e) {
   if (e <= 0) return 0;
   const t = 10 ** Math.floor(Math.log10(e));
   for (const n of [1, 2, 5])
     if (e <= n * t) return n * t;
   return 10 * t;
 }
-function lu(e, t) {
+function ru(e, t) {
   const n = /* @__PURE__ */ new Set();
   for (const a of e) {
     const s = a.fields[t];
@@ -5222,7 +5226,7 @@ function lu(e, t) {
   }
   return [...n].sort((a, s) => a.localeCompare(s));
 }
-function ru(e, t) {
+function ou(e, t) {
   let n = 0;
   for (const a of e) {
     const s = a.fields[t];
@@ -5230,25 +5234,25 @@ function ru(e, t) {
   }
   return n;
 }
-function Uu(e, t, n, a = {}) {
+function Qu(e, t, n, a = {}) {
   return {
     kind: "chips",
     key: t,
     label: n,
-    options: lu(e, t),
+    options: ru(e, t),
     ...a.multiple ? { multiple: !0 } : {}
   };
 }
-function Qu(e, t, n) {
-  return { kind: "range", key: t, label: n, min: 0, max: su(ru(e, t)) };
-}
 function Gu(e, t, n) {
+  return { kind: "range", key: t, label: n, min: 0, max: lu(ou(e, t)) };
+}
+function Yu(e, t, n) {
   return { kind: "toggle", key: e, label: t, text: n };
 }
-function Yu(e) {
+function Xu(e) {
   return e.filter((t) => t.kind === "chips" ? t.options.length > 1 : t.kind === "range" ? t.max > 0 : !0);
 }
-function Xu(e = "", t = "/") {
+function Ju(e = "", t = "/") {
   const n = q(de(e)), a = q(t), s = [`${a.value}${n.value}`];
   return {
     search: n,
@@ -5271,7 +5275,7 @@ function Jn(e) {
   const n = e.slice(t), a = n.indexOf("#");
   return de(a === -1 ? n : n.slice(0, a));
 }
-function Ju(e) {
+function Zu(e) {
   const t = q(Jn(e.currentRoute.value.fullPath)), n = f(() => e.currentRoute.value.path), a = ae(
     () => e.currentRoute.value.fullPath,
     (s) => {
@@ -5290,16 +5294,16 @@ function Ju(e) {
     dispose: a
   };
 }
-function Zu(e, t, n = "/") {
+function ed(e, t, n = "/") {
   return (a) => {
     const s = a.params[t], l = Array.isArray(s) ? s.join("/") : s ?? "", o = a.query[Oe], i = typeof o == "string" ? o : "", r = `${e}="${l.replace(/"/g, "")}"`;
     return { path: n, query: { ...a.query, [Oe]: dt(i, r) } };
   };
 }
-function ed(e, t = "/") {
+function td(e, t = "/") {
   return (n) => ({ path: t, query: { ...n.query, [Ke]: e } });
 }
-function td(e) {
+function nd(e) {
   const t = /* @__PURE__ */ new Map();
   for (const n of e) {
     const a = t.get(n.entityKey);
@@ -5314,15 +5318,15 @@ function td(e) {
     }
   };
 }
-function nd(e, t) {
+function ad(e, t) {
   return e.query({ ...t, limit: Number.MAX_SAFE_INTEGER, offset: 0 }).rows;
 }
-const ou = {
-  DataShell: dc,
+const iu = {
+  DataShell: fc,
   ShellHeader: Ia,
   RecordActions: an,
   ResultsArea: Ga,
-  SegmentedControl: Pc,
+  SegmentedControl: Ec,
   StatusPill: De,
   ListView: ln,
   CardsView: qa,
@@ -5332,31 +5336,31 @@ const ou = {
   LinksView: Da,
   PreviewView: Ka,
   TypeCardsView: Qa
-}, ad = {
+}, sd = {
   install(e, t = {}) {
     const n = t.prefix ?? "";
-    for (const [a, s] of Object.entries(ou))
+    for (const [a, s] of Object.entries(iu))
       e.component(`${n}${a}`, s);
     t.route && e.provide(ta, t.route), (t.theme || t.accent || t.tokens) && fl({ theme: t.theme, accent: t.accent, tokens: t.tokens }, e);
   }
 };
 export {
-  fu as COLUMN_BREAKPOINTS,
-  du as COLUMN_ROLES,
+  vu as COLUMN_BREAKPOINTS,
+  fu as COLUMN_ROLES,
   qa as CardsView,
   Yn as ColumnCell,
-  Dc as CopyButton,
+  Kc as CopyButton,
   ys as DEFAULT_ENTITY_VIEW,
   Gt as DEFAULT_SORT,
   na as DEFAULT_VIEW,
   xl as DRAFT_DELAY,
-  dc as DataShell,
+  fc as DataShell,
   we as EMPTY_CELL,
   _a as ENTITY_ALL,
   $t as ENTITY_TERM,
   rt as EXPRESSION_TERM,
   Fa as GridView,
-  ad as HeaderContentLayoutPlugin,
+  sd as HeaderContentLayoutPlugin,
   Va as ImagesView,
   Da as LinksView,
   ln as ListView,
@@ -5369,7 +5373,7 @@ export {
   It as PARAM_PAGE,
   hn as PARAM_SORT,
   At as PARAM_VIEW,
-  uu as PILL_TONES,
+  du as PILL_TONES,
   Tl as POPOVER_FLIP_BELOW,
   Ml as POPOVER_GAP,
   Ll as POPOVER_MARGIN,
@@ -5385,23 +5389,23 @@ export {
   Ma as SHELL_CONTEXT_KEY,
   bt as SHELL_THEME_KEY,
   pt as ScopeMark,
-  Pc as SegmentedControl,
+  Ec as SegmentedControl,
   Ae as SelectTick,
-  $u as ShellCard,
-  Cu as ShellCode,
-  Eu as ShellDialog,
-  Tc as ShellFact,
-  xu as ShellFacts,
+  xu as ShellCard,
+  Pu as ShellCode,
+  Mu as ShellDialog,
+  Oc as ShellFact,
+  Su as ShellFacts,
   Ia as ShellHeader,
-  Pu as ShellLog,
+  Eu as ShellLog,
   kr as ShellPager,
   Il as ShellPopover,
-  Mu as ShellToasts,
+  Lu as ShellToasts,
   sn as StandingControl,
-  Su as StatusCounts,
+  Cu as StatusCounts,
   De as StatusPill,
-  Jc as TOAST_ERROR_MS,
-  Xc as TOAST_MS,
+  Zc as TOAST_ERROR_MS,
+  Jc as TOAST_MS,
   Ua as TableView,
   Qa as TypeCardsView,
   gs as VIEW_ICONS,
@@ -5409,14 +5413,14 @@ export {
   Ln as VIEW_LABELS,
   dt as addTerm,
   pn as andExpression,
-  Ku as bytesCell,
+  Wu as bytesCell,
   ia as cellFull,
   gi as cellNarrowings,
   Te as cellText,
   mt as cellTextOf,
   ie as cellValue,
   Kt as changesResults,
-  Uu as chipsFrom,
+  Qu as chipsFrom,
   On as columnAlign,
   Nn as columnClass,
   Tn as columnKey,
@@ -5429,26 +5433,26 @@ export {
   Kl as completeDraft,
   bs as countPages,
   rs as createHistoryAdapter,
-  Xu as createMemoryAdapter,
-  td as createMemoryDataSource,
+  Ju as createMemoryAdapter,
+  nd as createMemoryDataSource,
   el as createMockDataSource,
-  Ju as createVueRouterAdapter,
-  qu as dateColumn,
+  Zu as createVueRouterAdapter,
+  Fu as dateColumn,
   Cs as defaultCellText,
   yt as defaultQuery,
   Ze as defaultViewFor,
   os as detachableAdapter,
   zt as drillExpression,
-  Wu as durationCell,
-  zu as elapsedCell,
+  zu as durationCell,
+  ju as elapsedCell,
   ws as emptyFacetValue,
   sl as entityAddress,
-  Fu as entityColumn,
+  Vu as entityColumn,
   Yt as entityCount,
-  ed as entityRedirect,
+  td as entityRedirect,
   $a as excludingTerm,
   tt as expandShortcuts,
-  Vu as facetColumn,
+  Du as facetColumn,
   lt as facetField,
   Oa as facetValue,
   Is as fieldHeading,
@@ -5456,13 +5460,13 @@ export {
   et as findEntity,
   wa as findEntityByAddress,
   Ce as findSort,
-  Du as flagColumn,
+  Ku as flagColumn,
   Ge as fnv1a,
   sa as focusEntity,
   fs as formatBytes,
   Je as formatCount,
   us as formatDate,
-  vu as formatDateTime,
+  pu as formatDateTime,
   Lt as formatDigits,
   vs as formatDuration,
   ps as formatElapsed,
@@ -5475,44 +5479,44 @@ export {
   ge as formatTerm,
   Zs as generateRows,
   yl as hasActiveFacets,
-  Ru as identityColumn,
-  wu as idsExpression,
-  pu as isEntityScoped,
+  Bu as identityColumn,
+  ku as idsExpression,
+  hu as isEntityScoped,
   ks as isFacetActive,
   dn as isPristineQuery,
   Ve as isRangeTerm,
   ra as isTypeCardsQuery,
   aa as isViewKind,
-  mu as joinExpression,
+  yu as joinExpression,
   xa as liftTerm,
   qs as matchesExpression,
-  Hu as metricColumn,
-  ku as narrowPatch,
+  qu as metricColumn,
+  bu as narrowPatch,
   Fs as negateTerm,
-  su as niceMax,
+  lu as niceMax,
   de as normalizeSearch,
   yi as numberRange,
   Ds as oppositeTerm,
-  Ou as ordinalColumn,
+  Nu as ordinalColumn,
   re as parseExpression,
   ol as parseQuery,
-  ju as percentCell,
-  Iu as pictureColumn,
+  Uu as percentCell,
+  Ru as pictureColumn,
   Ol as placePopover,
   qr as presentParts,
   Ba as presentRow,
   st as pressOptions,
   ul as provideShellContext,
   fl as provideShellTheme,
-  nd as queryAll,
-  Qu as rangeFrom,
+  ad as queryAll,
+  Gu as rangeFrom,
   Ot as rangeOf,
   zs as readDraft,
-  _u as readExpression,
-  Zu as recordRedirect,
+  wu as readExpression,
+  ed as recordRedirect,
   ka as recordTerm,
   cl as recordsIn,
-  Bu as referenceColumn,
+  Hu as referenceColumn,
   at as refineExpression,
   Fe as resolveView,
   ve as roleColumn,
@@ -5522,38 +5526,38 @@ export {
   ut as scopeTerm,
   kt as scopeTermFor,
   Pa as scopedEntity,
-  gu as searchFromQuery,
+  _u as searchFromQuery,
   Kn as serializeQuery,
   ll as sortAddress,
   Tt as sortsFor,
-  hu as splitExpression,
-  Nu as stateColumn,
+  mu as splitExpression,
+  Au as stateColumn,
   ms as stripAnsi,
   wl as summarizeQuery,
   xt as summaryTerms,
   gn as termStanding,
-  Au as tintColumn,
-  yu as tintFor,
-  Gu as toggleFacet,
+  Iu as tintColumn,
+  gu as tintFor,
+  Yu as toggleFacet,
   di as useColumns,
   Sl as useDraft,
   Or as useEntityCounts,
   Ai as useEntityPreviews,
   _n as useLayerTheme,
-  Lu as usePoll,
+  Tu as usePoll,
   Ne as usePresentedRows,
   kl as useQueryState,
   El as useRecordNames,
   bl as useResults,
   ne as useShellContext,
-  Tu as useStableSchema,
-  eu as useToasts,
-  Yu as usefulFacets,
+  Ou as useStableSchema,
+  tu as useToasts,
+  Xu as usefulFacets,
   Mn as viewAcross,
   Na as withFacetValue,
   Jt as withStanding,
   il as withWhere,
-  bu as withoutFacet,
+  $u as withoutFacet,
   Ca as withoutOwnScope,
   Vs as withoutTerm
 };

@@ -388,3 +388,35 @@ describe('a source with no stream', () => {
     expect(state.pending.value).toBe(false)
   })
 })
+
+describe('peek', () => {
+  it('asks the source for rows elsewhere in the same results, leaving the page as it is', async () => {
+    const all = rows('a', 'b', 'c', 'd', 'e', 'f')
+    const asked: QueryRequest[] = []
+    const source: DataSource = {
+      query(request) {
+        asked.push(request)
+        return { rows: all.slice(request.offset, request.offset + request.limit), total: all.length, unfiltered: true }
+      },
+    }
+    const { state } = mount(source, 1)
+    await nextTick()
+    const before = asked.length
+
+    expect((await state.peek(2, 3)).map((found) => found.id)).toEqual(['c', 'd', 'e'])
+    expect(asked[before]).toMatchObject({ offset: 2, limit: 3, entity: searches })
+    expect(state.rows.value.map((found) => found.id)).toEqual(['a'])
+    expect(await state.peek(-1, 1)).toEqual([row('a')])
+    expect(await state.peek(0, 0)).toEqual([])
+  })
+
+  it('is empty where the source fails', async () => {
+    const source: DataSource = {
+      query: () => {
+        throw new Error('down')
+      },
+    }
+    const { state } = mount(source)
+    expect(await state.peek(1, 2)).toEqual([])
+  })
+})

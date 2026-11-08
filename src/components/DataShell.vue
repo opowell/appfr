@@ -841,6 +841,7 @@ const shell = provideShellContext({
   limit,
   offset: results.offset,
   pageCount,
+  peek: results.peek,
   pending: results.pending,
   counting: results.counting,
   error: results.error,

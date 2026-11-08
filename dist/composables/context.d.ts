@@ -54,6 +54,11 @@ export interface ShellContext extends QueryState {
     offset: ComputedRef<number>;
     /** How many pages the total comes to. Never fewer than one. */
     pageCount: ComputedRef<number>;
+    /**
+     * Rows of the same results from elsewhere in them, without moving the page —
+     * see `ResultsState.peek`. Optional for a host building its own context.
+     */
+    peek?: (offset: number, limit: number) => Promise<ShellRow[]>;
     pending: Ref<boolean>;
     /** Whether the total is still being counted — see `ResultsState.counting`. */
     counting: Ref<boolean>;

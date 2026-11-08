@@ -64,6 +64,12 @@ export interface ResultsState {
    * which is not to say it is nowhere — or where the source could not say.
    */
   locate(id: string, place: number): Promise<number | null>
+  /**
+   * Rows of the same results from elsewhere in them, `limit` from `offset`,
+   * without moving the page: what a reader might show next, to load ahead.
+   * Empty where the source could not say.
+   */
+  peek(offset: number, limit: number): Promise<ShellRow[]>
 }
 
 /**
@@ -344,5 +350,21 @@ export function useResults(options: UseResultsOptions): ResultsState {
     }
   }
 
-  return { rows, total, offset, pageCount, pending, counting, error, refresh: run, locate }
+  const peek = async (from: number, limit: number): Promise<ShellRow[]> => {
+    if (limit <= 0) return []
+    try {
+      const { rows: found } = await options.source.value.query({
+        query: asks(),
+        schema: options.schema.value,
+        entity: options.entity.value,
+        limit,
+        offset: Math.max(0, from),
+      })
+      return found
+    } catch {
+      return []
+    }
+  }
+
+  return { rows, total, offset, pageCount, pending, counting, error, refresh: run, locate, peek }
 }

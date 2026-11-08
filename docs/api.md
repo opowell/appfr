@@ -203,6 +203,7 @@ shell.pageCount.value          // 4
 shell.query.value.page         // 3
 shell.setPage(shell.query.value.page + 1)
 shell.hrefFor({ page: 4 })     // a link, without navigating
+await shell.peek?.(shell.offset.value + 1, 2) // the two rows after this page's first, to load ahead
 ```
 
 ## The table stays inside the shell
@@ -265,7 +266,7 @@ Also exported:
 
 | | |
 | --- | --- |
-| `useResults` | drives a source, streaming or not: `rows`, `total`, `pageCount`, `pending`, `error`, `refresh` |
+| `useResults` | drives a source, streaming or not: `rows`, `total`, `pageCount`, `pending`, `error`, `refresh`, `peek` (rows from elsewhere in the results, without moving the page) |
 | `useColumns` | the scope's column set |
 | `usePresentedRows` | rows with every role resolved into `parts` |
 | `useRecordNames` | the names behind the ids a query narrows by |

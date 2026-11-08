@@ -4166,8 +4166,8 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
         w(n).isPristine.value ? M("", !0) : (u(), I(se, {
           key: 0,
           class: "dc-results__clear",
-          href: w(n).clearHref(),
-          onPress: b[0] || (b[0] = (O) => w(n).clearFilters())
+          href: w(n).isEverything.value ? w(n).clearHref() : w(n).entityHref(null),
+          onPress: b[0] || (b[0] = (O) => w(n).isEverything.value ? w(n).clearFilters() : w(n).clearEntity())
         }, {
           default: X(() => [
             te(E(w(n).isEverything.value ? "Clear filters" : "Search everything instead"), 1)
@@ -4177,7 +4177,7 @@ const Ri = ["data-dc-pending", "data-dc-heads-only"], Bi = {
       ]))
     ], 12, tc));
   }
-}), Ga = /* @__PURE__ */ U(ic, [["__scopeId", "data-v-4484c328"]]), cc = ["data-dc-theme", "data-dc-value-press"], uc = {
+}), Ga = /* @__PURE__ */ U(ic, [["__scopeId", "data-v-bc18f2f9"]]), cc = ["data-dc-theme", "data-dc-value-press"], uc = {
   key: 0,
   class: "dc-shell__page"
 }, dc = /* @__PURE__ */ W({

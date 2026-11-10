@@ -2660,32 +2660,30 @@ const Fr = ["data-dc-status", "data-dc-tone"], Vr = /* @__PURE__ */ W({
     column: {}
   },
   setup(e) {
-    const t = e, n = ne(), a = f(() => !t.entry.entity?.scope || !t.column.drill ? null : n.entities.value.find((c) => c.key === t.column.drill) ?? null), s = f(() => t.column.label ?? ""), l = f(() => Te(t.column, t.entry.row)), o = f(
-      () => a.value ? n.drillHref(t.entry.row, a.value, t.column.drillWhere) : null
-    );
-    function i(r, c) {
-      c.stopPropagation(), a.value && n.drill(t.entry.row, a.value, r, t.column.drillWhere);
+    const t = e, n = ne(), a = f(() => !t.entry.entity?.scope || !t.column.drill ? null : n.entities.value.find((v) => v.key === t.column.drill) ?? null), s = f(() => !!t.column.click), l = f(() => t.column.label ?? ""), o = f(() => Te(t.column, t.entry.row)), i = f(() => s.value ? t.column.clickHref?.(t.entry.row) ?? null : a.value ? n.drillHref(t.entry.row, a.value, t.column.drillWhere) : null), r = f(() => a.value && !s.value ? `${l.value} of ${t.entry.parts.identity} — show the ${a.value.label.toLowerCase()}` : `${l.value} of ${t.entry.parts.identity}`);
+    function c(d, v) {
+      v.stopPropagation(), s.value ? t.column.click?.(t.entry.row, d) : a.value && n.drill(t.entry.row, a.value, d, t.column.drillWhere);
     }
-    return (r, c) => a.value ? (u(), I(se, {
+    return (d, v) => a.value || s.value ? (u(), I(se, {
       key: 0,
       class: "dc-drill",
-      href: o.value,
-      title: `${s.value} of ${e.entry.parts.identity} — show the ${a.value.label.toLowerCase()}`,
-      onPress: i
+      href: i.value,
+      title: r.value,
+      onPress: c
     }, {
       default: X(() => [
-        Y(r.$slots, "default", {}, () => [
-          te(E(l.value), 1)
+        Y(d.$slots, "default", {}, () => [
+          te(E(o.value), 1)
         ], !0)
       ]),
       _: 3
     }, 8, ["href", "title"])) : (u(), h("span", Dr, [
-      Y(r.$slots, "default", {}, () => [
-        te(E(l.value), 1)
+      Y(d.$slots, "default", {}, () => [
+        te(E(o.value), 1)
       ], !0)
     ]));
   }
-}), ft = /* @__PURE__ */ U(Kr, [["__scopeId", "data-v-a67bfef1"]]), Wr = ["data-dc-active", "aria-pressed", "aria-label"], zr = /* @__PURE__ */ W({
+}), ft = /* @__PURE__ */ U(Kr, [["__scopeId", "data-v-bbbd334b"]]), Wr = ["data-dc-active", "aria-pressed", "aria-label"], zr = /* @__PURE__ */ W({
   __name: "PinStar",
   props: {
     row: {},
@@ -3556,9 +3554,7 @@ const wi = /* @__PURE__ */ W({
     function _(g) {
       t.column.click?.(t.entry.row, g), t.column.activate && n.activate(t.entry.row, g);
     }
-    const y = f(
-      () => t.column.activate && !t.column.click ? n.pressHref(t.entry.row) : null
-    );
+    const y = f(() => t.column.click ? t.column.clickHref?.(t.entry.row) ?? null : t.column.activate ? n.pressHref(t.entry.row) : null);
     return (g, p) => a.value === "component" && e.column.component ? (u(), I(Xe(e.column.component), {
       key: 0,
       row: e.entry.row,
@@ -3585,7 +3581,7 @@ const wi = /* @__PURE__ */ W({
       src: typeof s.value == "string" ? s.value : "",
       style: oe({ maxHeight: e.column.height }),
       onClick: v
-    }, null, 8, ["src", "style"])) : e.column.drill ? (u(), I(ft, {
+    }, null, 8, ["src", "style"])) : e.column.drill || e.column.click && e.column.role === "metric" ? (u(), I(ft, {
       key: 4,
       entry: e.entry,
       column: e.column
@@ -3614,7 +3610,7 @@ const wi = /* @__PURE__ */ W({
       class: ue(["dc-cell__text", { "dc-truncate": r.value }])
     }, E(l.value), 3));
   }
-}), Yn = /* @__PURE__ */ U(wi, [["__scopeId", "data-v-4b81f005"]]), ki = {
+}), Yn = /* @__PURE__ */ U(wi, [["__scopeId", "data-v-d07057a1"]]), ki = {
   key: 0,
   class: "dc-table__none"
 }, bi = { class: "dc-table__detail" }, $i = ["data-dc-wrap", "data-dc-row-links"], xi = {

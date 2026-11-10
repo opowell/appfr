@@ -5,6 +5,10 @@ import type { PresentedRow } from '../../composables/usePresentedRows';
  * something the schema also lists: clicking `12` under **Colors** means "show
  * me those twelve", which is the one thing a count is ever wanted for.
  *
+ * A column with a `click` of the host's is pressed for that instead, and is a
+ * link where its `clickHref` gives an address: the count of something the
+ * shell cannot list from here, which the host takes the reader to itself.
+ *
  * A number that counts nothing listable renders as the plain text it was, so
  * a view can put every metric through here without deciding anything itself.
  * The root element carries the caller's scope id either way, so the view goes

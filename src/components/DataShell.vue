@@ -838,6 +838,7 @@ const shell = provideShellContext({
   entities: computed(() => props.schema.entities),
   rows: results.rows,
   total: results.total,
+  matched: results.matched,
   limit,
   offset: results.offset,
   pageCount,

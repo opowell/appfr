@@ -41,6 +41,11 @@ export interface ResultsState {
   total: Ref<number>
   /** Rows skipped to reach the current page — where its first row sits. */
   offset: ComputedRef<number>
+  /**
+   * Rows that match the query: the total less those only kept at their places
+   * — see {@link QueryResult.kept}. What a count of the type says.
+   */
+  matched: ComputedRef<number>
   /** How many pages of `limit` the total comes to. Never fewer than one. */
   pageCount: ComputedRef<number>
   /**
@@ -84,6 +89,8 @@ export interface ResultsState {
 export function useResults(options: UseResultsOptions): ResultsState {
   const rows = shallowRef<ShellRow[]>([])
   const total = ref(0)
+  /** Of the total, rows kept at their places that no longer match. */
+  const kept = ref(0)
   const pending = ref(false)
   const counting = ref(false)
   const error = shallowRef<unknown>(null)
@@ -98,6 +105,7 @@ export function useResults(options: UseResultsOptions): ResultsState {
 
   const offset = computed(() => (options.query.value.page - 1) * options.limit.value)
   const pageCount = computed(() => countPages(total.value, options.limit.value))
+  const matched = computed(() => Math.max(0, total.value - kept.value))
 
   /**
    * The query as the source is asked it: the one in the URL, less the term on
@@ -121,6 +129,7 @@ export function useResults(options: UseResultsOptions): ResultsState {
   const apply = (result: QueryResult, key: string) => {
     rows.value = result.rows
     total.value = result.total
+    kept.value = result.kept ?? 0
     error.value = null
     settle(key)
   }
@@ -135,6 +144,7 @@ export function useResults(options: UseResultsOptions): ResultsState {
     error.value = thrown
     rows.value = []
     total.value = 0
+    kept.value = 0
     settled = null
     counting.value = false
   }
@@ -172,6 +182,7 @@ export function useResults(options: UseResultsOptions): ResultsState {
       if (fresh) {
         fresh = false
         rows.value = []
+        kept.value = 0
         tell(0)
       }
       error.value = null
@@ -366,5 +377,5 @@ export function useResults(options: UseResultsOptions): ResultsState {
     }
   }
 
-  return { rows, total, offset, pageCount, pending, counting, error, refresh: run, locate, peek }
+  return { rows, total, matched, offset, pageCount, pending, counting, error, refresh: run, locate, peek }
 }

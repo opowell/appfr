@@ -70,7 +70,7 @@ const COUNTING = '…'
  */
 function countOf(entity: EntitySchema): string {
   const chosen = entity.key === shell.query.value.entity
-  if (chosen && narrowed.value) return formatCount(shell.total.value)
+  if (chosen && narrowed.value) return formatCount((shell.matched ?? shell.total).value)
   if (entityCounts.pristine.value) return entityCount(entity)
   const found = entityCounts.counts.value.get(entity.key)
   if (!found) return entityCount(entity)

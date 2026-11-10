@@ -34,6 +34,10 @@ const source: DataSource = {
   [`columns`](schemas.md#columns-of-your-own).
 - `total` is the whole match before `limit` and `offset`; the shell counts
   pages with it. `unfiltered` is true when nothing narrowed the population.
+- `kept` (optional) is how many of `total` are listed although they no longer
+  match — a record that reading it took out of an `unread` list, held at its
+  place so a step back still finds it. They count for the pages and the pager,
+  and are left out of the type's count, which says what matches.
 - A synchronous source is applied in the same tick, so SSR emits complete
   markup and tests can assert without awaiting. An async source gets a pending
   state, and a slow response never overwrites a newer one.

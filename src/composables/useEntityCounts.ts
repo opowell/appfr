@@ -1,6 +1,6 @@
 import { getCurrentScope, onScopeDispose, ref, shallowRef } from 'vue'
 import type { ComputedRef, Ref, ShallowRef } from 'vue'
-import type { DataSource, DomainSchema, EntitySchema, ShellQuery } from '../types'
+import type { DataSource, DomainSchema, EntitySchema, QueryResult, ShellQuery } from '../types'
 import { andExpression } from '../data/expression'
 import { withoutOwnScope } from '../query/drill'
 
@@ -73,6 +73,11 @@ export interface EntityCountsState {
  * carries an {@link AbortSignal}, aborted by the next {@link refresh}, by
  * {@link cancel}, and when the owning scope ends.
  */
+/** What a type's count says of a result: what matches, not the rows only kept at their places. */
+function matchedOf(result: QueryResult): number {
+  return Math.max(0, result.total - (result.kept ?? 0))
+}
+
 export function useEntityCounts(options: UseEntityCountsOptions): EntityCountsState {
   const counts = shallowRef<Map<string, EntityCount>>(new Map())
   const pristine = ref(true)
@@ -132,11 +137,11 @@ export function useEntityCounts(options: UseEntityCountsOptions): EntityCountsSt
         if (!next.has(entity.key)) next.set(entity.key, { total: 0, pending: true, counted: false })
         outcome.then((result) => {
           settled = true
-          land({ total: result.total, pending: false, counted: true })
+          land({ total: matchedOf(result), pending: false, counted: true })
         })
       } else {
         settled = true
-        next.set(entity.key, { total: outcome.total, pending: false, counted: true })
+        next.set(entity.key, { total: matchedOf(outcome), pending: false, counted: true })
       }
     }
     building = false

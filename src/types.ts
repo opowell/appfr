@@ -837,6 +837,14 @@ export interface QueryResult {
    * match rather than the length of the page returned.
    */
   total: number
+  /**
+   * Of `total`, the rows listed although they no longer match: kept at their
+   * places while the list is being read, so that a step back still finds a
+   * record that reading it took out of the results. They are counted for the
+   * pages, which are places in what is listed, and left out of the count of
+   * what matches, which is what a type's count says. None when absent.
+   */
+  kept?: number
   /** True when no facet or expression narrowed the population. */
   unfiltered: boolean
 }

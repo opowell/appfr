@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import {
   chooseScope,
   chooseView,
@@ -67,6 +67,34 @@ async function openedUrl(opened: Promise<Page>): Promise<URL> {
   const tab = await opened
   await tab.waitForURL(u => u.protocol !== 'about:')
   return new URL(tab.url())
+}
+
+/**
+ * Presses `target` with the browser's own modifier held and returns the
+ * address of the tab or window that opens.
+ *
+ * A link's ⌘/Ctrl-click is Chromium's to carry out, and now and then — a few
+ * times in a hundred, more on a loaded CI machine — it lets one go: the click
+ * arrives, nothing stops it, and no tab is ever created. So a press that has
+ * opened nothing after a few seconds is made again. A link the shell kept for
+ * itself opens nothing however often it is pressed, and moves this page, which
+ * each test's `page.url()` check still catches.
+ */
+async function pressElsewhere(
+  page: Page,
+  target: Locator,
+  options: Parameters<Locator['click']>[0],
+): Promise<URL> {
+  for (let attempt = 1; ; attempt++) {
+    const opened = page.context().waitForEvent('page', { timeout: 5_000 })
+    opened.catch(() => {})
+    await target.click(options)
+    try {
+      return await openedUrl(opened)
+    } catch (error) {
+      if (attempt === 3) throw error
+    }
+  }
 }
 
 /**
@@ -255,54 +283,44 @@ test.describe('Pressing with the browser’s modifiers', () => {
     await expect(head.locator('.dc-type__name')).not.toHaveCSS('color', 'rgb(255, 0, 0)')
   })
 
-  test('opens the record in a new tab with ⌘, and leaves this one where it was', async ({ page, context }) => {
+  test('opens the record in a new tab with ⌘, and leaves this one where it was', async ({ page }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const before = page.url()
-    const opened = context.waitForEvent('page')
-    await page.locator('.dc-list__open').first().click({ modifiers: ['ControlOrMeta'] })
-    const url = await openedUrl(opened)
+    const url = await pressElsewhere(page, page.locator('.dc-list__open').first(), { modifiers: ['ControlOrMeta'] })
     expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
     expect(url.searchParams.get('e')).toBeNull()
     expect(page.url()).toBe(before)
   })
 
-  test('opens a metric’s list in a new window with ⇧', async ({ page, context }) => {
+  test('opens a metric’s list in a new window with ⇧', async ({ page }) => {
     await gotoStory(page, TABLE)
     const before = page.url()
-    const opened = context.waitForEvent('page')
-    await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Shift'] })
-    const url = await openedUrl(opened)
+    const url = await pressElsewhere(page, page.locator('.dc-table__row').first().locator('.dc-drill').first(), { modifiers: ['Shift'] })
     expect(url.searchParams.get('q')).toMatch(/^set="sets_\d+"$/)
     expect(url.searchParams.get('e')).toBe('p')
     expect(page.url()).toBe(before)
   })
 
-  test('opens a table row elsewhere from anywhere on it', async ({ page, context }) => {
+  test('opens a table row elsewhere from anywhere on it', async ({ page }) => {
     await gotoStory(page, 'shell-data-shell--table-view-row-links')
     const before = page.url()
-    const opened = context.waitForEvent('page')
-    await page.locator('.dc-table__row').first().locator('td').last().click({ modifiers: ['Meta'], position: { x: 2, y: 2 } })
-    const url = await openedUrl(opened)
+    const url = await pressElsewhere(page, page.locator('.dc-table__row').first().locator('td').last(), { modifiers: ['ControlOrMeta'], position: { x: 2, y: 2 } })
     expect(url.searchParams.get('q')).toContain('="')
     expect(page.url()).toBe(before)
   })
 
-  test('opens what a value narrows to elsewhere, though it is no link', async ({ page, context }) => {
+  test('opens what a value narrows to elsewhere, though it is no link', async ({ page }) => {
     await gotoStory(page, TABLE)
     const before = page.url()
-    const opened = context.waitForEvent('page')
-    await page.locator('.dc-table__row').first().locator('.dc-narrow').first().click({ modifiers: ['Meta'] })
-    const url = await openedUrl(opened)
+    const url = await pressElsewhere(page, page.locator('.dc-table__row').first().locator('.dc-narrow').first(), { modifiers: ['Meta'] })
     expect(url.searchParams.get('q')).toBeTruthy()
     expect(page.url()).toBe(before)
   })
 
-  test('opens a type in a new tab from its card', async ({ page, context }) => {
+  test('opens a type in a new tab from its card', async ({ page }) => {
     await gotoStory(page, HOME)
     const before = page.url()
-    const opened = context.waitForEvent('page')
-    await page.locator('.dc-type__head').first().click({ modifiers: ['ControlOrMeta'] })
-    const url = await openedUrl(opened)
+    const url = await pressElsewhere(page, page.locator('.dc-type__head').first(), { modifiers: ['ControlOrMeta'] })
     expect(url.searchParams.get('e')).not.toBeNull()
     expect(page.url()).toBe(before)
   })

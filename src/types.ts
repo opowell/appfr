@@ -360,6 +360,19 @@ export interface ColumnDef {
    */
   click?: (row: ShellRow, options?: PressOptions) => void
   /**
+   * Where a {@link ColumnDef.click} leads, for a host whose press goes to an
+   * address — so the value is a link, and ⌘-click, a middle click and the
+   * context menu open it elsewhere, while a plain press still calls `click`.
+   * Null or absent, the value stays a button. What `activateHref` is to
+   * `activate`, for one column.
+   *
+   * A metric with a `click` is pressed for it in every view, as a drill is,
+   * and drawn as one: a count that leads somewhere the shell cannot reach by
+   * itself — a type that only exists once the record is named, say — looks
+   * like a count that leads to a type it lists.
+   */
+  clickHref?: (row: ShellRow) => string | null | undefined
+  /**
    * Whether a press on the value narrows the list to rows like it — on unless
    * said `false`. A number adds `field<=value` or `field>=value`, whichever
    * end of its range it is nearer — or always the one named, `'>='` or

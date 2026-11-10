@@ -12,6 +12,10 @@ import { cellText } from '../../query/columns'
  * something the schema also lists: clicking `12` under **Colors** means "show
  * me those twelve", which is the one thing a count is ever wanted for.
  *
+ * A column with a `click` of the host's is pressed for that instead, and is a
+ * link where its `clickHref` gives an address: the count of something the
+ * shell cannot list from here, which the host takes the reader to itself.
+ *
  * A number that counts nothing listable renders as the plain text it was, so
  * a view can put every metric through here without deciding anything itself.
  * The root element carries the caller's scope id either way, so the view goes
@@ -37,29 +41,39 @@ const target = computed<EntitySchema | null>(() => {
   return shell.entities.value.find((candidate) => candidate.key === props.column.drill) ?? null
 })
 
+/** Pressed for the host's `click`, when the column has one. */
+const hostPress = computed(() => Boolean(props.column.click))
+
 const name = computed(() => props.column.label ?? '')
 
 const text = computed(() => cellText(props.column, props.entry.row))
 
 /** Stops the click reaching the row, which would open the record instead. */
 /** Where the number leads, so it is a link the browser can open elsewhere too. */
-const href = computed(() =>
-  target.value ? shell.drillHref(props.entry.row, target.value, props.column.drillWhere) : null,
-)
+const href = computed(() => {
+  if (hostPress.value) return props.column.clickHref?.(props.entry.row) ?? null
+  return target.value ? shell.drillHref(props.entry.row, target.value, props.column.drillWhere) : null
+})
+
+const title = computed(() => {
+  if (target.value && !hostPress.value) return `${name.value} of ${props.entry.parts.identity} — show the ${target.value.label.toLowerCase()}`
+  return `${name.value} of ${props.entry.parts.identity}`
+})
 
 function drill(options: PressOptions, event: MouseEvent) {
   // The row's own press would open the record — a count leads somewhere of its own.
   event.stopPropagation()
-  if (target.value) shell.drill(props.entry.row, target.value, options, props.column.drillWhere)
+  if (hostPress.value) props.column.click?.(props.entry.row, options)
+  else if (target.value) shell.drill(props.entry.row, target.value, options, props.column.drillWhere)
 }
 </script>
 
 <template>
   <PressLink
-    v-if="target"
+    v-if="target || hostPress"
     class="dc-drill"
     :href="href"
-    :title="`${name} of ${entry.parts.identity} — show the ${target.label.toLowerCase()}`"
+    :title="title"
     @press="drill"
   >
     <slot>{{ text }}</slot>

@@ -597,6 +597,44 @@ describe('DataShell — presses that change the URL are links', () => {
     expect(next!.attributes('href')).toBe('/?e=t&v=list&p=3')
     expect(w.find('.dc-actions__new').attributes('href')).toBe('#/tests/new')
   })
+
+  /** Tests whose `Runs` count and `Name` the host presses for, linked where `clickHref` is given. */
+  function counted(click: (row: ShellRow) => void, clickHref?: (row: ShellRow) => string) {
+    const runs = { key: 'runs', role: 'metric' as const, kind: 'number' as const, label: 'Runs', value: () => 7, click, clickHref }
+    const named = { key: 'named', label: 'Named', value: (row: ShellRow) => row.id, click, clickHref }
+    const counting: DomainSchema = { ...schema, entities: [entity('tests', { scope: 'test', columns: [identity, named, runs] })] }
+    return { schema: counting, source: source(3, counting) }
+  }
+
+  it('draws a metric with a click as a drill, linked to its clickHref, a plain press still the host’s', async () => {
+    const click = vi.fn()
+    const w = shell(createMemoryAdapter('?e=tests&v=table'), counted(click, (row) => `#/runs/${row.id}`))
+    await flushPromises()
+    const count = w.find('.dc-table__row .dc-drill')
+    expect(count.element.tagName).toBe('A')
+    expect(count.attributes('href')).toBe('#/runs/tests-0')
+    expect(count.text()).toBe('7')
+    await count.trigger('click')
+    expect(click).toHaveBeenCalledWith(expect.objectContaining({ id: 'tests-0' }), expect.anything())
+    expect(w.emitted('activate')).toBeUndefined()
+  })
+
+  it('presses a metric’s click off the table too, as a button without a clickHref', async () => {
+    const click = vi.fn()
+    const w = shell(createMemoryAdapter('?e=tests&v=list'), counted(click))
+    await flushPromises()
+    const count = w.find('.dc-list__metrics .dc-drill')
+    expect(count.element.tagName).toBe('BUTTON')
+    await count.trigger('click')
+    expect(click).toHaveBeenCalledWith(expect.objectContaining({ id: 'tests-0' }), expect.anything())
+  })
+
+  it('links a click column that is no metric to its clickHref', async () => {
+    const w = shell(createMemoryAdapter('?e=tests&v=table'), counted(vi.fn(), (row) => `#/named/${row.id}`))
+    await flushPromises()
+    const link = w.find('.dc-table__row .dc-table__open[href^="#/named/"]')
+    expect(link.attributes('href')).toBe('#/named/tests-0')
+  })
 })
 
 describe('DataShell — a page of the host’s', () => {

@@ -115,7 +115,7 @@ part those views leave out.
 | `field` / `value` / `format` | where the value comes from and how it reads |
 | `width` / `height` / `align` / `mono` / `muted` / `truncate` | how it is drawn |
 | `sort` | the `SortDef` key this header sorts by |
-| `activate` / `click` / `drill` / `scope` | what pressing it does |
+| `activate` / `click` / `clickHref` / `drill` / `scope` | what pressing it does |
 | `narrow` | `false` keeps the value from narrowing the list; `'>='` or `'<='` has a number always keep that end — see below |
 | `flags` | the boolean fields a `flagColumn` names; set by it |
 | `when` | `always`, or only in one of the two scopes |
@@ -126,7 +126,11 @@ part those views leave out.
 **Pressing a cell** is set per column. `activate` opens the record
 (`activate(row)`). `drill` names the entity the value counts, so pressing `12`
 under *Colors* lists those twelve — only where the row's entity declares a
-`scope`. `scope` puts the → beside the value. `click(row)` is yours.
+`scope`. `scope` puts the → beside the value. `click(row)` is yours, and
+`clickHref(row)` says where it leads, making the value a link. A metric with a
+`click` is drawn and pressed as a drill in every view — for a count of
+something the shell cannot list from here, such as a type that only exists
+once the record is named.
 
 **Pressing a value narrows to the rows like it**, in every column that is not
 pressed for one of those and that does not name the row, unless it says

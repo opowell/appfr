@@ -75,8 +75,8 @@ menu works. A plain or ⌥ click is the shell's and navigates in place — which
 why exclusion is ⌥, the one modifier a link doesn't use. Table rows aren't
 links (their cells hold controls), so the row handles modified clicks by hand;
 `rowLinks` makes every cell a link instead. A press the shell reports rather
-than applies has no `href` of its own; `activateHref` (rows) and `createHref`
-(**New …**) give it the host's. The name home, the pager, the sort headings and
+than applies has no `href` of its own; `activateHref` (rows), `createHref`
+(**New …**) and a column's `clickHref` give it the host's. The name home, the pager, the sort headings and
 arrow, and **Clear filters** are links too. `shell.pressHref(row)` and
 `shell.drillHref(row, entity)` build these hrefs through the route adapter's
 `href(search)`: the History adapter keeps the page's path and hash, and the

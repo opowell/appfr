@@ -92,13 +92,14 @@ function pressWith(options: PressOptions) {
 }
 
 /**
- * Where the press leads, where that is the shell's to say — an `activate`
- * column, the record's name. A `click` of the host's own goes wherever the
- * host takes it, so a cell with one is a button.
+ * Where the press leads — an `activate` column's, the record's name, being
+ * the shell's to say. A `click` of the host's own goes wherever the host
+ * takes it, so a cell with one is a button unless its `clickHref` says where.
  */
-const href = computed(() =>
-  props.column.activate && !props.column.click ? shell.pressHref(props.entry.row) : null,
-)
+const href = computed(() => {
+  if (props.column.click) return props.column.clickHref?.(props.entry.row) ?? null
+  return props.column.activate ? shell.pressHref(props.entry.row) : null
+})
 </script>
 
 <template>
@@ -135,9 +136,10 @@ const href = computed(() =>
   />
 
   <!-- A value that counts something listable is the way into those rows:
-       `12` under Tests means "show me those twelve". -->
+       `12` under Tests means "show me those twelve" — the host's way there,
+       for a metric with a `click`. -->
   <MetricDrill
-    v-else-if="column.drill"
+    v-else-if="column.drill || (column.click && column.role === 'metric')"
     :entry="entry"
     :column="column"
   />

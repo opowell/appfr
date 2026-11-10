@@ -47,23 +47,4 @@ export interface EntityCountsState {
      */
     cancel(): void;
 }
-/**
- * Counts each entity separately against the current query, for the type
- * picker's dropdown — the same per-entity fan-out {@link useEntityPreviews}
- * runs for the home screen's cards, but asking each entity for a total alone
- * (`limit: 0`) rather than a page of rows to show.
- *
- * Left for the caller to trigger rather than watched: a scan of a large entity
- * is real work, and the picker is open far less often than the query changes
- * underneath it. {@link refresh} is meant to be called as the picker opens.
- *
- * A slow count is not left blank until it lands: each request carries a
- * {@link QueryRequest.progress}, and what a source says through it stands as
- * the count, still pending, until the answer replaces it.
- *
- * Nor is a count nobody is waiting for left running: a picker opened, closed
- * and opened again is one round of counting, not three stacked up. Each round
- * carries an {@link AbortSignal}, aborted by the next {@link refresh}, by
- * {@link cancel}, and when the owning scope ends.
- */
 export declare function useEntityCounts(options: UseEntityCountsOptions): EntityCountsState;

@@ -46,8 +46,14 @@ export interface ShellContext extends QueryState {
     entities: ComputedRef<EntitySchema[]>;
     /** The rows of the current page, not of the whole result. */
     rows: ShallowRef<ShellRow[]>;
-    /** Rows matching the query, across every page of them. */
+    /** Rows listed for the query, across every page of them: what the pages count. */
     total: Ref<number>;
+    /**
+     * Rows matching the query: the total less the rows a source only keeps at
+     * their places — see `QueryResult.kept`. What the type's count says.
+     * Optional for a host building its own context, which then counts `total`.
+     */
+    matched?: ComputedRef<number>;
     /** Rows per page — what the shell asks its source for at a time. */
     limit: ComputedRef<number>;
     /** Rows before the first on screen: `(page - 1) * limit`. */

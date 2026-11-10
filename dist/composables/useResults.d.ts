@@ -24,6 +24,11 @@ export interface ResultsState {
     total: Ref<number>;
     /** Rows skipped to reach the current page — where its first row sits. */
     offset: ComputedRef<number>;
+    /**
+     * Rows that match the query: the total less those only kept at their places
+     * — see {@link QueryResult.kept}. What a count of the type says.
+     */
+    matched: ComputedRef<number>;
     /** How many pages of `limit` the total comes to. Never fewer than one. */
     pageCount: ComputedRef<number>;
     /**

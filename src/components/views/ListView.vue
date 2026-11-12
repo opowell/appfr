@@ -55,8 +55,15 @@ const showEntity = computed(() => shell.isEverything.value)
       >
         <span class="dc-list__ordinal dc-mono">{{ entry.ordinal }}</span>
         <span class="dc-list__identity">
-          <span class="dc-list__primary dc-truncate">{{ entry.parts.identity }}</span>
-          <span class="dc-list__secondary dc-mono dc-truncate">{{ entry.parts.reference }}</span>
+          <!-- Cut short where the row is narrow, so in full on hover. -->
+          <span
+            class="dc-list__primary dc-truncate"
+            :title="entry.parts.identity"
+          >{{ entry.parts.identity }}</span>
+          <span
+            class="dc-list__secondary dc-mono dc-truncate"
+            :title="entry.parts.reference || undefined"
+          >{{ entry.parts.reference }}</span>
         </span>
       </PressLink>
       <span

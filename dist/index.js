@@ -3197,7 +3197,7 @@ const Eo = { class: "dc-images" }, Mo = {
 }), Ka = /* @__PURE__ */ U(Ro, [["__scopeId", "data-v-de6c9a0f"]]), Bo = {
   class: "dc-list",
   role: "list"
-}, Ho = { class: "dc-list__ordinal dc-mono" }, qo = { class: "dc-list__identity" }, Fo = { class: "dc-list__primary dc-truncate" }, Vo = { class: "dc-list__secondary dc-mono dc-truncate" }, Do = {
+}, Ho = { class: "dc-list__ordinal dc-mono" }, qo = { class: "dc-list__identity" }, Fo = ["title"], Vo = ["title"], Do = {
   key: 1,
   class: "dc-list__entity dc-mono"
 }, Ko = { class: "dc-list__metrics dc-mono" }, Wo = { class: "dc-list__trailing" }, zo = /* @__PURE__ */ W({
@@ -3229,8 +3229,14 @@ const Eo = { class: "dc-images" }, Mo = {
           default: X(() => [
             S("span", Ho, E(o.ordinal), 1),
             S("span", qo, [
-              S("span", Fo, E(o.parts.identity), 1),
-              S("span", Vo, E(o.parts.reference), 1)
+              S("span", {
+                class: "dc-list__primary dc-truncate",
+                title: o.parts.identity
+              }, E(o.parts.identity), 9, Fo),
+              S("span", {
+                class: "dc-list__secondary dc-mono dc-truncate",
+                title: o.parts.reference || void 0
+              }, E(o.parts.reference), 9, Vo)
             ])
           ]),
           _: 2
@@ -3260,7 +3266,7 @@ const Eo = { class: "dc-images" }, Mo = {
       ]))), 128))
     ]));
   }
-}), ln = /* @__PURE__ */ U(zo, [["__scopeId", "data-v-3d349a10"]]), jo = { class: "dc-preview" }, Uo = { class: "dc-preview__pager dc-mono" }, Qo = ["disabled"], Go = { "aria-live": "polite" }, Yo = ["disabled"], Xo = {
+}), ln = /* @__PURE__ */ U(zo, [["__scopeId", "data-v-a2cb9c3f"]]), jo = { class: "dc-preview" }, Uo = { class: "dc-preview__pager dc-mono" }, Qo = ["disabled"], Go = { "aria-live": "polite" }, Yo = ["disabled"], Xo = {
   key: 0,
   class: "dc-preview__card"
 }, Jo = ["src"], Zo = { class: "dc-preview__body" }, ei = { class: "dc-preview__top" }, ti = { class: "dc-preview__badges" }, ni = { class: "dc-preview__entity dc-mono" }, ai = { class: "dc-preview__marks" }, si = { class: "dc-preview__primary" }, li = { class: "dc-preview__secondary dc-mono" }, ri = { class: "dc-preview__fields" }, oi = { class: "dc-preview__key" }, ii = { class: "dc-preview__value dc-mono" }, ci = /* @__PURE__ */ W({

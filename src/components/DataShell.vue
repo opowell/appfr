@@ -957,6 +957,14 @@ onBeforeUnmount(() => sizing?.disconnect())
 /** Whether the strip over the results sits on the bar's row — see `oneStripFrom`. */
 const oneStrip = computed(() => props.oneStripFrom !== false && width.value >= props.oneStripFrom)
 
+/**
+ * Whether a record view in force draws its own sort and pager, and so has no
+ * strip over it — see `strip` on `RecordView`.
+ */
+const stripless = computed(
+  () => resolveView(query.query.value.view, offeredViews.value) === 'record' && recordView.value?.strip === false,
+)
+
 /** The strip's props, the same wherever it is drawn. */
 const recordActions = computed(() => ({
   views: offeredViews.value,
@@ -1015,7 +1023,7 @@ defineExpose({
            the bar's row, after the query: the same controls, a row less over
            the records. -->
       <RecordActions
-        v-if="oneStrip && !slots.page"
+        v-if="oneStrip && !slots.page && !stripless"
         v-bind="recordActions"
       />
     </div>
@@ -1038,7 +1046,7 @@ defineExpose({
          nothing where there is nothing to choose or do, and stays put while
          the results scroll. -->
     <RecordActions
-      v-if="!oneStrip && !slots.page"
+      v-if="!oneStrip && !slots.page && !stripless"
       v-bind="recordActions"
     />
 

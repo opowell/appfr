@@ -230,6 +230,25 @@ describe('DataShell — a record’s own cards', () => {
     expect(param(adapter, 'p')).toBe('2')
   })
 
+  it('draws no strip over a record view that draws its own, and draws it again over the list', async () => {
+    const TestReader = {
+      props: { id: { type: String, required: true } },
+      setup: (props: { id: string }) => () => h('div', { class: 'test-reader' }, props.id),
+    }
+    const recordViews = markRaw({ tests: { label: 'Read', component: TestReader, strip: false } })
+    const adapter = createMemoryAdapter('?e=tests&v=record&p=3')
+    const w = shell(adapter, { recordViews })
+    await flushPromises()
+
+    expect(w.find('.test-reader').text()).toBe('tests-2')
+    expect(w.find('.dc-actions').exists()).toBe(false)
+    expect(w.find('.dc-pager').exists()).toBe(false)
+
+    adapter.push('?e=tests&v=list')
+    await flushPromises()
+    expect(w.find('.dc-actions').exists()).toBe(true)
+  })
+
   it('reads a row pressed in a list of a type with a view of its own', async () => {
     const TestReader = {
       props: { id: { type: String, required: true } },

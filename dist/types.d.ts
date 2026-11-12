@@ -27,6 +27,14 @@ export interface RecordView {
     label: string;
     /** Given the record's `id`, as a `recordCards` component is. */
     component: Component;
+    /**
+     * `false`: no strip over the view while it is in force — no sort, no pager,
+     * nothing to do to ticked rows, where none are ticked a record at a time.
+     * The view draws what it wants of them itself: `ShellPager` and the shell's
+     * `sorts`, `setSort` and `toggleDirection` are there for it. Drawn by
+     * default.
+     */
+    strip?: boolean;
 }
 /** Lifecycle state of a record, rendered as a pill. */
 export type RecordStatus = 'ok' | 'running' | 'queued' | 'review' | 'failed';

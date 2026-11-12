@@ -357,3 +357,18 @@ Chosen, the URL says `v=record` and the component is drawn with the record's
 `id` in place of the results, with no ticks over it. It fills the results
 area, which scrolls as it does for any view; a component that pages instead
 sizes itself to the area (`height: 100%`).
+
+The strip over the results stays over it — the sort and the pager, and what
+is done to ticked rows, though none are ticked a record at a time. A view that
+would rather hold them itself, beside what it draws, says `strip: false`, and
+the shell draws no strip while it is in force:
+
+```ts
+const recordViews = {
+  documents: { label: 'Read', component: DocumentReader, strip: false },
+}
+```
+
+The view then draws what it wants of them: `<ShellPager />` steps from record
+to record as the strip's pager does, and `useShellContext()` has the order —
+`sorts`, `sort`, `setSort` and `toggleDirection`.

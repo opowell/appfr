@@ -164,9 +164,12 @@ query in the stylesheet). Columns without it are always shown.
 
 A column also stands down while the query holds its field to one value: under
 `category=Poetry` every row's Category says the same, so the bar says it once
-instead. Only an unnegated `=` ANDed on pins a field, not `:`, a range, or a
-query of `OR`ed parts. A column of lists stays, as `tags=sea` keeps rows whose
-tags still differ, and so does the identity.
+instead. Only an unnegated `=` ANDed on pins a field, not `:`, a range, a
+query of `OR`ed parts, or a field named twice (`category=Poetry category=Drama`
+is the rows of either). A column of lists stays, as `tags=sea` keeps rows whose
+tags still differ, and so does the identity. The field matched is the column's
+`key`, so a column that reads one field and stands for another says both:
+`{ key: 'search', field: 'secondary' }` stands down under `search="1"`.
 
 **A cell of your own.** `kind: 'component'` renders your component with
 `{ row, entry, value, column }` — a sparkline, a thumbnail stack, a checkbox.

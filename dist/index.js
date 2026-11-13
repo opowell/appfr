@@ -3397,9 +3397,16 @@ const Mo = { class: "dc-images" }, Lo = {
 }), ja = /* @__PURE__ */ U(ui, [["__scopeId", "data-v-59e0d33b"]]);
 function di(e) {
   const t = se(e);
-  return t.length !== 1 ? /* @__PURE__ */ new Set() : new Set(
-    t[0].flatMap(
-      (n) => n.kind === "field" && n.comparator === "=" && !n.negated && !Ke(n) ? [n.field.toLowerCase()] : []
+  if (t.length !== 1) return /* @__PURE__ */ new Set();
+  const n = /* @__PURE__ */ new Map();
+  for (const a of t[0]) {
+    if (a.kind !== "field" || a.negated || Ke(a) || a.comparator !== "=" && a.comparator !== ":") continue;
+    const s = a.field.toLowerCase();
+    n.set(s, [...n.get(s) ?? [], a]);
+  }
+  return new Set(
+    [...n].flatMap(
+      ([a, s]) => s.length === 1 && s[0].comparator === "=" ? [a] : []
     )
   );
 }

@@ -5,16 +5,23 @@ import { cellValue } from './columns'
 /**
  * The fields the query holds to one value on every row it keeps: each
  * `field=value` it ANDs on, unnegated and not a range. A query of several
- * `OR`ed parts pins nothing, as each part may keep another value.
+ * `OR`ed parts pins nothing, as each part may keep another value; nor does a
+ * field named twice, `search=1 search=2` being the rows of either.
  */
 export function pinnedFields(expr: string): Set<string> {
   const groups = parseExpression(expr)
   if (groups.length !== 1) return new Set()
+  // The terms naming a value of each field, which are any-of together.
+  const named = new Map<string, { comparator: string }[]>()
+  for (const term of groups[0]!) {
+    if (term.kind !== 'field' || term.negated || isRangeTerm(term)) continue
+    if (term.comparator !== '=' && term.comparator !== ':') continue
+    const field = term.field.toLowerCase()
+    named.set(field, [...(named.get(field) ?? []), term])
+  }
   return new Set(
-    groups[0]!.flatMap((term) =>
-      term.kind === 'field' && term.comparator === '=' && !term.negated && !isRangeTerm(term)
-        ? [term.field.toLowerCase()]
-        : [],
+    [...named].flatMap(([field, terms]) =>
+      terms.length === 1 && terms[0]!.comparator === '=' ? [field] : [],
     ),
   )
 }

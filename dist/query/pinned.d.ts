@@ -2,7 +2,8 @@ import type { ColumnDef, ShellRow } from '../types';
 /**
  * The fields the query holds to one value on every row it keeps: each
  * `field=value` it ANDs on, unnegated and not a range. A query of several
- * `OR`ed parts pins nothing, as each part may keep another value.
+ * `OR`ed parts pins nothing, as each part may keep another value; nor does a
+ * field named twice, `search=1 search=2` being the rows of either.
  */
 export declare function pinnedFields(expr: string): Set<string>;
 /**

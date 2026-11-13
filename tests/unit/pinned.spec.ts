@@ -25,6 +25,8 @@ describe('pinnedFields', () => {
   it('pins nothing it does not hold to one value', () => {
     expect(pinnedFields('category:Poe -author=ann rating=1..5').size).toBe(0)
     expect(pinnedFields('category=Poetry OR category=Drama').size).toBe(0)
+    expect(pinnedFields('category=Poetry category=Drama').size).toBe(0)
+    expect(pinnedFields('category=Poetry category:Dra').size).toBe(0)
   })
 })
 

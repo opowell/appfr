@@ -1,6 +1,6 @@
 import type { ColumnDef, ShellRow } from '../types'
 import { isRangeTerm, parseExpression } from '../data/expression'
-import { cellValue } from './columns'
+import { cellText, cellValue } from './columns'
 
 /**
  * The fields the query holds to one value on every row it keeps: each
@@ -32,6 +32,12 @@ export function pinnedFields(expr: string): Set<string> {
  * says nothing the bar does not. A column of lists stays: `tags=teacher` keeps
  * rows whose tags are each their own. So does the identity, which names each
  * row whatever the query asks of it.
+ *
+ * The field is the column's key, which a column reading another field says it
+ * stands for: `{ key: 'item', field: 'from' }` is the item a row belongs to,
+ * shown by its title. As that title is not the value narrowed to, and a row
+ * may belong to several records, such a column stays while its rows on the
+ * page say different things.
  */
 export function withoutPinned(columns: ColumnDef[], expr: string, rows: ShellRow[]): ColumnDef[] {
   const pinned = pinnedFields(expr)
@@ -39,6 +45,7 @@ export function withoutPinned(columns: ColumnDef[], expr: string, rows: ShellRow
   return columns.filter((column) => {
     const field = (column.key ?? column.field)?.toLowerCase()
     if (field === undefined || !pinned.has(field) || column.role === 'identity') return true
-    return rows.some((row) => Array.isArray(cellValue(column, row)))
+    if (rows.some((row) => Array.isArray(cellValue(column, row)))) return true
+    return new Set(rows.map((row) => cellText(column, row))).size > 1
   })
 }

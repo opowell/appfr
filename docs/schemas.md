@@ -169,7 +169,9 @@ query of `OR`ed parts, or a field named twice (`category=Poetry category=Drama`
 is the rows of either). A column of lists stays, as `tags=sea` keeps rows whose
 tags still differ, and so does the identity. The field matched is the column's
 `key`, so a column that reads one field and stands for another says both:
-`{ key: 'search', field: 'secondary' }` stands down under `search="1"`.
+`{ key: 'search', field: 'secondary' }` stands down under `search="1"`. It
+stays while its rows on the page say different things, as a row may belong to
+several records and show one that is not the one narrowed to.
 
 **A cell of your own.** `kind: 'component'` renders your component with
 `{ row, entry, value, column }` — a sparkline, a thumbnail stack, a checkbox.

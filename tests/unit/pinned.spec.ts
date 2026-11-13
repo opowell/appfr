@@ -35,6 +35,14 @@ describe('withoutPinned', () => {
     expect(keys(withoutPinned(columns, 'category=Poetry', rows))).toEqual(['ordinal', 'title', 'tags', 'rating'])
   })
 
+  it('keeps a column standing for the field narrowed by while its rows differ', () => {
+    const owner: ColumnDef = { key: 'item', field: 'owner', label: 'Owner' }
+    const owned = [row({ title: 'A', owner: 'Ann', item: ['ann'] }), row({ title: 'B', owner: 'Ann', item: ['ann'] })]
+    expect(keys(withoutPinned([owner], 'item=ann', owned))).toEqual([])
+    const shared = [owned[0]!, row({ title: 'C', owner: 'Bob', item: ['bob', 'ann'] })]
+    expect(keys(withoutPinned([owner], 'item=ann', shared))).toEqual(['item'])
+  })
+
   it('keeps a column of lists, whose rows still differ', () => {
     expect(keys(withoutPinned(columns, 'tags=night', rows))).toEqual(keys(columns))
   })

@@ -1,4 +1,4 @@
-import { ref as H, computed as f, inject as rn, provide as on, getCurrentInstance as na, shallowRef as ye, toValue as Te, watch as ne, onScopeDispose as Pt, getCurrentScope as aa, defineComponent as z, onMounted as ct, onBeforeUnmount as ke, openBlock as u, createBlock as A, Teleport as Et, createElementVNode as S, mergeProps as De, unref as w, renderSlot as Y, createCommentVNode as M, nextTick as Xe, createElementBlock as h, withKeys as Oe, useSlots as Mt, useId as Lt, withCtx as X, toDisplayString as E, createTextVNode as Z, Fragment as W, renderList as J, withModifiers as Ne, normalizeClass as de, withDirectives as Ut, normalizeStyle as oe, vModelText as ts, createVNode as G, reactive as Cn, toHandlers as cn, resolveDynamicComponent as Je, createSlots as Qt, useModel as Pn, onBeforeUpdate as ns, normalizeProps as Dt, guardReactiveProps as as, mergeModels as En, vShow as Mn, Comment as ss, Text as ls, readonly as rs, watchEffect as os } from "vue";
+import { ref as H, computed as f, inject as rn, provide as on, getCurrentInstance as na, shallowRef as ye, toValue as Te, watch as ne, onScopeDispose as Pt, getCurrentScope as aa, defineComponent as z, onMounted as ct, onBeforeUnmount as ke, openBlock as u, createBlock as A, Teleport as Et, createElementVNode as S, mergeProps as De, unref as w, renderSlot as Y, createCommentVNode as M, nextTick as Xe, createElementBlock as m, withKeys as Oe, useSlots as Mt, useId as Lt, withCtx as X, toDisplayString as E, createTextVNode as Z, Fragment as W, renderList as J, withModifiers as Ne, normalizeClass as de, withDirectives as Ut, normalizeStyle as oe, vModelText as ts, createVNode as G, reactive as Cn, toHandlers as cn, resolveDynamicComponent as Je, createSlots as Qt, useModel as Pn, onBeforeUpdate as ns, normalizeProps as Dt, guardReactiveProps as as, mergeModels as En, vShow as Mn, Comment as ss, Text as ls, readonly as rs, watchEffect as os } from "vue";
 import { MenuList as is } from "menu-bar";
 const un = ["list", "cards", "grid", "images", "table", "links", "preview"], Ge = ["ok", "running", "queued", "review", "failed"], vu = [...Ge, "neutral", "accent"], pu = [
   "identity",
@@ -643,13 +643,13 @@ function wa({ query: e, schema: t, entity: n, limit: a, offset: s }, l, r) {
   for (const b of o)
     for (const P of l(b))
       c += 1, Ds(i, P, b, t) && d.push(P);
-  const v = Ee(n, e.sort, t), _ = ia(n, t).find((b) => b.sort === v.key), y = r.undatedLast ? d.filter((b) => !Kn(b, _)) : d, g = r.undatedLast ? d.filter((b) => Kn(b, _)) : [];
-  y.sort(Gs(_)), e.dir === "asc" && y.reverse();
-  const p = g.length ? [...y, ...g] : y;
+  const v = Ee(n, e.sort, t), _ = ia(n, t).find((b) => b.sort === v.key), p = r.undatedLast ? d.filter((b) => !Kn(b, _)) : d, g = r.undatedLast ? d.filter((b) => Kn(b, _)) : [];
+  p.sort(Gs(_)), e.dir === "asc" && p.reverse();
+  const h = g.length ? [...p, ...g] : p;
   return {
     // One page out of the middle. `total` stays the whole match, which is what
     // the shell counts pages with.
-    rows: r.zeroIsAll && a <= 0 ? p.slice(s) : p.slice(s, s + a),
+    rows: r.zeroIsAll && a <= 0 ? h.slice(s) : h.slice(s, s + a),
     total: d.length,
     unfiltered: d.length === c
   };
@@ -725,22 +725,22 @@ function nl(e, t = {}) {
   if (!l.length) return [];
   const i = [];
   for (let o = 0; o < n; o++) {
-    const c = l[o % l.length], d = Math.floor(o / l.length), v = Ye(`${a}:${e.key}:${c[0]}:${o}`), _ = ka(e.key, o), y = new Date(s.getTime() - v % 900 * 36e5).toISOString(), g = {};
-    for (const p of e.columns ?? []) {
-      const b = p.field ?? p.key;
-      if (!b || p.value) continue;
-      const P = tl(p, {
+    const c = l[o % l.length], d = Math.floor(o / l.length), v = Ye(`${a}:${e.key}:${c[0]}:${o}`), _ = ka(e.key, o), p = new Date(s.getTime() - v % 900 * 36e5).toISOString(), g = {};
+    for (const h of e.columns ?? []) {
+      const b = h.field ?? h.key;
+      if (!b || h.value) continue;
+      const P = tl(h, {
         hash: Ye(`${v}:${b}`),
         sample: c,
         revision: d,
-        updatedAt: y
+        updatedAt: p
       });
       P !== void 0 && (g[b] = P);
     }
-    for (const p of e.facets)
-      g[p.key] = Zs(p, Ye(`${v}:${p.key}`));
-    for (const [p, b] of r)
-      g[p] = b === e.key ? _ : Js(b, o, p, n);
+    for (const h of e.facets)
+      g[h.key] = Zs(h, Ye(`${v}:${h.key}`));
+    for (const [h, b] of r)
+      g[h] = b === e.key ? _ : Js(b, o, h, n);
     i.push({ id: _, entityKey: e.key, entityLabel: e.label, fields: g });
   }
   return i;
@@ -833,12 +833,12 @@ function ul(e, t, n = {}) {
     i,
     d ? cl(_e(d), Ot(i, t)) : n.sort,
     t
-  ), _ = s.get(mn), y = _ ? _e(_) === "asc" ? "asc" : "desc" : a.dir, g = s.get(Re), p = s.get(Rt), b = p === void 0 ? 1 : Number(_e(p)), P = Number.isFinite(b) ? Math.max(1, Math.floor(b)) : 1;
+  ), _ = s.get(mn), p = _ ? _e(_) === "asc" ? "asc" : "desc" : a.dir, g = s.get(Re), h = s.get(Rt), b = h === void 0 ? 1 : Number(_e(h)), P = Number.isFinite(b) ? Math.max(1, Math.floor(b)) : 1;
   return {
     entity: i?.key ?? null,
     view: c,
     sort: v.key,
-    dir: y,
+    dir: p,
     expr: g === void 0 ? "" : nt(_e(g), i, t),
     page: P
   };
@@ -846,7 +846,7 @@ function ul(e, t, n = {}) {
 function Wn(e, t, n = {}, a = "") {
   const s = gt(t, n), l = tt(t, e.entity), r = yn(a).filter(([v]) => !rl(v)), i = [], o = (v, _) => i.push([v, wt(_)]), c = l?.key ?? null;
   if (c !== s.entity && o(je, l ? ol(l, t) : ba), e.view !== et(c, n) && o(It, e.view), e.sort !== s.sort) {
-    const v = Ot(l, t), _ = v.find((y) => y.key === e.sort);
+    const v = Ot(l, t), _ = v.find((p) => p.key === e.sort);
     o(hn, _ ? il(_, v) : e.sort);
   }
   e.dir !== s.dir && o(mn, e.dir), e.expr.trim() !== "" && o(Re, va(e.expr, l, t)), e.page > 1 && o(Rt, String(e.page));
@@ -1210,33 +1210,33 @@ function bl(e, t, n = null) {
   return s && a.push(`"${s}"`), a.join(" · ");
 }
 function $l(e) {
-  const { adapter: t } = e, n = f(() => Te(e.schema)), a = f(() => Te(e.defaults) ?? {}), s = f(() => ul(t.search.value, n.value, a.value)), l = f(() => tt(n.value, s.value.entity)), r = f(() => l.value ?? oa(n.value, a.value)), i = f(() => Ot(l.value, n.value)), o = f(() => Ee(l.value, s.value.sort, n.value)), c = ($, m) => {
+  const { adapter: t } = e, n = f(() => Te(e.schema)), a = f(() => Te(e.defaults) ?? {}), s = f(() => ul(t.search.value, n.value, a.value)), l = f(() => tt(n.value, s.value.entity)), r = f(() => l.value ?? oa(n.value, a.value)), i = f(() => Ot(l.value, n.value)), o = f(() => Ee(l.value, s.value.sort, n.value)), c = ($, y) => {
     const k = Wn($, n.value, a.value, t.search.value);
-    return k === t.search.value && !t.elsewhere?.value ? !1 : (m === "push" ? t.push(k) : t.replace(k), !0);
-  }, d = () => Te(e.navigationMode) ?? "push", v = () => Te(e.facetNavigationMode) ?? "replace", _ = ($, m) => {
+    return k === t.search.value && !t.elsewhere?.value ? !1 : (y === "push" ? t.push(k) : t.replace(k), !0);
+  }, d = () => Te(e.navigationMode) ?? "push", v = () => Te(e.facetNavigationMode) ?? "replace", _ = ($, y) => {
     const k = $.page ?? (Kt($) ? 1 : s.value.page);
-    return c({ ...s.value, ...$, page: k }, m);
-  }, y = ($) => {
-    const m = $.page ?? (Kt($) ? 1 : s.value.page);
-    return g({ ...s.value, ...$, page: m });
+    return c({ ...s.value, ...$, page: k }, y);
+  }, p = ($) => {
+    const y = $.page ?? (Kt($) ? 1 : s.value.page);
+    return g({ ...s.value, ...$, page: y });
   }, g = ($) => {
-    const m = Wn($, n.value, a.value, t.search.value);
-    return t.href ? t.href(m) : `${t.path.value}${m}`;
-  }, p = ($, m) => {
+    const y = Wn($, n.value, a.value, t.search.value);
+    return t.href ? t.href(y) : `${t.path.value}${y}`;
+  }, h = ($, y) => {
     const k = l.value?.facets.find((F) => F.key === $);
     if (!k) return;
-    const T = Ra(s.value.expr, k, m(Ia(s.value.expr, k)));
+    const T = Ra(s.value.expr, k, y(Ia(s.value.expr, k)));
     _({ expr: T }, v());
   }, b = ($) => {
-    const m = $ === null ? null : tt(n.value, $);
-    return (m?.key ?? null) === s.value.entity ? {} : {
-      entity: m?.key ?? null,
-      view: Ln(s.value.view, s.value.entity, m?.key ?? null, a.value),
-      sort: Ee(m, s.value.sort, n.value).key
+    const y = $ === null ? null : tt(n.value, $);
+    return (y?.key ?? null) === s.value.entity ? {} : {
+      entity: y?.key ?? null,
+      view: Ln(s.value.view, s.value.entity, y?.key ?? null, a.value),
+      sort: Ee(y, s.value.sort, n.value).key
     };
   }, P = ($) => {
-    const m = b($);
-    Object.keys(m).length && _(m, d());
+    const y = b($);
+    Object.keys(y).length && _(y, d());
   };
   return {
     query: s,
@@ -1250,10 +1250,10 @@ function $l(e) {
     isEverything: f(() => s.value.entity === null),
     hasFacets: f(() => _l(s.value.expr, l.value)),
     setEntity: P,
-    entityHref: ($) => y(b($)),
+    entityHref: ($) => p(b($)),
     clearEntity: () => P(null),
-    setView($, m) {
-      _(m === void 0 ? { view: $ } : { view: $, page: Math.max(1, Math.floor(m)) }, d());
+    setView($, y) {
+      _(y === void 0 ? { view: $ } : { view: $, page: Math.max(1, Math.floor(y)) }, d());
     },
     setSort($) {
       _({ sort: Ee(l.value, $, n.value).key }, d());
@@ -1264,28 +1264,28 @@ function $l(e) {
     setExpression($) {
       return _({ expr: $ }, d());
     },
-    narrow($, m, k) {
-      return _({ expr: $, ...b(m), ...k ? { view: k } : {} }, d());
+    narrow($, y, k) {
+      return _({ expr: $, ...b(y), ...k ? { view: k } : {} }, d());
     },
-    narrowHref($, m, k) {
-      return y({ expr: $, ...b(m), ...k ? { view: k } : {} });
+    narrowHref($, y, k) {
+      return p({ expr: $, ...b(y), ...k ? { view: k } : {} });
     },
-    setPage($, m) {
-      _({ page: Math.max(1, Math.floor($)) }, m ?? d());
+    setPage($, y) {
+      _({ page: Math.max(1, Math.floor($)) }, y ?? d());
     },
-    setFacet($, m) {
-      p($, () => m);
+    setFacet($, y) {
+      h($, () => y);
     },
-    toggleChip($, m) {
-      p($, (k) => k.kind !== "chips" ? k : { kind: "chips", selected: k.selected.includes(m) ? k.selected.filter((F) => F !== m) : [...k.selected, m] });
+    toggleChip($, y) {
+      h($, (k) => k.kind !== "chips" ? k : { kind: "chips", selected: k.selected.includes(y) ? k.selected.filter((F) => F !== y) : [...k.selected, y] });
     },
-    setRange($, m, k) {
-      p($, (T) => T.kind === "range" ? { kind: "range", min: m, max: k } : T);
+    setRange($, y, k) {
+      h($, (T) => T.kind === "range" ? { kind: "range", min: y, max: k } : T);
     },
     toggleFlag($) {
-      p(
+      h(
         $,
-        (m) => m.kind === "toggle" ? { kind: "toggle", on: !m.on } : m
+        (y) => y.kind === "toggle" ? { kind: "toggle", on: !y.on } : y
       );
     },
     removeTerm($) {
@@ -1294,21 +1294,21 @@ function $l(e) {
         return;
       }
       if ($.facetKey === ot) {
-        const m = Ws(se(s.value.expr), $.group ?? 0, $.index ?? 0);
-        _({ expr: me(m) }, d());
+        const y = Ws(se(s.value.expr), $.group ?? 0, $.index ?? 0);
+        _({ expr: me(y) }, d());
       }
     },
     clearFilters() {
       _({ ...b(null), expr: "" }, d());
     },
-    clearHref: () => y({ ...b(null), expr: "" }),
+    clearHref: () => p({ ...b(null), expr: "" }),
     reset() {
       c(gt(n.value, a.value), d());
     },
     homeHref: () => g(gt(n.value, a.value)),
     hrefFor($) {
-      const m = { ...s.value, ...$ };
-      return "entity" in $ && !("view" in $) && (m.view = Ln(s.value.view, s.value.entity, m.entity, a.value)), m.page = $.page ?? (Kt($) ? 1 : s.value.page), g(m);
+      const y = { ...s.value, ...$ };
+      return "entity" in $ && !("view" in $) && (y.view = Ln(s.value.view, s.value.entity, y.entity, a.value)), y.page = $.page ?? (Kt($) ? 1 : s.value.page), g(y);
     }
   };
 }
@@ -1316,12 +1316,12 @@ const jn = 50;
 function xl(e) {
   const t = ye([]), n = H(0), a = H(0), s = H(!1), l = H(!1), r = ye(null);
   let i = 0, o = null, c = null;
-  const d = f(() => (e.query.value.page - 1) * e.limit.value), v = f(() => Ss(n.value, e.limit.value)), _ = f(() => Math.max(0, n.value - a.value)), y = () => {
+  const d = f(() => (e.query.value.page - 1) * e.limit.value), v = f(() => Ss(n.value, e.limit.value)), _ = f(() => Math.max(0, n.value - a.value)), p = () => {
     const I = e.query.value, B = e.within?.value.trim(), q = Ma(e.entity.value, I.expr);
     return B ? { ...I, expr: pn(B, q) } : q === I.expr ? I : { ...I, expr: q };
   }, g = (I, B) => {
-    t.value = I.rows, n.value = I.total, a.value = I.kept ?? 0, r.value = null, p(B);
-  }, p = (I) => {
+    t.value = I.rows, n.value = I.total, a.value = I.kept ?? 0, r.value = null, h(B);
+  }, h = (I) => {
     o = { key: I, total: n.value }, l.value = !1;
   }, b = (I) => {
     r.value = I, t.value = [], n.value = 0, a.value = 0, o = null, l.value = !1;
@@ -1350,7 +1350,7 @@ function xl(e) {
         te() && (j.rows && (N(), t.value = B > 0 ? j.rows.slice(0, B) : j.rows, Q(j.rows.length)), j.total !== void 0 && Q(j.total));
       },
       close() {
-        te() && (s.value = !1, L && (n.value = re), p(q));
+        te() && (s.value = !1, L && (n.value = re), h(q));
       },
       fail(j) {
         te() && (b(j), s.value = !1);
@@ -1359,13 +1359,13 @@ function xl(e) {
   }, $ = () => {
     const I = c;
     c = null, I?.();
-  }, m = () => {
+  }, y = () => {
     const I = ++i;
     $();
     const B = k.value, q = o?.key === B ? o.total : void 0;
     l.value = q === void 0;
     const ie = {
-      query: y(),
+      query: p(),
       schema: e.schema.value,
       entity: e.entity.value,
       limit: e.limit.value,
@@ -1399,18 +1399,18 @@ function xl(e) {
       I === i && (s.value = !1);
     });
   }, k = f(() => {
-    const I = y();
+    const I = p();
     return `${e.entity.value?.key ?? e.schema.value.entities[0]?.key ?? ""}|${JSON.stringify(fn.map((q) => I[q]))}`;
   }), T = f(() => `${k.value}|${e.query.value.page}`);
-  return ne([e.source, T, e.limit], m, {
+  return ne([e.source, T, e.limit], y, {
     immediate: !0
   }), Pt(() => {
     i++, $();
-  }, !0), { rows: t, total: n, matched: _, offset: d, pageCount: v, pending: s, counting: l, error: r, refresh: m, locate: async (I, B) => {
+  }, !0), { rows: t, total: n, matched: _, offset: d, pageCount: v, pending: s, counting: l, error: r, refresh: y, locate: async (I, B) => {
     const q = Math.max(0, B - 1 - jn);
     try {
       const { rows: ie } = await e.source.value.query({
-        query: y(),
+        query: p(),
         schema: e.schema.value,
         entity: e.entity.value,
         limit: jn * 2 + 1,
@@ -1424,7 +1424,7 @@ function xl(e) {
     if (B <= 0) return [];
     try {
       const { rows: q } = await e.source.value.query({
-        query: y(),
+        query: p(),
         schema: e.schema.value,
         entity: e.entity.value,
         limit: B,
@@ -1488,15 +1488,15 @@ function Pl(e) {
   const r = () => {
     clearTimeout(l), l = void 0;
   }, i = f(() => nt(Qs(a.value), e.entity.value, e.schema?.value)), o = f(() => i.value.trim() !== ""), c = f(
-    () => JSON.stringify([i.value, ...fn.map((y) => e.query.value[y])])
+    () => JSON.stringify([i.value, ...fn.map((p) => e.query.value[p])])
   ), d = ye(null), v = f(() => {
-    const y = e.query.value;
-    if (!o.value) return y;
+    const p = e.query.value;
+    if (!o.value) return p;
     const g = d.value?.of === c.value ? d.value.page : 1;
-    return { ...y, expr: st(y.expr, i.value), page: g };
+    return { ...p, expr: st(p.expr, i.value), page: g };
   });
-  ne(n, (y) => {
-    if (r(), !y.trim()) {
+  ne(n, (p) => {
+    if (r(), !p.trim()) {
       s || (a.value = "");
       return;
     }
@@ -1510,24 +1510,24 @@ function Pl(e) {
     },
     { flush: "sync" }
   );
-  const _ = (y) => {
-    r(), s = !0, n.value = "", !y() && s && (s = !1, a.value = "");
+  const _ = (p) => {
+    r(), s = !0, n.value = "", !p() && s && (s = !1, a.value = "");
   };
   return aa() && Pt(r), {
     text: n,
     live: v,
     drafting: o,
-    setPage(y) {
-      d.value = { of: c.value, page: Math.max(1, Math.floor(y)) };
+    setPage(p) {
+      d.value = { of: c.value, page: Math.max(1, Math.floor(p)) };
     },
     commit() {
-      const y = n.value.trim();
-      if (!y) return;
+      const p = n.value.trim();
+      if (!p) return;
       const g = st(
         e.query.value.expr,
-        nt(y, e.entity.value, e.schema?.value)
+        nt(p, e.entity.value, e.schema?.value)
       );
-      a.value = y, _(() => e.setExpression(g));
+      a.value = p, _(() => e.setExpression(g));
     },
     abandon() {
       r(), s = !1, n.value = "", a.value = "";
@@ -1577,9 +1577,9 @@ function Ll(e) {
       outcome: s(d)
     })), c = (d) => {
       const v = new Map(t.value);
-      d.forEach((_, y) => {
-        const { reference: g } = o[y], p = Ml(_.rows, g.id);
-        v.set(g.key, p ? l(g.entity, p) : "");
+      d.forEach((_, p) => {
+        const { reference: g } = o[p], h = Ml(_.rows, g.id);
+        v.set(g.key, h ? l(g.entity, h) : "");
       }), t.value = v;
     };
     if (o.every(({ outcome: d }) => !(d instanceof Promise))) {
@@ -1610,8 +1610,8 @@ function Al(e, t, n, a = {}) {
   const s = a.gap ?? Tl, l = a.margin ?? Ol, r = a.flipBelow ?? Nl, i = a.side ?? "below", o = {
     below: n.height - e.bottom - s - l,
     above: e.top - s - l
-  }, c = i === "below" ? "above" : "below", d = o[i] < r && o[c] > o[i] ? c : i, v = Math.min(a.maxHeight ?? 1 / 0, Math.max(0, o[d])), _ = Math.max(0, n.width - l * 2), y = Math.min(a.minWidth ?? e.width, _), g = Math.min(Math.max(t, y), _), p = a.align === "end" ? e.right - g : e.left, b = Math.max(l, Math.min(p, n.width - g - l));
-  return d === "below" ? { side: d, left: b, top: e.bottom + s, maxHeight: v, minWidth: y, maxWidth: _ } : { side: d, left: b, bottom: n.height - e.top + s, maxHeight: v, minWidth: y, maxWidth: _ };
+  }, c = i === "below" ? "above" : "below", d = o[i] < r && o[c] > o[i] ? c : i, v = Math.min(a.maxHeight ?? 1 / 0, Math.max(0, o[d])), _ = Math.max(0, n.width - l * 2), p = Math.min(a.minWidth ?? e.width, _), g = Math.min(Math.max(t, p), _), h = a.align === "end" ? e.right - g : e.left, b = Math.max(l, Math.min(h, n.width - g - l));
+  return d === "below" ? { side: d, left: b, top: e.bottom + s, maxHeight: v, minWidth: p, maxWidth: _ } : { side: d, left: b, bottom: n.height - e.top + s, maxHeight: v, minWidth: p, maxWidth: _ };
 }
 const Il = ["data-dc-theme", "data-dc-side"], Pe = [], Rl = /* @__PURE__ */ z({
   inheritAttrs: !1,
@@ -1632,23 +1632,23 @@ const Il = ["data-dc-theme", "data-dc-side"], Pe = [], Rl = /* @__PURE__ */ z({
   setup(e, { emit: t }) {
     const n = e, a = t, { theme: s, style: l, adopt: r } = _n(n), i = H(null), o = H(null), c = { root: () => i.value };
     function d() {
-      const m = n.anchor;
-      m && (o.value = Al(
-        m.getBoundingClientRect(),
+      const y = n.anchor;
+      y && (o.value = Al(
+        y.getBoundingClientRect(),
         i.value?.offsetWidth ?? 0,
         { width: window.innerWidth, height: window.innerHeight },
         { side: n.side, align: n.align, maxHeight: n.maxHeight, minWidth: n.minWidth }
       ));
     }
     const v = f(() => {
-      const m = o.value, k = m ? {
+      const y = o.value, k = y ? {
         position: "fixed",
-        left: `${m.left}px`,
-        ...m.top !== void 0 ? { top: `${m.top}px` } : {},
-        ...m.bottom !== void 0 ? { bottom: `${m.bottom}px` } : {},
-        minWidth: `${m.minWidth}px`,
-        maxWidth: `${m.maxWidth}px`,
-        maxHeight: `${m.maxHeight}px`,
+        left: `${y.left}px`,
+        ...y.top !== void 0 ? { top: `${y.top}px` } : {},
+        ...y.bottom !== void 0 ? { bottom: `${y.bottom}px` } : {},
+        minWidth: `${y.minWidth}px`,
+        maxWidth: `${y.maxWidth}px`,
+        maxHeight: `${y.maxHeight}px`,
         overflowY: "auto"
       } : { position: "fixed", visibility: "hidden" };
       return { ...l.value, ...k };
@@ -1656,47 +1656,47 @@ const Il = ["data-dc-theme", "data-dc-side"], Pe = [], Rl = /* @__PURE__ */ z({
     function _() {
       a("update:open", !1), a("close");
     }
-    function y(m) {
-      return i.value?.contains(m) || n.anchor?.contains(m) ? !0 : Pe.slice(Pe.indexOf(c) + 1).some((T) => T.root()?.contains(m));
+    function p(y) {
+      return i.value?.contains(y) || n.anchor?.contains(y) ? !0 : Pe.slice(Pe.indexOf(c) + 1).some((T) => T.root()?.contains(y));
     }
-    function g(m) {
-      const k = m.target;
-      k && !y(k) && _();
+    function g(y) {
+      const k = y.target;
+      k && !p(k) && _();
     }
-    function p(m) {
-      m.key !== "Escape" || m.defaultPrevented || Pe[Pe.length - 1] === c && (m.preventDefault(), i.value?.contains(document.activeElement) && n.anchor?.focus(), _());
+    function h(y) {
+      y.key !== "Escape" || y.defaultPrevented || Pe[Pe.length - 1] === c && (y.preventDefault(), i.value?.contains(document.activeElement) && n.anchor?.focus(), _());
     }
     let b = null;
     async function P() {
-      Pe.includes(c) || (Pe.push(c), r(), o.value = null, await Xe(), d(), window.addEventListener("pointerdown", g, !0), document.addEventListener("keydown", p, !0), window.addEventListener("resize", d), window.addEventListener("scroll", d, !0), typeof ResizeObserver < "u" && i.value && (b = new ResizeObserver(() => d()), b.observe(i.value)));
+      Pe.includes(c) || (Pe.push(c), r(), o.value = null, await Xe(), d(), window.addEventListener("pointerdown", g, !0), document.addEventListener("keydown", h, !0), window.addEventListener("resize", d), window.addEventListener("scroll", d, !0), typeof ResizeObserver < "u" && i.value && (b = new ResizeObserver(() => d()), b.observe(i.value)));
     }
     function $() {
-      const m = Pe.indexOf(c);
-      m !== -1 && (Pe.splice(m, 1), window.removeEventListener("pointerdown", g, !0), document.removeEventListener("keydown", p, !0), window.removeEventListener("resize", d), window.removeEventListener("scroll", d, !0), b?.disconnect(), b = null);
+      const y = Pe.indexOf(c);
+      y !== -1 && (Pe.splice(y, 1), window.removeEventListener("pointerdown", g, !0), document.removeEventListener("keydown", h, !0), window.removeEventListener("resize", d), window.removeEventListener("scroll", d, !0), b?.disconnect(), b = null);
     }
     return ct(() => {
       n.open && P();
     }), ne(
       () => n.open,
-      (m) => {
-        m ? P() : $();
+      (y) => {
+        y ? P() : $();
       }
     ), ne(() => n.anchor, () => {
       n.open && d();
-    }), ke($), (m, k) => e.open ? (u(), A(Et, {
+    }), ke($), (y, k) => e.open ? (u(), A(Et, {
       key: 0,
       to: e.to
     }, [
       S("div", De({
         ref_key: "root",
         ref: i
-      }, m.$attrs, {
+      }, y.$attrs, {
         class: "dc-shell dc-layer dc-popover",
         "data-dc-theme": w(s),
         "data-dc-side": o.value?.side,
         style: v.value
       }), [
-        Y(m.$slots, "default", {}, void 0, !0)
+        Y(y.$slots, "default", {}, void 0, !0)
       ], 16, Il)
     ], 8, ["to"])) : M("", !0);
   }
@@ -1727,7 +1727,7 @@ const Il = ["data-dc-theme", "data-dc-side"], Pe = [], Rl = /* @__PURE__ */ z({
       }
       i.preventDefault(), a("press", lt(i), i);
     }
-    return (i, o) => e.selectable ? (u(), h("span", {
+    return (i, o) => e.selectable ? (u(), m("span", {
       key: 0,
       role: "link",
       tabindex: "0",
@@ -1737,14 +1737,14 @@ const Il = ["data-dc-theme", "data-dc-side"], Pe = [], Rl = /* @__PURE__ */ z({
       onKeydown: o[0] || (o[0] = Oe((c) => c.currentTarget.click(), ["enter"]))
     }, [
       Y(i.$slots, "default", {}, void 0, !0)
-    ], 32)) : e.href ? (u(), h("a", {
+    ], 32)) : e.href ? (u(), m("a", {
       key: 1,
       href: e.href,
       class: "dc-press",
       onClick: r
     }, [
       Y(i.$slots, "default", {}, void 0, !0)
-    ], 8, Hl)) : (u(), h("button", {
+    ], 8, Hl)) : (u(), m("button", {
       key: 2,
       type: "button",
       class: "dc-press",
@@ -1789,7 +1789,7 @@ function zl(e, t) {
     const [, r, i, o, c] = l, d = Dl(t, i);
     if (!d) return [];
     const v = c.replace(/"/g, "").toLowerCase();
-    for (const { value: _, hint: y } of Wl(d)) {
+    for (const { value: _, hint: p } of Wl(d)) {
       if (!_.toLowerCase().includes(v)) continue;
       const g = we({
         kind: "field",
@@ -1798,7 +1798,7 @@ function zl(e, t) {
         value: _,
         ...r ? { negated: !0 } : {}
       });
-      s.push({ draft: a + g, label: g, ...y ? { hint: y } : {}, complete: !0 });
+      s.push({ draft: a + g, label: g, ...p ? { hint: p } : {}, complete: !0 });
     }
   } else {
     if (/[<>"]/.test(n)) return [];
@@ -1879,42 +1879,42 @@ Written ${D} in the address and the search box` : V;
       ).filter((D) => D.address !== void 0 && !V.has(D.address)).map(
         (D) => C.name ? `${i(D.field)}: ${o(C.name)}` : D.label
       );
-    }), _ = f(() => n.pressPreview?.value?.alone === !0), y = H(null);
+    }), _ = f(() => n.pressPreview?.value?.alone === !0), p = H(null);
     function g(C) {
-      y.value = C instanceof HTMLInputElement ? C : null;
+      p.value = C instanceof HTMLInputElement ? C : null;
     }
-    function p() {
-      n.abandonDraft(), y.value?.blur();
+    function h() {
+      n.abandonDraft(), p.value?.blur();
     }
     function b() {
-      const C = m.value[$.value];
+      const C = y.value[$.value];
       if (k.value && C) {
         F(C);
         return;
       }
       B.value = null, P.value = !1, n.commitDraft();
     }
-    const P = H(!1), $ = H(-1), m = f(() => {
+    const P = H(!1), $ = H(-1), y = f(() => {
       const C = n.entity.value?.facets ?? [];
       return C.length ? zl(n.draft.value, C) : [];
-    }), k = f(() => P.value && m.value.length > 0);
-    ne(m, () => {
+    }), k = f(() => P.value && y.value.length > 0);
+    ne(y, () => {
       $.value = -1;
     });
     const T = `${Lt() ?? "dc-header"}-completions`;
     function F(C) {
       n.draft.value = C.draft, P.value = !C.complete, $.value = -1, Xe(() => {
-        const O = y.value;
+        const O = p.value;
         O?.focus(), O?.setSelectionRange(C.draft.length, C.draft.length);
       });
     }
     function ce(C, O) {
-      if (C.isComposing || !m.value.length) return;
+      if (C.isComposing || !y.value.length) return;
       if (C.preventDefault(), !P.value) {
         P.value = !0;
         return;
       }
-      const V = m.value.length + 1;
+      const V = y.value.length + 1;
       $.value = ($.value + 1 + O + V) % V - 1;
     }
     function I(C) {
@@ -1929,14 +1929,14 @@ Written ${D} in the address and the search box` : V;
     });
     function te(C, O) {
       B.value = C >= l.value.length ? null : Math.max(0, C), Xe(() => {
-        const V = y.value;
+        const V = p.value;
         if (!V) return;
         const D = O === "start" ? 0 : V.value.length;
         V.setSelectionRange(D, D), V.scrollIntoView({ block: "nearest", inline: "nearest" }), Ce();
       });
     }
     function re(C) {
-      const O = y.value;
+      const O = p.value;
       return !O || O.selectionStart !== O.selectionEnd ? !1 : O.selectionStart === (C === "start" ? 0 : O.value.length);
     }
     function L(C) {
@@ -1958,7 +1958,7 @@ Written ${D} in the address and the search box` : V;
       O && B.value !== null && (B.value = Math.max(0, B.value - 1)), n.removeTerm(C);
     }
     function ge(C) {
-      C.target?.closest("button, input") || (C.preventDefault(), y.value?.focus(), te(l.value.length, "end"));
+      C.target?.closest("button, input") || (C.preventDefault(), p.value?.focus(), te(l.value.length, "end"));
     }
     function ht() {
       P.value = !1, n.draft.value || (B.value = null);
@@ -1980,7 +1980,7 @@ Written ${D} in the address and the search box` : V;
         $e?.disconnect(), $e = null, Ce(), !(!C || typeof ResizeObserver > "u") && ($e = new ResizeObserver(Ce), $e.observe(C));
       },
       { flush: "post" }
-    ), ne([l, q], Ce, { flush: "post" }), ke(() => $e?.disconnect()), (C, O) => (u(), h("div", jl, [
+    ), ne([l, q], Ce, { flush: "post" }), ke(() => $e?.disconnect()), (C, O) => (u(), m("div", jl, [
       S("div", Ul, [
         a.value.label && t.brand ? (u(), A(ae, {
           key: 0,
@@ -2012,9 +2012,9 @@ Written ${D} in the address and the search box` : V;
           _: 1
         }, 8, ["href"])) : M("", !0),
         Y(C.$slots, "lead", {}, void 0, !0),
-        s.value.length ? (u(), h("span", Yl, [
+        s.value.length ? (u(), m("span", Yl, [
           O[10] || (O[10] = S("span", { class: "dc-header__sr" }, "Within", -1)),
-          (u(!0), h(W, null, J(s.value, (V) => (u(), h("span", {
+          (u(!0), m(W, null, J(s.value, (V) => (u(), m("span", {
             key: `scope:${V.id}`,
             class: "dc-within dc-mono dc-truncate",
             title: c(V)
@@ -2033,14 +2033,14 @@ Written ${D} in the address and the search box` : V;
               title: w(n).summary.value,
               onScroll: Ce
             }, [
-              (u(!0), h(W, null, J(ie.value, (V) => (u(), h(W, {
+              (u(!0), m(W, null, J(ie.value, (V) => (u(), m(W, {
                 key: V.key
               }, [
                 S("span", er, [
-                  (u(!0), h(W, null, J(V.entries, (D) => (u(), h(W, {
+                  (u(!0), m(W, null, J(V.entries, (D) => (u(), m(W, {
                     key: D.term.id
                   }, [
-                    D.or ? (u(), h("span", tr, "or")) : M("", !0),
+                    D.or ? (u(), m("span", tr, "or")) : M("", !0),
                     S("button", {
                       type: "button",
                       class: de(["dc-term dc-mono", { "dc-term--idle": D.idle, "dc-term--leaving": _.value }]),
@@ -2051,13 +2051,13 @@ Written ${D} in the address and the search box` : V;
                       onClick: (Le) => pe(D.term, V.key === "before")
                     }, E(c(D.term)), 43, nr)
                   ], 64))), 128)),
-                  V.key === "before" ? (u(!0), h(W, { key: 0 }, J(v.value, (D) => (u(), h("span", {
+                  V.key === "before" ? (u(!0), m(W, { key: 0 }, J(v.value, (D) => (u(), m("span", {
                     key: D,
                     class: "dc-term dc-term--preview dc-mono",
                     "aria-hidden": "true"
                   }, E(D), 1))), 128)) : M("", !0)
                 ]),
-                V.key === "before" ? Ut((u(), h("input", {
+                V.key === "before" ? Ut((u(), m("input", {
                   key: 0,
                   ref_for: !0,
                   ref: g,
@@ -2076,7 +2076,7 @@ Written ${D} in the address and the search box` : V;
                   "aria-activedescendant": k.value && $.value >= 0 ? I($.value) : void 0,
                   onKeydown: [
                     Oe(Ne(b, ["prevent"]), ["enter"]),
-                    Oe(Ne(p, ["prevent"]), ["esc"]),
+                    Oe(Ne(h, ["prevent"]), ["esc"]),
                     O[4] || (O[4] = Oe((D) => ce(D, 1), ["down"])),
                     O[5] || (O[5] = Oe((D) => ce(D, -1), ["up"])),
                     ve
@@ -2095,7 +2095,7 @@ Written ${D} in the address and the search box` : V;
       G(Bl, {
         id: T,
         open: k.value,
-        anchor: y.value,
+        anchor: p.value,
         "min-width": 0,
         "max-height": 320,
         class: "dc-completions",
@@ -2104,7 +2104,7 @@ Written ${D} in the address and the search box` : V;
         onClose: O[9] || (O[9] = (V) => P.value = !1)
       }, {
         default: X(() => [
-          (u(!0), h(W, null, J(m.value, (V, D) => (u(), h("div", {
+          (u(!0), m(W, null, J(y.value, (V, D) => (u(), m("div", {
             id: I(D),
             key: V.label,
             class: de(["dc-completion", { "dc-completion--active": D === $.value }]),
@@ -2115,12 +2115,12 @@ Written ${D} in the address and the search box` : V;
             onClick: (Le) => F(V)
           }, [
             S("span", lr, E(V.label), 1),
-            V.hint ? (u(), h("span", rr, E(V.hint), 1)) : M("", !0)
+            V.hint ? (u(), m("span", rr, E(V.hint), 1)) : M("", !0)
           ], 42, sr))), 128))
         ]),
         _: 1
       }, 8, ["open", "anchor"]),
-      t.actions ? (u(), h("div", or, [
+      t.actions ? (u(), m("div", or, [
         Y(C.$slots, "actions", {}, void 0, !0)
       ])) : M("", !0)
     ]));
@@ -2131,7 +2131,7 @@ Written ${D} in the address and the search box` : V;
     const t = ee(), n = f(() => t.rows.value.filter((l) => t.isSelected(l)).length), a = f(
       () => t.rows.value.length > 0 && n.value === t.rows.value.length
     ), s = f(() => n.value > 0 && !a.value);
-    return (l, r) => (u(), h("input", {
+    return (l, r) => (u(), m("input", {
       class: "dc-tick",
       type: "checkbox",
       checked: a.value,
@@ -2165,33 +2165,33 @@ Written ${D} in the address and the search box` : V;
         icon: k.icon,
         checked: k.key === n.modelValue
       }))
-    ), y = f(
+    ), p = f(
       () => i.value ? { maxHeight: `${window.innerHeight - i.value.y - 8}px` } : void 0
     );
     function g(k) {
       const T = l.value?.getBoundingClientRect();
       T && (d.value = l.value?.closest(".dc-shell") ?? document.body, i.value = { x: T.left, y: T.bottom + 4, mirrorX: T.right }, o.value = k, a("open"));
     }
-    function p(k) {
+    function h(k) {
       i.value && a("close"), i.value = null, k && l.value?.focus();
     }
     function b() {
-      c.value ? p(!0) : g(!1);
+      c.value ? h(!0) : g(!1);
     }
     function P(k) {
       k.key !== "ArrowDown" && k.key !== "ArrowUp" || c.value || (k.preventDefault(), g(!0));
     }
     function $(k) {
       const T = k.target;
-      T && (l.value?.contains(T) || r.value?.root?.contains(T) || p(!1));
+      T && (l.value?.contains(T) || r.value?.root?.contains(T) || h(!1));
     }
     ne(c, (k) => {
       k ? window.addEventListener("pointerdown", $, !0) : window.removeEventListener("pointerdown", $, !0);
     }), ke(() => window.removeEventListener("pointerdown", $, !0));
-    function m(k) {
-      p(!0), !(k.id === void 0 || k.id === n.modelValue) && a("update:modelValue", k.id);
+    function y(k) {
+      h(!0), !(k.id === void 0 || k.id === n.modelValue) && a("update:modelValue", k.id);
     }
-    return (k, T) => (u(), h("span", ur, [
+    return (k, T) => (u(), m("span", ur, [
       S("span", {
         id: `${w(s)}-name`,
         class: "dc-pick__name"
@@ -2209,7 +2209,7 @@ Written ${D} in the address and the search box` : V;
         onClick: b,
         onKeydown: P
       }, [
-        v.value?.icon ? (u(), h("svg", vr, [
+        v.value?.icon ? (u(), m("svg", vr, [
           S("path", {
             d: v.value.icon
           }, null, 8, pr)
@@ -2231,13 +2231,13 @@ Written ${D} in the address and the search box` : V;
           ref_key: "menu",
           ref: r,
           class: "dc-pick__list",
-          style: oe(y.value),
+          style: oe(p.value),
           items: _.value,
           at: i.value,
           label: e.label,
           autofocus: o.value,
-          onChoose: m,
-          onDismiss: T[0] || (T[0] = (F) => p(!0))
+          onChoose: y,
+          onDismiss: T[0] || (T[0] = (F) => h(!0))
         }, null, 8, ["style", "items", "at", "label", "autofocus"])
       ], 8, ["to"])) : M("", !0)
     ]));
@@ -2261,45 +2261,45 @@ Written ${D} in the address and the search box` : V;
       () => `${n.counting.value ? "~" : ""}${Ve(n.pageCount.value)}`
     ), l = f(() => {
       if (n.limit.value === 1) {
-        const p = `Record ${Ve(a.value)} of ${s.value}`;
-        return t.pagesNote ? `${p}
-${t.pagesNote}` : p;
+        const h = `Record ${Ve(a.value)} of ${s.value}`;
+        return t.pagesNote ? `${h}
+${t.pagesNote}` : h;
       }
-      let y = `Page ${Ve(a.value)} of ${s.value}`;
+      let p = `Page ${Ve(a.value)} of ${s.value}`;
       const g = n.rows.value.length;
       if (g) {
-        const p = n.offset.value + 1, b = `${n.counting.value ? "~" : ""}${Ve(n.total.value)}`;
-        y += ` — rows ${Ve(p)} to ${Ve(p + g - 1)} of ${b}`;
+        const h = n.offset.value + 1, b = `${n.counting.value ? "~" : ""}${Ve(n.total.value)}`;
+        p += ` — rows ${Ve(h)} to ${Ve(h + g - 1)} of ${b}`;
       }
-      return t.pagesNote ? `${y}
-${t.pagesNote}` : y;
+      return t.pagesNote ? `${p}
+${t.pagesNote}` : p;
     }), r = H(null), i = f(() => r.value ?? String(a.value)), o = f(
       () => `calc(${Math.max(2, String(n.pageCount.value).length)}ch + 10px)`
     );
-    function c(y) {
-      y.target.select();
+    function c(p) {
+      p.target.select();
     }
-    function d(y) {
-      const g = y.target, p = g.value.replace(/[^0-9]/g, "");
-      g.value !== p && (g.value = p), r.value = p;
+    function d(p) {
+      const g = p.target, h = g.value.replace(/[^0-9]/g, "");
+      g.value !== h && (g.value = h), r.value = h;
     }
-    function v(y) {
-      const g = y.target, p = Number(r.value);
+    function v(p) {
+      const g = p.target, h = Number(r.value);
       r.value = null;
-      const b = Number.isFinite(p) && p >= 1 ? Math.min(Math.trunc(p), Math.max(1, n.pageCount.value)) : a.value;
+      const b = Number.isFinite(h) && h >= 1 ? Math.min(Math.trunc(h), Math.max(1, n.pageCount.value)) : a.value;
       g.value = String(b), b !== a.value && n.setPage(b);
     }
-    function _(y) {
-      const g = y.target;
+    function _(p) {
+      const g = p.target;
       r.value = null, g.value = String(a.value), g.blur();
     }
-    return (y, g) => (u(), h("nav", yr, [
+    return (p, g) => (u(), m("nav", yr, [
       G(ae, {
         class: "dc-pager__step",
         "aria-label": "Previous page",
         href: a.value > 1 ? w(n).hrefFor({ page: a.value - 1 }) : null,
         disabled: a.value <= 1,
-        onPress: g[0] || (g[0] = (p) => w(n).setPage(a.value - 1))
+        onPress: g[0] || (g[0] = (h) => w(n).setPage(a.value - 1))
       }, {
         default: X(() => [...g[2] || (g[2] = [
           S("span", { "aria-hidden": "true" }, "‹", -1)
@@ -2334,7 +2334,7 @@ ${t.pagesNote}` : y;
         "aria-label": "Next page",
         href: a.value < w(n).pageCount.value ? w(n).hrefFor({ page: a.value + 1 }) : null,
         disabled: a.value >= w(n).pageCount.value,
-        onPress: g[1] || (g[1] = (p) => w(n).setPage(a.value + 1))
+        onPress: g[1] || (g[1] = (h) => w(n).setPage(a.value + 1))
       }, {
         default: X(() => [...g[3] || (g[3] = [
           S("span", { "aria-hidden": "true" }, "›", -1)
@@ -2377,19 +2377,19 @@ ${t.pagesNote}` : y;
       () => !ca(n.query.value, t.views) && a.value !== "record"
     ), v = f(() => a.value === "record" && n.query.value.entity !== null), _ = f(
       () => (d.value || v.value) && !n.loading.value && (n.pageCount.value > 1 || !!t.pagesNote)
-    ), y = f(() => n.selection.value.ids.length), g = f(
-      () => d.value && n.selectable.value && (n.rows.value.length > 0 || y.value > 0)
-    ), p = f(() => a.value === "table"), b = f(
+    ), p = f(() => n.selection.value.ids.length), g = f(
+      () => d.value && n.selectable.value && (n.rows.value.length > 0 || p.value > 0)
+    ), h = f(() => a.value === "table"), b = f(
       () => s.value || _.value || d.value && (g.value || !!(c.value?.create || c.value?.duplicate || c.value?.delete || c.value?.operations?.length))
-    ), P = f(() => y.value ? `${y.value} selected` : p.value ? "" : "Select all"), $ = f(() => t.selectionPlacement === "end");
-    function m(k) {
-      return y.value ? k.endsWith("…") ? `${k.slice(0, -1)} ${y.value}…` : `${k} ${y.value}` : k;
+    ), P = f(() => p.value ? `${p.value} selected` : h.value ? "" : "Select all"), $ = f(() => t.selectionPlacement === "end");
+    function y(k) {
+      return p.value ? k.endsWith("…") ? `${k.slice(0, -1)} ${p.value}…` : `${k} ${p.value}` : k;
     }
-    return (k, T) => b.value ? (u(), h("div", {
+    return (k, T) => b.value ? (u(), m("div", {
       key: 0,
       class: de(["dc-actions", { "dc-actions--selection-end": $.value }])
     }, [
-      s.value ? (u(), h("span", xr, [
+      s.value ? (u(), m("span", xr, [
         r.value ? (u(), A(nn, {
           key: 0,
           class: "dc-actions__pick dc-actions__sort",
@@ -2411,12 +2411,12 @@ ${t.pagesNote}` : y;
           _: 1
         }, 8, ["aria-label", "title", "href"])
       ])) : M("", !0),
-      g.value && P.value ? (u(), h("div", Sr, [
-        p.value ? (u(), h("span", Er, E(P.value), 1)) : (u(), h("label", Cr, [
+      g.value && P.value ? (u(), m("div", Sr, [
+        h.value ? (u(), m("span", Er, E(P.value), 1)) : (u(), m("label", Cr, [
           G(qa),
           S("span", Pr, E(P.value), 1)
         ])),
-        y.value ? (u(), h("button", {
+        p.value ? (u(), m("button", {
           key: 2,
           type: "button",
           class: de(["dc-actions__clear", { "dc-actions__clear--op": $.value }]),
@@ -2439,28 +2439,28 @@ ${t.pagesNote}` : y;
           ]),
           _: 1
         }, 8, ["href"])) : M("", !0),
-        c.value?.duplicate ? (u(), h("button", {
+        c.value?.duplicate ? (u(), m("button", {
           key: 1,
           type: "button",
           class: "dc-actions__op",
-          disabled: !y.value,
+          disabled: !p.value,
           onClick: T[3] || (T[3] = (F) => w(n).duplicate())
-        }, E(m(c.value.duplicate)), 9, Lr)) : M("", !0),
-        (u(!0), h(W, null, J(c.value?.operations ?? [], (F) => (u(), h("button", {
+        }, E(y(c.value.duplicate)), 9, Lr)) : M("", !0),
+        (u(!0), m(W, null, J(c.value?.operations ?? [], (F) => (u(), m("button", {
           key: F.key,
           type: "button",
           class: "dc-actions__op",
           "data-dc-operation": F.key,
-          disabled: !y.value && F.selection !== !1,
+          disabled: !p.value && F.selection !== !1,
           onClick: (ce) => w(n).operate(F.key)
-        }, E(F.selection === !1 ? F.label : m(F.label)), 9, Tr))), 128)),
-        c.value?.delete ? (u(), h("button", {
+        }, E(F.selection === !1 ? F.label : y(F.label)), 9, Tr))), 128)),
+        c.value?.delete ? (u(), m("button", {
           key: 2,
           type: "button",
           class: "dc-actions__op dc-actions__danger",
-          disabled: !y.value,
+          disabled: !p.value,
           onClick: T[4] || (T[4] = (F) => w(n).delete())
-        }, E(m(c.value.delete)), 9, Or)) : M("", !0)
+        }, E(y(c.value.delete)), 9, Or)) : M("", !0)
       ]),
       _.value ? (u(), A($r, {
         key: 2,
@@ -2482,35 +2482,35 @@ function Ar(e) {
     l();
     const i = a, { signal: o } = s = new AbortController(), c = e.query.value, d = e.schema.value, v = e.entities.value, _ = e.within?.value.trim() ?? "";
     n.value = c.expr.trim() === "" && !_;
-    const y = /* @__PURE__ */ new Map();
+    const p = /* @__PURE__ */ new Map();
     let g = !0;
-    for (const p of v) {
-      const b = Ma(p, c.expr), P = _ ? pn(_, b) : b;
+    for (const h of v) {
+      const b = Ma(h, c.expr), P = _ ? pn(_, b) : b;
       let $ = !1;
-      const m = (T) => {
+      const y = (T) => {
         if (i !== a) return;
         if (g) {
-          y.set(p.key, T);
+          p.set(h.key, T);
           return;
         }
         const F = new Map(t.value);
-        F.set(p.key, T), t.value = F;
+        F.set(h.key, T), t.value = F;
       }, k = e.source.value.query({
-        query: { ...c, entity: p.key, expr: P, page: 1 },
+        query: { ...c, entity: h.key, expr: P, page: 1 },
         schema: d,
-        entity: p,
+        entity: h,
         limit: 0,
         offset: 0,
         signal: o,
         progress: (T) => {
-          $ || m({ total: T, pending: !0, counted: !0 });
+          $ || y({ total: T, pending: !0, counted: !0 });
         }
       });
-      k instanceof Promise ? (y.has(p.key) || y.set(p.key, { total: 0, pending: !0, counted: !1 }), k.then((T) => {
-        $ = !0, m({ total: Gn(T), pending: !1, counted: !0 });
-      })) : ($ = !0, y.set(p.key, { total: Gn(k), pending: !1, counted: !0 }));
+      k instanceof Promise ? (p.has(h.key) || p.set(h.key, { total: 0, pending: !0, counted: !1 }), k.then((T) => {
+        $ = !0, y({ total: Gn(T), pending: !1, counted: !0 });
+      })) : ($ = !0, p.set(h.key, { total: Gn(k), pending: !1, counted: !0 }));
     }
-    g = !1, t.value = y;
+    g = !1, t.value = p;
   };
   return aa() && Pt(l), { counts: t, pristine: n, refresh: r, cancel: l };
 }
@@ -2535,35 +2535,35 @@ const Ir = {
       entities: n.entities,
       within: n.within
     });
-    function l(y) {
-      if (y.key === n.query.value.entity && a.value) return Ze((n.matched ?? n.total).value);
-      if (s.pristine.value) return Yt(y);
-      const p = s.counts.value.get(y.key);
-      return p ? p.counted ? `${p.pending ? "~" : ""}${Ze(p.total)}` : Rr : Yt(y);
+    function l(p) {
+      if (p.key === n.query.value.entity && a.value) return Ze((n.matched ?? n.total).value);
+      if (s.pristine.value) return Yt(p);
+      const h = s.counts.value.get(p.key);
+      return h ? h.counted ? `${h.pending ? "~" : ""}${Ze(h.total)}` : Rr : Yt(p);
     }
     const r = f(() => [
       { key: "", label: "Everything" },
-      ...n.entities.value.map((y) => ({
-        key: y.key,
-        label: `${y.label} · ${l(y)}`
+      ...n.entities.value.map((p) => ({
+        key: p.key,
+        label: `${p.label} · ${l(p)}`
       }))
     ]), i = f(
       () => t.typeChooser === "always" || n.query.value.entity !== null
     );
-    function o(y) {
-      n.setEntity(y || null);
+    function o(p) {
+      n.setEntity(p || null);
     }
     const c = f(
-      () => (t.views ?? [...un]).map((y) => ({
-        key: y,
-        label: y === "record" ? n.recordView.value?.label ?? Tn.record : Tn[y],
-        icon: ks[y]
+      () => (t.views ?? [...un]).map((p) => ({
+        key: p,
+        label: p === "record" ? n.recordView.value?.label ?? Tn.record : Tn[p],
+        icon: ks[p]
       }))
     ), d = f(() => Ae(n.query.value.view, t.views)), v = f(() => c.value.length > 1);
-    function _(y) {
-      n.setView(y);
+    function _(p) {
+      n.setView(p);
     }
-    return (y, g) => i.value || v.value ? (u(), h("div", Ir, [
+    return (p, g) => i.value || v.value ? (u(), m("div", Ir, [
       i.value ? (u(), A(nn, {
         key: 0,
         class: "dc-actions__pick dc-actions__type",
@@ -2652,7 +2652,7 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
   },
   setup(e) {
     const t = e, n = f(() => t.label ?? t.status ?? "");
-    return (a, s) => (u(), h("span", {
+    return (a, s) => (u(), m("span", {
       class: "dc-pill",
       "data-dc-status": e.status,
       "data-dc-tone": e.tone
@@ -2682,7 +2682,7 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
         ], !0)
       ]),
       _: 3
-    }, 8, ["href", "title"])) : (u(), h("span", Wr, [
+    }, 8, ["href", "title"])) : (u(), m("span", Wr, [
       Y(d.$slots, "default", {}, () => [
         Z(E(r.value), 1)
       ], !0)
@@ -2700,7 +2700,7 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
     function a(s) {
       s.stopPropagation(), n.togglePin(t.row);
     }
-    return (s, l) => (u(), h("button", {
+    return (s, l) => (u(), m("button", {
       type: "button",
       class: "dc-star",
       "data-dc-active": e.pinned ? "true" : "false",
@@ -2721,7 +2721,7 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
       () => {
         n.value = !1;
       }
-    ), (a, s) => e.src.trim() && !n.value ? (u(), h("img", {
+    ), (a, s) => e.src.trim() && !n.value ? (u(), m("img", {
       key: 0,
       class: "dc-picture",
       src: e.src,
@@ -2743,7 +2743,7 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
     function r(i) {
       i.stopPropagation(), n.setExpression(Pa(n.query.value.expr, a.value));
     }
-    return (i, o) => s.value ? (u(), h("button", {
+    return (i, o) => s.value ? (u(), m("button", {
       key: 0,
       type: "button",
       class: "dc-standing",
@@ -2770,12 +2770,12 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
     function r(i, o) {
       i.stopPropagation(), a("set", o);
     }
-    return (i, o) => (u(), h("span", {
+    return (i, o) => (u(), m("span", {
       class: "dc-standing-control",
       role: "radiogroup",
       "aria-label": `Where the query stands on ${e.name}`
     }, [
-      (u(!0), h(W, null, J(s.value, (c) => (u(), h("button", {
+      (u(!0), m(W, null, J(s.value, (c) => (u(), m("button", {
         key: c.sign,
         type: "button",
         role: "radio",
@@ -2817,7 +2817,7 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
       const s = t.entry.row, l = n.recordHref?.(s) ?? null;
       return l ? n.pressHref(s) === l ? null : l : null;
     });
-    return (s, l) => a.value ? (u(), h("a", {
+    return (s, l) => a.value ? (u(), m("a", {
       key: 0,
       class: "dc-open",
       href: a.value,
@@ -2882,7 +2882,7 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
     function a(s) {
       s.stopPropagation(), n.toggleSelect(t.row);
     }
-    return (s, l) => (u(), h("input", {
+    return (s, l) => (u(), m("input", {
       class: "dc-tick",
       type: "checkbox",
       checked: e.selected,
@@ -2909,10 +2909,10 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
   __name: "CardsView",
   setup(e) {
     const t = ee(), n = Be(), a = f(() => t.isEverything.value), s = (r) => r.entity?.card === "picture", l = f(() => n.value.length > 0 && n.value.every(s));
-    return (r, i) => (u(), h("div", {
+    return (r, i) => (u(), m("div", {
       class: de(["dc-cards", { "dc-cards--pictures": l.value }])
     }, [
-      (u(!0), h(W, null, J(w(n), (o) => (u(), h("div", {
+      (u(!0), m(W, null, J(w(n), (o) => (u(), m("div", {
         key: o.key,
         class: de(["dc-card", { "dc-card--picture": s(o) }])
       }, [
@@ -2924,10 +2924,10 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
               selected: o.selected,
               name: o.parts.identity
             }, null, 8, ["row", "selected", "name"])) : M("", !0),
-            s(o) ? M("", !0) : (u(), h(W, { key: 1 }, [
+            s(o) ? M("", !0) : (u(), m(W, { key: 1 }, [
               Z(E(o.ordinal), 1)
             ], 64)),
-            a.value ? (u(), h("span", oo, E(o.entityLabel), 1)) : M("", !0)
+            a.value ? (u(), m("span", oo, E(o.entityLabel), 1)) : M("", !0)
           ]),
           S("span", io, [
             o.parts.state && !s(o) ? (u(), A(ze, {
@@ -2964,9 +2964,9 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
             }, null, 8, ["src"])) : M("", !0),
             S("span", co, [
               S("span", uo, E(o.parts.identity), 1),
-              s(o) ? M("", !0) : (u(), h("span", fo, E(o.parts.reference), 1)),
-              o.parts.facts.length ? (u(), h("span", vo, [
-                (u(!0), h(W, null, J(o.parts.facts, (c) => (u(), h("span", {
+              s(o) ? M("", !0) : (u(), m("span", fo, E(o.parts.reference), 1)),
+              o.parts.facts.length ? (u(), m("span", vo, [
+                (u(!0), m(W, null, J(o.parts.facts, (c) => (u(), m("span", {
                   key: c.column.key ?? c.label,
                   class: "dc-card__fact",
                   title: c.title || void 0
@@ -2979,8 +2979,8 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
           ]),
           _: 2
         }, 1032, ["href", "onPress"]),
-        s(o) ? M("", !0) : (u(), h("div", mo, [
-          (u(!0), h(W, null, J(o.parts.metrics.slice(0, 2), (c) => (u(), A(ft, {
+        s(o) ? M("", !0) : (u(), m("div", mo, [
+          (u(!0), m(W, null, J(o.parts.metrics.slice(0, 2), (c) => (u(), A(ft, {
             key: c.column.key ?? c.label,
             entry: o,
             column: c.column
@@ -2990,7 +2990,7 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
             ]),
             _: 2
           }, 1032, ["entry", "column"]))), 128)),
-          o.parts.updated ? (u(), h("span", yo, E(o.parts.updated), 1)) : M("", !0)
+          o.parts.updated ? (u(), m("span", yo, E(o.parts.updated), 1)) : M("", !0)
         ]))
       ], 2))), 128))
     ], 2));
@@ -2999,8 +2999,8 @@ const Dr = ["data-dc-status", "data-dc-tone"], Kr = /* @__PURE__ */ z({
   __name: "GridView",
   setup(e) {
     const t = ee(), n = Be();
-    return (a, s) => (u(), h("div", _o, [
-      (u(!0), h(W, null, J(w(n), (l) => (u(), h("div", {
+    return (a, s) => (u(), m("div", _o, [
+      (u(!0), m(W, null, J(w(n), (l) => (u(), m("div", {
         key: l.key,
         class: "dc-grid__cell"
       }, [
@@ -3055,13 +3055,13 @@ function Eo(e, t, n) {
   const r = [];
   let i = [], o = 0, c = 0;
   for (const d of e) {
-    const v = t(d), _ = Math.max(v.ratio, Number.EPSILON), y = v.height && v.height > 0 ? Math.max(c, v.height) : c, g = jt(y, s), p = Yn(o + _, i.length + 1, a, l);
-    if (p > g) {
-      i.push(d), o += _, c = y;
+    const v = t(d), _ = Math.max(v.ratio, Number.EPSILON), p = v.height && v.height > 0 ? Math.max(c, v.height) : c, g = jt(p, s), h = Yn(o + _, i.length + 1, a, l);
+    if (h > g) {
+      i.push(d), o += _, c = p;
       continue;
     }
     const b = jt(c, s), P = i.length ? Yn(o, i.length, a, l) : 1 / 0;
-    P <= Po(c) && P - b < g - p ? (r.push({ items: i, height: P, filled: !0 }), i = [d], o = _, c = v.height && v.height > 0 ? v.height : 0) : (r.push({ items: [...i, d], height: p, filled: !0 }), i = [], o = 0, c = 0);
+    P <= Po(c) && P - b < g - h ? (r.push({ items: i, height: P, filled: !0 }), i = [d], o = _, c = v.height && v.height > 0 ? v.height : 0) : (r.push({ items: [...i, d], height: h, filled: !0 }), i = [], o = 0, c = 0);
   }
   return i.length && r.push({ items: i, height: jt(c, s), filled: !1 }), r;
 }
@@ -3073,21 +3073,21 @@ const Mo = { class: "dc-images" }, Lo = {
   __name: "ImagesView",
   setup(e) {
     const t = ee(), n = Be(), a = Cn(/* @__PURE__ */ new Map()), s = Cn(/* @__PURE__ */ new Set());
-    function l(g, p) {
-      const b = p.target;
+    function l(g, h) {
+      const b = h.target;
       b.naturalWidth > 0 && b.naturalHeight > 0 && a.set(g, { width: b.naturalWidth, height: b.naturalHeight });
     }
     function r(g) {
-      const p = g.parts.image;
-      return p && !s.has(p) ? p : null;
+      const h = g.parts.image;
+      return h && !s.has(h) ? h : null;
     }
     function i(g) {
-      const p = r(g);
-      return p ? a.get(p) : void 0;
+      const h = r(g);
+      return h ? a.get(h) : void 0;
     }
     function o(g) {
-      const p = i(g);
-      return p ? { ratio: p.width / p.height, height: p.height } : { ratio: Oo };
+      const h = i(g);
+      return h ? { ratio: h.width / h.height, height: h.height } : { ratio: Oo };
     }
     const c = H(null), d = H(0);
     let v = null;
@@ -3099,19 +3099,19 @@ const Mo = { class: "dc-images" }, Lo = {
     }), ke(() => {
       v?.disconnect(), v = null;
     });
-    const y = f(() => {
+    const p = f(() => {
       const g = Eo(n.value, o, {
         width: d.value,
         height: To,
         gap: mt
-      }), p = [];
+      }), h = [];
       let b = 0;
       for (const P of g) {
         let $ = 0;
-        for (const m of P.items) {
-          const k = o(m).ratio * P.height, T = i(m), F = T !== void 0 && T.height < P.height;
-          p.push({
-            entry: m,
+        for (const y of P.items) {
+          const k = o(y).ratio * P.height, T = i(y), F = T !== void 0 && T.height < P.height;
+          h.push({
+            entry: y,
             style: {
               top: `${b}px`,
               left: `${$}px`,
@@ -3123,16 +3123,16 @@ const Mo = { class: "dc-images" }, Lo = {
         }
         b += P.height + mt;
       }
-      return { boxes: p, height: g.length ? b - mt : 0 };
+      return { boxes: h, height: g.length ? b - mt : 0 };
     });
-    return (g, p) => (u(), h("div", Mo, [
+    return (g, h) => (u(), m("div", Mo, [
       S("div", {
         ref_key: "wall",
         ref: c,
         class: "dc-images__wall",
-        style: oe({ height: `${y.value.height}px` })
+        style: oe({ height: `${p.value.height}px` })
       }, [
-        (u(!0), h(W, null, J(y.value.boxes, ({ entry: b, style: P, picture: $ }) => (u(), h("div", {
+        (u(!0), m(W, null, J(p.value.boxes, ({ entry: b, style: P, picture: $ }) => (u(), m("div", {
           key: b.key,
           class: "dc-images__cell",
           style: oe(P)
@@ -3142,7 +3142,7 @@ const Mo = { class: "dc-images" }, Lo = {
             title: b.parts.identity,
             "aria-label": b.parts.identity,
             href: w(t).pressHref(b.row),
-            onPress: (m) => w(t).activate(b.row, m)
+            onPress: (y) => w(t).activate(b.row, y)
           }, {
             default: X(() => [
               r(b) ? (u(), A(qt, {
@@ -3150,9 +3150,9 @@ const Mo = { class: "dc-images" }, Lo = {
                 class: "dc-images__picture",
                 style: oe($),
                 src: r(b),
-                onLoad: (m) => l(r(b), m),
-                onError: (m) => s.add(r(b))
-              }, null, 8, ["style", "src", "onLoad", "onError"])) : (u(), h("span", Lo, E(b.parts.identity), 1))
+                onLoad: (y) => l(r(b), y),
+                onError: (y) => s.add(r(b))
+              }, null, 8, ["style", "src", "onLoad", "onError"])) : (u(), m("span", Lo, E(b.parts.identity), 1))
             ]),
             _: 2
           }, 1032, ["title", "aria-label", "href", "onPress"]),
@@ -3171,8 +3171,8 @@ const Mo = { class: "dc-images" }, Lo = {
   __name: "LinksView",
   setup(e) {
     const t = ee(), n = Be();
-    return (a, s) => (u(), h("div", Ao, [
-      (u(!0), h(W, null, J(w(n), (l) => (u(), h("span", {
+    return (a, s) => (u(), m("div", Ao, [
+      (u(!0), m(W, null, J(w(n), (l) => (u(), m("span", {
         key: l.key,
         class: "dc-links__item"
       }, [
@@ -3206,8 +3206,8 @@ const Mo = { class: "dc-images" }, Lo = {
   __name: "ListView",
   setup(e) {
     const t = ee(), n = Be(), a = f(() => t.isEverything.value);
-    return (s, l) => (u(), h("div", Ho, [
-      (u(!0), h(W, null, J(w(n), (r) => (u(), h("div", {
+    return (s, l) => (u(), m("div", Ho, [
+      (u(!0), m(W, null, J(w(n), (r) => (u(), m("div", {
         key: r.key,
         class: "dc-list__row",
         role: "listitem"
@@ -3243,9 +3243,9 @@ const Mo = { class: "dc-images" }, Lo = {
           ]),
           _: 2
         }, 1032, ["href", "onPress"]),
-        a.value ? (u(), h("span", Ko, E(r.entityLabel), 1)) : M("", !0),
+        a.value ? (u(), m("span", Ko, E(r.entityLabel), 1)) : M("", !0),
         S("span", Wo, [
-          (u(!0), h(W, null, J(r.parts.metrics.slice(0, 2), (i) => (u(), A(ft, {
+          (u(!0), m(W, null, J(r.parts.metrics.slice(0, 2), (i) => (u(), A(ft, {
             key: i.column.key ?? i.label,
             entry: r,
             column: i.column
@@ -3299,7 +3299,7 @@ const Mo = { class: "dc-images" }, Lo = {
       const c = n.value.length;
       c && (a.value = Math.min(c - 1, Math.max(0, a.value + o)));
     };
-    return (o, c) => (u(), h("div", Uo, [
+    return (o, c) => (u(), m("div", Uo, [
       S("div", Qo, [
         S("button", {
           type: "button",
@@ -3317,18 +3317,18 @@ const Mo = { class: "dc-images" }, Lo = {
           onClick: c[1] || (c[1] = (d) => i(1))
         }, " › ", 8, Xo)
       ]),
-      s.value ? (u(), h("div", Jo, [
+      s.value ? (u(), m("div", Jo, [
         S("div", {
           class: "dc-preview__media",
           style: oe({ background: s.value.parts.tint ?? void 0 }),
           "aria-hidden": "true"
         }, [
-          s.value.parts.image ? (u(), h("img", {
+          s.value.parts.image ? (u(), m("img", {
             key: 0,
             class: "dc-preview__image",
             src: s.value.parts.image,
             alt: ""
-          }, null, 8, Zo)) : (u(), h(W, { key: 1 }, [
+          }, null, 8, Zo)) : (u(), m(W, { key: 1 }, [
             Z(" preview ")
           ], 64))
         ], 4),
@@ -3364,7 +3364,7 @@ const Mo = { class: "dc-images" }, Lo = {
             S("div", ri, E(s.value.parts.reference), 1)
           ]),
           S("dl", oi, [
-            (u(!0), h(W, null, J(l.value, (d) => (u(), h("div", {
+            (u(!0), m(W, null, J(l.value, (d) => (u(), m("div", {
               key: d.key,
               class: "dc-preview__field"
             }, [
@@ -3374,7 +3374,7 @@ const Mo = { class: "dc-images" }, Lo = {
                   key: 0,
                   entry: s.value,
                   column: d.column
-                }, null, 8, ["entry", "column"])) : (u(), h(W, { key: 1 }, [
+                }, null, 8, ["entry", "column"])) : (u(), m(W, { key: 1 }, [
                   Z(E(d.value), 1)
                 ], 64))
               ])
@@ -3458,35 +3458,35 @@ const pi = /* @__PURE__ */ z({
       return n.narrowHref(l(v), r(v));
     }
     function o(v) {
-      return v.entity !== void 0 ? `Show ${n.schema.value.entities.find((y) => y.key === v.entity)?.label ?? a.value} only` : `Narrow to ${s(v)}
+      return v.entity !== void 0 ? `Show ${n.schema.value.entities.find((p) => p.key === v.entity)?.label ?? a.value} only` : `Narrow to ${s(v)}
 ⌥-press to leave these out`;
     }
     function c(v) {
       return v.entity !== void 0 ? null : { term: s(v) };
     }
-    function d(v, _, y) {
-      y.stopPropagation(), n.narrow(l(v, _.exclude), r(v));
+    function d(v, _, p) {
+      p.stopPropagation(), n.narrow(l(v, _.exclude), r(v));
     }
-    return (v, _) => (u(), h("span", {
+    return (v, _) => (u(), m("span", {
       class: de(["dc-cell__text", { "dc-truncate": e.truncates }])
     }, [
-      (u(!0), h(W, null, J(e.narrowings, (y, g) => (u(), h(W, {
-        key: s(y)
+      (u(!0), m(W, null, J(e.narrowings, (p, g) => (u(), m(W, {
+        key: s(p)
       }, [
-        g > 0 ? (u(), h(W, { key: 0 }, [
+        g > 0 ? (u(), m(W, { key: 0 }, [
           Z(", ")
         ], 64)) : M("", !0),
         G(ae, De({
           class: "dc-narrow",
-          href: i(y),
-          title: o(y),
+          href: i(p),
+          title: o(p),
           selectable: ""
-        }, cn(w(bn)(w(n), c(y))), {
-          onPress: (p, b) => d(y, p, b)
+        }, cn(w(bn)(w(n), c(p))), {
+          onPress: (h, b) => d(p, h, b)
         }), {
           default: X(() => [
             Y(v.$slots, "default", {}, () => [
-              Z(E(y.label ?? a.value), 1)
+              Z(E(p.label ?? a.value), 1)
             ], !0)
           ]),
           _: 2
@@ -3565,8 +3565,8 @@ const bi = /* @__PURE__ */ z({
     function _(g) {
       t.column.click?.(t.entry.row, g), t.column.activate && n.activate(t.entry.row, g);
     }
-    const y = f(() => t.column.click ? t.column.clickHref?.(t.entry.row) ?? null : t.column.activate ? n.pressHref(t.entry.row) : null);
-    return (g, p) => a.value === "component" && e.column.component ? (u(), A(Je(e.column.component), {
+    const p = f(() => t.column.click ? t.column.clickHref?.(t.entry.row) ?? null : t.column.activate ? n.pressHref(t.entry.row) : null);
+    return (g, h) => a.value === "component" && e.column.component ? (u(), A(Je(e.column.component), {
       key: 0,
       row: e.entry.row,
       entry: e.entry,
@@ -3599,10 +3599,10 @@ const bi = /* @__PURE__ */ z({
     }, null, 8, ["entry", "column"])) : i.value ? (u(), A(ae, De({
       key: 5,
       class: ["dc-table__open", { "dc-truncate": o.value }],
-      href: y.value,
+      href: p.value,
       title: c.value
     }, cn(e.column.activate ? w(bn)(w(n), w(Ua)(w(n), e.entry)) : {}), {
-      onPress: p[0] || (p[0] = (b, P) => {
+      onPress: h[0] || (h[0] = (b, P) => {
         P.stopPropagation(), _(b);
       })
     }), {
@@ -3616,7 +3616,7 @@ const bi = /* @__PURE__ */ z({
       column: e.column,
       narrowings: d.value,
       truncates: o.value
-    }, null, 8, ["entry", "column", "narrowings", "truncates"])) : (u(), h("span", {
+    }, null, 8, ["entry", "column", "narrowings", "truncates"])) : (u(), m("span", {
       key: 7,
       class: de(["dc-cell__text", { "dc-truncate": o.value }])
     }, E(l.value), 3));
@@ -3674,21 +3674,21 @@ const bi = /* @__PURE__ */ z({
     }), d = f(
       () => t.entity.value ? !!t.entity.value.scope : t.entities.value.some((L) => L.scope)
     ), v = (L) => dt(L.entity, L.row), _ = (L) => gn(t.query.value.expr, v(L));
-    function y(L, Q) {
+    function p(L, Q) {
       t.setExpression(Jt(t.query.value.expr, v(L), Q));
     }
     const g = f(() => {
       const L = n.value.filter((N) => v(N) !== null), Q = L.filter((N) => N.selected);
       return Q.length ? Q : L;
-    }), p = f(() => g.value.some((L) => L.selected)), b = f(() => {
+    }), h = f(() => g.value.some((L) => L.selected)), b = f(() => {
       const L = g.value[0];
       return L ? _(L) : null;
     }), P = f(
       () => g.value.some((L) => _(L) !== b.value)
     ), $ = f(
-      () => p.value ? "the ticked rows" : "every row on this page"
+      () => h.value ? "the ticked rows" : "every row on this page"
     );
-    function m(L) {
+    function y(L) {
       t.setExpression(
         g.value.reduce(
           (Q, N) => Jt(Q, v(N), L),
@@ -3725,7 +3725,7 @@ const bi = /* @__PURE__ */ z({
     function re(L) {
       te.value && (te.value.scrollLeft = L.target.scrollLeft);
     }
-    return (L, Q) => w(a).length ? (u(), h("table", {
+    return (L, Q) => w(a).length ? (u(), m("table", {
       key: 1,
       class: "dc-table",
       "data-dc-wrap": k.value ? "" : void 0,
@@ -3737,19 +3737,19 @@ const bi = /* @__PURE__ */ z({
         "data-dc-stuck": ""
       }, [
         S("tr", null, [
-          w(t).selectable.value ? (u(), h("th", Ci, [
+          w(t).selectable.value ? (u(), m("th", Ci, [
             G(qa)
           ])) : M("", !0),
-          d.value ? (u(), h("th", Pi, [
+          d.value ? (u(), m("th", Pi, [
             g.value.length ? (u(), A(sn, {
               key: 0,
               standing: b.value,
               mixed: P.value,
               name: $.value,
-              onSet: m
+              onSet: y
             }, null, 8, ["standing", "mixed", "name"])) : M("", !0)
           ])) : M("", !0),
-          (u(!0), h(W, null, J(w(a), (N, j) => (u(), h("th", {
+          (u(!0), m(W, null, J(w(a), (N, j) => (u(), m("th", {
             key: w(On)(N, j),
             scope: "col",
             class: de(w(An)(N)),
@@ -3769,10 +3769,10 @@ const bi = /* @__PURE__ */ z({
                 Z(E(N.label), 1)
               ]),
               _: 2
-            }, 1032, ["href", "onPress"])) : (u(), h(W, { key: 1 }, [
+            }, 1032, ["href", "onPress"])) : (u(), m(W, { key: 1 }, [
               Z(E(N.label), 1)
             ], 64)),
-            N.header ? (u(), h("span", Mi, [
+            N.header ? (u(), m("span", Mi, [
               (u(), A(Je(N.header), {
                 column: N,
                 entity: w(t).entity.value
@@ -3785,27 +3785,27 @@ const bi = /* @__PURE__ */ z({
         "data-dc-scroll": "",
         onScroll: re
       }, [
-        (u(!0), h(W, null, J(w(n), (N) => (u(), h("tr", {
+        (u(!0), m(W, null, J(w(n), (N) => (u(), m("tr", {
           key: N.key,
           class: "dc-table__row",
           onClick: (j) => s(N.row, j)
         }, [
-          w(t).selectable.value ? (u(), h("td", Ti, [
+          w(t).selectable.value ? (u(), m("td", Ti, [
             G(He, {
               row: N.row,
               selected: N.selected,
               name: N.parts.identity
             }, null, 8, ["row", "selected", "name"])
           ])) : M("", !0),
-          d.value ? (u(), h("td", Oi, [
+          d.value ? (u(), m("td", Oi, [
             v(N) !== null ? (u(), A(sn, {
               key: 0,
               standing: _(N),
               name: N.parts.identity,
-              onSet: (j) => y(N, j)
+              onSet: (j) => p(N, j)
             }, null, 8, ["standing", "name", "onSet"])) : M("", !0)
           ])) : M("", !0),
-          (u(!0), h(W, null, J(w(a), (j, ve) => (u(), h("td", {
+          (u(!0), m(W, null, J(w(a), (j, ve) => (u(), m("td", {
             key: w(On)(j, ve),
             class: de(ie(j)),
             style: oe({ width: j.width }),
@@ -3823,7 +3823,7 @@ const bi = /* @__PURE__ */ z({
             }, cn(w(bn)(w(t), w(Ua)(w(t), N))), {
               onPress: (pe, ge) => i(N.row, pe, ge)
             }), null, 16, ["href", "tabindex", "aria-hidden", "aria-label", "onPress"])) : M("", !0),
-            j === c.value ? (u(), h("span", Ai, [
+            j === c.value ? (u(), m("span", Ai, [
               G(Zn, {
                 column: j,
                 entry: N
@@ -3838,7 +3838,7 @@ const bi = /* @__PURE__ */ z({
           ], 14, Ni))), 128))
         ], 8, Li))), 128))
       ], 32)
-    ], 8, Si)) : (u(), h("p", $i, [
+    ], 8, Si)) : (u(), m("p", $i, [
       Q[2] || (Q[2] = S("span", { class: "dc-table__headline" }, "No columns declared", -1)),
       S("span", xi, [
         Z(E(ce.value) + " has no ", 1),
@@ -3853,18 +3853,18 @@ function Ri(e) {
   let s = 0;
   const l = (o, c, d, v, _) => ({
     entity: o,
-    rows: e.limit.value > 0 ? c.rows.map((y, g) => Fa(y, g, o, e.isPinned(y.id))) : [],
+    rows: e.limit.value > 0 ? c.rows.map((p, g) => Fa(p, g, o, e.isPinned(p.id))) : [],
     total: c.total,
     count: d ? Yt(o) : Ze(c.total),
     pinned: Bi(v, c, _)
   }), r = () => {
-    const o = ++s, c = e.query.value, d = e.schema.value, v = e.entities.value, _ = e.limit.value, y = e.within?.value.trim() ?? "", g = dn(c) && !y, p = y ? pn(y, c.expr) : c.expr, b = v.map((P) => ({
+    const o = ++s, c = e.query.value, d = e.schema.value, v = e.entities.value, _ = e.limit.value, p = e.within?.value.trim() ?? "", g = dn(c) && !p, h = p ? pn(p, c.expr) : c.expr, b = v.map((P) => ({
       entity: P,
       // Scope the query to this entity, keeping the expression and ordering.
       outcome: e.source.value.query({
         // Each card is the top few of its type, wherever the shell's own
         // result set has been paged to — so this asks for the first page.
-        query: { ...c, entity: P.key, expr: p, page: 1 },
+        query: { ...c, entity: P.key, expr: h, page: 1 },
         schema: d,
         entity: P,
         /*
@@ -3879,13 +3879,13 @@ function Ri(e) {
     }));
     if (b.every(({ outcome: P }) => !(P instanceof Promise))) {
       t.value = b.map(
-        ({ entity: P, outcome: $ }) => l(P, $, g, d, p)
+        ({ entity: P, outcome: $ }) => l(P, $, g, d, h)
       ), a.value = null, n.value = !1;
       return;
     }
     n.value = !0, Promise.all(b.map(({ outcome: P }) => Promise.resolve(P))).then((P) => {
       o === s && (t.value = P.map(
-        ($, m) => l(b[m].entity, $, g, d, p)
+        ($, y) => l(b[y].entity, $, g, d, h)
       ), a.value = null);
     }).catch((P) => {
       o === s && (a.value = P, t.value = []);
@@ -3957,101 +3957,106 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       entities: t.entities,
       limit: t.previewsPerType,
       within: t.within,
-      isPinned: (o) => t.isPinnedId(o)
+      isPinned: (d) => t.isPinnedId(d)
     }), l = f(
       () => !t.isPristine.value || !!t.within.value || t.drafting.value
     ), r = f(() => t.previewsPerType.value <= 0), i = f(
+      () => new Set(n.value.filter((d) => d.pinned).map((d) => d.entity.key))
+    ), o = (d) => {
+      const { keepsCard: v } = d;
+      return Array.isArray(v) ? v.some((_) => i.value.has(_)) : !!v;
+    }, c = f(
       () => n.value.filter(
-        (o) => !o.pinned && (o.total > 0 || !r.value && o.entity.create)
+        (d) => !d.pinned && (d.total > 0 || o(d.entity) || !r.value && d.entity.create)
       )
     );
-    return (o, c) => (u(), h("div", {
+    return (d, v) => (u(), m("div", {
       class: "dc-types",
       "data-dc-pending": w(a) ? "true" : "false",
       "data-dc-heads-only": r.value ? "true" : "false"
     }, [
-      Y(o.$slots, "before", {}, void 0, !0),
-      w(s) ? (u(), h("p", qi, " Could not load results: " + E(w(s) instanceof Error ? w(s).message : "the data source failed."), 1)) : !i.value.length && w(a) ? (u(), h("p", Fi, " Running query… ")) : i.value.length ? M("", !0) : (u(), h("p", Vi, E(l.value ? "Nothing matches this query" : "Nothing here yet"), 1)),
-      (u(!0), h(W, null, J(i.value, (d) => (u(), h("section", {
-        key: d.entity.key,
+      Y(d.$slots, "before", {}, void 0, !0),
+      w(s) ? (u(), m("p", qi, " Could not load results: " + E(w(s) instanceof Error ? w(s).message : "the data source failed."), 1)) : !c.value.length && w(a) ? (u(), m("p", Fi, " Running query… ")) : c.value.length ? M("", !0) : (u(), m("p", Vi, E(l.value ? "Nothing matches this query" : "Nothing here yet"), 1)),
+      (u(!0), m(W, null, J(c.value, (_) => (u(), m("section", {
+        key: _.entity.key,
         class: "dc-type",
-        "data-dc-empty": d.total ? "false" : "true"
+        "data-dc-empty": _.total ? "false" : "true"
       }, [
         G(ae, {
           class: "dc-type__head",
-          href: w(t).entityHref(d.entity.key),
-          onPress: (v) => w(t).setEntity(d.entity.key)
+          href: w(t).entityHref(_.entity.key),
+          onPress: (p) => w(t).setEntity(_.entity.key)
         }, {
           default: X(() => [
-            S("span", Ki, E(d.entity.label), 1),
-            S("span", Wi, E(d.count), 1),
-            d.entity.note ? (u(), h("span", zi, E(d.entity.note), 1)) : M("", !0),
-            c[0] || (c[0] = S("span", {
+            S("span", Ki, E(_.entity.label), 1),
+            S("span", Wi, E(_.count), 1),
+            _.entity.note ? (u(), m("span", zi, E(_.entity.note), 1)) : M("", !0),
+            v[0] || (v[0] = S("span", {
               class: "dc-type__go",
               "aria-hidden": "true"
             }, "→", -1)),
-            S("span", ji, "Show only " + E(d.entity.label.toLowerCase()), 1),
-            d.entity.description ? (u(), h("span", Ui, E(d.entity.description), 1)) : M("", !0)
+            S("span", ji, "Show only " + E(_.entity.label.toLowerCase()), 1),
+            _.entity.description ? (u(), m("span", Ui, E(_.entity.description), 1)) : M("", !0)
           ]),
           _: 2
         }, 1032, ["href", "onPress"]),
-        d.total ? M("", !0) : (u(), h("p", Qi, E(l.value ? "No matches" : "Nothing here yet"), 1)),
-        (u(!0), h(W, null, J(d.rows, (v) => (u(), h("div", {
-          key: v.key,
+        _.total ? M("", !0) : (u(), m("p", Qi, E(l.value ? "No matches" : "Nothing here yet"), 1)),
+        (u(!0), m(W, null, J(_.rows, (p) => (u(), m("div", {
+          key: p.key,
           class: "dc-type__row"
         }, [
           G(ae, {
             class: "dc-type__open",
-            href: w(t).pressHref(v.row),
-            onPress: (_) => w(t).activate(v.row, _)
+            href: w(t).pressHref(p.row),
+            onPress: (g) => w(t).activate(p.row, g)
           }, {
             default: X(() => [
               S("span", Gi, [
-                S("span", Yi, E(v.parts.identity), 1),
-                S("span", Xi, E(v.parts.reference), 1)
+                S("span", Yi, E(p.parts.identity), 1),
+                S("span", Xi, E(p.parts.reference), 1)
               ])
             ]),
             _: 2
           }, 1032, ["href", "onPress"]),
           S("span", Ji, [
-            (u(!0), h(W, null, J(v.parts.metrics.slice(0, 1), (_) => (u(), A(ft, {
-              key: _.column.key ?? _.label,
+            (u(!0), m(W, null, J(p.parts.metrics.slice(0, 1), (g) => (u(), A(ft, {
+              key: g.column.key ?? g.label,
               class: "dc-type__metric",
-              entry: v,
-              column: _.column
+              entry: p,
+              column: g.column
             }, {
               default: X(() => [
-                S("span", Zi, E(_.text), 1),
-                S("span", ec, E(_.label), 1)
+                S("span", Zi, E(g.text), 1),
+                S("span", ec, E(g.label), 1)
               ]),
               _: 2
             }, 1032, ["entry", "column"]))), 128)),
-            v.parts.updated ? (u(), h("span", tc, E(v.parts.updated), 1)) : M("", !0),
-            G(kn, { entry: v }, null, 8, ["entry"]),
-            G(pt, { entry: v }, null, 8, ["entry"]),
-            G(vt, { entry: v }, null, 8, ["entry"])
+            p.parts.updated ? (u(), m("span", tc, E(p.parts.updated), 1)) : M("", !0),
+            G(kn, { entry: p }, null, 8, ["entry"]),
+            G(pt, { entry: p }, null, 8, ["entry"]),
+            G(vt, { entry: p }, null, 8, ["entry"])
           ])
         ]))), 128)),
-        d.entity.create && !r.value ? (u(), A(ae, {
+        _.entity.create && !r.value ? (u(), A(ae, {
           key: 1,
           class: "dc-type__new",
-          href: w(t).createHref?.(d.entity),
-          onPress: (v) => w(t).create(d.entity)
+          href: w(t).createHref?.(_.entity),
+          onPress: (p) => w(t).create(_.entity)
         }, {
           default: X(() => [
-            c[1] || (c[1] = S("span", {
+            v[1] || (v[1] = S("span", {
               class: "dc-type__plus",
               "aria-hidden": "true"
             }, "+", -1)),
-            Z(" " + E(d.entity.create), 1)
+            Z(" " + E(_.entity.create), 1)
           ]),
           _: 2
         }, 1032, ["href", "onPress"])) : M("", !0)
       ], 8, Di))), 128)),
-      Y(o.$slots, "after", {}, void 0, !0)
+      Y(d.$slots, "after", {}, void 0, !0)
     ], 8, Hi));
   }
-}), Xa = /* @__PURE__ */ U(nc, [["__scopeId", "data-v-6f5fc1b0"]]), ac = ["data-dc-pending", "data-dc-more"], sc = {
+}), Xa = /* @__PURE__ */ U(nc, [["__scopeId", "data-v-154f2f3a"]]), ac = ["data-dc-pending", "data-dc-more"], sc = {
   key: 0,
   class: "dc-results__state dc-results__state--loading",
   "aria-live": "polite"
@@ -4082,8 +4087,8 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       links: za,
       preview: ja
     }, l = f(() => ca(n.query.value, t.views)), r = f(() => Ae(n.query.value.view, t.views)), i = f(() => (r.value === "record" ? null : s[r.value]) ?? ln), o = f(() => r.value === "record" ? n.recordView.value : null), c = f(() => n.rows.value.length > 0), d = f(() => n.error.value !== null), v = H(null);
-    function _(m) {
-      return m.querySelector("[data-dc-scroll]") ?? m;
+    function _(y) {
+      return y.querySelector("[data-dc-scroll]") ?? y;
     }
     ne(
       // The page on screen, which is the draft's own while one is being typed.
@@ -4092,34 +4097,34 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
         v.value && (_(v.value).scrollTop = 0);
       }
     );
-    const y = H(""), g = H({ x: 0, y: 0 }), p = H(0);
+    const p = H(""), g = H({ x: 0, y: 0 }), h = H(0);
     function b() {
-      const m = v.value;
-      if (!m) {
-        y.value = "";
+      const y = v.value;
+      if (!y) {
+        p.value = "";
         return;
       }
-      const k = _(m), T = {
+      const k = _(y), T = {
         top: k.scrollTop > 1,
         right: k.scrollWidth - k.clientWidth - k.scrollLeft > 1,
         bottom: k.scrollHeight - k.clientHeight - k.scrollTop > 1,
         left: k.scrollLeft > 1
       };
-      y.value = Object.entries(T).filter(([, F]) => F).map(([F]) => F).join(" "), g.value = {
+      p.value = Object.entries(T).filter(([, F]) => F).map(([F]) => F).join(" "), g.value = {
         x: k.offsetHeight - k.clientHeight,
         y: k.offsetWidth - k.clientWidth
-      }, p.value = m.querySelector("[data-dc-stuck]")?.offsetHeight ?? 0;
+      }, h.value = y.querySelector("[data-dc-stuck]")?.offsetHeight ?? 0;
     }
     let P = null, $ = null;
     return ne(
       v,
-      (m, k) => {
-        if (k?.removeEventListener("scroll", b, { capture: !0 }), P?.disconnect(), $?.disconnect(), P = null, $ = null, b(), !m || (m.addEventListener("scroll", b, { passive: !0, capture: !0 }), typeof ResizeObserver > "u")) return;
+      (y, k) => {
+        if (k?.removeEventListener("scroll", b, { capture: !0 }), P?.disconnect(), $?.disconnect(), P = null, $ = null, b(), !y || (y.addEventListener("scroll", b, { passive: !0, capture: !0 }), typeof ResizeObserver > "u")) return;
         const T = new ResizeObserver(b), F = typeof MutationObserver > "u" ? null : new MutationObserver(() => {
           ce(), b();
         }), ce = () => {
           T.disconnect(), F?.disconnect();
-          for (const I of /* @__PURE__ */ new Set([m, _(m)])) {
+          for (const I of /* @__PURE__ */ new Set([y, _(y)])) {
             T.observe(I);
             for (const B of I.children) T.observe(B);
             F?.observe(I, { childList: !0 });
@@ -4130,44 +4135,44 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       { flush: "post" }
     ), ke(() => {
       v.value?.removeEventListener("scroll", b, { capture: !0 }), P?.disconnect(), $?.disconnect();
-    }), (m, k) => (u(), h("div", {
+    }), (y, k) => (u(), m("div", {
       ref_key: "scroller",
       ref: v,
       class: "dc-results",
       "data-dc-pending": w(n).pending.value ? "true" : "false",
-      "data-dc-more": y.value,
+      "data-dc-more": p.value,
       style: oe({
         "--dc-results-gutter-x": `${g.value.x}px`,
         "--dc-results-gutter-y": `${g.value.y}px`,
-        "--dc-results-stuck": `${p.value}px`
+        "--dc-results-stuck": `${h.value}px`
       })
     }, [
-      e.loading ? (u(), h("p", sc, [...k[1] || (k[1] = [
+      e.loading ? (u(), m("p", sc, [...k[1] || (k[1] = [
         S("span", { class: "dc-results__detail" }, "Loading…", -1)
       ])])) : l.value ? (u(), A(Xa, { key: 1 }, Qt({ _: 2 }, [
         a["cards-before"] ? {
           name: "before",
           fn: X(() => [
-            Y(m.$slots, "cards-before", {}, void 0, !0)
+            Y(y.$slots, "cards-before", {}, void 0, !0)
           ]),
           key: "0"
         } : void 0,
         a["cards-after"] ? {
           name: "after",
           fn: X(() => [
-            Y(m.$slots, "cards-after", {}, void 0, !0)
+            Y(y.$slots, "cards-after", {}, void 0, !0)
           ]),
           key: "1"
         } : void 0
       ]), 1024)) : o.value?.id ? (u(), A(Je(o.value.component), {
         key: 2,
         id: o.value.id
-      }, null, 8, ["id"])) : d.value ? (u(), h("p", lc, [
+      }, null, 8, ["id"])) : d.value ? (u(), m("p", lc, [
         k[2] || (k[2] = S("span", { class: "dc-results__headline" }, "Could not load results", -1)),
         S("span", rc, E(w(n).error.value instanceof Error ? w(n).error.value.message : "The data source failed."), 1)
-      ])) : !c.value && w(n).pending.value ? (u(), h("p", oc, [...k[3] || (k[3] = [
+      ])) : !c.value && w(n).pending.value ? (u(), m("p", oc, [...k[3] || (k[3] = [
         S("span", { class: "dc-results__detail" }, "Running query…", -1)
-      ])])) : c.value ? (u(), A(Je(i.value), { key: 6 })) : (u(), h("div", ic, [
+      ])])) : c.value ? (u(), A(Je(i.value), { key: 6 })) : (u(), m("div", ic, [
         k[4] || (k[4] = S("span", { class: "dc-results__headline" }, "Nothing matches this query", -1)),
         S("span", cc, E(w(n).summary.value), 1),
         w(n).isPristine.value ? M("", !0) : (u(), A(ae, {
@@ -4236,48 +4241,48 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
     const _ = us(d, {
       detached: () => v.value && a.pageQuery === "detached",
       path: () => a.listPath
-    }), y = f(() => al({ seed: a.schema.key })), g = f(() => a.source ?? y.value), p = $l({
+    }), p = f(() => al({ seed: a.schema.key })), g = f(() => a.source ?? p.value), h = $l({
       schema: () => a.schema,
       adapter: _,
       defaults: () => a.defaults,
       navigationMode: () => a.navigationMode,
       facetNavigationMode: () => a.facetNavigationMode
     }), b = f(() => a.within?.trim() ?? ""), P = Pl({
-      query: p.query,
-      entity: p.entity,
+      query: h.query,
+      entity: h.entity,
       schema: f(() => a.schema),
-      setExpression: p.setExpression
+      setExpression: h.setExpression
     });
-    ne(p.query, (x) => s("query-change", x));
-    const $ = f(() => dl(a.schema, [p.query.value.expr])), m = f(
+    ne(h.query, (x) => s("query-change", x));
+    const $ = f(() => dl(a.schema, [h.query.value.expr])), y = f(
       () => $.value.flatMap((x) => {
         const R = a.schema.entities.find((K) => K.key === x.entityKey);
         return R ? [{ ...x, entity: R }] : [];
       })
     );
     function k() {
-      if (i.record) return m.value;
+      if (i.record) return y.value;
       const x = a.recordCards;
-      return x ? m.value.filter((R) => x[R.entityKey]) : [];
+      return x ? y.value.filter((R) => x[R.entityKey]) : [];
     }
     const T = f(() => {
-      const [x, ...R] = m.value;
-      if (!x || R.length || p.entity.value !== null) return null;
+      const [x, ...R] = y.value;
+      if (!x || R.length || h.entity.value !== null) return null;
       const K = a.recordViews?.[x.entityKey];
       return K ? { ...K, id: x.id } : null;
     }), F = f(() => {
-      const x = p.entity.value?.key;
+      const x = h.entity.value?.key;
       return x && a.recordViews?.[x] || null;
     }), ce = f(() => {
-      const x = a.views, R = typeof x == "function" ? x({ entity: p.entity.value, records: $.value }) : x;
+      const x = a.views, R = typeof x == "function" ? x({ entity: h.entity.value, records: $.value }) : x;
       return T.value || F.value ? [...(R ?? un).filter((K) => K !== "record"), "record"] : R?.filter((K) => K !== "record");
     }), I = f(
-      () => F.value !== null && Ae(p.query.value.view, ce.value) === "record"
+      () => F.value !== null && Ae(h.query.value.view, ce.value) === "record"
     ), B = f(() => I.value ? 1 : a.limit), q = xl({
       source: g,
       query: P.live,
       schema: f(() => a.schema),
-      entity: p.entity,
+      entity: h.entity,
       limit: B,
       within: b
     }), ie = Sl({
@@ -4292,7 +4297,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       }),
       locate: q.locate,
       moveTo: (x) => {
-        P.drafting.value ? P.setPage(x) : p.setPage(x, "replace");
+        P.drafting.value ? P.setPage(x) : h.setPage(x, "replace");
       }
     }), le = f(() => q.pageCount.value + (ie.gone.value ? 1 : 0)), te = f(() => {
       if (T.value) return T.value;
@@ -4302,11 +4307,11 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
     function re(x) {
       const R = F.value !== null && Ae(x, ce.value) === "record";
       if (R === I.value) {
-        p.setView(x);
+        h.setView(x);
         return;
       }
       const K = P.live.value.page, xe = R ? (K - 1) * a.limit + 1 : Math.ceil(K / a.limit);
-      P.drafting.value ? (p.setView(x), P.setPage(xe)) : p.setView(x, xe);
+      P.drafting.value ? (h.setView(x), P.setPage(xe)) : h.setView(x, xe);
     }
     function L(x) {
       if (!F.value || I.value) return null;
@@ -4314,11 +4319,11 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       return R === -1 ? null : q.offset.value + R + 1;
     }
     ne(
-      [le, q.pending, p.query, P.drafting, () => a.loading, v, ie.holding],
+      [le, q.pending, h.query, P.drafting, () => a.loading, v, ie.holding],
       () => {
         if (q.pending.value || P.drafting.value || a.loading || v.value) return;
         const x = le.value;
-        p.query.value.page <= x || (ie.gone.value ? ie.moveTo(x) : ie.holding.value || p.setPage(x, "replace"));
+        h.query.value.page <= x || (ie.gone.value ? ie.moveTo(x) : ie.holding.value || h.setPage(x, "replace"));
       },
       // Immediately, since a pasted URL is past the end before anything changes;
       // and after the render, so the correction is a navigation the mounted shell
@@ -4333,7 +4338,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
     }
     const j = f(() => {
       if (a.selectable === !0) return !0;
-      const x = p.entity.value;
+      const x = h.entity.value;
       return !!(x?.duplicate || x?.delete || x?.operations?.some((R) => R.selection !== !1));
     }), ve = f(() => new Set(r.value));
     function pe(x) {
@@ -4352,12 +4357,12 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
     const Se = f(() => ({
       ids: [...r.value],
       rows: q.rows.value.filter((x) => ve.value.has(x.id)),
-      entity: p.entity.value
+      entity: h.entity.value
     }));
-    ne(() => p.query.value.entity, ht);
+    ne(() => h.query.value.entity, ht);
     function qe(x, R, K = {}, xe) {
-      const Sn = zt(a.schema, p.query.value, x, K, xe);
-      K.exclude ? p.narrow(Sn, R?.key ?? p.query.value.entity) : P.release(() => p.narrow(Sn, R?.key ?? null, R ? void 0 : "cards")), s("drill", x, R, K);
+      const Sn = zt(a.schema, h.query.value, x, K, xe);
+      K.exclude ? h.narrow(Sn, R?.key ?? h.query.value.entity) : P.release(() => h.narrow(Sn, R?.key ?? null, R ? void 0 : "cards")), s("drill", x, R, K);
     }
     function Ce(x) {
       return a.rowPress === "narrow" && bt(a.schema, x) !== null;
@@ -4366,11 +4371,11 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       return a.schema.entities.find((K) => K.key === x.entityKey)?.href?.(x) || null;
     }
     const C = ye(null);
-    ne(p.query, () => {
+    ne(h.query, () => {
       C.value = null;
     });
     const O = fl({
-      ...p,
+      ...h,
       draft: P.text,
       liveQuery: P.live,
       drafting: P.drafting,
@@ -4382,7 +4387,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
        */
       setPage: (x, R) => {
         const K = ie.step(x);
-        K !== null && (P.drafting.value ? P.setPage(K) : p.setPage(K, R));
+        K !== null && (P.drafting.value ? P.setPage(K) : h.setPage(K, R));
       },
       setView: re,
       schema: f(() => a.schema),
@@ -4426,7 +4431,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
         }
         const K = L(x);
         if (K !== null) {
-          P.drafting.value ? (p.setView("record"), P.setPage(K)) : p.setView("record", K);
+          P.drafting.value ? (h.setView("record"), P.setPage(K)) : h.setView("record", K);
           return;
         }
         const xe = $e(x);
@@ -4437,13 +4442,13 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
         s("activate", x);
       },
       pressHref: (x) => {
-        if (Ce(x)) return p.narrowHref(zt(a.schema, p.query.value, x), null, "cards");
+        if (Ce(x)) return h.narrowHref(zt(a.schema, h.query.value, x), null, "cards");
         const R = L(x);
-        return R !== null ? p.hrefFor({ view: "record", page: R }) : $e(x) ?? a.activateHref?.(x) ?? null;
+        return R !== null ? h.hrefFor({ view: "record", page: R }) : $e(x) ?? a.activateHref?.(x) ?? null;
       },
       recordHref: $e,
-      drillHref: (x, R, K) => bt(a.schema, x) ? p.narrowHref(
-        zt(a.schema, p.query.value, x, {}, K),
+      drillHref: (x, R, K) => bt(a.schema, x) ? h.narrowHref(
+        zt(a.schema, h.query.value, x, {}, K),
         R?.key ?? null,
         R ? void 0 : "cards"
       ) : null,
@@ -4467,15 +4472,15 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       }), Fe.observe(x)));
     }), ke(() => Fe?.disconnect());
     const Vt = f(() => a.oneStripFrom !== !1 && Le.value >= a.oneStripFrom), $n = f(
-      () => Ae(p.query.value.view, ce.value) === "record" && te.value?.strip === !1
+      () => Ae(h.query.value.view, ce.value) === "record" && te.value?.strip === !1
     ), xn = f(() => ({
       views: ce.value,
       selectionPlacement: a.selectionPlacement,
       pagesNote: a.pagesNote
     }));
     return t({
-      query: p.query
-    }), (x, R) => (u(), h("div", {
+      query: h.query
+    }), (x, R) => (u(), m("div", {
       ref_key: "root",
       ref: D,
       class: "dc-shell",
@@ -4514,7 +4519,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
         ]), 1024),
         Vt.value && !i.page && !$n.value ? (u(), A(an, Dt(De({ key: 0 }, xn.value)), null, 16)) : M("", !0)
       ], 2),
-      i.page ? (u(), h("div", fc, [
+      i.page ? (u(), m("div", fc, [
         Y(x.$slots, "page", {
           query: w(O).query.value
         }, void 0, !0)
@@ -4536,7 +4541,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
           i["cards-before"] || k().length ? {
             name: "cards-before",
             fn: X(() => [
-              (u(!0), h(W, null, J(k(), (K) => (u(), h(W, {
+              (u(!0), m(W, null, J(k(), (K) => (u(), m(W, {
                 key: `${K.entityKey}:${K.id}`
               }, [
                 i.record ? Y(x.$slots, "record", {
@@ -4602,15 +4607,15 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
     }
     const c = f(
       () => !!n.title || !!n.name || d.value || i(r.head)
-    ), d = f(() => i(r.aside)), v = f(() => i(r.default)), _ = f(() => i(r.foot)), y = f(
+    ), d = f(() => i(r.aside)), v = f(() => i(r.default)), _ = f(() => i(r.foot)), p = f(
       () => !!n.name && (!!n.reference || i(r.reference))
-    ), g = f(() => n.collapsible === !0 && c.value), p = f(() => g.value && (n.collapsed ?? s.value));
+    ), g = f(() => n.collapsible === !0 && c.value), h = f(() => g.value && (n.collapsed ?? s.value));
     function b() {
-      const I = !p.value;
+      const I = !h.value;
       s.value = I, a("update:collapsed", I);
     }
-    const P = Lt() ?? "dc-shell-card", $ = `${P}-body`, m = `${P}-foot`, k = f(
-      () => [v.value ? $ : "", _.value ? m : ""].filter(Boolean).join(" ") || void 0
+    const P = Lt() ?? "dc-shell-card", $ = `${P}-body`, y = `${P}-foot`, k = f(
+      () => [v.value ? $ : "", _.value ? y : ""].filter(Boolean).join(" ") || void 0
     ), T = [
       "a[href]",
       "button",
@@ -4632,13 +4637,13 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       const B = I.target?.closest(T);
       B && F.value?.contains(B) || typeof window < "u" && window.getSelection()?.toString() || b();
     }
-    return (I, B) => (u(), h("section", {
+    return (I, B) => (u(), m("section", {
       class: "dc-shell-card",
       style: oe(l.value),
       "data-dc-muted": e.muted ? "true" : "false",
-      "data-dc-collapsed": p.value ? "true" : "false"
+      "data-dc-collapsed": h.value ? "true" : "false"
     }, [
-      c.value ? (u(), h("header", {
+      c.value ? (u(), m("header", {
         key: 0,
         ref_key: "head",
         ref: F,
@@ -4646,11 +4651,11 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
         "data-dc-collapsible": g.value ? "true" : "false",
         onClick: ce
       }, [
-        g.value ? (u(), h("button", {
+        g.value ? (u(), m("button", {
           key: 0,
           type: "button",
           class: "dc-shell-card__toggle",
-          "aria-expanded": p.value ? "false" : "true",
+          "aria-expanded": h.value ? "false" : "true",
           "aria-controls": k.value,
           onClick: b
         }, [
@@ -4664,21 +4669,21 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
           S("span", gc, E(e.name || e.title || "Card"), 1)
         ], 8, yc)) : M("", !0),
         Y(I.$slots, "head", {}, () => [
-          e.name ? (u(), h("div", _c, [
+          e.name ? (u(), m("div", _c, [
             S("h2", wc, E(e.name), 1),
-            y.value ? (u(), h("span", kc, [
+            p.value ? (u(), m("span", kc, [
               Y(I.$slots, "reference", {}, () => [
                 Z(E(e.reference), 1)
               ], !0)
             ])) : M("", !0)
-          ])) : (u(), h("h2", bc, E(e.title), 1)),
-          e.count !== void 0 ? (u(), h("span", $c, E(e.count), 1)) : M("", !0)
+          ])) : (u(), m("h2", bc, E(e.title), 1)),
+          e.count !== void 0 ? (u(), m("span", $c, E(e.count), 1)) : M("", !0)
         ], !0),
-        d.value ? (u(), h("span", xc, [
+        d.value ? (u(), m("span", xc, [
           Y(I.$slots, "aside", {}, void 0, !0)
         ])) : M("", !0)
       ], 8, mc)) : M("", !0),
-      v.value ? Ut((u(), h("div", {
+      v.value ? Ut((u(), m("div", {
         key: 1,
         id: $,
         class: "dc-shell-card__body",
@@ -4686,16 +4691,16 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       }, [
         Y(I.$slots, "default", {}, void 0, !0)
       ], 8, Sc)), [
-        [Mn, !p.value]
+        [Mn, !h.value]
       ]) : M("", !0),
-      _.value ? Ut((u(), h("footer", {
+      _.value ? Ut((u(), m("footer", {
         key: 2,
-        id: m,
+        id: y,
         class: "dc-shell-card__foot"
       }, [
         Y(I.$slots, "foot", {}, void 0, !0)
       ], 512)), [
-        [Mn, !p.value]
+        [Mn, !h.value]
       ]) : M("", !0)
     ], 12, hc));
   }
@@ -4718,12 +4723,12 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       const d = n.options[c];
       d && (a("update:modelValue", d.key), s.value[c]?.focus());
     }
-    return (r, i) => (u(), h("div", {
+    return (r, i) => (u(), m("div", {
       class: "dc-segmented",
       role: "radiogroup",
       "aria-label": e.label
     }, [
-      (u(!0), h(W, null, J(e.options, (o, c) => (u(), h("button", {
+      (u(!0), m(W, null, J(e.options, (o, c) => (u(), m("button", {
         key: o.key,
         ref_for: !0,
         ref_key: "buttons",
@@ -4757,7 +4762,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       }
       return [String(s)];
     }), a = f(() => t.wide ? { gridColumn: "1 / -1" } : void 0);
-    return (s, l) => (u(), h("div", {
+    return (s, l) => (u(), m("div", {
       class: "dc-fact",
       style: oe(a.value)
     }, [
@@ -4771,9 +4776,9 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
         title: e.title
       }, [
         Y(s.$slots, "default", {}, () => [
-          n.value.length === 1 ? (u(), h(W, { key: 0 }, [
+          n.value.length === 1 ? (u(), m(W, { key: 0 }, [
             Z(E(n.value[0]), 1)
-          ], 64)) : (u(!0), h(W, { key: 1 }, J(n.value, (r, i) => (u(), h("span", {
+          ], 64)) : (u(!0), m(W, { key: 1 }, J(n.value, (r, i) => (u(), m("span", {
             key: i,
             class: "dc-fact__line"
           }, E(r), 1))), 128))
@@ -4789,11 +4794,11 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
   },
   setup(e) {
     const t = e, n = f(() => ({ "--dc-facts-min": t.min }));
-    return (a, s) => (u(), h("dl", {
+    return (a, s) => (u(), m("dl", {
       class: "dc-facts",
       style: oe(n.value)
     }, [
-      (u(!0), h(W, null, J(e.items, (l, r) => (u(), A(Ac, {
+      (u(!0), m(W, null, J(e.items, (l, r) => (u(), A(Ac, {
         key: `${r}:${l.label}`,
         label: l.label,
         value: l.value,
@@ -4814,13 +4819,13 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
   },
   setup(e) {
     const t = e, n = f(() => t.counts.filter((a) => a.count > 0));
-    return (a, s) => (u(), h("span", Rc, [
-      (u(!0), h(W, null, J(n.value, (l) => (u(), h("span", {
+    return (a, s) => (u(), m("span", Rc, [
+      (u(!0), m(W, null, J(n.value, (l) => (u(), m("span", {
         key: l.label,
         class: "dc-counts__count",
         "data-dc-tone": l.tone ?? "neutral"
       }, E(l.count) + " " + E(l.label), 9, Bc))), 128)),
-      n.value.length === 0 ? (u(), h("span", Hc, E(e.empty), 1)) : M("", !0)
+      n.value.length === 0 ? (u(), m("span", Hc, E(e.empty), 1)) : M("", !0)
     ]));
   }
 }), Eu = /* @__PURE__ */ U(qc, [["__scopeId", "data-v-5553a9e2"]]), Fc = ["data-dc-copied", "title", "aria-label"], Vc = {
@@ -4856,7 +4861,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
         s.value = !1;
       }, Kc), a("copied", i);
     }
-    return ke(() => clearTimeout(l)), (i, o) => (u(), h("button", {
+    return ke(() => clearTimeout(l)), (i, o) => (u(), m("button", {
       type: "button",
       class: "dc-copy",
       "data-dc-copied": s.value ? "true" : "false",
@@ -4864,9 +4869,9 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       "aria-label": e.label,
       onClick: r
     }, [
-      s.value ? (u(), h("svg", Dc, [...o[1] || (o[1] = [
+      s.value ? (u(), m("svg", Dc, [...o[1] || (o[1] = [
         S("path", { d: "M3 8.5l3.2 3L13 4.5" }, null, -1)
-      ])])) : (u(), h("svg", Vc, [...o[0] || (o[0] = [
+      ])])) : (u(), m("svg", Vc, [...o[0] || (o[0] = [
         S("rect", {
           x: "5.5",
           y: "5.5",
@@ -4894,7 +4899,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
     function r() {
       return n.code ?? s.value?.textContent ?? "";
     }
-    return (i, o) => (u(), h("div", {
+    return (i, o) => (u(), m("div", {
       class: "dc-code",
       "data-dc-copy": e.copy ? "true" : "false",
       "data-dc-wrap": e.wrap ? "true" : "false",
@@ -4936,16 +4941,16 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       }), i;
     }
     async function c() {
-      const { chunk: _, offset: y } = await n.fetchChunk(r);
-      if (r = y, !_) return;
-      const g = l.value, p = !g || g.scrollTop + g.clientHeight >= g.scrollHeight - Qc;
-      a.value += _, p && (await Xe(), l.value && (l.value.scrollTop = l.value.scrollHeight));
+      const { chunk: _, offset: p } = await n.fetchChunk(r);
+      if (r = p, !_) return;
+      const g = l.value, h = !g || g.scrollTop + g.clientHeight >= g.scrollHeight - Qc;
+      a.value += _, h && (await Xe(), l.value && (l.value.scrollTop = l.value.scrollHeight));
     }
     function d() {
       a.value = "", r = 0;
     }
     const v = f(() => n.maxHeight === void 0 ? void 0 : { maxHeight: typeof n.maxHeight == "number" ? `${n.maxHeight}px` : n.maxHeight });
-    return t({ poll: o, reset: d }), (_, y) => (u(), h("pre", {
+    return t({ poll: o, reset: d }), (_, p) => (u(), m("pre", {
       ref_key: "pane",
       ref: l,
       class: "dc-log dc-mono",
@@ -4975,17 +4980,17 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
       a("close"), a("update:open", !1);
     }
     const d = Symbol("dc-dialog");
-    function v(m) {
-      m.key !== "Escape" || m.defaultPrevented || Qe[Qe.length - 1] === d && (m.preventDefault(), c());
+    function v(y) {
+      y.key !== "Escape" || y.defaultPrevented || Qe[Qe.length - 1] === d && (y.preventDefault(), c());
     }
     let _ = !1;
-    function y(m) {
-      _ = m.target === m.currentTarget;
+    function p(y) {
+      _ = y.target === y.currentTarget;
     }
-    function g(m) {
-      m.target === m.currentTarget && _ && c(), _ = !1;
+    function g(y) {
+      y.target === y.currentTarget && _ && c(), _ = !1;
     }
-    const p = [
+    const h = [
       "[autofocus]",
       'input:not([disabled]):not([type="hidden"])',
       "select:not([disabled])",
@@ -4996,20 +5001,20 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
     ].join(", ");
     let b = null;
     async function P() {
-      Qe.push(d), document.addEventListener("keydown", v), b = document.activeElement instanceof HTMLElement ? document.activeElement : null, r(), await Xe(), (o.value?.querySelector("[autofocus]") ?? o.value?.querySelector(p) ?? o.value)?.focus();
+      Qe.push(d), document.addEventListener("keydown", v), b = document.activeElement instanceof HTMLElement ? document.activeElement : null, r(), await Xe(), (o.value?.querySelector("[autofocus]") ?? o.value?.querySelector(h) ?? o.value)?.focus();
     }
     function $() {
-      const m = Qe.indexOf(d);
-      m !== -1 && (Qe.splice(m, 1), document.removeEventListener("keydown", v), b?.isConnected && b.focus(), b = null);
+      const y = Qe.indexOf(d);
+      y !== -1 && (Qe.splice(y, 1), document.removeEventListener("keydown", v), b?.isConnected && b.focus(), b = null);
     }
     return ct(() => {
       n.open && P();
     }), ne(
       () => n.open,
-      (m) => {
-        m ? P() : $();
+      (y) => {
+        y ? P() : $();
       }
-    ), ke($), (m, k) => e.open ? (u(), A(Et, {
+    ), ke($), (y, k) => e.open ? (u(), A(Et, {
       key: 0,
       to: e.to
     }, [
@@ -5017,7 +5022,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
         class: "dc-shell dc-layer dc-dialog",
         "data-dc-theme": w(s),
         style: oe(w(l)),
-        onPointerdown: y,
+        onPointerdown: p,
         onClick: g
       }, [
         S("div", {
@@ -5030,7 +5035,7 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
           "aria-labelledby": e.title ? i : void 0,
           "aria-label": e.title ? void 0 : e.label
         }, [
-          e.title ? (u(), h("h2", {
+          e.title ? (u(), m("h2", {
             key: 0,
             id: i,
             class: "dc-dialog__title"
@@ -5038,10 +5043,10 @@ const Hi = ["data-dc-pending", "data-dc-heads-only"], qi = {
           S("div", {
             class: de(["dc-dialog__body", e.bodyClass])
           }, [
-            Y(m.$slots, "default", {}, void 0, !0)
+            Y(y.$slots, "default", {}, void 0, !0)
           ], 2),
-          m.$slots.actions ? (u(), h("div", Jc, [
-            Y(m.$slots, "actions", {}, void 0, !0)
+          y.$slots.actions ? (u(), m("div", Jc, [
+            Y(y.$slots, "actions", {}, void 0, !0)
           ])) : M("", !0)
         ], 10, Xc)
       ], 44, Yc)
@@ -5080,7 +5085,7 @@ const su = ["data-dc-theme"], lu = ["data-dc-kind", "role"], ru = /* @__PURE__ *
         style: oe(w(s)),
         "aria-live": "polite"
       }, [
-        (u(!0), h(W, null, J(w(n), (o) => (u(), h("div", {
+        (u(!0), m(W, null, J(w(n), (o) => (u(), m("div", {
           key: o.id,
           class: "dc-toast",
           "data-dc-kind": o.kind,

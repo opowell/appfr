@@ -116,6 +116,21 @@ export const HomeCreatableEmpty = creatable({ search: '?q=recall' })
 /** Heads-only cards offer no button, so a type holding nothing is dropped even where it names one. */
 export const HomeHeadsOnlyCreatable = creatable({ previewsPerType: 0, search: '?q=recall' })
 
+/**
+ * `keepsCard` keeps a type's card where it holds nothing: Searches, which
+ * matches nothing here, stays as `Searches 0`, the way to its list.
+ */
+export const HomeHeadsOnlyKept = story({
+  previewsPerType: 0,
+  search: '?q=recall',
+  schema: {
+    ...iRadarSchema,
+    entities: iRadarSchema.entities.map((entity) =>
+      entity.key === 'searches' ? { ...entity, keepsCard: true } : entity,
+    ),
+  },
+})
+
 /* ------------------------------------------------------ what a type is, said */
 
 /**

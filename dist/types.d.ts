@@ -433,6 +433,25 @@ export interface EntitySchema {
      */
     create?: string;
     /**
+     * Keep this type's card on the home screen while it holds nothing.
+     *
+     * The cards drop a type with no records (but for one whose `create` button
+     * they draw), since on a screen read inside one record most of the types
+     * hold none of it. A type that is the way to *add* to the record — the links
+     * a record owns, say, made from the type's own list — has to stay there
+     * empty, or nothing on the record's screen leads to where they are made.
+     * Its card says it holds none (`Links 0`), and pressing it opens the list.
+     *
+     * `true` keeps it everywhere. A list of entity keys keeps it only on the
+     * screen of one record of those types — `['items']` on an item's screen,
+     * the screen the query names a single item on (that type's card `pinned`),
+     * and not on a search's, where the type has nothing to add to.
+     *
+     * It still goes where its card would restate the header (see the preview's
+     * `pinned`).
+     */
+    keepsCard?: boolean | string[];
+    /**
      * What copying the ticked records is called — `'Duplicate'`. Naming it puts
      * that button on the bar over this type's list, and with it the ticks that
      * say which records it is for: an operation on a selection is what makes a

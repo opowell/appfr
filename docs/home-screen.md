@@ -22,6 +22,11 @@ few records.
 - `previewsPerType` sets the rows per card (default 3). Each card is queried on
   its own, so a quiet type still shows its latest. `0` draws only each card's
   heading (type and count, no `create` button) in narrow wrapping columns.
+- A type holding nothing gets no card, but for one whose `create` button the
+  card draws, and one that says `keepsCard`: kept as the way to its list
+  (`Links 0`), for the type a record's screen must lead to even when empty.
+  `true` keeps it everywhere; a list of entity keys (`['items']`) only on the
+  screen of one record of those types.
 - A type's `description` is a line under its name, and its `note` a few words
   beside its count (`Results 180 · 42 unread`), for a second number the host
   keeps about the type.

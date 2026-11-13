@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { EntitySchema } from '../../types'
 import { useShellContext } from '../../composables/context'
 import PressLink from './PressLink.vue'
 import { useEntityPreviews } from '../../composables/useEntityPreviews'
@@ -87,14 +88,29 @@ const narrowed = computed(
  *
  * The `create` button goes too: under a heading alone it is the one thing in
  * the card that is not the type, and the type's own list offers it on its bar
- * a press away. With it goes the reason to keep an empty card.
+ * a press away. With it goes the reason to keep an empty card — unless the
+ * type says `keepsCard`, as the way to the list where more of it are made.
  */
 const headsOnly = computed(() => shell.previewsPerType.value <= 0)
+
+/** The types whose one record this screen is: their cards are `pinned`. */
+const screenOf = computed(
+  () => new Set(found.value.filter((preview) => preview.pinned).map((preview) => preview.entity.key)),
+)
+
+/** Whether a type holding nothing keeps its card on this screen — see `keepsCard`. */
+const keeps = (entity: EntitySchema): boolean => {
+  const { keepsCard } = entity
+  return Array.isArray(keepsCard) ? keepsCard.some((key) => screenOf.value.has(key)) : Boolean(keepsCard)
+}
 
 const previews = computed(() =>
   found.value.filter(
     (preview) =>
-      !preview.pinned && (preview.total > 0 || (!headsOnly.value && preview.entity.create)),
+      !preview.pinned &&
+      (preview.total > 0 ||
+        keeps(preview.entity) ||
+        (!headsOnly.value && preview.entity.create)),
   ),
 )
 </script>

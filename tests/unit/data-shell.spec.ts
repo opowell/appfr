@@ -418,6 +418,47 @@ describe('DataShell — a record’s own cards', () => {
   })
 })
 
+describe('DataShell — a type that keeps its card', () => {
+  const kept: DomainSchema = {
+    ...schema,
+    entities: [
+      entity('tests', { scope: 'test' }),
+      // Kept, empty, on a test's own screen only.
+      entity('urls', { scope: 'url', keepsCard: ['tests'] }),
+      // Kept on a url's screen, which this is not.
+      entity('notes', { keepsCard: ['urls'] }),
+      // Kept everywhere.
+      entity('logs', { keepsCard: true }),
+    ],
+  }
+  /** One test, `a.spec`, where the query names it; nothing else of anything. */
+  const only: DataSource = {
+    query(request: QueryRequest) {
+      const rows = request.entity?.key === 'tests' && request.query.expr.includes('test="a.spec"')
+        ? [row('tests', 'a.spec')]
+        : []
+      return { rows, total: rows.length, unfiltered: false }
+    },
+  }
+  const names = (w: VueWrapper) => w.findAll('.dc-type__name').map((name) => name.text())
+
+  it('stays, holding nothing, on the screen of one record of a type it names', async () => {
+    const w = shell(createMemoryAdapter('?v=cards&q=test%3D%22a.spec%22'), {
+      schema: kept,
+      source: only,
+      previewsPerType: 0,
+    })
+    await flushPromises()
+    expect(names(w)).toEqual(['Urls', 'Logs'])
+  })
+
+  it('goes elsewhere unless it keeps its card everywhere', async () => {
+    const w = shell(createMemoryAdapter('?v=cards&q=zzz'), { schema: kept, source: only, previewsPerType: 0 })
+    await flushPromises()
+    expect(names(w)).toEqual(['Logs'])
+  })
+})
+
 describe('DataShell — views as a function', () => {
   const views = vi.fn(({ entity, records }: ViewsContext) =>
     entity ? ['table' as const] : records.length ? ['cards' as const] : ['table' as const, 'cards' as const],

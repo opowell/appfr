@@ -341,6 +341,14 @@ test.describe('Home — heads only', () => {
     // Nothing in Searches mentions the search, and its button no longer keeps it.
     await expect(card(page, 'Searches')).toHaveCount(0)
   })
+
+  test('a type that keeps its card stays, holding nothing, and still leads to its list', async ({ page }) => {
+    await gotoStory(page, 'shell-data-shell--home-heads-only-kept')
+    await expect(card(page, 'Items')).toBeVisible()
+    await expect(card(page, 'Searches').locator('.dc-type__count')).toHaveText('0')
+    await card(page, 'Searches').locator('.dc-type__head').click()
+    await expect(scopeSelect(page)).toHaveAttribute('data-dc-value', 'searches')
+  })
 })
 
 test.describe('Home — narrow', () => {

@@ -292,7 +292,10 @@ export function drillExpression(
   where?: string,
 ): string {
   const term = scopeTermFor(schema, row)
-  return withWhere(addTerm(query.expr, options.exclude ? excludingTerm(term) : term), where)
+  if (options.exclude) return withWhere(addTerm(query.expr, excludingTerm(term)), where)
+  // A record that narrows alone (EntitySchema.narrowsAlone) leaves the rest of the query behind.
+  const alone = term !== null && schema.entities.find((entity) => entity.key === row.entityKey)?.narrowsAlone === true
+  return withWhere(addTerm(alone ? '' : query.expr, term), where)
 }
 
 /**

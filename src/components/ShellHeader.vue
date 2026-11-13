@@ -152,7 +152,7 @@ const previewed = computed(() => {
   const query = shell.query.value
   const held = new Set(shell.terms.value.map((term) => term.address))
   return summaryTerms(
-    { ...query, expr: refineExpression(query.expr, preview.term) },
+    { ...query, expr: preview.alone ? preview.term : refineExpression(query.expr, preview.term) },
     shell.entity.value,
     shell.schema.value,
   )
@@ -161,6 +161,9 @@ const previewed = computed(() => {
       preview.name ? `${fieldLabelOf(term.field!)}: ${withoutOwnId(preview.name)}` : term.label,
     )
 })
+
+/** Whether a press on the value under the pointer would take the parts there now out of the query. */
+const leaving = computed(() => shell.pressPreview?.value?.alone === true)
 
 /* ------------------------------------------------------- adding to the query */
 
@@ -558,7 +561,7 @@ onBeforeUnmount(() => watching?.disconnect())
                   <button
                     type="button"
                     class="dc-term dc-mono"
-                    :class="{ 'dc-term--idle': entry.idle }"
+                    :class="{ 'dc-term--idle': entry.idle, 'dc-term--leaving': leaving }"
                     :title="titleOf(entry)"
                     :aria-label="`Remove ${labelOf(entry.term)}`"
                     @mousedown.prevent
@@ -825,7 +828,8 @@ onBeforeUnmount(() => watching?.disconnect())
 }
 
 .dc-term:hover,
-.dc-term:focus-visible {
+.dc-term:focus-visible,
+.dc-term--leaving {
   opacity: 0.5;
   text-decoration: line-through;
 }

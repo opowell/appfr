@@ -321,6 +321,13 @@ describe('drillExpression', () => {
     )
   })
 
+  it('narrows to a record of a type that narrows alone, leaving the rest of the query', () => {
+    const alone = { ...legoSchema, entities: legoSchema.entities.map((entity) => entity.key === 'categories' ? { ...entity, narrowsAlone: true } : entity) }
+    const query = { ...defaultQuery(alone), expr: 'theme:space' }
+    expect(drillExpression(alone, query, row())).toBe('category="categories_10007"')
+    expect(drillExpression(alone, query, row(), { exclude: true })).toBe('theme:space -category="categories_10007"')
+  })
+
   it('leaves an unscopable row out of nothing, as it narrows to nothing', () => {
     const query = { ...defaultQuery(legoSchema), expr: 'theme:space' }
     expect(drillExpression(legoSchema, query, row({ entityKey: 'inventories' }), { exclude: true })).toBe(

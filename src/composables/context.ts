@@ -17,6 +17,8 @@ import { expandShortcuts, refineExpression } from '../data/expression'
 export interface PressPreview {
   term: string
   name?: string
+  /** Whether the press leaves the rest of the query behind: see `EntitySchema.narrowsAlone`. */
+  alone?: boolean
 }
 
 /**

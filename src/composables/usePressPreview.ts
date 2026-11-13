@@ -21,5 +21,5 @@ export function pressPreviewOn(shell: ShellContext, preview: PressPreview | null
 /** What a press on a row's name adds, where that press narrows to its record. */
 export function recordPressPreview(shell: ShellContext, entry: PresentedRow): PressPreview | null {
   const term = shell.narrowsOnPress.value ? scopeTerm(entry.entity, entry.row) : null
-  return term ? { term, name: entry.parts.identity } : null
+  return term ? { term, name: entry.parts.identity, alone: entry.entity?.narrowsAlone === true } : null
 }

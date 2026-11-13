@@ -490,6 +490,21 @@ export interface EntitySchema {
      */
     keepsScope?: boolean;
     /**
+     * Whether a press on a record of this type narrows to it alone.
+     *
+     * Unset, a press adds the record to the query, which keeps everything it
+     * already said: `set="a"` and a press on condition 3 is everything about
+     * set a under condition 3. Set it where a record is a screen of its own
+     * that the rest of the query has no say in: the item a list of searches was
+     * narrowed by is how the search was found, and ANDed on to the search's own
+     * screen it would narrow that search's rows to the item. The press then
+     * leaves the query as the record's term and nothing else, and the header
+     * shows the parts going while it previews it. Leaving the record out (the
+     * press with the modifier) still keeps the query, being a refinement of the
+     * very list it was pressed in.
+     */
+    narrowsAlone?: boolean;
+    /**
      * Where a record of this type lives outside the shell — a page of the
      * host's, a site it points at — or null for a record that lives nowhere
      * else. `row => row.id` for a type whose records *are* URLs.

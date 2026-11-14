@@ -63,6 +63,10 @@ export declare function metricColumn(key: string, label: string, over?: Over): C
  * A date, sorted by its own key. The one a card shows and every list opens in
  * says `{ role: 'updated', sort: 'updated' }`, the recency sort being the one
  * a URL naming none falls back to.
+ *
+ * No width: every date is as long as every other, so sized to its value the
+ * column is the same width on every page, and wide enough in whatever type
+ * size the host sets, as a fixed width is not.
  */
 export declare function dateColumn(key: string, label: string, over?: Over): ColumnDef;
 /**

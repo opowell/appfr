@@ -269,8 +269,9 @@ export interface ColumnDef {
      */
     format?: (value: unknown, row: ShellRow) => string;
     /**
-     * CSS width. Columns that name one keep it at every shell width; what is
-     * left over is shared between the columns that do not, so at least one
+     * CSS width. Columns that name one keep it at every shell width; those that
+     * do not are as wide as their widest value, and where that comes to more
+     * than the shell has they share what is left and truncate. So at least one
      * column should go without.
      */
     width?: string;

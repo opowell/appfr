@@ -3967,7 +3967,7 @@ const Fi = ["data-dc-pending", "data-dc-heads-only"], Vi = {
       return Array.isArray(v) ? v.some((_) => i.value.has(_)) : !!v;
     }, c = f(
       () => n.value.filter(
-        (d) => !d.pinned && (d.total > 0 || o(d.entity) || !r.value && d.entity.create)
+        (d) => !d.pinned && (l.value || !d.entity.nested) && (d.total > 0 || o(d.entity) || !r.value && d.entity.create)
       )
     );
     return (d, v) => (u(), m("div", {
@@ -4056,7 +4056,7 @@ const Fi = ["data-dc-pending", "data-dc-heads-only"], Vi = {
       G(d.$slots, "after", {}, void 0, !0)
     ], 8, Fi));
   }
-}), Xa = /* @__PURE__ */ j(sc, [["__scopeId", "data-v-154f2f3a"]]), lc = ["data-dc-pending", "data-dc-more"], rc = {
+}), Xa = /* @__PURE__ */ j(sc, [["__scopeId", "data-v-2c518ead"]]), lc = ["data-dc-pending", "data-dc-more"], rc = {
   key: 0,
   class: "dc-results__state dc-results__state--loading",
   "aria-live": "polite"

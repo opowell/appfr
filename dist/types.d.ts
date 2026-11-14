@@ -453,6 +453,18 @@ export interface EntitySchema {
      */
     keepsCard?: boolean | string[];
     /**
+     * Its records belong to records of other types — a search's settings, an
+     * item's links — rather than standing on their own.
+     *
+     * So its card is left off the home screen while nothing narrows it: home is
+     * where the reader picks what to look at, and a type read only through what
+     * owns it is a card of everything in no order. It comes back wherever the
+     * cards are narrowed — on the screen of a record it belongs to, and under a
+     * query, where home is a breakdown by type — and its list is still the Type
+     * picker's, or `entity:` typed in the bar.
+     */
+    nested?: boolean;
+    /**
      * What copying the ticked records is called — `'Duplicate'`. Naming it puts
      * that button on the bar over this type's list, and with it the ticks that
      * say which records it is for: an operation on a selection is what makes a

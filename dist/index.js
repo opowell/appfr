@@ -2067,8 +2067,8 @@ Written ${D} in the address and the search box` : V;
                   type: "text",
                   autocomplete: "off",
                   spellcheck: "false",
-                  placeholder: oe.value ? "" : "Search…",
-                  "aria-label": "Search",
+                  placeholder: oe.value ? "" : "Filter…",
+                  "aria-label": "Filter",
                   role: "combobox",
                   "aria-autocomplete": "list",
                   "aria-expanded": k.value,
@@ -2125,7 +2125,7 @@ Written ${D} in the address and the search box` : V;
       ])) : L("", !0)
     ]));
   }
-}), Ha = /* @__PURE__ */ j(ir, [["__scopeId", "data-v-33d16be3"]]), cr = ["checked", "indeterminate"], qa = /* @__PURE__ */ z({
+}), Ha = /* @__PURE__ */ j(ir, [["__scopeId", "data-v-be5eed0e"]]), cr = ["checked", "indeterminate"], qa = /* @__PURE__ */ z({
   __name: "PageTick",
   setup(e) {
     const t = ee(), n = f(() => t.rows.value.filter((l) => t.isSelected(l)).length), a = f(
@@ -4056,7 +4056,7 @@ const Fi = ["data-dc-pending", "data-dc-heads-only"], Vi = {
       G(d.$slots, "after", {}, void 0, !0)
     ], 8, Fi));
   }
-}), Xa = /* @__PURE__ */ j(sc, [["__scopeId", "data-v-2c518ead"]]), lc = ["data-dc-pending", "data-dc-more"], rc = {
+}), Xa = /* @__PURE__ */ j(sc, [["__scopeId", "data-v-d60e56a6"]]), lc = ["data-dc-pending", "data-dc-more"], rc = {
   key: 0,
   class: "dc-results__state dc-results__state--loading",
   "aria-live": "polite"
@@ -4567,7 +4567,7 @@ const Fi = ["data-dc-pending", "data-dc-heads-only"], Vi = {
       ], !0, 2)
     ], 12, vc));
   }
-}), mc = /* @__PURE__ */ j(hc, [["__scopeId", "data-v-7ae0f737"]]), yc = ["data-dc-muted", "data-dc-collapsed"], gc = ["data-dc-collapsible"], _c = ["aria-expanded", "aria-controls"], wc = { class: "dc-shell-card__sr" }, kc = {
+}), mc = /* @__PURE__ */ j(hc, [["__scopeId", "data-v-7ae0f737"]]), yc = ["data-dc-span", "data-dc-muted", "data-dc-collapsed"], gc = ["data-dc-collapsible"], _c = ["aria-expanded", "aria-controls"], wc = { class: "dc-shell-card__sr" }, kc = {
   key: 0,
   class: "dc-shell-card__identity"
 }, bc = { class: "dc-shell-card__title dc-shell-card__name" }, $c = {
@@ -4640,6 +4640,7 @@ const Fi = ["data-dc-pending", "data-dc-heads-only"], Vi = {
     return (I, B) => (u(), m("section", {
       class: "dc-shell-card",
       style: le(l.value),
+      "data-dc-span": e.span,
       "data-dc-muted": e.muted ? "true" : "false",
       "data-dc-collapsed": h.value ? "true" : "false"
     }, [
@@ -4704,7 +4705,7 @@ const Fi = ["data-dc-pending", "data-dc-heads-only"], Vi = {
       ]) : L("", !0)
     ], 12, yc));
   }
-}), Eu = /* @__PURE__ */ j(Ec, [["__scopeId", "data-v-073304c8"]]), Mc = ["aria-label"], Lc = ["aria-checked", "data-dc-active", "tabindex", "onClick", "onKeydown"], Tc = /* @__PURE__ */ z({
+}), Eu = /* @__PURE__ */ j(Ec, [["__scopeId", "data-v-c84525aa"]]), Mc = ["aria-label"], Lc = ["aria-checked", "data-dc-active", "tabindex", "onClick", "onKeydown"], Tc = /* @__PURE__ */ z({
   __name: "SegmentedControl",
   props: {
     modelValue: {},

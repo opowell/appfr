@@ -21,7 +21,8 @@ few records.
   and one somebody chose survives it.
 - `previewsPerType` sets the rows per card (default 3). Each card is queried on
   its own, so a quiet type still shows its latest. `0` draws only each card's
-  heading (type and count, no `create` button) in narrow wrapping columns.
+  heading (type and count, no `create` button), one width, in centred rows that
+  wrap; a card that spans all columns has a row of its own.
 - A type holding nothing gets no card, but for one whose `create` button the
   card draws, and one that says `keepsCard`: kept as the way to its list
   (`Links 0`), for the type a record's screen must lead to even when empty.

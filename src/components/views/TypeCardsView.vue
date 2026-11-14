@@ -294,9 +294,29 @@ const previews = computed(() =>
  * leaves stranded in the left of a wide box. Narrow enough that a laptop holds
  * five or six of them across, wide enough for a type name and a count in the
  * thousands beside it.
+ *
+ * And centred, a row of buttons under whatever leads the screen: a grid packs
+ * them to the left, leaving the empty tracks of a wide screen at the right and
+ * the last row of a wrapped one hanging off the first. So a wrapping flex row,
+ * every card one width, each row centred on its own.
  */
 .dc-types[data-dc-heads-only='true'] {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Deep, as the cards of the slots are the host's and carry its scope rather than this one's. */
+.dc-types[data-dc-heads-only='true'] > :deep(*) {
+  flex: 0 1 260px;
+  min-width: 0;
+}
+
+/* A card that spans the grid's columns, and the line about the whole result,
+   take a row of their own; centred, if they are narrower than it. */
+.dc-types[data-dc-heads-only='true'] > :deep([data-dc-span='all']),
+.dc-types[data-dc-heads-only='true'] > .dc-types__state {
+  flex-basis: 100%;
 }
 
 .dc-types[data-dc-pending='true'] {
@@ -542,6 +562,11 @@ const previews = computed(() =>
 @container (max-width: 560px) {
   .dc-type__date {
     display: none;
+  }
+
+  /* One to a row on a phone, as wide as the screen, as the grid's were. */
+  .dc-types[data-dc-heads-only='true'] > :deep(*) {
+    flex-basis: 100%;
   }
 }
 </style>

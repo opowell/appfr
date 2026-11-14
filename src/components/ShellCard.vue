@@ -248,6 +248,7 @@ function pressHead(event: MouseEvent): void {
   <section
     class="dc-shell-card"
     :style="style"
+    :data-dc-span="span"
     :data-dc-muted="muted ? 'true' : 'false'"
     :data-dc-collapsed="shut ? 'true' : 'false'"
   >

@@ -206,10 +206,15 @@ shell.hrefFor({ page: 4 })     // a link, without navigating
 await shell.peek?.(shell.offset.value + 1, 2) // the two rows after this page's first, to load ahead
 ```
 
-## The table stays inside the shell
+## The table is as wide as its columns, and stays inside the shell
 
-The table lays out fixed: columns with a `width` keep it, the rest share what
-is left, so it is never wider than the shell. Overflow is truncated, and hover
+Columns with a `width` keep it; the rest are as wide as their widest value,
+and the table is as wide as its columns together: a table of short values sits
+at the left rather than being stretched across the shell. Where that comes to
+more than the shell has, the columns without a width share what is left —
+evenly, each up to what it asked for, so short values keep the whole of their
+width and the longest give way — and the table is never wider than the shell.
+Overflow is truncated, and hover
 shows the full *value* — `1.2k` hovers as `1240`. `cellFull(column, row)` is
 that string, for a cell of your own.
 

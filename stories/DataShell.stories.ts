@@ -537,8 +537,8 @@ export const LinksView = story({ search: '?e=items&v=links' })
 export const PreviewView = story({ search: '?e=items&v=preview' })
 
 /**
- * The table against values no column can hold. Fixed layout keeps it exactly as
- * wide as the shell however long a name or a path gets: what does not fit is
+ * The table against values no column can hold. It grows with its values only
+ * as far as the shell is wide, however long a name or a path gets: what does not fit is
  * truncated, with the whole of it on hover, and every row stays one line deep.
  * The alternative — a table as wide as its longest cell — puts the date and the
  * state off the right-hand edge, which are the two columns a row is scanned for.

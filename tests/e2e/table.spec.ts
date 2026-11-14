@@ -39,6 +39,26 @@ test.describe('Table — as wide as the shell, never wider', () => {
     expect(drawn).toBeLessThanOrEqual(area)
   })
 
+  test('is no wider than its columns need where the values are short', async ({ page }) => {
+    await page.setViewportSize({ width: 1800, height: 720 })
+    await gotoStory(page, 'shell-data-shell--table-view')
+    await expect(table(page)).toBeVisible()
+    const [area, drawn] = await Promise.all([
+      results(page).evaluate((element) => element.clientWidth),
+      table(page).evaluate((element) => element.getBoundingClientRect().width),
+    ])
+    expect(drawn).toBeLessThan(area)
+
+    // Narrower, and still one set of columns: each heading over its cells.
+    const edges = (selector: string) =>
+      page.locator(selector).evaluateAll((cells) =>
+        cells.map((cell) => Math.round(cell.getBoundingClientRect().left)),
+      )
+    expect(await edges('.dc-table tbody tr:first-child td')).toEqual(
+      await edges('.dc-table thead th'),
+    )
+  })
+
   test('truncates the name and the path rather than wrapping them', async ({ page }) => {
     await gotoStory(page, LONG)
     const row = page.locator('.dc-table__row').first()

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { ColumnDef, PressOptions, ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
 import { hasTextSelection, isBrowserPress, openElsewhere, pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
@@ -256,16 +256,17 @@ function cellTitle(column: ColumnDef, entry: PresentedRow): string | undefined {
   return cellFull(column, entry.row)
 }
 
-const head = ref<HTMLElement | null>(null)
-
 /**
- * The headings move sideways with the rows. They sit outside the box that
- * scrolls, so a table wider than the shell would otherwise leave them over
- * the columns they started over.
+ * How many columns the grid lays out: the declared ones and the two the shell
+ * adds ahead of them. The head and every row are subgrids of the table, so
+ * they share its tracks, and these are those tracks.
  */
-function followBody(event: Event) {
-  if (head.value) head.value.scrollLeft = (event.target as HTMLElement).scrollLeft
-}
+const tracks = computed(
+  () =>
+    columns.value.length +
+    (shell.selectable.value ? 1 : 0) +
+    (standable.value ? 1 : 0),
+)
 </script>
 
 <template>
@@ -288,11 +289,9 @@ function followBody(event: Event) {
     class="dc-table"
     :data-dc-wrap="wraps ? '' : undefined"
     :data-dc-row-links="shell.rowLinks?.value ? '' : undefined"
+    :style="{ '--dc-table-tracks': tracks }"
   >
-    <thead
-      ref="head"
-      data-dc-stuck
-    >
+    <thead data-dc-stuck>
       <tr>
         <!-- Not a column: the shell declares none, and this is an affordance
              rather than a field of the record — the same tick the other views
@@ -367,10 +366,7 @@ function followBody(event: Event) {
     </thead>
     <!-- The box that scrolls, marked for the results area, which fades and
          resets whichever box that is. -->
-    <tbody
-      data-dc-scroll
-      @scroll="followBody"
-    >
+    <tbody data-dc-scroll>
       <tr
         v-for="entry in rows"
         :key="entry.key"
@@ -476,62 +472,68 @@ function followBody(event: Event) {
  * Outside the box that scrolls rather than stuck to the top of it, so the
  * scrollbar runs beside the rows alone.
  *
- * The table fills the results area as a column of two blocks, the head and
- * the body, and the body is what scrolls.
+ * The table is a grid of two rows, the head and the body, and the body is what
+ * scrolls. Each is a subgrid of the table's columns, and so is every row in
+ * them: one set of tracks, laid out from every cell in the head and the body,
+ * so a column is as wide in the head as in every row.
+ *
+ * As wide as its columns need and no wider. Each column takes the width its
+ * widest value asks for, or the one it declares, and the table is the sum of
+ * them: a table of two short columns sits at the left under the bar rather than
+ * being pulled across the shell with its second column at the far edge.
+ *
+ * Never wider than the shell, though, since a table that is as wide as its
+ * longest cell is a table that scrolls sideways: one long name or one long path
+ * and every other column is pushed off the right edge, where the state and the
+ * date — the two things a row is scanned for — are the first to go. Where the
+ * columns ask for more than there is, those that declare a width keep it, as do
+ * those whose values cannot be cut short, and the rest share what is left —
+ * evenly, each up to what it asked for, so a short value keeps the whole of its
+ * width and the longest give way. What no longer fits is truncated with the
+ * whole of it on hover.
  */
 .dc-table {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--dc-table-tracks), minmax(auto, max-content));
+  grid-template-rows: auto minmax(0, 1fr);
+  width: fit-content;
+  max-width: 100%;
   height: 100%;
-  /* Separate rather than collapsed, with no gap: every cell draws only its
-     bottom edge, and a collapsed one would belong to the row's table rather
-     than to the cell. Both are inherited by each row's own table. */
-  border-collapse: separate;
-  border-spacing: 0;
+  /* Sideways, head and rows together, if the widths the columns declare come
+     to more than the shell has — which `hideBelow` is there to prevent. */
+  overflow-x: auto;
+  overflow-y: hidden;
   font-size: var(--dc-text-body);
 }
 
 .dc-table thead,
+.dc-table tbody,
+.dc-table tr {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.dc-table thead,
 .dc-table tbody {
-  display: block;
-  /* The body's scrollbar takes its width from the rows whatever kind it is,
-     and the head gives up the same strip, so its columns stay over theirs. */
+  /* The body's scrollbar takes its width from the last column whatever kind it
+     is, and the head gives up the same strip, so its columns stay over theirs. */
   scrollbar-gutter: stable;
 }
 
-/* Sideways too, if the rows are wider than the shell — see `followBody`. The
-   head is laid on the ground rather than on nothing, since `--dc-bg-1` is a
+/* The head is laid on the ground rather than on nothing, since `--dc-bg-1` is a
    veil under the plain themes. */
 .dc-table thead {
-  flex: none;
   overflow: hidden;
   background: linear-gradient(var(--dc-bg-1), var(--dc-bg-1)) var(--dc-ground);
 }
 
+/* Rows at the top of the body however few, rather than stretched to fill it. */
 .dc-table tbody {
-  flex: 1;
+  align-content: start;
   min-height: 0;
-  overflow: auto;
-}
-
-/*
- * A block does not lay out columns, so each row is a table of its own, laid
- * out from its own cells — the same widths in the head and in every row, so
- * the same columns.
- *
- * Fixed layout, because a table that lays itself out by its content is a table
- * that scrolls sideways: one long name or one long path and every other column
- * is pushed off the right edge, where the state and the date — the two things a
- * row is scanned for — are the first to go. Fixed hands each column the width
- * declared for it and lets the ones that declare none share the rest, so the
- * table is exactly as wide as the shell however long a value gets. What no
- * longer fits is truncated with the whole of it on hover.
- */
-.dc-table tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .dc-table th {
@@ -546,6 +548,13 @@ function followBody(event: Event) {
   text-transform: var(--dc-caps);
   letter-spacing: var(--dc-tracking-caps);
   white-space: nowrap;
+}
+
+/* Grid items rather than table cells, so the middle of the row is asked for:
+   a line of text beside a picture sits level with the picture's middle. */
+.dc-table th,
+.dc-table td {
+  align-content: center;
 }
 
 .dc-table td {
@@ -571,8 +580,7 @@ function followBody(event: Event) {
   cursor: pointer;
 }
 
-/* Held to the tick's own width, since `table-layout: fixed` shares out only
-   what the columns did not claim: the gutter, the box, and the room after it. */
+/* Held to the tick's own width: the gutter, the box, and the room after it. */
 .dc-table th.dc-table__pick,
 .dc-table td.dc-table__pick {
   width: calc(var(--dc-gutter) + 24px);
@@ -719,10 +727,11 @@ function followBody(event: Event) {
 
 /*
  * Columns leave in order of what a narrow table can do without, each at the
- * width its `hideBelow` names.
+ * width its `hideBelow` names. Its track stays, empty and so no width at all,
+ * since the cells after it move up a track in the head and in every row alike.
  *
- * Fixed layout keeps the declared widths whatever the shell's width is, so past
- * a point they are most of it and the name and the path are slivers. In the
+ * A column keeps the width it declares whatever the shell's width is, so past
+ * a point those are most of it and the name and the path are slivers. In the
  * default set the metrics go first — the list view drops them at the same size
  * — then the type, which the query itself usually says, then the date. The
  * name, the path and the state are what is left, and they are what a row is

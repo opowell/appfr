@@ -12,11 +12,10 @@
  * `--dc-table-lines` lines there before it is cut short.
  *
  * Three rules because three things have to give. The `td` stops holding its
- * contents to one line, but cannot be the box that counts them — an element
- * that is not `display: table-cell` is not a cell, and the column would come
- * apart. So the box is whichever of the two things a value can be inside it,
- * and each has to give up the `nowrap` it wears as a `.dc-truncate` of its
- * own. The ellipsis then comes from the clamp rather than from
+ * contents to one line, but is left a plain grid item — the thing its column
+ * is sized from — rather than made the box that counts them. So the box is
+ * whichever of the two things a value can be inside it, and each has to give
+ * up the `nowrap` it wears as a `.dc-truncate` of its own. The ellipsis then comes from the clamp rather than from
  * `text-overflow`, which is why it lands after a whole word rather than
  * part-way through one.
  *

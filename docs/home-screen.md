@@ -27,6 +27,10 @@ few records.
   (`Links 0`), for the type a record's screen must lead to even when empty.
   `true` keeps it everywhere; a list of entity keys (`['items']`) only on the
   screen of one record of those types.
+- A type that says `nested`, whose records belong to records of other types
+  (a search's settings, an item's links), gets no card on home while nothing
+  narrows it. It is drawn on the screen of a record it belongs to and under a
+  query, and its list is still a pick of the type away.
 - A type's `description` is a line under its name, and its `note` a few words
   beside its count (`Results 180 · 42 unread`), for a second number the host
   keeps about the type.

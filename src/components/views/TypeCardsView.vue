@@ -104,10 +104,15 @@ const keeps = (entity: EntitySchema): boolean => {
   return Array.isArray(keepsCard) ? keepsCard.some((key) => screenOf.value.has(key)) : Boolean(keepsCard)
 }
 
+/**
+ * A type whose records belong to another's stays off the home screen until
+ * something narrows it — see `nested`.
+ */
 const previews = computed(() =>
   found.value.filter(
     (preview) =>
       !preview.pinned &&
+      (narrowed.value || !preview.entity.nested) &&
       (preview.total > 0 ||
         keeps(preview.entity) ||
         (!headsOnly.value && preview.entity.create)),

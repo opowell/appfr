@@ -459,6 +459,33 @@ describe('DataShell — a type that keeps its card', () => {
   })
 })
 
+describe('DataShell — a nested type', () => {
+  const nested: DomainSchema = {
+    ...schema,
+    entities: [entity('tests', { scope: 'test' }), entity('urls', { nested: true })],
+  }
+  /** One of each, whatever is asked. */
+  const both: DataSource = {
+    query(request: QueryRequest) {
+      const rows = request.entity?.key === 'urls' ? [row('urls', 'u')] : [row('tests', 'a.spec')]
+      return { rows, total: rows.length, unfiltered: false }
+    },
+  }
+  const names = (w: VueWrapper) => w.findAll('.dc-type__name').map((name) => name.text())
+
+  it('has no card on the home screen', async () => {
+    const w = shell(createMemoryAdapter('?v=cards'), { schema: nested, source: both, previewsPerType: 0 })
+    await flushPromises()
+    expect(names(w)).toEqual(['Tests'])
+  })
+
+  it('has its card where a query narrows the cards', async () => {
+    const w = shell(createMemoryAdapter('?v=cards&q=zzz'), { schema: nested, source: both, previewsPerType: 0 })
+    await flushPromises()
+    expect(names(w)).toEqual(['Tests', 'Urls'])
+  })
+})
+
 describe('DataShell — views as a function', () => {
   const views = vi.fn(({ entity, records }: ViewsContext) =>
     entity ? ['table' as const] : records.length ? ['cards' as const] : ['table' as const, 'cards' as const],

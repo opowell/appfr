@@ -11,7 +11,7 @@ how to sort and display the results. The results area shows the items that match
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ Search…                                           ‹ 1 / 2 ›  │  ← query bar
+│ Filter…                                           ‹ 1 / 2 ›  │  ← query bar
 ├──────────────────────────────────────────────────────────────┤
 │ [Reports · 12 ▾] [List ▾]                     [+ New report] │  ← display and action bar
 ├──────────────────────────────────────────────────────────────┤

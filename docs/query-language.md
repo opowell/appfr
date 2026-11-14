@@ -53,7 +53,7 @@ The bar shows each term of the expression, facets included, as a part.
 Pressing a part lifts it.
 
 ```
-[year ≥ 1988] [release] or [recall] Search…
+[year ≥ 1988] [release] or [recall] Filter…
  ^ press: that constraint is gone
 ```
 

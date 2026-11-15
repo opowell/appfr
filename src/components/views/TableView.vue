@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ColumnDef, PressOptions, ShellRow } from '../../types'
+import type { ColumnDef, EntitySchema, PressOptions, ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
-import { hasTextSelection, isBrowserPress, openElsewhere, pressOptions, scopeTerm, termStanding, withStanding } from '../../query/drill'
+import { hasTextSelection, isBrowserPress, openElsewhere, pressOptions, standingTerm, termStanding, withStanding } from '../../query/drill'
 import type { TermStanding } from '../../query/drill'
 import { useColumns } from '../../composables/useColumns'
 import { pressPreviewOn, recordPressPreview } from '../../composables/usePressPreview'
@@ -121,14 +121,13 @@ const marked = computed<ColumnDef | undefined>(() => {
  */
 
 /** Whether any row on this table could be named by the query. */
-const standable = computed(() =>
-  shell.entity.value
-    ? Boolean(shell.entity.value.scope)
-    : shell.entities.value.some((entity) => entity.scope),
-)
+const standable = computed(() => {
+  const stands = (entity: EntitySchema) => Boolean(entity.scope) && entity.standing !== false
+  return shell.entity.value ? stands(shell.entity.value) : shell.entities.value.some(stands)
+})
 
 /** The term naming a row, or null for a row of a type that declares no scope. */
-const termOf = (entry: PresentedRow) => scopeTerm(entry.entity, entry.row)
+const termOf = (entry: PresentedRow) => standingTerm(entry.entity, entry.row)
 
 const standingOf = (entry: PresentedRow) => termStanding(shell.query.value.expr, termOf(entry))
 

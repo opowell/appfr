@@ -8,7 +8,8 @@ import type { PresentedRow } from '../../composables/usePresentedRows';
  * has been told about is a feature nobody finds. And it says where the query
  * stands as it does, the lit sign being the mark a row the query names wears.
  *
- * Nothing for a row of a type that declares no scope: no term can name it.
+ * Nothing for a row of a type that declares no scope, as no term can name
+ * it, or that says `standing: false`.
  */
 type __VLS_Props = {
     entry: PresentedRow;

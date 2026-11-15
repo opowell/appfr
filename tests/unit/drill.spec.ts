@@ -10,6 +10,7 @@ import {
   scopedEntity,
   scopeTerm,
   scopeTermFor,
+  standingTerm,
   termStanding,
   withStanding,
   withoutOwnScope,
@@ -87,6 +88,14 @@ describe('recordTerm', () => {
 
   it('is null where the entity declares no scope', () => {
     expect(recordTerm(inventories, 'inventories_10007')).toBeNull()
+  })
+})
+
+describe('standingTerm', () => {
+  it('is scopeTerm, but null for a type that says standing: false', () => {
+    expect(standingTerm(categories, row())).toBe(scopeTerm(categories, row()))
+    expect(standingTerm({ ...categories, standing: false }, row())).toBeNull()
+    expect(standingTerm(null, row())).toBeNull()
   })
 })
 

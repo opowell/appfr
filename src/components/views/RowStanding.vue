@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useShellContext } from '../../composables/context'
-import { scopeTerm, termStanding, withStanding } from '../../query/drill'
+import { standingTerm, termStanding, withStanding } from '../../query/drill'
 import type { TermStanding } from '../../query/drill'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import StandingControl from './StandingControl.vue'
@@ -15,13 +15,14 @@ import StandingControl from './StandingControl.vue'
  * has been told about is a feature nobody finds. And it says where the query
  * stands as it does, the lit sign being the mark a row the query names wears.
  *
- * Nothing for a row of a type that declares no scope: no term can name it.
+ * Nothing for a row of a type that declares no scope, as no term can name
+ * it, or that says `standing: false`.
  */
 const props = defineProps<{ entry: PresentedRow }>()
 
 const shell = useShellContext()
 
-const term = computed(() => scopeTerm(props.entry.entity, props.entry.row))
+const term = computed(() => standingTerm(props.entry.entity, props.entry.row))
 
 const standing = computed(() => termStanding(shell.query.value.expr, term.value))
 

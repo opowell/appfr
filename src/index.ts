@@ -189,6 +189,7 @@ export {
   scopedEntity,
   scopeTerm,
   scopeTermFor,
+  standingTerm,
   termStanding,
   withoutOwnScope,
   withStanding,

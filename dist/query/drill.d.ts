@@ -26,6 +26,11 @@ import type { DomainSchema, EntitySchema, NarrowedRecord, PressOptions, ShellRow
  */
 export declare function scopeTerm(entity: EntitySchema | null | undefined, row: ShellRow): string | null;
 /**
+ * The term a row's `+ · −` sets, or null where its type wears none: one that
+ * declares no scope, or says `standing: false`.
+ */
+export declare function standingTerm(entity: EntitySchema | null | undefined, row: ShellRow): string | null;
+/**
  * The same term for a record named by its id alone — what reading one back
  * *out* of a query has, where a drill had the whole row in hand.
  */

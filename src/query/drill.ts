@@ -34,6 +34,14 @@ export function scopeTerm(entity: EntitySchema | null | undefined, row: ShellRow
 }
 
 /**
+ * The term a row's `+ · −` sets, or null where its type wears none: one that
+ * declares no scope, or says `standing: false`.
+ */
+export function standingTerm(entity: EntitySchema | null | undefined, row: ShellRow): string | null {
+  return entity?.standing === false ? null : scopeTerm(entity, row)
+}
+
+/**
  * The same term for a record named by its id alone — what reading one back
  * *out* of a query has, where a drill had the whole row in hand.
  */

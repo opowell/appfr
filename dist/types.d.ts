@@ -522,6 +522,16 @@ export interface EntitySchema {
      */
     keepsScope?: boolean;
     /**
+     * Whether this type's rows wear the `+ · −` control that says where the
+     * query stands on each record and sets it.
+     *
+     * Unset, every type with a {@link scope} does. Set it `false` where leaving
+     * a record in or out of the query means nothing to a reader — a settings
+     * list, say, whose records are only ever opened — and the rows keep their
+     * press and their `→` without the column of signs beside them.
+     */
+    standing?: boolean;
+    /**
      * Whether a press on a record of this type narrows to it alone.
      *
      * Unset, a press adds the record to the query, which keeps everything it

@@ -8,18 +8,34 @@ export declare const DEFAULT_VIEW: ViewKind;
 /** Table: what one type's records, every row of them the same columns, are drawn as. */
 export declare const DEFAULT_ENTITY_VIEW: ViewKind;
 /**
+ * Whether an expression over the whole corpus is a search of it: something
+ * typed, naming no record. A positive term on some type's `scope` makes the
+ * screen one about that record, which leads with its cards, so it is not one
+ * {@link ShellQueryDefaults.searchView} takes over. Without a schema there is
+ * no telling which fields are scopes, and any expression is a search.
+ */
+export declare function searchesCorpus(expr: string, schema?: DomainSchema | null): boolean;
+/**
  * The view a query leaves unsaid — so the one its URL omits — which depends on
  * whether it names a type: {@link DEFAULT_VIEW} across them, and
  * {@link DEFAULT_ENTITY_VIEW} within one.
  */
-export declare function defaultViewFor(entity: string | null, defaults?: ShellQueryDefaults): ViewKind;
+export declare function defaultViewFor(entity: string | null, defaults?: ShellQueryDefaults, expr?: string, schema?: DomainSchema | null): ViewKind;
 /**
  * The view a change of type lands in. A view left at its default was nobody's
  * choice, so it becomes the default of where the query is going; one somebody
  * chose is theirs, and goes with them — unless the host says a change of type
  * always lands on its default (`viewAcrossTypes: 'default'`).
  */
-export declare function viewAcross(view: ViewKind, from: string | null, to: string | null, defaults?: ShellQueryDefaults): ViewKind;
+export declare function viewAcross(view: ViewKind, from: string | null, to: string | null, defaults?: ShellQueryDefaults, fromExpr?: string, toExpr?: string, schema?: DomainSchema | null): ViewKind;
+/**
+ * The view a change of query lands in when the change does not name one. A
+ * change of type is {@link viewAcross}'s; within a type, a view left at its
+ * default follows the default where that moves — the whole corpus's when its
+ * first term is typed or its last cleared, with a
+ * {@link ShellQueryDefaults.searchView} — and one somebody chose stays.
+ */
+export declare function viewAfter(prev: Pick<ShellQuery, 'entity' | 'view' | 'expr'>, next: Pick<ShellQuery, 'entity' | 'expr'>, defaults?: ShellQueryDefaults, schema?: DomainSchema | null): ViewKind;
 export declare const DEFAULT_SORT = "updated";
 export declare function isViewKind(value: unknown): value is ViewKind;
 /**

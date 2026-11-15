@@ -154,11 +154,14 @@ export function parseQuery(
   const entityKey = entityParam === undefined ? base.entity : decodeValue(entityParam)
   const entity = entityKey === ENTITY_ALL ? null : findEntityByAddress(schema, entityKey)
 
+  const exprParam = params.get(PARAM_EXPR)
+  const expr = exprParam === undefined ? '' : expandShortcuts(decodeValue(exprParam), entity, schema)
+
   const viewParam = params.get(PARAM_VIEW)
   const view =
     viewParam && isViewKind(decodeValue(viewParam))
       ? decodeValue(viewParam)
-      : defaultViewFor(entity?.key ?? null, defaults)
+      : defaultViewFor(entity?.key ?? null, defaults, expr, schema)
 
   const sortParam = params.get(PARAM_SORT)
   const sort = findSort(
@@ -169,8 +172,6 @@ export function parseQuery(
 
   const dirParam = params.get(PARAM_DIR)
   const dir = dirParam ? (decodeValue(dirParam) === 'asc' ? 'asc' : 'desc') : base.dir
-
-  const exprParam = params.get(PARAM_EXPR)
 
   // A page below the first, a fraction, or a word is a page nobody can be on,
   // so it reads as the first one. How far past the end a page is depends on a
@@ -184,7 +185,7 @@ export function parseQuery(
     view: view as ShellQuery['view'],
     sort: sort.key,
     dir,
-    expr: exprParam === undefined ? '' : expandShortcuts(decodeValue(exprParam), entity, schema),
+    expr,
     page,
   }
 }
@@ -213,7 +214,7 @@ export function serializeQuery(
     // of the parameter — which is what keeps the home screen's URL empty.
     put(PARAM_ENTITY, entity ? entityAddress(entity, schema) : ENTITY_ALL)
   }
-  if (query.view !== defaultViewFor(entityKey, defaults)) put(PARAM_VIEW, query.view)
+  if (query.view !== defaultViewFor(entityKey, defaults, query.expr, schema)) put(PARAM_VIEW, query.view)
   if (query.sort !== base.sort) {
     const sorts = sortsFor(entity, schema)
     const sort = sorts.find((candidate) => candidate.key === query.sort)

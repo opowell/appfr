@@ -773,6 +773,16 @@ export interface ShellQueryDefaults {
    */
   entityView?: ViewKind
   /**
+   * The view a search of the whole corpus — no type picked, an expression
+   * typed — opens in when the URL names none. {@link ShellQueryDefaults.view}
+   * unless set. The home screen's cards are a card per type, which is what an
+   * empty query is for; once something is searched for, a host can show the
+   * records that matched instead, a table of every type's rows. Typing the
+   * first term or clearing the last moves a view left at its default to the
+   * other one, as a change of type does.
+   */
+  searchView?: ViewKind
+  /**
    * The view a change of type lands in. `'chosen'` (the default) carries a
    * view somebody picked across the change, and moves only one left at its
    * default; `'default'` always lands on the default of where the query is

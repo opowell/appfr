@@ -61,7 +61,7 @@ export type { PopoverAnchorRect, PopoverPlacement, PopoverPlacementOptions, } fr
 export type { Toast, ToastKind, ToastsState } from './composables/useToasts';
 export { ENTITY_ALL, entityAddress, findEntityByAddress, PARAM_DIR, PARAM_ENTITY, PARAM_EXPR, PARAM_PAGE, PARAM_SORT, PARAM_VIEW, parseQuery, readExpression, searchFromQuery, serializeQuery, sortAddress, } from './query/codec';
 export type { RouteQuery } from './query/codec';
-export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, DEFAULT_ENTITY_VIEW, defaultViewFor, viewAcross, defaultQuery, emptyFacetValue, entityCount, findEntity, findSort, focusEntity, isEntityScoped, isFacetActive, isPristineQuery, isTypeCardsQuery, isViewKind, resolveView, RESULT_FIELDS, sortsFor, VIEW_ICONS, VIEW_LABELS, } from './query/schema';
+export { changesResults, countPages, DEFAULT_SORT, DEFAULT_VIEW, DEFAULT_ENTITY_VIEW, defaultViewFor, viewAcross, viewAfter, searchesCorpus, defaultQuery, emptyFacetValue, entityCount, findEntity, findSort, focusEntity, isEntityScoped, isFacetActive, isPristineQuery, isTypeCardsQuery, isViewKind, resolveView, RESULT_FIELDS, sortsFor, VIEW_ICONS, VIEW_LABELS, } from './query/schema';
 export { facetField, facetValue, hasActiveFacets, withFacetValue, withoutFacet, } from './query/facetTerms';
 export { cellFull, cellText, cellTextOf, cellValue, columnAlign, columnClass, columnKey, columnsFor, columnTruncates, defaultCellText, EMPTY_CELL, roleColumn, roleColumns, rowKey, } from './query/columns';
 export { bytesCell, dateColumn, durationCell, elapsedCell, entityColumn, facetColumn, flagColumn, identityColumn, metricColumn, ordinalColumn, percentCell, pictureColumn, referenceColumn, stateColumn, tintColumn, } from './query/presets';

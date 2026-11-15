@@ -133,6 +133,46 @@ describe('useQueryState — the entity filter', () => {
     expect(home.state.query.value.view).toBe('table')
   })
 
+  it('opens a search of the whole corpus in the host\'s search view', () => {
+    const defaults = { viewAcrossTypes: 'default' as const, searchView: 'table' as const }
+    const searched = setup('?q=2pac', { defaults })
+    expect(searched.state.query.value.view).toBe('table')
+    expect(searched.state.query.value.entity).toBeNull()
+
+    // The first term typed leaves the type cards for it, the last one cleared returns.
+    const home = setup('', { defaults })
+    expect(home.state.query.value.view).toBe('cards')
+    home.state.setExpression('2pac')
+    expect(home.adapter.search.value).toBe('?q=2pac')
+    expect(home.state.query.value.view).toBe('table')
+    home.state.setExpression('')
+    expect(home.adapter.search.value).toBe('')
+    expect(home.state.query.value.view).toBe('cards')
+
+    // A view somebody chose stays when the search changes.
+    const chosen = setup('?v=list', { defaults })
+    chosen.state.setExpression('2pac')
+    expect(chosen.adapter.search.value).toBe('?v=list&q=2pac')
+
+    // Leaving a type for everything while searching lands on the search view.
+    const typed = setup('?e=items&q=2pac', { defaults })
+    typed.state.setEntity(null)
+    expect(typed.adapter.search.value).toBe('?q=2pac')
+    expect(typed.state.query.value.view).toBe('table')
+  })
+
+  it('leaves a screen about a record on its cards', () => {
+    const defaults = { searchView: 'table' as const }
+    const record = setup('?q=set="sets_10007"', { schema: legoSchema, defaults })
+    expect(record.state.query.value.view).toBe('cards')
+    const searched = setup('?q=red', { schema: legoSchema, defaults })
+    expect(searched.state.query.value.view).toBe('table')
+    // Naming the record turns the search into its screen, its view left at the default.
+    searched.state.setExpression('set="sets_10007"')
+    expect(searched.adapter.search.value).not.toContain('v=')
+    expect(searched.state.query.value.view).toBe('cards')
+  })
+
   it('opens a metric drill from the home screen as a table of what it counts', () => {
     const { state, adapter } = setup('')
     state.narrow('search:"s1"', 'items')

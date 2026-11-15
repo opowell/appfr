@@ -11,6 +11,7 @@ import type {
 } from '../types'
 import { VIEW_KINDS } from '../types'
 import { formatCount } from '../data/format'
+import { parseExpression } from '../data/expression'
 
 /**
  * Cards. On the home screen — where no entity is filtered to — that means a
@@ -23,13 +24,39 @@ export const DEFAULT_VIEW: ViewKind = 'cards'
 export const DEFAULT_ENTITY_VIEW: ViewKind = 'table'
 
 /**
+ * Whether an expression over the whole corpus is a search of it: something
+ * typed, naming no record. A positive term on some type's `scope` makes the
+ * screen one about that record, which leads with its cards, so it is not one
+ * {@link ShellQueryDefaults.searchView} takes over. Without a schema there is
+ * no telling which fields are scopes, and any expression is a search.
+ */
+export function searchesCorpus(expr: string, schema: DomainSchema | null = null): boolean {
+  if (expr.trim() === '') return false
+  if (!schema) return true
+  const scopes = new Set(
+    schema.entities.flatMap((entity) => (entity.scope ? [entity.scope.toLowerCase()] : [])),
+  )
+  return !parseExpression(expr)
+    .flat()
+    .some((term) => term.kind === 'field' && !term.negated && scopes.has(term.field.toLowerCase()) && term.value !== '')
+}
+
+/**
  * The view a query leaves unsaid — so the one its URL omits — which depends on
  * whether it names a type: {@link DEFAULT_VIEW} across them, and
  * {@link DEFAULT_ENTITY_VIEW} within one.
  */
-export function defaultViewFor(entity: string | null, defaults: ShellQueryDefaults = {}): ViewKind {
+export function defaultViewFor(
+  entity: string | null,
+  defaults: ShellQueryDefaults = {},
+  expr = '',
+  schema: DomainSchema | null = null,
+): ViewKind {
   const asked = (view: ViewKind | undefined) => (view && isViewKind(view) ? view : undefined)
-  if (entity === null) return asked(defaults.view) ?? DEFAULT_VIEW
+  if (entity === null) {
+    const searched = searchesCorpus(expr, schema) ? asked(defaults.searchView) : undefined
+    return searched ?? asked(defaults.view) ?? DEFAULT_VIEW
+  }
   // A host landing on a type has always named the view it lands in as `view`.
   const landing = defaults.landing === 'entity' ? asked(defaults.view) : undefined
   return asked(defaults.entityView) ?? landing ?? DEFAULT_ENTITY_VIEW
@@ -46,9 +73,32 @@ export function viewAcross(
   from: string | null,
   to: string | null,
   defaults: ShellQueryDefaults = {},
+  fromExpr = '',
+  toExpr = fromExpr,
+  schema: DomainSchema | null = null,
 ): ViewKind {
-  const carried = defaults.viewAcrossTypes !== 'default' && view !== defaultViewFor(from, defaults)
-  return carried ? view : defaultViewFor(to, defaults)
+  const carried = defaults.viewAcrossTypes !== 'default' && view !== defaultViewFor(from, defaults, fromExpr, schema)
+  return carried ? view : defaultViewFor(to, defaults, toExpr, schema)
+}
+
+/**
+ * The view a change of query lands in when the change does not name one. A
+ * change of type is {@link viewAcross}'s; within a type, a view left at its
+ * default follows the default where that moves — the whole corpus's when its
+ * first term is typed or its last cleared, with a
+ * {@link ShellQueryDefaults.searchView} — and one somebody chose stays.
+ */
+export function viewAfter(
+  prev: Pick<ShellQuery, 'entity' | 'view' | 'expr'>,
+  next: Pick<ShellQuery, 'entity' | 'expr'>,
+  defaults: ShellQueryDefaults = {},
+  schema: DomainSchema | null = null,
+): ViewKind {
+  if (prev.entity !== next.entity) {
+    return viewAcross(prev.view, prev.entity, next.entity, defaults, prev.expr, next.expr, schema)
+  }
+  const was = defaultViewFor(prev.entity, defaults, prev.expr, schema)
+  return prev.view === was ? defaultViewFor(next.entity, defaults, next.expr, schema) : prev.view
 }
 export const DEFAULT_SORT = 'updated'
 

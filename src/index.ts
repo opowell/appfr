@@ -113,6 +113,8 @@ export {
   DEFAULT_ENTITY_VIEW,
   defaultViewFor,
   viewAcross,
+  viewAfter,
+  searchesCorpus,
   defaultQuery,
   emptyFacetValue,
   entityCount,

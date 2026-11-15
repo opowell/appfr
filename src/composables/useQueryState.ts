@@ -19,7 +19,7 @@ import {
   focusEntity,
   isPristineQuery,
   sortsFor,
-  viewAcross,
+  viewAfter,
 } from '../query/schema'
 import { facetValue, hasActiveFacets, withFacetValue } from '../query/facetTerms'
 import type { SummaryTerm } from '../query/summary'
@@ -169,9 +169,19 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
    * different result set makes the position meaningless. A patch that names a
    * page is saying where to go, so it is left alone.
    */
-  const commit = (patch: Partial<ShellQuery>, mode: NavigationMode): boolean => {
+  const commit = (patch: Partial<ShellQuery>, mode: NavigationMode): boolean => navigate(settle(patch), mode)
+
+  /**
+   * The query a patch makes of this one: the first page whenever what matched
+   * changes, and — unless the patch names a view — the view {@link viewAfter}
+   * lands in, so a change of type, or the first term typed into the whole
+   * corpus, goes to its default view.
+   */
+  const settle = (patch: Partial<ShellQuery>): ShellQuery => {
     const page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
-    return navigate({ ...query.value, ...patch, page }, mode)
+    const next = { ...query.value, ...patch, page }
+    if (patch.view === undefined) next.view = viewAfter(query.value, next, defaults.value, schema.value)
+    return next
   }
 
   /**
@@ -179,10 +189,7 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
    * press can be a real link, and the browser's ways of opening one elsewhere
    * work on it unchanged.
    */
-  const linkTo = (patch: Partial<ShellQuery>): string => {
-    const page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
-    return linkToQuery({ ...query.value, ...patch, page })
-  }
+  const linkTo = (patch: Partial<ShellQuery>): string => linkToQuery(settle(patch))
 
   const linkToQuery = (next: ShellQuery): string => {
     const search = serializeQuery(next, schema.value, defaults.value, adapter.search.value)
@@ -210,9 +217,10 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
   const entityPatch = (key: string | null): Partial<ShellQuery> => {
     const next = key === null ? null : findEntity(schema.value, key)
     if ((next?.key ?? null) === query.value.entity) return {}
+    // The view it lands in is settled with the rest of the change, which
+    // knows the expression it goes with.
     return {
       entity: next?.key ?? null,
-      view: viewAcross(query.value.view, query.value.entity, next?.key ?? null, defaults.value),
       sort: findSort(next, query.value.sort, schema.value).key,
     }
   }
@@ -303,16 +311,8 @@ export function useQueryState(options: UseQueryStateOptions): QueryState {
       navigate(defaultQuery(schema.value, defaults.value), primaryMode())
     },
     homeHref: () => linkToQuery(defaultQuery(schema.value, defaults.value)),
-    hrefFor(patch) {
-      const next = { ...query.value, ...patch }
-      // A link to another type lands in the view choosing that type would.
-      if ('entity' in patch && !('view' in patch)) {
-        next.view = viewAcross(query.value.view, query.value.entity, next.entity, defaults.value)
-      }
-      // The same rule the mutations follow, so a link built for a change goes
-      // exactly where clicking through to that change would have gone.
-      next.page = patch.page ?? (changesResults(patch) ? 1 : query.value.page)
-      return linkToQuery(next)
-    },
+    // The same rule the mutations follow, so a link built for a change goes
+    // exactly where clicking through to that change would have gone.
+    hrefFor: (patch) => linkTo(patch),
   }
 }

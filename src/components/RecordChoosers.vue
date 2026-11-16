@@ -7,6 +7,7 @@ import { useEntityCounts } from '../composables/useEntityCounts'
 import { formatCount } from '../data/format'
 import { VIEW_ICONS, VIEW_LABELS, entityCount, resolveView } from '../query/schema'
 import PickControl from './PickControl.vue'
+import PressLink from './views/PressLink.vue'
 
 /**
  * Which type the results are, and how they are drawn: the two choices about
@@ -18,7 +19,14 @@ const props = defineProps<{
   views?: ViewKind[]
   /** Where the list of types is a control on the bar — see `showTypes`. */
   typeChooser?: 'scoped' | 'always'
+  /**
+   * Drawn in a side panel rather than on a bar: one under the other, and the
+   * views as a row of every one on offer rather than a list that opens.
+   */
+  stacked?: boolean
 }>()
+
+const showAsId = `dc-show-as-${Math.random().toString(36).slice(2, 8)}`
 
 const shell = useShellContext()
 
@@ -145,6 +153,7 @@ function chooseView(key: string): void {
   <div
     v-if="showTypes || showViews"
     class="dc-choosers"
+    :class="{ 'dc-choosers--stacked': stacked }"
   >
     <!-- Which type, while one is filtered to, with `Everything` in the list
          beside the types so widening back out stays one press. -->
@@ -159,9 +168,38 @@ function chooseView(key: string): void {
       @update:model-value="chooseEntity"
     />
 
-    <!-- And how they are drawn, wherever the host offers more than one way. -->
+    <!-- And how they are drawn, wherever the host offers more than one way:
+         in a side panel every way at once, as a row of links, the one in
+         force pressed in. -->
+    <div
+      v-if="showViews && stacked"
+      class="dc-show-as"
+    >
+      <span
+        :id="showAsId"
+        class="dc-show-as__label"
+      >Show as</span>
+      <div
+        class="dc-show-as__group"
+        :style="{ '--dc-views': viewOptions.length }"
+        role="group"
+        :aria-labelledby="showAsId"
+      >
+        <PressLink
+          v-for="option in viewOptions"
+          :key="option.key"
+          class="dc-show-as__option"
+          :class="{ 'dc-show-as__option--on': option.key === view }"
+          :aria-current="option.key === view ? 'true' : undefined"
+          :href="shell.hrefFor({ view: option.key })"
+          @press="chooseView(option.key)"
+        >
+          {{ option.label }}
+        </PressLink>
+      </div>
+    </div>
     <PickControl
-      v-if="showViews"
+      v-else-if="showViews"
       class="dc-actions__pick dc-actions__view"
       label="View"
       :model-value="view"
@@ -177,6 +215,68 @@ function chooseView(key: string): void {
   align-items: center;
   gap: 6px;
   flex: 0 0 auto;
+}
+
+/* In a side panel, one under the other, as wide as the panel. */
+.dc-choosers--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+/* The type a list of, as wide as it says. */
+.dc-choosers--stacked > .dc-actions__type {
+  align-self: flex-start;
+}
+
+.dc-show-as {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dc-show-as__label {
+  color: var(--dc-fg-2);
+  font-size: var(--dc-text-meta);
+}
+
+/* The one in force raised out of the groove they sit in. */
+/* Every view at once, four to a row where there are more. */
+.dc-show-as__group {
+  display: grid;
+  grid-template-columns: repeat(min(4, var(--dc-views, 4)), minmax(0, 1fr));
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--dc-radius);
+  background: var(--dc-bg-3);
+}
+
+.dc-show-as__option {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: var(--dc-control-height);
+  padding: 0 6px;
+  overflow: hidden;
+  border-radius: var(--dc-radius-sm);
+  color: var(--dc-fg-2);
+  font-size: var(--dc-text-meta);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-show-as__option:hover {
+  color: var(--dc-fg-0);
+}
+
+.dc-show-as__option--on {
+  background: var(--dc-bg-0);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.14);
+  color: var(--dc-fg-0);
+  font-weight: 500;
 }
 
 /* At the type size of the query's parts, sitting beside them. */

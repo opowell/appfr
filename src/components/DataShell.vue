@@ -187,6 +187,18 @@ const props = withDefaults(
      * query. `false` always stacks them.
      */
     oneStripFrom?: number | false
+    /**
+     * Where what is chosen about the records is set. `bar`, the default, is
+     * the bar over them: the name, the type and view, the query, then the
+     * strip of sort, ticks and pager. `panel` puts all of it in a column at
+     * the right, beside the records, which then have the whole height: the
+     * host's `panel-head` first (its way home, back and on), the query, the
+     * type and the views (every view on offer at once), the host's `panel`
+     * (what it says about the record or search in view), and last the sort,
+     * the operations and the pager. On a narrow screen the column goes above
+     * the records.
+     */
+    layout?: 'bar' | 'panel'
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string
     /**
@@ -287,6 +299,7 @@ const props = withDefaults(
     typeChooser: 'scoped',
     selectionPlacement: 'start',
     oneStripFrom: 1200,
+    layout: 'bar',
     theme: 'minimal',
     navigationMode: 'push',
     facetNavigationMode: 'replace',
@@ -339,6 +352,17 @@ const selected = defineModel<string[]>('selected', { default: () => [] })
 const slots = defineSlots<{
   /** Extra controls at the right end of the header bar. */
   actions?: () => unknown
+  /**
+   * With `layout: 'panel'`, the panel's first row, over the query: the
+   * host's way home and its other ways about, the bar having no name.
+   */
+  'panel-head'?: () => unknown
+  /**
+   * With `layout: 'panel'`, the host's own part of the panel, after the
+   * query and the views and before the sort and the pager: what it says about
+   * what is in view. Given the query, as `page` is.
+   */
+  panel?: (props: { query: ShellQuery }) => unknown
   /**
    * The domain's mark at the left end of the bar, drawn in place of its name
    * — a logo, an icon. The name stays the bar's accessible text, read out
@@ -954,8 +978,11 @@ onMounted(() => {
 })
 onBeforeUnmount(() => sizing?.disconnect())
 
+/** Whether what is chosen about the records is in a side panel — see `layout`. */
+const panel = computed(() => props.layout === 'panel')
+
 /** Whether the strip over the results sits on the bar's row — see `oneStripFrom`. */
-const oneStrip = computed(() => props.oneStripFrom !== false && width.value >= props.oneStripFrom)
+const oneStrip = computed(() => !panel.value && props.oneStripFrom !== false && width.value >= props.oneStripFrom)
 
 /**
  * Whether a record view in force draws its own sort and pager, and so has no
@@ -983,9 +1010,11 @@ defineExpose({
     class="dc-shell"
     :data-dc-theme="theme"
     :data-dc-value-press="valuePress"
+    :data-dc-layout="layout"
     :style="style"
   >
     <div
+      v-if="!panel"
       class="dc-shell__head"
       :class="{ 'dc-shell__head--one-strip': oneStrip }"
     >
@@ -1029,78 +1058,183 @@ defineExpose({
     </div>
 
 
-    <!-- A page of the host's, under the same bar: not a drawing of the rows,
+    <!-- The records, or the host's page: beside the panel where there is one,
+         and laid out as the shell's own children where there is none. -->
+    <div class="dc-shell__main">
+      <!-- A page of the host's, under the same bar: not a drawing of the rows,
          so none of what acts on them is offered over it. -->
-    <div
-      v-if="slots.page"
-      class="dc-shell__page"
-    >
-      <slot
-        name="page"
-        :query="shell.query.value"
-      />
-    </div>
+      <div
+        v-if="slots.page"
+        class="dc-shell__page"
+      >
+        <slot
+          name="page"
+          :query="shell.query.value"
+        />
+      </div>
 
-    <!-- How the records are ordered and what can be done with them, over the
+      <!-- How the records are ordered and what can be done with them, over the
          records themselves and under the query that found them. It renders
          nothing where there is nothing to choose or do, and stays put while
          the results scroll. -->
-    <RecordActions
-      v-if="!oneStrip && !slots.page && !stripless"
-      v-bind="recordActions"
-    />
+      <RecordActions
+        v-if="!panel && !oneStrip && !slots.page && !stripless"
+        v-bind="recordActions"
+      />
 
-    <slot
-      v-if="!slots.page"
-      name="results"
-      :rows="shell.rows.value"
-      :total="shell.total.value"
-      :offset="shell.offset.value"
-      :page-count="shell.pageCount.value"
-      :query="shell.liveQuery.value"
-      :pending="shell.pending.value"
-      :loading="loading"
-    >
-      <ResultsArea
-        :views="offeredViews"
+      <slot
+        v-if="!slots.page"
+        name="results"
+        :rows="shell.rows.value"
+        :total="shell.total.value"
+        :offset="shell.offset.value"
+        :page-count="shell.pageCount.value"
+        :query="shell.liveQuery.value"
+        :pending="shell.pending.value"
         :loading="loading"
       >
-        <template
-          v-if="slots['cards-before'] || cardedRecords().length"
-          #cards-before
+        <ResultsArea
+          :views="offeredViews"
+          :loading="loading"
         >
-          <!-- The records the query is about, before anything else the host
-               puts among the cards: the screen is about them first. -->
           <template
-            v-for="record in cardedRecords()"
-            :key="`${record.entityKey}:${record.id}`"
+            v-if="slots['cards-before'] || cardedRecords().length"
+            #cards-before
           >
-            <slot
-              v-if="slots.record"
-              :id="record.id"
-              name="record"
-              :entity="record.entity"
-            />
-            <component
-              :is="recordCards?.[record.entityKey]"
-              v-else
-              :id="record.id"
-            />
+            <!-- The records the query is about, before anything else the host
+               puts among the cards: the screen is about them first. -->
+            <template
+              v-for="record in cardedRecords()"
+              :key="`${record.entityKey}:${record.id}`"
+            >
+              <slot
+                v-if="slots.record"
+                :id="record.id"
+                name="record"
+                :entity="record.entity"
+              />
+              <component
+                :is="recordCards?.[record.entityKey]"
+                v-else
+                :id="record.id"
+              />
+            </template>
+            <slot name="cards-before" />
           </template>
-          <slot name="cards-before" />
-        </template>
+          <template
+            v-if="slots['cards-after']"
+            #cards-after
+          >
+            <slot name="cards-after" />
+          </template>
+        </ResultsArea>
+      </slot>
+    </div>
+
+    <!-- Everything chosen about the records, and the host's word on them, in
+         a column beside them. -->
+    <aside
+      v-if="panel"
+      class="dc-shell__panel"
+      aria-label="Panel"
+    >
+      <slot name="panel-head" />
+      <ShellHeader panel>
         <template
-          v-if="slots['cards-after']"
-          #cards-after
+          v-if="slots.actions"
+          #actions
         >
-          <slot name="cards-after" />
+          <slot name="actions" />
         </template>
-      </ResultsArea>
-    </slot>
+      </ShellHeader>
+      <RecordChoosers
+        v-if="!slots.page"
+        :views="offeredViews"
+        :type-chooser="typeChooser"
+        stacked
+      />
+      <slot
+        name="panel"
+        :query="shell.query.value"
+      />
+      <RecordActions
+        v-if="!slots.page && !stripless"
+        class="dc-shell__panel-actions"
+        v-bind="recordActions"
+      />
+    </aside>
   </div>
 </template>
 
 <style scoped>
+/* Without a panel the records are laid out as the shell's own children. */
+.dc-shell__main {
+  display: contents;
+}
+
+/*
+ * With one, the records take the height and the rest of the width, and the
+ * panel its own column at the right, scrolling on its own.
+ */
+.dc-shell[data-dc-layout='panel'] {
+  flex-direction: row;
+}
+
+.dc-shell[data-dc-layout='panel'] > .dc-shell__main {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dc-shell__panel {
+  position: relative;
+  z-index: 30;
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 var(--dc-panel-width, 360px);
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 14px 20px 28px;
+  overflow-y: auto;
+  border-left: 1px solid var(--dc-line);
+  background: var(--dc-bg-1);
+}
+
+.dc-shell__panel > * {
+  flex-shrink: 0;
+}
+
+/* The sort, the ticks, the operations and the pager, wrapping in the column
+   under a rule rather than drawn as a strip. */
+.dc-shell__panel > .dc-shell__panel-actions {
+  flex-wrap: wrap;
+  min-height: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--dc-line);
+  border-bottom: 0;
+  background: none;
+}
+
+/* Too narrow for a column beside the records: over them instead, no taller
+   than half the screen. */
+@media (max-width: 760px) {
+  .dc-shell[data-dc-layout='panel'] {
+    flex-direction: column;
+  }
+
+  .dc-shell__panel {
+    flex: 0 1 auto;
+    order: -1;
+    max-height: 50vh;
+    border-left: 0;
+    border-bottom: 1px solid var(--dc-line);
+  }
+}
+
 /*
  * A host's page takes the room the results would have, and scrolls in it the
  * way they do — the bar staying put above it.

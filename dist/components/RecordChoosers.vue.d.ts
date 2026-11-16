@@ -9,6 +9,11 @@ type __VLS_Props = {
     views?: ViewKind[];
     /** Where the list of types is a control on the bar — see `showTypes`. */
     typeChooser?: 'scoped' | 'always';
+    /**
+     * Drawn in a side panel rather than on a bar: one under the other, and the
+     * views as a row of every one on offer rather than a list that opens.
+     */
+    stacked?: boolean;
 };
 declare const _default: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export default _default;

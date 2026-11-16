@@ -145,6 +145,18 @@ type __VLS_Props = {
      * query. `false` always stacks them.
      */
     oneStripFrom?: number | false;
+    /**
+     * Where what is chosen about the records is set. `bar`, the default, is
+     * the bar over them: the name, the type and view, the query, then the
+     * strip of sort, ticks and pager. `panel` puts all of it in a column at
+     * the right, beside the records, which then have the whole height: the
+     * host's `panel-head` first (its way home, back and on), the query, the
+     * type and the views (every view on offer at once), the host's `panel`
+     * (what it says about the record or search in view), and last the sort,
+     * the operations and the pager. On a narrow screen the column goes above
+     * the records.
+     */
+    layout?: 'bar' | 'panel';
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string;
     /**
@@ -236,6 +248,19 @@ type __VLS_Props = {
 type __VLS_Slots = {
     /** Extra controls at the right end of the header bar. */
     actions?: () => unknown;
+    /**
+     * With `layout: 'panel'`, the panel's first row, over the query: the
+     * host's way home and its other ways about, the bar having no name.
+     */
+    'panel-head'?: () => unknown;
+    /**
+     * With `layout: 'panel'`, the host's own part of the panel, after the
+     * query and the views and before the sort and the pager: what it says about
+     * what is in view. Given the query, as `page` is.
+     */
+    panel?: (props: {
+        query: ShellQuery;
+    }) => unknown;
     /**
      * The domain's mark at the left end of the bar, drawn in place of its name
      * — a logo, an icon. The name stays the bar's accessible text, read out
@@ -363,6 +388,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     theme: ShellTheme;
     selectionPlacement: "start" | "end";
     typeChooser: "scoped" | "always";
+    layout: "bar" | "panel";
     pageQuery: "shell" | "detached";
     listPath: string;
     oneStripFrom: number | false;

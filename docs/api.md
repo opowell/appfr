@@ -12,6 +12,7 @@
 | `previewsPerType` | `number` | `3` | Rows in each home-screen type card. `0` draws headings only (name and count, no `create`), in narrower wrapping columns. |
 | `typeChooser` | `'scoped' \| 'always'` | `'scoped'` | `scoped` offers the type list only once a type is filtered to; `always` offers it on `Everything` too. |
 | `selectionPlacement` | `'start' \| 'end'` | `'start'` | Where the ticked count and Clear sit: leading the strip, or at its end beside the operations. |
+| `layout` | `'bar' \| 'panel'` | `'bar'` | Where the query, type, views, sort and pager are set: the bar over the records, or a side panel at their right (over them on a narrow screen), the views there as a row of every one on offer. |
 | `limit` | `number` | `50` | Rows per page. |
 | `pagesNote` | `string` | — | What the count is short of (`first 1,200 of 30,200 lots`). Shown in the pager's tooltip; keeps the pager up on a single page. See [paging](#paging-through-the-results). |
 | `views` | `ViewKind[] \| ((context: ViewsContext) => ViewKind[])` | all seven | The offered views. A URL naming one not offered renders the first that is. One view hides the View chooser. A function gets `{ entity, records }` — see [cards for the records the query names](records.md#cards-for-the-records-the-query-names). |
@@ -51,6 +52,8 @@
 | Slot | Props | For |
 | --- | --- | --- |
 | `actions` | | extra controls at the right of the bar |
+| `panel-head` | | with `layout: 'panel'`, the panel's first row (the way home, back and on) |
+| `panel` | `query` | with `layout: 'panel'`, the host's word on what is in view, before the sort and pager |
 | `brand` | `label` | a mark in place of the domain's name — see [a mark for the name](#a-mark-for-the-name) |
 | `cards-before` / `cards-after` | | [cards of your own](records.md#cards-of-your-own) around the card-per-type screen |
 | `record` | `entity`, `id` | cards about [each record the query names](records.md#cards-for-the-records-the-query-names) |

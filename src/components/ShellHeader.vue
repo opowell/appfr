@@ -23,6 +23,15 @@ const slots = defineSlots<{
   brand?: (props: { label: string }) => unknown
 }>()
 
+const props = defineProps<{
+  /**
+   * Drawn at the head of a side panel rather than as the bar over the
+   * results: no name (the host's own row over it is the way home), and the
+   * query's parts wrapping onto as many lines as they take.
+   */
+  panel?: boolean
+}>()
+
 const shell = useShellContext()
 
 const domain = computed(() => shell.schema.value)
@@ -471,7 +480,10 @@ onBeforeUnmount(() => watching?.disconnect())
 </script>
 
 <template>
-  <div class="dc-header">
+  <div
+    class="dc-header"
+    :class="{ 'dc-header--panel': props.panel }"
+  >
     <!-- The domain, and the query as it stands: where the query is read and
          edited, and the only place it is. -->
     <div class="dc-header__main">
@@ -479,7 +491,7 @@ onBeforeUnmount(() => watching?.disconnect())
            mark, where it has one, is drawn for the eye and hidden from
            assistive technology, which reads the name it stands for. -->
       <PressLink
-        v-if="domain.label && slots.brand"
+        v-if="!props.panel && domain.label && slots.brand"
         class="dc-header__domain"
         data-dc-brand
         title="Home"
@@ -498,7 +510,7 @@ onBeforeUnmount(() => watching?.disconnect())
         <span class="dc-header__sr">{{ domain.label }}</span>
       </PressLink>
       <PressLink
-        v-else-if="domain.label"
+        v-else-if="!props.panel && domain.label"
         class="dc-header__domain"
         title="Home"
         :href="shell.homeHref()"
@@ -659,6 +671,45 @@ onBeforeUnmount(() => watching?.disconnect())
 </template>
 
 <style scoped>
+/*
+ * In a side panel: no bar of its own, the field as wide as the panel and the
+ * parts wrapping in it rather than scrolling, there being room downwards and
+ * none across. The host's actions, if any, go under it.
+ */
+.dc-header.dc-header--panel {
+  flex-wrap: wrap;
+  height: auto;
+  padding: 0;
+  border-bottom: 0;
+  background: none;
+}
+
+.dc-header--panel .dc-header__main {
+  flex: 1 1 100%;
+  margin-left: 0;
+  padding: 0;
+}
+
+.dc-header--panel .dc-header__field {
+  padding: 3px;
+  border-radius: var(--dc-radius);
+}
+
+.dc-header--panel .dc-header__terms {
+  flex-wrap: wrap;
+  row-gap: 4px;
+  overflow: visible;
+  white-space: normal;
+  mask-image: none;
+}
+
+.dc-header--panel .dc-term {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .dc-header {
   position: relative;
   z-index: 3;

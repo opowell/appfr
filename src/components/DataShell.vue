@@ -43,6 +43,7 @@ import { useDraft } from '../composables/useDraft'
 import ShellHeader from './ShellHeader.vue'
 import RecordActions from './RecordActions.vue'
 import RecordChoosers from './RecordChoosers.vue'
+import ShellTypes from './ShellTypes.vue'
 import ResultsArea from './ResultsArea.vue'
 
 const props = withDefaults(
@@ -199,6 +200,10 @@ const props = withDefaults(
      * the records.
      */
     layout?: 'bar' | 'panel'
+    /** The host's own names for views, over the shell's — `{ grid: 'Tiles' }`. */
+    viewLabels?: Partial<Record<ViewKind, string>>
+    /** With `layout: 'panel'`, a line under each view's name in Show as — `{ cards: 'Like Reddit' }`. */
+    viewHints?: Partial<Record<ViewKind, string>>
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string
     /**
@@ -1151,8 +1156,13 @@ defineExpose({
         v-if="!slots.page"
         :views="offeredViews"
         :type-chooser="typeChooser"
+        :labels="viewLabels"
+        :hints="viewHints"
         stacked
       />
+      <!-- Which types, where the query is about no one record: a record's
+           screen has a card per type of it instead. -->
+      <ShellTypes v-if="!slots.page && records.length === 0" />
       <slot
         name="panel"
         :query="shell.query.value"

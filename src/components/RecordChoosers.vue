@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { EntitySchema, ViewKind } from '../types'
 import { VIEW_KINDS } from '../types'
 import { useShellContext } from '../composables/context'
@@ -7,7 +7,6 @@ import { useEntityCounts } from '../composables/useEntityCounts'
 import { formatCount } from '../data/format'
 import { VIEW_ICONS, VIEW_LABELS, entityCount, resolveView } from '../query/schema'
 import PickControl from './PickControl.vue'
-import PressLink from './views/PressLink.vue'
 
 /**
  * Which type the results are, and how they are drawn: the two choices about
@@ -24,6 +23,10 @@ const props = defineProps<{
    * views as a row of every one on offer rather than a list that opens.
    */
   stacked?: boolean
+  /** The host's own names for views, over the shell's — `{ grid: 'Tiles' }`. */
+  labels?: Partial<Record<ViewKind, string>>
+  /** A line under each view's name in the stacked list — `{ cards: 'Like Reddit' }`. */
+  hints?: Partial<Record<ViewKind, string>>
 }>()
 
 const showAsId = `dc-show-as-${Math.random().toString(36).slice(2, 8)}`
@@ -123,13 +126,18 @@ function chooseEntity(key: string): void {
 
 /* --------------------------------------------------------- how they are drawn */
 
-const viewOptions = computed<{ key: ViewKind; label: string; icon: string }[]>(() =>
-  (props.views ?? [...VIEW_KINDS]).map((key) => ({
+const viewOptions = computed<{ key: ViewKind; label: string; icon: string; hint?: string }[]>(() => {
+  const views = props.views ?? [...VIEW_KINDS]
+  // In a panel the record itself comes first, as the one thing rather than a
+  // way of listing several.
+  const ordered = props.stacked && views.includes('record') ? ['record' as const, ...views.filter((key) => key !== 'record')] : views
+  return ordered.map((key) => ({
     key,
-    label: key === 'record' ? (shell.recordView.value?.label ?? VIEW_LABELS.record) : VIEW_LABELS[key],
+    label: props.labels?.[key] ?? (key === 'record' ? (shell.recordView.value?.label ?? VIEW_LABELS.record) : VIEW_LABELS[key]),
     icon: VIEW_ICONS[key],
-  })),
-)
+    hint: props.hints?.[key],
+  }))
+})
 
 /**
  * Which view is in force. A URL naming one the host withheld draws as the
@@ -144,21 +152,86 @@ const view = computed(() => resolveView(shell.query.value.view, props.views))
  */
 const showViews = computed(() => viewOptions.value.length > 1)
 
+/** Stacked, the type is a part of the query in the field above, so nothing here says it. */
+const showsAnything = computed(() => showViews.value || (showTypes.value && !props.stacked))
+
 function chooseView(key: string): void {
   shell.setView(key as ViewKind)
+}
+
+/* ------------------------------------------- Show as, a field in a panel */
+
+/*
+ * A field naming the view in force, its icon before it, opening the views
+ * under it: typing narrows them by name or hint, Up and Down move, Enter takes
+ * the one marked (the first that matches), Escape puts the list away.
+ */
+const showBox = ref<HTMLInputElement | null>(null)
+const showOpen = ref(false)
+const showText = ref('')
+const showActive = ref(0)
+const chosenOption = computed(() => viewOptions.value.find((option) => option.key === view.value))
+const showMatches = computed(() => {
+  const typed = showText.value.trim().toLowerCase()
+  if (!typed) return viewOptions.value
+  return viewOptions.value.filter(
+    (option) => option.label.toLowerCase().includes(typed) || Boolean(option.hint?.toLowerCase().includes(typed)),
+  )
+})
+
+function openShow(): void {
+  showOpen.value = true
+  showActive.value = Math.max(0, showMatches.value.findIndex((option) => option.key === view.value))
+}
+
+function closeShow(): void {
+  showOpen.value = false
+  showText.value = ''
+}
+
+function toggleShow(): void {
+  if (showOpen.value) {
+    showBox.value?.blur()
+  } else {
+    showBox.value?.focus()
+  }
+}
+
+function pickShow(key: ViewKind): void {
+  if (key !== view.value) chooseView(key)
+  showBox.value?.blur()
+}
+
+function showKey(event: KeyboardEvent): void {
+  const count = showMatches.value.length
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault()
+    if (!showOpen.value) {
+      openShow()
+      return
+    }
+    if (count) showActive.value = (showActive.value + (event.key === 'ArrowDown' ? 1 : -1) + count) % count
+  } else if (event.key === 'Enter') {
+    event.preventDefault()
+    const option = showMatches.value[showActive.value]
+    if (option) pickShow(option.key)
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    showBox.value?.blur()
+  }
 }
 </script>
 
 <template>
   <div
-    v-if="showTypes || showViews"
+    v-if="showsAnything"
     class="dc-choosers"
     :class="{ 'dc-choosers--stacked': stacked }"
   >
     <!-- Which type, while one is filtered to, with `Everything` in the list
          beside the types so widening back out stays one press. -->
     <PickControl
-      v-if="showTypes"
+      v-if="showTypes && !stacked"
       class="dc-actions__pick dc-actions__type"
       label="Type"
       :model-value="shell.query.value.entity ?? ''"
@@ -175,27 +248,108 @@ function chooseView(key: string): void {
       v-if="showViews && stacked"
       class="dc-show-as"
     >
-      <span
-        :id="showAsId"
+      <label
+        :for="showAsId"
         class="dc-show-as__label"
-      >Show as</span>
+      >Show as <span class="dc-mono">(u)</span></label>
       <div
-        class="dc-show-as__group"
-        :style="{ '--dc-views': viewOptions.length }"
-        role="group"
-        :aria-labelledby="showAsId"
+        class="dc-show-as__field"
+        :class="{ 'dc-show-as__field--open': showOpen }"
       >
-        <PressLink
-          v-for="option in viewOptions"
-          :key="option.key"
-          class="dc-show-as__option"
-          :class="{ 'dc-show-as__option--on': option.key === view }"
-          :aria-current="option.key === view ? 'true' : undefined"
-          :href="shell.hrefFor({ view: option.key })"
-          @press="chooseView(option.key)"
+        <svg
+          class="dc-show-as__icon"
+          viewBox="0 0 16 16"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        ><path :d="chosenOption?.icon" /></svg>
+        <input
+          :id="showAsId"
+          ref="showBox"
+          v-model="showText"
+          class="dc-show-as__input"
+          type="text"
+          role="combobox"
+          autocomplete="off"
+          spellcheck="false"
+          aria-autocomplete="list"
+          :aria-expanded="showOpen"
+          :aria-controls="`${showAsId}-list`"
+          :aria-activedescendant="showOpen && showMatches.length ? `${showAsId}-${showMatches[showActive]?.key}` : undefined"
+          :placeholder="chosenOption?.label"
+          @focus="openShow"
+          @blur="closeShow"
+          @input="showActive = 0; showOpen = true"
+          @keydown="showKey"
         >
-          {{ option.label }}
-        </PressLink>
+        <button
+          type="button"
+          class="dc-show-as__toggle"
+          tabindex="-1"
+          aria-label="Open Show as"
+          @mousedown.prevent="toggleShow"
+        >
+          <span
+            class="dc-show-as__caret"
+            aria-hidden="true"
+          >▾</span>
+        </button>
+        <ul
+          v-if="showOpen"
+          :id="`${showAsId}-list`"
+          class="dc-show-as__list"
+          role="listbox"
+          aria-label="Show as"
+        >
+          <li
+            v-for="(option, place) in showMatches"
+            :id="`${showAsId}-${option.key}`"
+            :key="option.key"
+            class="dc-show-as__option"
+            :class="{ 'dc-show-as__option--active': place === showActive, 'dc-show-as__option--on': option.key === view }"
+            :style="{ animationDelay: `${place * 30}ms` }"
+            role="option"
+            :aria-selected="option.key === view"
+            @mousedown.prevent="pickShow(option.key)"
+            @mousemove="showActive = place"
+          >
+            <svg
+              class="dc-show-as__icon"
+              viewBox="0 0 16 16"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            ><path :d="option.icon" /></svg>
+            <span class="dc-show-as__text">
+              <span class="dc-show-as__name">{{ option.label }}</span>
+              <span
+                v-if="option.hint"
+                class="dc-show-as__hint"
+              >{{ option.hint }}</span>
+            </span>
+            <span
+              class="dc-show-as__check"
+              aria-hidden="true"
+            >{{ option.key === view ? '✓' : '' }}</span>
+          </li>
+          <li
+            v-if="!showMatches.length"
+            class="dc-show-as__none"
+            role="presentation"
+          >
+            No format matches “{{ showText }}”
+          </li>
+        </ul>
       </div>
     </div>
     <PickControl
@@ -241,42 +395,158 @@ function chooseView(key: string): void {
 }
 
 /* The one in force raised out of the groove they sit in. */
-/* Every view at once, four to a row where there are more. */
-.dc-show-as__group {
-  display: grid;
-  grid-template-columns: repeat(min(4, var(--dc-views, 4)), minmax(0, 1fr));
-  gap: 2px;
-  padding: 3px;
+/* The field: the view in force, its icon first, the edge the accent while open. */
+.dc-show-as__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: calc(var(--dc-control-height) + 4px);
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--dc-line);
   border-radius: var(--dc-radius);
-  background: var(--dc-bg-3);
+  background: var(--dc-field, var(--dc-bg-0));
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dc-show-as__field:focus-within {
+  border-color: var(--dc-accent-dim, var(--dc-accent));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--dc-accent) 14%, transparent);
+}
+
+.dc-show-as__icon {
+  flex-shrink: 0;
+  color: var(--dc-fg-2);
+}
+
+.dc-show-as__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: var(--dc-control-height);
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--dc-fg-0);
+  font: inherit;
+}
+
+.dc-show-as__input::placeholder {
+  color: var(--dc-fg-0);
+}
+
+.dc-show-as__input:focus::placeholder {
+  color: var(--dc-fg-3);
+}
+
+.dc-show-as__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dc-fg-2);
+  cursor: pointer;
+}
+
+.dc-show-as__caret {
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+.dc-show-as__field--open .dc-show-as__caret {
+  transform: rotate(180deg);
+}
+
+/* The views, dropped under the field, over what is under it. */
+.dc-show-as__list {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid var(--dc-line);
+  border-radius: calc(var(--dc-radius) + 4px);
+  background: var(--dc-bg-0);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.16);
+  animation: dc-show-drop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .dc-show-as__option {
   display: flex;
-  flex: 1 1 0;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--dc-radius);
+  cursor: pointer;
+  animation: dc-show-rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.dc-show-as__option--active {
+  background: var(--dc-accent-bg, var(--dc-bg-2));
+}
+
+.dc-show-as__option--on .dc-show-as__icon,
+.dc-show-as__check {
+  color: var(--dc-accent);
+}
+
+.dc-show-as__option--on .dc-show-as__name {
+  font-weight: 600;
+}
+
+.dc-show-as__text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-width: 0;
-  min-height: var(--dc-control-height);
-  padding: 0 6px;
-  overflow: hidden;
-  border-radius: var(--dc-radius-sm);
+}
+
+.dc-show-as__hint {
   color: var(--dc-fg-2);
   font-size: var(--dc-text-meta);
-  text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.dc-show-as__option:hover {
-  color: var(--dc-fg-0);
+.dc-show-as__check {
+  flex-shrink: 0;
+  width: 1em;
 }
 
-.dc-show-as__option--on {
-  background: var(--dc-bg-0);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.14);
-  color: var(--dc-fg-0);
-  font-weight: 500;
+.dc-show-as__none {
+  padding: 8px 10px;
+  color: var(--dc-fg-2);
+}
+
+@keyframes dc-show-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes dc-show-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dc-show-as__list,
+  .dc-show-as__option {
+    animation: none;
+  }
+
+  .dc-show-as__caret,
+  .dc-show-as__field {
+    transition: none;
+  }
 }
 
 /* At the type size of the query's parts, sitting beside them. */

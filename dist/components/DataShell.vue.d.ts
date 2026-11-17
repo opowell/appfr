@@ -1,6 +1,6 @@
 import '../style/shell.css';
 import type { Component } from 'vue';
-import type { DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, Selection, ShellQuery, ShellQueryDefaults, ShellRow, ViewsOption } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, Selection, ShellQuery, ShellQueryDefaults, ShellRow, ViewKind, ViewsOption } from '../types';
 import type { ShellTheme } from 'themes';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
@@ -157,6 +157,10 @@ type __VLS_Props = {
      * the records.
      */
     layout?: 'bar' | 'panel';
+    /** The host's own names for views, over the shell's — `{ grid: 'Tiles' }`. */
+    viewLabels?: Partial<Record<ViewKind, string>>;
+    /** With `layout: 'panel'`, a line under each view's name in Show as — `{ cards: 'Like Reddit' }`. */
+    viewHints?: Partial<Record<ViewKind, string>>;
     /** Overrides the `--dc-accent` token. Shorthand for `tokens`. */
     accent?: string;
     /**

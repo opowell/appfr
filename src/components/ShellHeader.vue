@@ -9,6 +9,7 @@ import type { Completion } from '../query/completion'
 import { refineExpression } from '../data/expression'
 import { scopedEntity } from '../query/drill'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
+import { formatCount } from '../data/format'
 import type { SummaryTerm } from '../query/summary'
 
 const slots = defineSlots<{
@@ -74,7 +75,9 @@ const scopeTerms = computed<SummaryTerm[]>(() => {
 const terms = computed(() => {
   const entity = shell.entity.value
   const own = entity?.keepsScope ? undefined : entity?.scope?.toLowerCase()
-  return shell.terms.value.filter((term) => term.facetKey !== ENTITY_TERM).map((term, at, all) => {
+  // The type is the bar's chooser's to say; in a panel, which has none, it is
+  // a part of the query like the rest, lifted to list every type.
+  return shell.terms.value.filter((term) => props.panel || term.facetKey !== ENTITY_TERM).map((term, at, all) => {
     const before = all[at - 1]
     return {
       term,
@@ -128,6 +131,11 @@ function withoutOwnId(name: string): string {
  * record, the part says which record: `set: Yellow Castle`.
  */
 function labelOf(term: SummaryTerm): string {
+  // The type, with how many of it match, as the bar's chooser says it.
+  if (term.facetKey === ENTITY_TERM) {
+    const label = shell.entity.value?.label
+    return label ? `${label} · ${formatCount((shell.matched ?? shell.total).value)}` : term.label
+  }
   const name = records.nameOf(term)
   if (!name) return term.label
   // The sign stays in front of the name as it stood in front of the id: what
@@ -573,7 +581,7 @@ onBeforeUnmount(() => watching?.disconnect())
                   <button
                     type="button"
                     class="dc-term dc-mono"
-                    :class="{ 'dc-term--idle': entry.idle, 'dc-term--leaving': leaving }"
+                    :class="{ 'dc-term--idle': entry.idle, 'dc-term--leaving': leaving, 'dc-term--type': entry.term.facetKey === ENTITY_TERM }"
                     :title="titleOf(entry)"
                     :aria-label="`Remove ${labelOf(entry.term)}`"
                     @mousedown.prevent

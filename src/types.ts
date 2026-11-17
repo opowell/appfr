@@ -783,6 +783,13 @@ export interface ShellQueryDefaults {
    */
   searchView?: ViewKind
   /**
+   * The view the whole corpus opens in with nothing in the query — the home
+   * screen — where the URL names none. Unsaid, it is {@link view}'s, and the
+   * home screen a card per type; `table` makes it every record of every type
+   * in one table.
+   */
+  homeView?: ViewKind
+  /**
    * The view a change of type lands in. `'chosen'` (the default) carries a
    * view somebody picked across the change, and moves only one left at its
    * default; `'default'` always lands on the default of where the query is

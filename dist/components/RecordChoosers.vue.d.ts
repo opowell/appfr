@@ -14,6 +14,10 @@ type __VLS_Props = {
      * views as a row of every one on offer rather than a list that opens.
      */
     stacked?: boolean;
+    /** The host's own names for views, over the shell's — `{ grid: 'Tiles' }`. */
+    labels?: Partial<Record<ViewKind, string>>;
+    /** A line under each view's name in the stacked list — `{ cards: 'Like Reddit' }`. */
+    hints?: Partial<Record<ViewKind, string>>;
 };
 declare const _default: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export default _default;

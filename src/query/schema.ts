@@ -55,7 +55,8 @@ export function defaultViewFor(
   const asked = (view: ViewKind | undefined) => (view && isViewKind(view) ? view : undefined)
   if (entity === null) {
     const searched = searchesCorpus(expr, schema) ? asked(defaults.searchView) : undefined
-    return searched ?? asked(defaults.view) ?? DEFAULT_VIEW
+    const home = expr.trim() === '' ? asked(defaults.homeView) : undefined
+    return searched ?? home ?? asked(defaults.view) ?? DEFAULT_VIEW
   }
   // A host landing on a type has always named the view it lands in as `view`.
   const landing = defaults.landing === 'entity' ? asked(defaults.view) : undefined

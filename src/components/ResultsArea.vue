@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { Component } from 'vue'
-import type { ViewKind } from '../types'
+import type { BuiltinViewKind, ViewKind } from '../types'
 import { useShellContext } from '../composables/context'
-import { isTypeCardsQuery, resolveView } from '../query/schema'
+import { isBuiltinView, isTypeCardsQuery, resolveView } from '../query/schema'
 import CardsView from './views/CardsView.vue'
 import GridView from './views/GridView.vue'
 import ImagesView from './views/ImagesView.vue'
@@ -42,7 +42,7 @@ const slots = defineSlots<{
   'cards-after'?: () => unknown
 }>()
 
-const VIEWS: Record<Exclude<ViewKind, 'record'>, Component> = {
+const VIEWS: Record<Exclude<BuiltinViewKind, 'record'>, Component> = {
   list: ListView,
   cards: CardsView,
   grid: GridView,
@@ -61,7 +61,12 @@ const isTypeCards = computed(() => isTypeCardsQuery(shell.query.value, props.vie
 
 const kind = computed<ViewKind>(() => resolveView(shell.query.value.view, props.views))
 
-const view = computed(() => (kind.value === 'record' ? null : VIEWS[kind.value]) ?? ListView)
+/** The host's own view of the rows, where that is the view in force — see `HostView`. */
+const hostView = computed(() => (isBuiltinView(kind.value) ? null : (shell.hostViews.value[kind.value] ?? null)))
+
+const view = computed(
+  () => (kind.value === 'record' || !isBuiltinView(kind.value) ? null : VIEWS[kind.value as Exclude<BuiltinViewKind, 'record'>]) ?? ListView,
+)
 
 /** The host's own view of the record, where that is the view in force. */
 const recordView = computed(() => (kind.value === 'record' ? shell.recordView.value : null))
@@ -285,6 +290,12 @@ onBeforeUnmount(() => {
         {{ shell.isEverything.value ? 'Clear filters' : 'Search everything instead' }}
       </PressLink>
     </div>
+
+    <component
+      :is="hostView.component"
+      v-else-if="hostView"
+      v-bind="hostView.props ?? {}"
+    />
 
     <component
       :is="view"

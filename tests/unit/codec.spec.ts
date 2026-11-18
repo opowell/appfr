@@ -7,7 +7,7 @@ import {
   readExpression,
   serializeQuery,
 } from '../../src/query/codec'
-import { defaultQuery, findEntity } from '../../src/query/schema'
+import { defaultQuery, findEntity, resolveView } from '../../src/query/schema'
 import { facetValue } from '../../src/query/facetTerms'
 import { iRadarSchema, legoSchema } from '../../src/fixtures/schemas'
 import type { DomainSchema, FacetDef, ShellQuery } from '../../src/types'
@@ -74,9 +74,14 @@ describe('parseQuery', () => {
   })
 
   it('ignores unknown views and sorts', () => {
-    const query = parseQuery('?e=items&v=hologram&s=vibes', iRadarSchema)
+    const query = parseQuery('?e=items&v=Hologram!&s=vibes', iRadarSchema)
     expect(query.view).toBe('table')
     expect(query.sort).toBe('updated')
+  })
+
+  it("keeps a word that may name a host's view, which is drawn as the first on offer where it names none", () => {
+    expect(parseQuery('?e=items&v=hologram', iRadarSchema).view).toBe('hologram')
+    expect(resolveView('hologram', ['table', 'list'])).toBe('table')
   })
 
   it('leaves a parameter it does not own alone, an old facet one among them', () => {

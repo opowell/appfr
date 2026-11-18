@@ -16,6 +16,7 @@ import type {
   NarrowedRecord,
   PressOptions,
   RecordView,
+  HostView,
   Selection,
   ShellQuery,
   ShellQueryDefaults,
@@ -167,6 +168,12 @@ const props = withDefaults(
      * press on a row of that type opens it there, in its place.
      */
     recordViews?: Record<string, RecordView>
+    /**
+     * Views of the host's own for the rows, beside the shell's: each offered
+     * where `views` names its word (all of them, after the shell's, where
+     * `views` is not given), as `v=<word>` in the URL — see `HostView`.
+     */
+    hostViews?: Record<string, HostView>
     /**
      * Where the bar offers the list of types. `scoped`, the default, only
      * while one is filtered to — on `Everything` the home screen's cards are
@@ -587,10 +594,11 @@ const offeredViews = computed<ViewKind[] | undefined>(() => {
   const offered = typeof asked === 'function'
     ? asked({ entity: query.entity.value, records: records.value })
     : asked
+  const base = offered ?? (props.hostViews ? [...VIEW_KINDS, ...Object.keys(props.hostViews)] : undefined)
   if (namedRecordView.value || listedRecordView.value) {
-    return [...(offered ?? VIEW_KINDS).filter((kind) => kind !== 'record'), 'record']
+    return [...(base ?? VIEW_KINDS).filter((kind) => kind !== 'record'), 'record']
   }
-  return offered?.filter((kind) => kind !== 'record')
+  return base?.filter((kind) => kind !== 'record')
 })
 
 /**
@@ -936,6 +944,7 @@ const shell = provideShellContext({
   within,
   loading: computed(() => props.loading),
   recordView,
+  hostViews: computed(() => props.hostViews ?? {}),
   pinnable: computed(() => props.pinnable === true),
   isPinned: (row) => pinnedIds.value.has(row.id),
   isPinnedId: (id) => pinnedIds.value.has(id),

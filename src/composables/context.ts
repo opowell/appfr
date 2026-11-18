@@ -1,6 +1,7 @@
 import { computed, inject, provide, ref } from 'vue'
 import type { ComputedRef, InjectionKey, Ref, ShallowRef } from 'vue'
 import type {
+  HostView,
   DataSource,
   DomainSchema,
   EntitySchema,
@@ -113,6 +114,8 @@ export interface ShellContext extends QueryState {
    * `DataShell`.
    */
   recordView: ComputedRef<(RecordView & { id: string | null }) | null>
+  /** The host's own views of the rows, by the word naming each — see `hostViews` on `DataShell`. */
+  hostViews: ComputedRef<Record<string, HostView>>
   /** Whether the star affordance is offered on rows. */
   pinnable: ComputedRef<boolean>
   isPinned(row: ShellRow): boolean

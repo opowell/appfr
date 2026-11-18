@@ -15,9 +15,35 @@ import type { Component } from 'vue'
  * on offer unless the host has one for that record's type, so it is not among
  * {@link VIEW_KINDS}, the views a shell offers when the host says nothing.
  */
-export type ViewKind = 'list' | 'cards' | 'grid' | 'images' | 'table' | 'links' | 'preview' | 'record'
+export type BuiltinViewKind = 'list' | 'cards' | 'grid' | 'images' | 'table' | 'links' | 'preview' | 'record'
+
+/**
+ * A view the shell draws: one of its own ({@link BuiltinViewKind}), or one of
+ * the host's, named by any other word of lower-case letters, digits and
+ * hyphens — see {@link HostView}.
+ */
+export type ViewKind = BuiltinViewKind | (string & {})
 
 export const VIEW_KINDS = ['list', 'cards', 'grid', 'images', 'table', 'links', 'preview'] as const
+
+/**
+ * A view of the host's own for the rows, offered beside the shell's under the
+ * word it is keyed by in `hostViews` — `{ hackernews: { label: 'Hacker News',
+ * component: TemplateList } }` — and drawn as `<component :is v-bind="props">`
+ * in place of theirs. It reads the rows as the shell's views do: from
+ * `useShellContext()` and `usePresentedRows()`.
+ */
+export interface HostView {
+  /** What Show as calls it. */
+  label: string
+  /** A line under its name in Show as, as `viewHints` gives one. */
+  hint?: string
+  /** The `d` of an SVG path in a 16×16 box, as {@link VIEW_ICONS} has one per view. */
+  icon?: string
+  component: Component
+  /** Given to the component, so that one component can draw several views. */
+  props?: Record<string, unknown>
+}
 
 /**
  * A view of the host's own for one record of a type — a reader for a document,

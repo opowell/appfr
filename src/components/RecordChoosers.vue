@@ -5,7 +5,7 @@ import { VIEW_KINDS } from '../types'
 import { useShellContext } from '../composables/context'
 import { useEntityCounts } from '../composables/useEntityCounts'
 import { formatCount } from '../data/format'
-import { VIEW_ICONS, VIEW_LABELS, entityCount, resolveView } from '../query/schema'
+import { VIEW_ICONS, VIEW_LABELS, entityCount, isBuiltinView, resolveView } from '../query/schema'
 import PickControl from './PickControl.vue'
 
 /**
@@ -131,12 +131,21 @@ const viewOptions = computed<{ key: ViewKind; label: string; icon: string; hint?
   // In a panel the record itself comes first, as the one thing rather than a
   // way of listing several.
   const ordered = props.stacked && views.includes('record') ? ['record' as const, ...views.filter((key) => key !== 'record')] : views
-  return ordered.map((key) => ({
-    key,
-    label: props.labels?.[key] ?? (key === 'record' ? (shell.recordView.value?.label ?? VIEW_LABELS.record) : VIEW_LABELS[key]),
-    icon: VIEW_ICONS[key],
-    hint: props.hints?.[key],
-  }))
+  return ordered.map((key) => {
+    const host = isBuiltinView(key) ? undefined : shell.hostViews.value[key]
+    return {
+      key,
+      label:
+        props.labels?.[key] ??
+        (key === 'record'
+          ? (shell.recordView.value?.label ?? VIEW_LABELS.record)
+          : isBuiltinView(key)
+            ? VIEW_LABELS[key]
+            : (host?.label ?? key)),
+      icon: isBuiltinView(key) ? VIEW_ICONS[key] : (host?.icon ?? VIEW_ICONS.list),
+      hint: props.hints?.[key] ?? host?.hint,
+    }
+  })
 })
 
 /**

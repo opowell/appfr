@@ -1,5 +1,5 @@
 import type { ComputedRef, InjectionKey, Ref, ShallowRef } from 'vue';
-import type { DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, Selection, ShellQuery, ShellRow } from '../types';
+import type { HostView, DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, Selection, ShellQuery, ShellRow } from '../types';
 import type { QueryState } from './useQueryState';
 import type { TermStanding } from '../query/drill';
 /** A press being considered: the term it would add, and the record it names, if any. */
@@ -102,6 +102,8 @@ export interface ShellContext extends QueryState {
     recordView: ComputedRef<(RecordView & {
         id: string | null;
     }) | null>;
+    /** The host's own views of the rows, by the word naming each — see `hostViews` on `DataShell`. */
+    hostViews: ComputedRef<Record<string, HostView>>;
     /** Whether the star affordance is offered on rows. */
     pinnable: ComputedRef<boolean>;
     isPinned(row: ShellRow): boolean;

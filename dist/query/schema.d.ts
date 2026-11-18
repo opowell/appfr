@@ -1,4 +1,4 @@
-import type { ColumnDef, DomainSchema, EntitySchema, FacetDef, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
+import type { BuiltinViewKind, ColumnDef, DomainSchema, EntitySchema, FacetDef, FacetValue, ShellQuery, ShellQueryDefaults, SortDef, ViewKind } from '../types';
 /**
  * Cards. On the home screen — where no entity is filtered to — that means a
  * card per item type rather than per record: what each type is, how many of it
@@ -38,20 +38,22 @@ export declare function viewAcross(view: ViewKind, from: string | null, to: stri
 export declare function viewAfter(prev: Pick<ShellQuery, 'entity' | 'view' | 'expr'>, next: Pick<ShellQuery, 'entity' | 'expr'>, defaults?: ShellQueryDefaults, schema?: DomainSchema | null): ViewKind;
 export declare const DEFAULT_SORT = "updated";
 export declare function isViewKind(value: unknown): value is ViewKind;
+/** Whether a view is one the shell draws itself rather than one of the host's. */
+export declare function isBuiltinView(value: ViewKind): value is BuiltinViewKind;
 /**
  * What each view is called wherever one is offered as a choice — the header's
  * chooser and the query panel's row of them are naming the same seven things,
  * and a view called `Cards` in one place and `cards` in the other would read
  * as two settings rather than one.
  */
-export declare const VIEW_LABELS: Record<ViewKind, string>;
+export declare const VIEW_LABELS: Record<BuiltinViewKind, string>;
 /**
  * What each view looks like wherever one is offered as a choice, beside its
  * {@link VIEW_LABELS} name: the `d` of an SVG path in a 16×16 box, stroked and
  * never filled — a menu item's `icon`. Each is a small drawing of the view
  * itself, so the seven read apart at a glance.
  */
-export declare const VIEW_ICONS: Record<ViewKind, string>;
+export declare const VIEW_ICONS: Record<BuiltinViewKind, string>;
 /**
  * The view actually drawn, given what the query asks for and what the host
  * offers. A URL naming a view a host has withheld falls back to the first on

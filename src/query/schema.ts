@@ -1,4 +1,5 @@
 import type {
+  BuiltinViewKind,
   ColumnDef,
   DomainSchema,
   EntitySchema,
@@ -104,7 +105,15 @@ export function viewAfter(
 export const DEFAULT_SORT = 'updated'
 
 export function isViewKind(value: unknown): value is ViewKind {
-  return typeof value === 'string' && (value === 'record' || (VIEW_KINDS as readonly string[]).includes(value))
+  return typeof value === 'string' && (value === 'record' || (VIEW_KINDS as readonly string[]).includes(value) || HOST_VIEW.test(value))
+}
+
+/** How a host's view is named — see `HostView`: a word the shell's own views are not. */
+const HOST_VIEW = /^[a-z][a-z0-9-]*$/
+
+/** Whether a view is one the shell draws itself rather than one of the host's. */
+export function isBuiltinView(value: ViewKind): value is BuiltinViewKind {
+  return value === 'record' || (VIEW_KINDS as readonly string[]).includes(value)
 }
 
 /**
@@ -113,7 +122,7 @@ export function isViewKind(value: unknown): value is ViewKind {
  * and a view called `Cards` in one place and `cards` in the other would read
  * as two settings rather than one.
  */
-export const VIEW_LABELS: Record<ViewKind, string> = {
+export const VIEW_LABELS: Record<BuiltinViewKind, string> = {
   list: 'List',
   cards: 'Cards',
   grid: 'Grid',
@@ -130,7 +139,7 @@ export const VIEW_LABELS: Record<ViewKind, string> = {
  * never filled — a menu item's `icon`. Each is a small drawing of the view
  * itself, so the seven read apart at a glance.
  */
-export const VIEW_ICONS: Record<ViewKind, string> = {
+export const VIEW_ICONS: Record<BuiltinViewKind, string> = {
   list: 'M6 4h7.5M6 8h7.5M6 12h7.5M2.5 4h.01M2.5 8h.01M2.5 12h.01',
   cards: 'M2.5 2.5h11v4.5h-11zM2.5 9h11v4.5h-11z',
   grid: 'M2.5 2.5h4.5v4.5h-4.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5h-4.5zM9 9h4.5v4.5H9z',
@@ -154,7 +163,8 @@ export function resolveView(asked: ViewKind, offered: ViewKind[] | undefined): V
   // as nothing, there being no host's view of that record to draw.
   if (asked === 'record' && !offered?.includes(asked)) return offered?.[0] ?? DEFAULT_VIEW
   const [fallback] = offered ?? []
-  if (fallback === undefined) return asked
+  // A host's view where the host offers none is a link kept from a host that did.
+  if (fallback === undefined) return isBuiltinView(asked) ? asked : DEFAULT_VIEW
   return offered?.includes(asked) ? asked : fallback
 }
 

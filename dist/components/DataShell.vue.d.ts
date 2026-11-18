@@ -1,6 +1,6 @@
 import '../style/shell.css';
 import type { Component } from 'vue';
-import type { DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, Selection, ShellQuery, ShellQueryDefaults, ShellRow, ViewKind, ViewsOption } from '../types';
+import type { DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, HostView, Selection, ShellQuery, ShellQueryDefaults, ShellRow, ViewKind, ViewsOption } from '../types';
 import type { ShellTheme } from 'themes';
 import type { RouteAdapter } from '../routing/adapter';
 import type { NavigationMode } from '../composables/useQueryState';
@@ -123,6 +123,12 @@ type __VLS_Props = {
      * press on a row of that type opens it there, in its place.
      */
     recordViews?: Record<string, RecordView>;
+    /**
+     * Views of the host's own for the rows, beside the shell's: each offered
+     * where `views` names its word (all of them, after the shell's, where
+     * `views` is not given), as `v=<word>` in the URL — see `HostView`.
+     */
+    hostViews?: Record<string, HostView>;
     /**
      * Where the bar offers the list of types. `scoped`, the default, only
      * while one is filtered to — on `Everything` the home screen's cards are

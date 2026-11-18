@@ -195,6 +195,7 @@ export {
   termStanding,
   withoutOwnScope,
   withStanding,
+  withStandings,
   withWhere,
 } from './query/drill'
 export type { SearchPatch, TermStanding } from './query/drill'

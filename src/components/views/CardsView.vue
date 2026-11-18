@@ -9,7 +9,6 @@ import MetricDrill from './MetricDrill.vue'
 import PinStar from './PinStar.vue'
 import RowPicture from './RowPicture.vue'
 import QueryMark from './QueryMark.vue'
-import RowStanding from './RowStanding.vue'
 import OpenMark from './OpenMark.vue'
 import ScopeMark from './ScopeMark.vue'
 import SelectTick from './SelectTick.vue'
@@ -56,16 +55,9 @@ const allPictures = computed(() => rows.value.length > 0 && rows.value.every(isP
             v-if="entry.parts.state && !isPicture(entry)"
             :status="entry.parts.state"
           />
-          <!-- A picture card is the picture and the name: it wears the quiet
-               mark, drawn only where the query names it, not the control. -->
-          <QueryMark
-            v-if="isPicture(entry)"
-            :entry="entry"
-          />
-          <RowStanding
-            v-else
-            :entry="entry"
-          />
+          <!-- Where the query stands on the record, drawn only where it names
+               it: ticked cards are included or excluded from the bar. -->
+          <QueryMark :entry="entry" />
           <ScopeMark :entry="entry" />
           <OpenMark :entry="entry" />
           <PinStar

@@ -9,7 +9,7 @@ pages cover the rest, roughly in the order a host needs them:
 | [Wiring it to your data](data-sources.md) | `DataSource`, streaming results with `stream`, and `createMemoryDataSource` for rows already in hand |
 | [Routing](routing.md) | Route adapters, permalink redirects, the URL format and its shortcuts |
 | [Schemas](schemas.md) | `DomainSchema`, columns and their roles, column factories, `create` / `duplicate` / `delete` and the selection, multi-valued facets |
-| [Records](records.md) | Narrowing to one record, `href`, the `+ · −` standing marks, `strictScopes`, `within`, and cards of your own |
+| [Records](records.md) | Narrowing to one record, `href`, the standing marks, Include and Exclude, `strictScopes`, `within`, and cards of your own |
 | [Card content, layers and controls](cards-and-layers.md) | `ShellFacts`, `StatusPill`, `ShellCode`, `ShellLog`, dialogs, toasts, popovers, `controls.css` |
 | [The expression field](query-language.md) | The query language, the parts on the bar, and the draft box |
 | [Component API](api.md) | `<DataShell>` props, events and slots, the `page` slot, paging, table layout, composables |

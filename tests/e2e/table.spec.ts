@@ -161,9 +161,9 @@ test.describe('Columns — as many as the schema declares', () => {
     await gotoStory(page, COLUMNS)
     const labels = (await headings(page).allInnerTexts()).map((text) => text.trim())
     // The one thing the shell adds, ahead of the declared set: the column
-    // saying where the query stands on each row, since pieces can be named.
-    // Headed by the same control the rows wear, not by a label.
-    expect(labels.shift()).toMatch(/^\+\s*·\s*−$/)
+    // of ticks, since pieces can be named and so included or excluded.
+    // Headed by the tick that takes the page, not by a label.
+    expect(labels.shift()).toBe('')
     expect(labels).toEqual([
       '#',
       // The picture column heads nothing: a column of pictures says what it is.

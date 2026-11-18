@@ -325,7 +325,9 @@ test.describe('Views — a type whose card is its picture', () => {
     expect(await cards.count()).toBeGreaterThan(0)
     await expect(cards.first().locator('.dc-card__primary')).not.toBeEmpty()
     // No row number, no state, no reference, no numbers: those are the table's.
-    await expect(page.locator('.dc-card__top:visible')).toHaveCount(0)
+    // Only the tick, over the picture, as the cards can be included or excluded.
+    await expect(cards.first().locator('.dc-card__top')).toHaveText('')
+    await expect(cards.first().locator('.dc-card__top .dc-tick')).toBeVisible()
     await expect(page.locator('.dc-card .dc-pill')).toHaveCount(0)
     await expect(page.locator('.dc-card__secondary')).toHaveCount(0)
     await expect(page.locator('.dc-card__metrics')).toHaveCount(0)

@@ -32,7 +32,7 @@
 | `activateHref` | `(row) => string \| null` | — | Where a reported press (`activate`) leads, as an `href`. Rows of types the shell can't narrow to become real links to the host's page; a plain press is still reported. |
 | `createHref` | `(entity) => string \| null` | — | Where `create` leads, so **New …** is a link to the host's form; a plain press is still reported. |
 | `pinnable` | `boolean` | `false` | Offers the star on rows. |
-| `selectable` | `boolean` | `false` | Offers ticks even where the type names no operation. A type naming `duplicate` or `delete` offers them anyway. |
+| `selectable` | `boolean` | `false` | Offers ticks even where the type names no operation. A type naming `duplicate` or `delete` offers them anyway, as does one that can be named (a `scope`, not `standing: false`), whose ticked rows are included or excluded from the bar. |
 | `pinned` | `string[]` | — | `v-model:pinned`; omit and the shell holds it. |
 | `selected` | `string[]` | — | `v-model:selected`; omit and the shell holds it. |
 | `navigationMode` | `'push' \| 'replace'` | `'push'` | For entity, view, sort and expression. |
@@ -286,7 +286,8 @@ Also exported:
 The context also carries:
 
 - **the selection** — `selectable`, `selection`, `isSelected`, `toggleSelect`,
-  `selectPage`, `clearSelection`, plus `create`, `duplicate` and `delete`, so
+  `selectPage`, `clearSelection`, `standable`, `selectionTerms` and
+  `standSelection(standing)` (what Include and Exclude call), plus `create`, `duplicate` and `delete`, so
   a view of your own can offer ticks. `<RecordActions>` is the strip over the
   results (sort, ticks, operations, pager) and `<RecordChoosers>` the Type and
   View choosers on the bar, for a host laying out the parts itself, and

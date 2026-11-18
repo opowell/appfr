@@ -90,16 +90,21 @@ says which. Pressing the mark lifts the term (`termStanding(expr, term)` and
 `liftTerm(expr, term)`). On hover the mark fades and the `→` turns green, or red
 with ⌥ held — previewing the press.
 
-**`+ · −` controls.** A list row (before the name) and a card (beside its
-state) carry `RowStanding`, the three-way control for one row; ⌥-click on the
-name still does the `−`. A type card's glance rows and the preview pane keep
-the quieter mark. A table whose type can be named gets a column of
-`StandingControl`s after the ticks: `+` narrows to the record, `·` says
-nothing, `−` excludes it. The column head applies the same to every row on the
-page, or to the ticked rows if any, and is lit only where they agree. Each
-press is one expression change; the table stays put. `withStanding(expr, term,
-standing)` is what one press writes. `+` over a page writes `set:a set:b …`,
-which reads as any of them — see [the expression field](query-language.md).
+**Include and Exclude.** No row carries a control for where the query stands
+on it: rows of a type that can be named (a `scope`, and not `standing: false`)
+are ticked, and **Include** and **Exclude** among the bar's operations (or the
+side panel's, with `layout: 'panel'`) narrow the query to the ticked records or
+leave them out, as one expression change, and untick them. They count what they
+are for (`Include 2`) and are off with nothing ticked. A tick on another page
+counts too: the shell keeps the term of each record as it is ticked. ⌥-click on
+the name still leaves one record out. A table shows a column of marks after the
+ticks while some row on the page is one the query names. `withStandings(expr,
+terms, standing)` is what a press writes: including records of one type writes
+`set=a set=b …`, which reads as any of them — see
+[the expression field](query-language.md) — and records of several types a
+group per type (`item=a OR scraper=b`), each with the rest of the query.
+`withStanding(expr, term, standing)` does it for one record; `StandingControl`,
+the old three-way `+ · −`, is still exported for a host that wants it.
 
 A host applying a narrowing itself should call `narrow(expr, entityKey)` from
 `useQueryState`, not `setExpression` then `setEntity`: each serialises from the

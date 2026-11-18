@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ColumnDef, EntitySchema, PressOptions, ShellRow } from '../../types'
+import type { ColumnDef, PressOptions, ShellRow } from '../../types'
 import { useShellContext } from '../../composables/context'
-import { hasTextSelection, isBrowserPress, openElsewhere, pressOptions, standingTerm, termStanding, withStanding } from '../../query/drill'
-import type { TermStanding } from '../../query/drill'
+import { hasTextSelection, isBrowserPress, openElsewhere, pressOptions, standingTerm, termStanding } from '../../query/drill'
 import { useColumns } from '../../composables/useColumns'
 import { pressPreviewOn, recordPressPreview } from '../../composables/usePressPreview'
 import { columnShortcutOf } from '../../data/expression'
@@ -20,7 +19,7 @@ import ColumnCell from './ColumnCell.vue'
 import OpenMark from './OpenMark.vue'
 import PressLink from './PressLink.vue'
 import ScopeMark from './ScopeMark.vue'
-import StandingControl from './StandingControl.vue'
+import QueryMark from './QueryMark.vue'
 import PageTick from './PageTick.vue'
 import SelectTick from './SelectTick.vue'
 
@@ -107,71 +106,18 @@ const marked = computed<ColumnDef | undefined>(() => {
 
 /*
  * Where the query stands on each row — a column of its own, rather than a
- * sign beside the name.
- *
- * The other views mark a row only where the query names it, since a card has
- * no room for a control on every record. A table has: a row is a line, and a
- * column is what a table has for a fact about every line. So every row of a
- * type that can be named wears the same three-way control, lit where the
- * query narrows to the record or leaves it out and unlit — nearly always —
- * where it says nothing, and the head of the column is the same control over
- * every row at once. The sign is not an affordance the schema has to opt into
- * — it is a fact about the query — so the column is there wherever some row
- * could be named, whether or not any column asked for the `→`.
+ * sign beside the name, drawn while some row on the page is one the query
+ * names: a `+` where it narrows to the record, a `−` where it leaves it out,
+ * pressed to lift it. Rows are included and excluded by ticking them and
+ * pressing Include or Exclude on the bar, not here.
  */
 
-/** Whether any row on this table could be named by the query. */
-const standable = computed(() => {
-  const stands = (entity: EntitySchema) => Boolean(entity.scope) && entity.standing !== false
-  return shell.entity.value ? stands(shell.entity.value) : shell.entities.value.some(stands)
-})
-
-/** The term naming a row, or null for a row of a type that declares no scope. */
 const termOf = (entry: PresentedRow) => standingTerm(entry.entity, entry.row)
 
-const standingOf = (entry: PresentedRow) => termStanding(shell.query.value.expr, termOf(entry))
-
-function setStanding(entry: PresentedRow, standing: TermStanding | null) {
-  shell.setExpression(withStanding(shell.query.value.expr, termOf(entry), standing))
-}
-
-/**
- * The rows the head of the column speaks for: the ticked ones, where any on
- * the page are — a tick is the reader saying which rows an operation is for —
- * and otherwise every row on the page. Rows no term could name are left out
- * either way, there being nothing to say about them.
- */
-const headed = computed(() => {
-  const named = rows.value.filter((entry) => termOf(entry) !== null)
-  const ticked = named.filter((entry) => entry.selected)
-  return ticked.length ? ticked : named
-})
-
-const headsTicked = computed(() => headed.value.some((entry) => entry.selected))
-
-/** What the rows the head speaks for agree on — and whether they agree. */
-const headStanding = computed<TermStanding | null>(() => {
-  const first = headed.value[0]
-  return first ? standingOf(first) : null
-})
-
-const headMixed = computed(() =>
-  headed.value.some((entry) => standingOf(entry) !== headStanding.value),
+/** Whether any row on this page is one the query names. */
+const standable = computed(() =>
+  rows.value.some((entry) => termStanding(shell.query.value.expr, termOf(entry)) !== null),
 )
-
-const headName = computed(() =>
-  headsTicked.value ? 'the ticked rows' : 'every row on this page',
-)
-
-/** One navigation for the lot, since each is a change to the same expression. */
-function setHeadStanding(standing: TermStanding | null) {
-  shell.setExpression(
-    headed.value.reduce(
-      (expr, entry) => withStanding(expr, termOf(entry), standing),
-      shell.query.value.expr,
-    ),
-  )
-}
 
 /**
  * Whether a text cell may wrap, which is to say whether this table's rows are
@@ -306,22 +252,13 @@ const tracks = computed(
           <PageTick />
         </th>
         <!-- Not a column either: where the query stands on each row is a
-             fact about the query rather than a field of the record. Headed
-             by the same control over every row on the page, or over the
-             ticked ones where there are any — see `headed`. -->
+             fact about the query rather than a field of the record. -->
         <th
           v-if="standable"
           class="dc-table__standing"
           scope="col"
-        >
-          <StandingControl
-            v-if="headed.length"
-            :standing="headStanding"
-            :mixed="headMixed"
-            :name="headName"
-            @set="setHeadStanding"
-          />
-        </th>
+          aria-label="In the query"
+        />
         <!-- The hint sits on the cell rather than on the button inside it, so
              a sortable header and a plain one answer a hover the same way.
              The column's shortcut in the expression field follows it. -->
@@ -386,12 +323,7 @@ const tracks = computed(
           v-if="standable"
           class="dc-table__standing"
         >
-          <StandingControl
-            v-if="termOf(entry) !== null"
-            :standing="standingOf(entry)"
-            :name="entry.parts.identity"
-            @set="setStanding(entry, $event)"
-          />
+          <QueryMark :entry="entry" />
         </td>
         <td
           v-for="(column, index) in columns"
@@ -593,26 +525,19 @@ const tracks = computed(
   display: block;
 }
 
-/* Likewise held to the control's own width, and the head's control drawn as
-   the rows' are — a box of signs, not a heading. The width follows the
-   control's type size rather than a number of pixels: three signs of 1.5em
-   each, the four lines around and between them, and the cell's own padding.
-   Set in px it fit the shell's own scale and clipped the `−` off the head
-   (and ran the rows' into the next column) wherever a host set the type
-   larger — `mono-size` on an 18px page, say. */
+/* Held to the mark's own width: one sign in a box. */
 .dc-table th.dc-table__standing,
 .dc-table td.dc-table__standing {
-  width: calc(4.5em + 20px);
+  width: calc(1.5em + 20px);
   padding-right: 4px;
-  font-size: var(--dc-standing-text, var(--dc-text-body));
   text-transform: none;
   letter-spacing: normal;
 }
 
-/* Leading the row, the control's left padding is the gutter. */
+/* Leading the row, the mark's left padding is the gutter. */
 .dc-table th.dc-table__standing:first-child,
 .dc-table td.dc-table__standing:first-child {
-  width: calc(4.5em + 8px + var(--dc-gutter));
+  width: calc(1.5em + 8px + var(--dc-gutter));
 }
 
 .dc-table__row:hover {

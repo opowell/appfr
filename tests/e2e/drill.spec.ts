@@ -121,7 +121,7 @@ test.describe('A metric that counts something listable', () => {
     const first = page.locator('.dc-table__row').first()
     // Sets: metric1 is Parts and leads to pieces; metric2 is Minifigs, which
     // this schema does not list, so that number stays plain text.
-    // One further along than the columns say: the standing column comes first.
+    // One further along than the columns say: the column of ticks comes first.
     await expect(first.locator('td').nth(4).locator('.dc-drill')).toHaveCount(1)
     await expect(first.locator('td').nth(5).locator('.dc-drill')).toHaveCount(0)
   })
@@ -390,9 +390,8 @@ test.describe('Pressing a row with ⌥ held', () => {
  * the query stands on one of them, and the mark is what says which.
  */
 test.describe('A row the query names', () => {
-  /* The sign lit in a list row's `+ · −`, the dot being the row the query says nothing of. */
-  const marks = (page: Page) =>
-    page.locator('.dc-list__standing [data-dc-active="true"]:not([data-dc-standing="none"])')
+  /* The mark on a list row the query names: `+` or `−`, and nothing on any other. */
+  const marks = (page: Page) => page.locator('.dc-list__row .dc-standing')
 
   test('wears a + where the query narrows to it, and nothing elsewhere', async ({ page }) => {
     await gotoStory(page, HOME)
@@ -410,15 +409,15 @@ test.describe('A row the query names', () => {
     await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
     await expect(marks(page)).toHaveCount(1)
     await expect(marks(page)).toHaveAttribute('data-dc-standing', 'out')
-    await expect(listRows(page).filter({ has: marks(page) }).locator('.dc-list__primary')).toHaveText(name)
+    await expect(listRows(page).filter({ has: page.locator('.dc-standing') }).locator('.dc-list__primary')).toHaveText(name)
   })
 
-  test('lifts the term when its dot is pressed, and stays where it is', async ({ page }) => {
+  test('lifts the term when its mark is pressed, and stays where it is', async ({ page }) => {
     await gotoStory(page, HOME, '&e=sets&v=list')
     const before = await listRows(page).count()
     await page.locator('.dc-list__open').first().click({ modifiers: ['Alt'] })
     expect(queryOf(page)).toMatch(/^-set="sets_\d+"$/)
-    await listRows(page).first().locator('.dc-list__standing [data-dc-standing="none"]').click()
+    await listRows(page).first().locator('.dc-standing').click()
     expect(queryOf(page)).toBeNull()
     expect(entityOf(page)).toBe('s')
     await expect(viewSelect(page)).toHaveAttribute('data-dc-value', 'list')
@@ -426,17 +425,15 @@ test.describe('A row the query names', () => {
     await expect(marks(page)).toHaveCount(0)
   })
 
-  test('shows it in the table as the lit sign of its standing column', async ({ page }) => {
+  test('shows it in the table in a column of its own', async ({ page }) => {
     await gotoStory(page, TABLE)
     await page.locator('.dc-table__row').first().locator('.dc-drill').first().click({ modifiers: ['Alt'] })
     await chooseScope(page, 'Sets')
     await chooseView(page, 'table')
-    // Not the mark beside the name — a table has a column for this, on
-    // every row, and the one the query leaves out is the one row lit `−`.
+    // Not the mark beside the name — a table has a column for this, drawn
+    // while some row is named, and the one the query leaves out wears `−`.
     await expect(marks(page)).toHaveCount(0)
-    const lit = page.locator(
-      'td.dc-table__standing [data-dc-active="true"]:not([data-dc-standing="none"])',
-    )
+    const lit = page.locator('td.dc-table__standing .dc-standing')
     await expect(lit).toHaveCount(1)
     await expect(lit).toHaveAttribute('data-dc-standing', 'out')
   })

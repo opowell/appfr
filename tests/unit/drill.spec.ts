@@ -13,6 +13,7 @@ import {
   standingTerm,
   termStanding,
   withStanding,
+  withStandings,
   withoutOwnScope,
   withWhere,
 } from '../../src/query/drill'
@@ -307,6 +308,33 @@ describe('withStanding', () => {
   it('leaves the expression alone for a record no term can name', () => {
     expect(withStanding('theme:space', null, 'in')).toBe('theme:space')
     expect(withStanding('theme:space', null, null)).toBe('theme:space')
+  })
+})
+
+describe('withStandings', () => {
+  it('includes records of one type as alternatives in one group', () => {
+    expect(withStandings('theme:space', ['set="a"', 'set="b"'], 'in')).toBe('theme:space set="a" set="b"')
+  })
+
+  it('includes records of several types as a group per type, each with the query', () => {
+    expect(withStandings('theme:space', ['set="a"', 'piece="p"', 'set="b"'], 'in')).toBe(
+      'theme:space set=a set=b OR theme:space piece=p',
+    )
+    expect(withStandings('', ['set="a"', 'piece="p"'], 'in')).toBe('set=a OR piece=p')
+  })
+
+  it('takes an exclusion of one of them back as it includes it', () => {
+    expect(withStandings('-set="a"', ['set="a"', 'piece="p"'], 'in')).toBe('set=a OR piece=p')
+  })
+
+  it('excludes every record, whatever its type', () => {
+    expect(withStandings('theme:space', ['set="a"', 'piece="p"'], 'out')).toBe(
+      'theme:space -set="a" -piece="p"',
+    )
+  })
+
+  it('lifts every record', () => {
+    expect(withStandings('set="a" -piece="p" theme:space', ['set="a"', 'piece="p"'], null)).toBe('theme:space')
   })
 })
 

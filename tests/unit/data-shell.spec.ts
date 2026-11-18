@@ -828,11 +828,60 @@ describe('DataShell — the order, off the table', () => {
   })
 })
 
+describe('DataShell — including and excluding ticked rows', () => {
+  const include = (w: VueWrapper) => w.find('[data-dc-operation="include"]')
+  const exclude = (w: VueWrapper) => w.find('[data-dc-operation="exclude"]')
+  const tick = (w: VueWrapper, at: number) => w.findAll('.dc-list__row input[type="checkbox"]')[at]!
+
+  it('ticks rows of a type that can be named, and offers no + · − on them', async () => {
+    const w = shell(createMemoryAdapter('?e=tests&v=list'))
+    await flushPromises()
+    expect(w.findAll('.dc-list__row input[type="checkbox"]')).toHaveLength(10)
+    expect(w.find('.dc-standing-control').exists()).toBe(false)
+    expect(include(w).attributes('disabled')).toBeDefined()
+    expect(exclude(w).attributes('disabled')).toBeDefined()
+  })
+
+  it('excludes the ticked rows, from this page and another, and unticks them', async () => {
+    const adapter = createMemoryAdapter('?e=tests&v=list')
+    const w = shell(adapter)
+    await flushPromises()
+    await tick(w, 1).trigger('click')
+    await w.vm.$nextTick()
+    adapter.replace('?e=tests&v=list&p=2')
+    await flushPromises()
+    await tick(w, 0).trigger('click')
+    await flushPromises()
+    expect(exclude(w).text()).toBe('Exclude 2')
+    await exclude(w).trigger('click')
+    await flushPromises()
+    expect(param(adapter, 'q')).toBe('-test="tests-1" -test="tests-10"')
+    expect(w.findAll('.dc-list__row input[type="checkbox"]:checked')).toHaveLength(0)
+  })
+
+  it('includes ticked rows of several types as alternatives', async () => {
+    const adapter = createMemoryAdapter('?v=list')
+    // Three of each type, so the first page holds every type.
+    const w = shell(adapter, { source: source(3) })
+    await flushPromises()
+    const rows = w.findAll('.dc-list__row')
+    const at = (key: string) => rows.findIndex((r) => r.text().includes(key))
+    await tick(w, at('tests-0')).trigger('click')
+    await tick(w, at('urls-0')).trigger('click')
+    await flushPromises()
+    await include(w).trigger('click')
+    await flushPromises()
+    expect(param(adapter, 'q')).toBe('test=tests-0 OR url=urls-0')
+  })
+})
+
 describe('DataShell — operations on the type as a whole', () => {
   const exportable: DomainSchema = {
     ...schema,
     entities: [entity('tests', {
       scope: 'test',
+      // Named, but never included or excluded: nothing else to tick for.
+      standing: false,
       operations: [{ key: 'export', label: 'Export all', selection: false }],
     })],
   }

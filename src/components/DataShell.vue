@@ -30,7 +30,8 @@ import { ROUTE_ADAPTER_KEY } from '../routing/adapter'
 import { createHistoryAdapter } from '../routing/history'
 import { detachableAdapter } from '../routing/detached'
 import { createMockDataSource } from '../data/mock'
-import { drillExpression, recordsIn, scopeTermFor } from '../query/drill'
+import { drillExpression, recordsIn, scopeTermFor, standingTerm, withStandings } from '../query/drill'
+import type { TermStanding } from '../query/drill'
 import { resolveView } from '../query/schema'
 import { provideShellContext } from '../composables/context'
 import type { PressPreview } from '../composables/context'
@@ -727,33 +728,88 @@ function togglePin(row: ShellRow) {
 /* --------------------------------------------------------------- selecting */
 
 /**
+ * Whether the rows listed can be left in or out of the query by name: the
+ * type in force declares a scope and does not say `standing: false`, or —
+ * every type listed at once — one of them does.
+ */
+const standable = computed(() => {
+  const stands = (entity: EntitySchema) => Boolean(entity.scope) && entity.standing !== false
+  const entity = query.entity.value
+  return entity ? stands(entity) : props.schema.entities.some(stands)
+})
+
+/**
  * Whether records may be ticked. The type in force naming something to do to a
  * selection is what usually says so — a tick with nothing to do to what it
- * ticks is a control that leads nowhere — and the prop offers them anyway, for
- * a host whose bulk action is its own.
+ * ticks is a control that leads nowhere — and rows that can be named are
+ * ticked to include or exclude them (`standSelection`). The prop offers them
+ * anyway, for a host whose bulk action is its own.
  */
 const selectable = computed(() => {
   if (props.selectable === true) return true
+  if (standable.value) return true
   const entity = query.entity.value
   return Boolean(entity?.duplicate || entity?.delete || entity?.operations?.some(operation => operation.selection !== false))
 })
 
 const selectedIds = computed(() => new Set(selected.value))
 
+/** The term naming a row — of its own type, where every type is listed — or null. */
+function rowTerm(row: ShellRow): string | null {
+  const entity = props.schema.entities.find((candidate) => candidate.key === row.entityKey) ?? query.entity.value
+  return standingTerm(entity, row)
+}
+
+/**
+ * The terms naming the ticked rows, kept as they are ticked: a tick outlives
+ * the page it was made on, and a row on another page is not in hand to name.
+ */
+const tickedTerms = new Map<string, string | null>()
+
 function toggleSelect(row: ShellRow) {
   const next = new Set(selectedIds.value)
   if (next.has(row.id)) next.delete(row.id)
-  else next.add(row.id)
+  else {
+    next.add(row.id)
+    tickedTerms.set(row.id, rowTerm(row))
+  }
   selected.value = [...next]
 }
 
 function selectPage(on: boolean) {
   const next = new Set(selectedIds.value)
   for (const row of results.rows.value) {
-    if (on) next.add(row.id)
-    else next.delete(row.id)
+    if (on) {
+      next.add(row.id)
+      tickedTerms.set(row.id, rowTerm(row))
+    } else next.delete(row.id)
   }
   selected.value = [...next]
+}
+
+/** The terms naming what is ticked, from the rows on the page or as they were ticked. */
+const selectionTerms = computed(() => {
+  const onPage = new Map(results.rows.value.map((row) => [row.id, row]))
+  return selected.value
+    .map((id) => {
+      const row = onPage.get(id)
+      return row ? rowTerm(row) : (tickedTerms.get(id) ?? null)
+    })
+    .filter((term): term is string => term !== null)
+})
+
+/**
+ * Includes the ticked records in the query (`in`), excludes them (`out`), or
+ * lifts what it says of them (null), as one change to the expression, and
+ * unticks them: what they were ticked for is done. Several included are any
+ * of them — see {@link withStandings}.
+ */
+function standSelection(standing: TermStanding | null) {
+  const terms = selectionTerms.value
+  if (!terms.length) return
+  const expr = withStandings(query.query.value.expr, terms, standing)
+  clearSelection()
+  query.setExpression(expr)
 }
 
 function clearSelection() {
@@ -890,6 +946,9 @@ const shell = provideShellContext({
   toggleSelect,
   selectPage,
   clearSelection,
+  standable,
+  selectionTerms,
+  standSelection,
   narrowsOnPress: computed(() => props.rowPress === 'narrow'),
   rowLinks: computed(() => props.rowLinks),
   pressPreview,

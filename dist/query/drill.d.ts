@@ -133,6 +133,20 @@ export declare function liftTerm(expr: string, term: string | null): string;
  */
 export declare function withStanding(expr: string, term: string | null, standing: TermStanding | null): string;
 /**
+ * `expr` with the query's standing on several records set at once — what
+ * Include and Exclude on a selection write — as one expression.
+ *
+ * Leaving records out, or lifting them, is each record's own move in turn:
+ * the terms are all ANDed. Including them is not quite: two `=` terms on one
+ * field in one group are alternatives already (see {@link idsExpression}),
+ * but records of different types are named on different fields, and ANDing
+ * `item="a"` to `scraper="b"` asks for a row that is both. So where the
+ * records are named on more than one field, the terms on each field become a
+ * group of their own — `item="a" OR scraper="b"` — each ANDed with every
+ * alternative the query already had.
+ */
+export declare function withStandings(expr: string, terms: readonly string[], standing: TermStanding | null): string;
+/**
  * Does by hand what the browser does with a modified click on a link, for what
  * cannot be one: ⌘/Ctrl opens `href` in a new tab, ⇧ in a new window.
  */

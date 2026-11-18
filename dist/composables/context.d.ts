@@ -1,6 +1,7 @@
 import type { ComputedRef, InjectionKey, Ref, ShallowRef } from 'vue';
 import type { DataSource, DomainSchema, EntitySchema, PressOptions, RecordView, Selection, ShellQuery, ShellRow } from '../types';
 import type { QueryState } from './useQueryState';
+import type { TermStanding } from '../query/drill';
 /** A press being considered: the term it would add, and the record it names, if any. */
 export interface PressPreview {
     term: string;
@@ -122,6 +123,19 @@ export interface ShellContext extends QueryState {
     selectPage(on: boolean): void;
     /** Unticks everything, on this page and every other. */
     clearSelection(): void;
+    /**
+     * Whether the rows listed can be included in or excluded from the query by
+     * name — their type declares a scope and not `standing: false`. They are
+     * then ticked, and `standSelection` does it to the ticked ones.
+     */
+    standable: ComputedRef<boolean>;
+    /** The terms naming the ticked records that can be named. */
+    selectionTerms: ComputedRef<string[]>;
+    /**
+     * Includes the ticked records in the query (`in`), excludes them (`out`) or
+     * lifts what it says of them (null), and unticks them.
+     */
+    standSelection(standing: TermStanding | null): void;
     /**
      * Whether pressing a row narrows the whole result set to that record rather
      * than reporting it as {@link ShellContext.activate}. True by default — see

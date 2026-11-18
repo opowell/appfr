@@ -179,6 +179,11 @@ const readout = computed(() => {
  */
 const selectionAtEnd = computed(() => props.selectionPlacement === 'end')
 
+/** How many of the ticked records the query can name, for Include and Exclude. */
+const standCount = computed(() => shell.selectionTerms.value.length)
+
+const standLabel = (label: string) => (standCount.value ? `${label} ${standCount.value}` : label)
+
 /**
  * An operation says how many it is for, once there are any. A label ending
  * in `…` keeps it at the end — `Run 3…`, not `Run… 3` — since the ellipsis
@@ -273,6 +278,33 @@ function opLabel(label: string): string {
         >+</span>
         {{ entity.create }}
       </PressLink>
+
+      <!-- Where the query stands on the ticked records: narrowed to them, or
+           leaving them out. Here rather than on each row, where a row has
+           only its tick: the rows say what they are, and this is the one
+           place what is done to them is chosen. -->
+      <template v-if="records && shell.standable.value">
+        <button
+          type="button"
+          class="dc-actions__op"
+          data-dc-operation="include"
+          :title="standCount ? `Narrow the query to the ${standCount} ticked` : 'Tick rows to narrow the query to them'"
+          :disabled="!standCount"
+          @click="shell.standSelection('in')"
+        >
+          {{ standLabel('Include') }}
+        </button>
+        <button
+          type="button"
+          class="dc-actions__op"
+          data-dc-operation="exclude"
+          :title="standCount ? `Leave the ${standCount} ticked out of the query` : 'Tick rows to leave them out of the query'"
+          :disabled="!standCount"
+          @click="shell.standSelection('out')"
+        >
+          {{ standLabel('Exclude') }}
+        </button>
+      </template>
 
       <!-- Both of these operate on the ticks, so with none they have nothing to
            operate on and say so. That is a fact about the selection rather than

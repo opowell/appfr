@@ -3,8 +3,8 @@ import { gotoStory, scopeSelect, searchBox, terms } from './story'
 
 /**
  * A value in a table cell narrows the list to the rows sharing it: a number
- * keeps its end of the range, anything else keeps that value. What a press
- * would add stands faintly in the search bar first.
+ * keeps its end of the range, anything else keeps that value. Nothing stands
+ * in the search bar before the press.
  */
 
 /** Searches as a table: `New` and `Results` are numbers that count nothing listable. */
@@ -33,15 +33,12 @@ test.describe('Table — a value narrows to the rows like it', () => {
     await expect(page.locator('.dc-table')).toBeVisible()
   })
 
-  test('says what a press would add while the pointer is on the value', async ({ page }) => {
+  test('says nothing in the search bar while the pointer is on the value', async ({ page }) => {
     await gotoStory(page, TABLE)
-    const preview = page.locator('.dc-term--preview')
-    await expect(preview).toHaveCount(0)
     const value = narrows(page).first()
     await value.hover()
-    await expect(preview).toHaveText(/^\S+ [≤≥] \d+(\.\d+)?$/)
-    await page.locator('.dc-table thead').hover()
-    await expect(preview).toHaveCount(0)
+    await expect(value).toHaveAttribute('title', /^Narrow to /)
+    await expect(page.locator('.dc-term--preview')).toHaveCount(0)
   })
 
   test('says it for the name of a record too, and goes when it is pressed', async ({ page }) => {

@@ -136,8 +136,9 @@ once the record is named.
 pressed for one of those and that does not name the row, unless it says
 `narrow: false`. The shell's `valuePress` says how the value shows it can be
 pressed: `text` is plain until the pointer finds it, `button` is marked out at
-rest. While the pointer or the focus is on it, the term it would add stands
-faintly in the search bar. The press ANDs that term on to the query, keeping the
+rest. Its title names the term it would add; nothing is shown in the search
+bar before the press (a record's name, which narrows to its record, still
+shows its term there). The press ANDs that term on to the query, keeping the
 type and the view, and dragging across the value selects its text instead. Being selectable, it is
 a span in the role of a link, so it has no context menu for links:
 

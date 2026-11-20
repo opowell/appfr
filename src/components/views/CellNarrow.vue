@@ -4,7 +4,6 @@ import type { ColumnDef, PressOptions } from '../../types'
 import { useShellContext } from '../../composables/context'
 import type { PresentedRow } from '../../composables/usePresentedRows'
 import { formatTerm, refineExpression } from '../../data/expression'
-import { pressPreviewOn } from '../../composables/usePressPreview'
 import { cellText } from '../../query/columns'
 import type { CellNarrowing } from '../../query/narrowing'
 import PressLink from './PressLink.vue'
@@ -61,11 +60,6 @@ function titleOf(narrowing: CellNarrowing): string {
   return `Narrow to ${termOf(narrowing)}\n⌥-press to leave these out`
 }
 
-/** What the header shows faintly while the value is under the pointer: a term, never a move. */
-function previewOf(narrowing: CellNarrowing) {
-  return narrowing.entity !== undefined ? null : { term: termOf(narrowing) }
-}
-
 function press(narrowing: CellNarrowing, options: PressOptions, event: MouseEvent): void {
   // The row's own press would open the record — this value leads somewhere of its own.
   event.stopPropagation()
@@ -88,7 +82,6 @@ function press(narrowing: CellNarrowing, options: PressOptions, event: MouseEven
         :href="hrefOf(narrowing)"
         :title="titleOf(narrowing)"
         selectable
-        v-on="pressPreviewOn(shell, previewOf(narrowing))"
         @press="(options, event) => press(narrowing, options, event)"
       ><slot>{{ narrowing.label ?? text }}</slot></PressLink>
     </template>

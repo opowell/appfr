@@ -1277,6 +1277,7 @@ defineExpose({
   gap: 16px;
   min-width: 0;
   padding: 14px 20px 28px;
+  overflow-x: hidden;
   overflow-y: auto;
   border-left: 1px solid var(--dc-line);
   background: var(--dc-bg-1);
@@ -1295,6 +1296,20 @@ defineExpose({
   border-top: 1px solid var(--dc-line);
   border-bottom: 0;
   background: none;
+}
+
+/* The operations wrap too, as many to a row as the column holds, so the panel
+   never scrolls sideways; and the pager, on a row of its own once they fill
+   theirs, needs no divider from them. */
+.dc-shell__panel > .dc-shell__panel-actions :deep(.dc-actions__ops) {
+  flex-wrap: wrap;
+  min-width: 0;
+  margin-left: 0;
+}
+
+.dc-shell__panel > .dc-shell__panel-actions :deep(.dc-actions__pages) {
+  padding-left: 0;
+  border-left: 0;
 }
 
 /* Too narrow for a column beside the records: over them instead, no taller

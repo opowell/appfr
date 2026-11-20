@@ -4841,7 +4841,7 @@ const vc = ["data-dc-pending", "data-dc-heads-only"], pc = {
       ])) : O("", !0)
     ], 12, Vc));
   }
-}), zc = /* @__PURE__ */ Q(Wc, [["__scopeId", "data-v-ad54b2b2"]]), jc = ["data-dc-span", "data-dc-muted", "data-dc-collapsed"], Uc = ["data-dc-collapsible"], Qc = ["aria-expanded", "aria-controls"], Gc = { class: "dc-shell-card__sr" }, Yc = {
+}), zc = /* @__PURE__ */ Q(Wc, [["__scopeId", "data-v-4e7b98d6"]]), jc = ["data-dc-span", "data-dc-muted", "data-dc-collapsed"], Uc = ["data-dc-collapsible"], Qc = ["aria-expanded", "aria-controls"], Gc = { class: "dc-shell-card__sr" }, Yc = {
   key: 0,
   class: "dc-shell-card__identity"
 }, Xc = { class: "dc-shell-card__title dc-shell-card__name" }, Jc = {

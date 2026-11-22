@@ -163,6 +163,13 @@ type __VLS_Props = {
      * the records.
      */
     layout?: 'bar' | 'panel';
+    /**
+     * With `layout: 'panel'`, the query in a row over the records rather than
+     * in the panel, after the host's `top-lead` (its way home); the panel then
+     * opens with the host's `panel-head` and the views. For a screen that
+     * wants the records' whole height (a page read), leave it off.
+     */
+    queryOnTop?: boolean;
     /** The host's own names for views, over the shell's — `{ grid: 'Tiles' }`. */
     viewLabels?: Partial<Record<ViewKind, string>>;
     /** With `layout: 'panel'`, a line under each view's name in Show as — `{ cards: 'Like Reddit' }`. */
@@ -263,6 +270,11 @@ type __VLS_Slots = {
      * host's way home and its other ways about, the bar having no name.
      */
     'panel-head'?: () => unknown;
+    /**
+     * With `layout: 'panel'` and `queryOnTop`, what comes before the query in
+     * the row over the records: the host's way home.
+     */
+    'top-lead'?: () => unknown;
     /**
      * With `layout: 'panel'`, the host's own part of the panel, after the
      * query and the views and before the sort and the pager: what it says about

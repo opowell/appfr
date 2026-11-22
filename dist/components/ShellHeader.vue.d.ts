@@ -18,6 +18,13 @@ type __VLS_Props = {
      * query's parts wrapping onto as many lines as they take.
      */
     panel?: boolean;
+    /**
+     * Drawn over the records in a panel layout whose query is on top (see
+     * `queryOnTop` on `DataShell`): no name, the host's way home being before
+     * it, and the field a rounded box with a magnifier, its parts on one line
+     * as on the bar, so that the records under it never move.
+     */
+    top?: boolean;
 };
 declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: __VLS_WithSlots<typeof __VLS_component, __VLS_Slots>;

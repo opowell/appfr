@@ -215,6 +215,13 @@ const props = withDefaults(
      * wants the records' whole height (a page read), leave it off.
      */
     queryOnTop?: boolean
+    /**
+     * Leaves the listed type out of the query's parts in a panel layout (on
+     * top or in the panel), where it is otherwise one (`Links · 62`): for a
+     * screen the host means as one record's own, whose type it lists without
+     * the type being a thing to lift, the record's part saying what it is.
+     */
+    hideTypePart?: boolean
     /** The host's own names for views, over the shell's — `{ grid: 'Tiles' }`. */
     viewLabels?: Partial<Record<ViewKind, string>>
     /** With `layout: 'panel'`, a line under each view's name in Show as — `{ cards: 'Like Reddit' }`. */
@@ -388,6 +395,12 @@ const slots = defineSlots<{
    * what is in view. Given the query, as `page` is.
    */
   panel?: (props: { query: ShellQuery }) => unknown
+  /**
+   * With `layout: 'panel'`, the host's part of the panel after the sort, the
+   * operations and the pager: what it says about a record whose rows are
+   * listed, under what acts on the rows.
+   */
+  'panel-end'?: (props: { query: ShellQuery }) => unknown
   /**
    * The domain's mark at the left end of the bar, drawn in place of its name
    * — a logo, an icon. The name stays the bar's accessible text, read out
@@ -1156,7 +1169,10 @@ defineExpose({
         class="dc-shell__top"
       >
         <slot name="top-lead" />
-        <ShellHeader top />
+        <ShellHeader
+          top
+          :hide-type="hideTypePart"
+        />
       </div>
 
       <!-- A page of the host's, under the same bar: not a drawing of the rows,
@@ -1240,6 +1256,7 @@ defineExpose({
       <ShellHeader
         v-if="!queryOnTop"
         panel
+        :hide-type="hideTypePart"
       >
         <template
           v-if="slots.actions"
@@ -1273,6 +1290,10 @@ defineExpose({
         v-if="!slots.page && !stripless"
         class="dc-shell__panel-actions"
         v-bind="recordActions"
+      />
+      <slot
+        name="panel-end"
+        :query="shell.query.value"
       />
     </aside>
   </div>

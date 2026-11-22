@@ -38,6 +38,8 @@ const props = defineProps<{
    * as on the bar, so that the records under it never move.
    */
   top?: boolean
+  /** Leaves the listed type out of the parts in a panel or on top — see `hideTypePart` on `DataShell`. */
+  hideType?: boolean
 }>()
 
 const shell = useShellContext()
@@ -84,7 +86,8 @@ const terms = computed(() => {
   const own = entity?.keepsScope ? undefined : entity?.scope?.toLowerCase()
   // The type is the bar's chooser's to say; in a panel, which has none, it is
   // a part of the query like the rest, lifted to list every type.
-  return shell.terms.value.filter((term) => props.panel || props.top || term.facetKey !== ENTITY_TERM).map((term, at, all) => {
+  const typePart = (props.panel || props.top) && !props.hideType
+  return shell.terms.value.filter((term) => typePart || term.facetKey !== ENTITY_TERM).map((term, at, all) => {
     const before = all[at - 1]
     return {
       term,

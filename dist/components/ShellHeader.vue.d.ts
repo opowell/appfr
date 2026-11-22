@@ -25,6 +25,8 @@ type __VLS_Props = {
      * as on the bar, so that the records under it never move.
      */
     top?: boolean;
+    /** Leaves the listed type out of the parts in a panel or on top — see `hideTypePart` on `DataShell`. */
+    hideType?: boolean;
 };
 declare const __VLS_component: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: __VLS_WithSlots<typeof __VLS_component, __VLS_Slots>;

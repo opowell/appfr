@@ -208,6 +208,13 @@ const props = withDefaults(
      * the records.
      */
     layout?: 'bar' | 'panel'
+    /**
+     * With `layout: 'panel'`, the query in a row over the records rather than
+     * in the panel, after the host's `top-lead` (its way home); the panel then
+     * opens with the host's `panel-head` and the views. For a screen that
+     * wants the records' whole height (a page read), leave it off.
+     */
+    queryOnTop?: boolean
     /** The host's own names for views, over the shell's — `{ grid: 'Tiles' }`. */
     viewLabels?: Partial<Record<ViewKind, string>>
     /** With `layout: 'panel'`, a line under each view's name in Show as — `{ cards: 'Like Reddit' }`. */
@@ -370,6 +377,11 @@ const slots = defineSlots<{
    * host's way home and its other ways about, the bar having no name.
    */
   'panel-head'?: () => unknown
+  /**
+   * With `layout: 'panel'` and `queryOnTop`, what comes before the query in
+   * the row over the records: the host's way home.
+   */
+  'top-lead'?: () => unknown
   /**
    * With `layout: 'panel'`, the host's own part of the panel, after the
    * query and the views and before the sort and the pager: what it says about
@@ -1054,6 +1066,9 @@ onBeforeUnmount(() => sizing?.disconnect())
 /** Whether what is chosen about the records is in a side panel — see `layout`. */
 const panel = computed(() => props.layout === 'panel')
 
+/** Whether the query is in a row over the records, beside the panel — see `queryOnTop`. */
+const queryOnTop = computed(() => panel.value && props.queryOnTop === true)
+
 /** Whether the strip over the results sits on the bar's row — see `oneStripFrom`. */
 const oneStrip = computed(() => !panel.value && props.oneStripFrom !== false && width.value >= props.oneStripFrom)
 
@@ -1134,6 +1149,16 @@ defineExpose({
     <!-- The records, or the host's page: beside the panel where there is one,
          and laid out as the shell's own children where there is none. -->
     <div class="dc-shell__main">
+      <!-- With the query on top: the host's way home and the query, in a row
+           over the records. -->
+      <div
+        v-if="queryOnTop"
+        class="dc-shell__top"
+      >
+        <slot name="top-lead" />
+        <ShellHeader top />
+      </div>
+
       <!-- A page of the host's, under the same bar: not a drawing of the rows,
          so none of what acts on them is offered over it. -->
       <div
@@ -1212,7 +1237,10 @@ defineExpose({
       aria-label="Panel"
     >
       <slot name="panel-head" />
-      <ShellHeader panel>
+      <ShellHeader
+        v-if="!queryOnTop"
+        panel
+      >
         <template
           v-if="slots.actions"
           #actions
@@ -1220,6 +1248,12 @@ defineExpose({
           <slot name="actions" />
         </template>
       </ShellHeader>
+      <div
+        v-else-if="slots.actions"
+        class="dc-shell__panel-host-actions"
+      >
+        <slot name="actions" />
+      </div>
       <RecordChoosers
         v-if="!slots.page"
         :views="offeredViews"
@@ -1287,6 +1321,27 @@ defineExpose({
   flex-shrink: 0;
 }
 
+/* The row over the records holding the query, when it is on top. */
+.dc-shell__top {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 32px 12px;
+}
+
+/* The host's actions, in the panel without the query they would follow. */
+.dc-shell__panel-host-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.dc-shell__panel-host-actions:empty {
+  display: none;
+}
+
 /* The sort, the ticks, the operations and the pager, wrapping in the column
    under a rule rather than drawn as a strip. */
 .dc-shell__panel > .dc-shell__panel-actions {
@@ -1325,6 +1380,10 @@ defineExpose({
     max-height: 50vh;
     border-left: 0;
     border-bottom: 1px solid var(--dc-line);
+  }
+
+  .dc-shell__top {
+    padding: 10px 16px;
   }
 }
 

@@ -31,6 +31,13 @@ const props = defineProps<{
    * query's parts wrapping onto as many lines as they take.
    */
   panel?: boolean
+  /**
+   * Drawn over the records in a panel layout whose query is on top (see
+   * `queryOnTop` on `DataShell`): no name, the host's way home being before
+   * it, and the field a rounded box with a magnifier, its parts on one line
+   * as on the bar, so that the records under it never move.
+   */
+  top?: boolean
 }>()
 
 const shell = useShellContext()
@@ -77,7 +84,7 @@ const terms = computed(() => {
   const own = entity?.keepsScope ? undefined : entity?.scope?.toLowerCase()
   // The type is the bar's chooser's to say; in a panel, which has none, it is
   // a part of the query like the rest, lifted to list every type.
-  return shell.terms.value.filter((term) => props.panel || term.facetKey !== ENTITY_TERM).map((term, at, all) => {
+  return shell.terms.value.filter((term) => props.panel || props.top || term.facetKey !== ENTITY_TERM).map((term, at, all) => {
     const before = all[at - 1]
     return {
       term,
@@ -490,7 +497,7 @@ onBeforeUnmount(() => watching?.disconnect())
 <template>
   <div
     class="dc-header"
-    :class="{ 'dc-header--panel': props.panel }"
+    :class="{ 'dc-header--panel': props.panel, 'dc-header--top': props.top }"
   >
     <!-- The domain, and the query as it stands: where the query is read and
          edited, and the only place it is. -->
@@ -499,7 +506,7 @@ onBeforeUnmount(() => watching?.disconnect())
            mark, where it has one, is drawn for the eye and hidden from
            assistive technology, which reads the name it stands for. -->
       <PressLink
-        v-if="!props.panel && domain.label && slots.brand"
+        v-if="!props.panel && !props.top && domain.label && slots.brand"
         class="dc-header__domain"
         data-dc-brand
         title="Home"
@@ -518,7 +525,7 @@ onBeforeUnmount(() => watching?.disconnect())
         <span class="dc-header__sr">{{ domain.label }}</span>
       </PressLink>
       <PressLink
-        v-else-if="!props.panel && domain.label"
+        v-else-if="!props.panel && !props.top && domain.label"
         class="dc-header__domain"
         title="Home"
         :href="shell.homeHref()"
@@ -556,6 +563,22 @@ onBeforeUnmount(() => watching?.disconnect())
           class="dc-header__field"
           @mousedown="pressField"
         >
+          <svg
+            v-if="props.top"
+            class="dc-header__magnifier"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          ><circle
+            cx="11"
+            cy="11"
+            r="6.5"
+          /><path d="M16 16l4.5 4.5" /></svg>
           <div
             ref="termBar"
             class="dc-header__terms"
@@ -709,6 +732,39 @@ onBeforeUnmount(() => watching?.disconnect())
   overflow: visible;
   white-space: normal;
   mask-image: none;
+}
+
+/*
+ * Over the records, in a panel layout whose query is on top: no bar of its
+ * own, the field a rounded box as wide as the row, a magnifier at its left,
+ * and the parts on one line, scrolled as on the bar rather than wrapped: a
+ * part previewed while the pointer is on a record would otherwise move the
+ * records under it.
+ */
+.dc-header.dc-header--top {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border-bottom: 0;
+  background: none;
+}
+
+.dc-header--top .dc-header__main {
+  margin-left: 0;
+  padding: 0;
+}
+
+.dc-header--top .dc-header__field {
+  gap: 8px;
+  min-height: calc(var(--dc-control-height) + 14px);
+  padding: 5px 16px;
+  border-radius: calc(var(--dc-radius-sm) * 99);
+}
+
+.dc-header__magnifier {
+  flex: 0 0 auto;
+  color: var(--dc-fg-2);
 }
 
 .dc-header--panel .dc-term {

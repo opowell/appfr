@@ -212,6 +212,24 @@ export declare function withWhere(expr: string, where: string | undefined): stri
  */
 export declare function withoutOwnScope(entity: EntitySchema | null | undefined, expr: string): string;
 /**
+ * The scope fields, lowercased, of every type `entity` belongs to — its
+ * {@link EntitySchema.parent}, that one's parent, and so on up. Empty for a
+ * type that is nobody's child, and for a parent that declares no scope: no
+ * term can name it, so there is none to lift. A parent chain that loops back
+ * on itself is read once round.
+ */
+export declare function ancestorScopes(schema: DomainSchema, entity: EntitySchema | null | undefined): string[];
+/**
+ * `expr` less the positive terms on any of `fields` — the parents a child
+ * record's press leaves behind (see {@link EntitySchema.parent}).
+ *
+ * Every alternative, as {@link withoutOwnScope} lifts: the field is what makes
+ * the term about that parent. A negated term stays, being a record left out
+ * rather than one narrowed to, which narrowing to a child does not contradict.
+ * Unchanged, text and all, where there is nothing to lift.
+ */
+export declare function withoutScopes(expr: string, fields: readonly string[]): string;
+/**
  * The entity whose records a field names — the inverse of {@link scopeTerm}.
  *
  * `set` is the field every other record carries a set's id in, so
@@ -272,6 +290,8 @@ export type SearchPatch = Record<string, string | undefined>;
  * goes too — these are different rows, so the page someone was on is a
  * position in a result set that no longer exists.
  *
- * `view` is cards unless said, as the shell's own press is.
+ * `view` is cards unless said, as the shell's own press is. `parentFields` are
+ * the scope fields of the record's parents ({@link ancestorScopes}), lifted
+ * from `expr` first, as a press on a child lifts them.
  */
-export declare function narrowPatch(expr: string, term: string | null, view?: ViewKind): SearchPatch;
+export declare function narrowPatch(expr: string, term: string | null, view?: ViewKind, parentFields?: readonly string[]): SearchPatch;

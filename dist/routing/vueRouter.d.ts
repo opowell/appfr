@@ -58,9 +58,11 @@ export interface RedirectTo {
  *
  * `scopeField` is the field the record's type declares as its
  * {@link EntitySchema.scope}; `param` the route param holding the id. `path`
- * is where the shell is mounted, `/` unless it says otherwise.
+ * is where the shell is mounted, `/` unless it says otherwise. `parentFields`
+ * are the scope fields of the record's parents (`EntitySchema.parent`), whose
+ * terms the query it arrived with loses, as a press on the record loses them.
  */
-export declare function recordRedirect(scopeField: string, param: string, path?: string): (to: RedirectFrom) => RedirectTo;
+export declare function recordRedirect(scopeField: string, param: string, path?: string, parentFields?: readonly string[]): (to: RedirectFrom) => RedirectTo;
 /**
  * A type's old list address, as a vue-router `redirect`: `/tests` landing on
  * the shell listing tests — `{ path: '/tests', redirect: entityRedirect('tests') }`.

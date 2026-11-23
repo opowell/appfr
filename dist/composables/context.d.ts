@@ -8,6 +8,8 @@ export interface PressPreview {
     name?: string;
     /** Whether the press leaves the rest of the query behind: see `EntitySchema.narrowsAlone`. */
     alone?: boolean;
+    /** The scope fields, lowercased, of the record's parents, whose terms the press lifts: see `EntitySchema.parent`. */
+    lifts?: string[];
 }
 /**
  * Everything the header, the query panel and the result views need. Provided

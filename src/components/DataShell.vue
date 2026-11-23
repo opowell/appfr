@@ -285,6 +285,12 @@ const props = withDefaults(
      */
     rowLinks?: boolean
     /**
+     * Whether hovering (or focusing) a value that a press would narrow to shows
+     * that narrowing as a dimmed term in the search box ahead of the press. On
+     * by default; `false` leaves the search box alone until the press.
+     */
+    pressPreview?: boolean
+    /**
      * How a value that can be pressed says so: `text` is plain until the
      * pointer finds it, `button` is marked out among plain text at rest.
      */
@@ -317,6 +323,7 @@ const props = withDefaults(
   {
     rowPress: 'narrow',
     rowLinks: false,
+    pressPreview: true,
     valuePress: 'button',
     loading: false,
     pageQuery: 'shell',
@@ -928,10 +935,10 @@ function recordHref(row: ShellRow): string | null {
   return entity?.href?.(row) || null
 }
 
-const pressPreview = shallowRef<PressPreview | null>(null)
+const pressed = shallowRef<PressPreview | null>(null)
 // A press takes the value away from under the pointer without it ever leaving.
 watch(query.query, () => {
-  pressPreview.value = null
+  pressed.value = null
 })
 
 const shell = provideShellContext({
@@ -985,7 +992,7 @@ const shell = provideShellContext({
   standSelection,
   narrowsOnPress: computed(() => props.rowPress === 'narrow'),
   rowLinks: computed(() => props.rowLinks),
-  pressPreview,
+  pressPreview: props.pressPreview ? pressed : undefined,
   /*
    * The one place a press is read, so every view gets the same answer without
    * knowing which of the two it is: they all call this.

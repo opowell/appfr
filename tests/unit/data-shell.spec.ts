@@ -655,6 +655,18 @@ describe('DataShell — rows that live somewhere', () => {
     expect(w.emitted('activate')).toHaveLength(1)
   })
 
+  it('shows what a press would narrow to while hovered, unless pressPreview is off', async () => {
+    for (const [props, shown] of [[{}, true], [{ pressPreview: false }, false]] as const) {
+      const w = shell(createMemoryAdapter('?e=tests&v=table'), props)
+      await flushPromises()
+      await w.find('.dc-table__row a').trigger('mouseenter')
+      await nextTick()
+      expect(w.find('.dc-term--preview').exists()).toBe(shown)
+      w.unmount()
+      wrapper = undefined
+    }
+  })
+
   it('makes every cell of a reported row a link under rowLinks', async () => {
     const plain: DomainSchema = { ...schema, entities: [entity('plain', { columns: [{ ...identity, activate: false }] })] }
     const w = shell(createMemoryAdapter('?e=plain&v=table'), {

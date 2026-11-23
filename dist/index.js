@@ -4464,6 +4464,7 @@ const hc = ["data-dc-pending", "data-dc-heads-only"], yc = {
     selectable: { type: Boolean },
     rowPress: { default: "narrow" },
     rowLinks: { type: Boolean, default: !1 },
+    pressPreview: { type: Boolean, default: !0 },
     valuePress: { default: "button" },
     activateHref: {},
     createHref: {},
@@ -4690,7 +4691,7 @@ const hc = ["data-dc-pending", "data-dc-heads-only"], yc = {
       standSelection: Ee,
       narrowsOnPress: f(() => a.rowPress === "narrow"),
       rowLinks: f(() => a.rowLinks),
-      pressPreview: Fe,
+      pressPreview: a.pressPreview ? Fe : void 0,
       /*
        * The one place a press is read, so every view gets the same answer without
        * knowing which of the two it is: they all call this.
@@ -4886,7 +4887,7 @@ const hc = ["data-dc-pending", "data-dc-heads-only"], yc = {
       ])) : L("", !0)
     ], 12, Dc));
   }
-}), Gc = /* @__PURE__ */ G(Qc, [["__scopeId", "data-v-0d27065d"]]), Yc = ["data-dc-span", "data-dc-muted", "data-dc-collapsed"], Xc = ["data-dc-collapsible"], Jc = ["aria-expanded", "aria-controls"], Zc = { class: "dc-shell-card__sr" }, eu = {
+}), Gc = /* @__PURE__ */ G(Qc, [["__scopeId", "data-v-c56f4612"]]), Yc = ["data-dc-span", "data-dc-muted", "data-dc-collapsed"], Xc = ["data-dc-collapsible"], Jc = ["aria-expanded", "aria-controls"], Zc = { class: "dc-shell-card__sr" }, eu = {
   key: 0,
   class: "dc-shell-card__identity"
 }, tu = { class: "dc-shell-card__title dc-shell-card__name" }, nu = {

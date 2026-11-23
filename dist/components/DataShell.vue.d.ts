@@ -240,6 +240,12 @@ type __VLS_Props = {
      */
     rowLinks?: boolean;
     /**
+     * Whether hovering (or focusing) a value that a press would narrow to shows
+     * that narrowing as a dimmed term in the search box ahead of the press. On
+     * by default; `false` leaves the search box alone until the press.
+     */
+    pressPreview?: boolean;
+    /**
      * How a value that can be pressed says so: `text` is plain until the
      * pointer finds it, `button` is marked out among plain text at rest.
      */
@@ -422,6 +428,7 @@ declare const __VLS_component: import("vue").DefineComponent<__VLS_PublicProps, 
     previewsPerType: number;
     loading: boolean;
     rowLinks: boolean;
+    pressPreview: boolean;
     theme: ShellTheme;
     selectionPlacement: "start" | "end";
     typeChooser: "scoped" | "always";

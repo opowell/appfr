@@ -1,6 +1,6 @@
 import type { PresentedRow } from './usePresentedRows'
 import type { PressPreview, ShellContext } from './context'
-import { scopeTerm } from '../query/drill'
+import { ancestorScopes, scopeTerm } from '../query/drill'
 
 /**
  * The listeners that put `preview` in the header while the pointer or the focus
@@ -21,5 +21,7 @@ export function pressPreviewOn(shell: ShellContext, preview: PressPreview | null
 /** What a press on a row's name adds, where that press narrows to its record. */
 export function recordPressPreview(shell: ShellContext, entry: PresentedRow): PressPreview | null {
   const term = shell.narrowsOnPress.value ? scopeTerm(entry.entity, entry.row) : null
-  return term ? { term, name: entry.parts.identity, alone: entry.entity?.narrowsAlone === true } : null
+  if (!term) return null
+  const lifts = ancestorScopes(shell.schema.value, entry.entity)
+  return { term, name: entry.parts.identity, alone: entry.entity?.narrowsAlone === true, ...(lifts.length ? { lifts } : {}) }
 }

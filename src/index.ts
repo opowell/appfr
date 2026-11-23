@@ -180,6 +180,7 @@ export { cellNarrowings, columnNarrows, numberRange } from './query/narrowing'
 export type { CellNarrowing, NumberRange } from './query/narrowing'
 export {
   addTerm,
+  ancestorScopes,
   drillExpression,
   excludingTerm,
   fieldTerm,
@@ -195,6 +196,7 @@ export {
   standingTerm,
   termStanding,
   withoutOwnScope,
+  withoutScopes,
   withStanding,
   withStandings,
   withWhere,

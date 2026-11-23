@@ -106,6 +106,19 @@ group per type (`item=a OR scraper=b`), each with the rest of the query.
 `withStanding(expr, term, standing)` does it for one record; `StandingControl`,
 the old three-way `+ · −`, is still exported for a host that wants it.
 
+**Parents.** A type can say which type it belongs to with `parent: 'resorts'`
+(the parent's `key`; both types need a `scope`). A child's id already says where
+it lives, so narrowing to one lifts the query's terms on the parent's scope
+field — and on that one's parent, up the chain — before adding its own:
+`resort="631"` and a press on an issue is `issue="631:RULE:SECTION:43769"`, not
+both. The rest of the query stays, a negated parent term stays, and leaving the
+child out (⌥) keeps everything. The header's preview strikes the parts the press
+will lift. A host writing its own narrowing passes `ancestorScopes(schema,
+entity)` to `narrowPatch(expr, term, view, parentFields)` or
+`recordRedirect(field, param, path, parentFields)`; `withoutScopes(expr,
+fields)` is the lift itself. Parents are optional: a type that names none
+narrows as before.
+
 A host applying a narrowing itself should call `narrow(expr, entityKey)` from
 `useQueryState`, not `setExpression` then `setEntity`: each serialises from the
 URL's current query, and route changes aren't synchronous, so the second

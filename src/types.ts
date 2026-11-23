@@ -617,6 +617,20 @@ export interface EntitySchema {
    */
   narrowsAlone?: boolean
   /**
+   * The {@link key} of the type this one belongs to — `'resorts'` for an issue
+   * of a resort. Optional: most types are nobody's child.
+   *
+   * A child's id already says where it lives, so narrowing to one makes the
+   * query's term on its parent redundant, and the parent's term is what would
+   * keep the child's own screen from reaching its other parents' siblings or
+   * leave a stale parent pill behind. A press on a record of this type therefore
+   * lifts the terms on the parent's {@link scope} field (and on its parent's, up
+   * the chain) before adding the record's own. Both types need a `scope`; the
+   * rest of the query stays. Leaving the child out keeps everything, being a
+   * refinement of the list it was pressed in.
+   */
+  parent?: string
+  /**
    * Where a record of this type lives outside the shell — a page of the
    * host's, a site it points at — or null for a record that lives nowhere
    * else. `row => row.id` for a type whose records *are* URLs.

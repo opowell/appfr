@@ -335,9 +335,12 @@ export function drillExpression(
 ): string {
   const term = scopeTermFor(schema, row)
   if (options.exclude) return withWhere(addTerm(query.expr, excludingTerm(term)), where)
+  const entity = schema.entities.find((candidate) => candidate.key === row.entityKey)
   // A record that narrows alone (EntitySchema.narrowsAlone) leaves the rest of the query behind.
-  const alone = term !== null && schema.entities.find((entity) => entity.key === row.entityKey)?.narrowsAlone === true
-  return withWhere(addTerm(alone ? '' : query.expr, term), where)
+  const alone = term !== null && entity?.narrowsAlone === true
+  // A child record leaves its parents behind (EntitySchema.parent): its id says where it lives.
+  const base = alone ? '' : term === null ? query.expr : withoutScopes(query.expr, ancestorScopes(schema, entity))
+  return withWhere(addTerm(base, term), where)
 }
 
 /**
@@ -396,6 +399,45 @@ export function withoutOwnScope(entity: EntitySchema | null | undefined, expr: s
   const groups = parseExpression(expr)
   const kept = groups.map((group) =>
     group.filter((term) => term.kind !== 'field' || term.field !== field),
+  )
+  if (kept.every((group, at) => group.length === groups[at]?.length)) return expr
+  return formatExpression(kept)
+}
+
+/**
+ * The scope fields, lowercased, of every type `entity` belongs to — its
+ * {@link EntitySchema.parent}, that one's parent, and so on up. Empty for a
+ * type that is nobody's child, and for a parent that declares no scope: no
+ * term can name it, so there is none to lift. A parent chain that loops back
+ * on itself is read once round.
+ */
+export function ancestorScopes(schema: DomainSchema, entity: EntitySchema | null | undefined): string[] {
+  const fields: string[] = []
+  const seen = new Set<string>()
+  let at = entity
+  while (at?.parent && !seen.has(at.parent)) {
+    seen.add(at.parent)
+    at = schema.entities.find((candidate) => candidate.key === at!.parent)
+    const field = at?.scope?.toLowerCase()
+    if (field) fields.push(field)
+  }
+  return fields
+}
+
+/**
+ * `expr` less the positive terms on any of `fields` — the parents a child
+ * record's press leaves behind (see {@link EntitySchema.parent}).
+ *
+ * Every alternative, as {@link withoutOwnScope} lifts: the field is what makes
+ * the term about that parent. A negated term stays, being a record left out
+ * rather than one narrowed to, which narrowing to a child does not contradict.
+ * Unchanged, text and all, where there is nothing to lift.
+ */
+export function withoutScopes(expr: string, fields: readonly string[]): string {
+  if (!fields.length || !expr.trim()) return expr
+  const groups = parseExpression(expr)
+  const kept = groups.map((group) =>
+    group.filter((term) => term.kind !== 'field' || term.negated || !fields.includes(term.field.toLowerCase())),
   )
   if (kept.every((group, at) => group.length === groups[at]?.length)) return expr
   return formatExpression(kept)
@@ -491,12 +533,19 @@ export type SearchPatch = Record<string, string | undefined>
  * goes too — these are different rows, so the page someone was on is a
  * position in a result set that no longer exists.
  *
- * `view` is cards unless said, as the shell's own press is.
+ * `view` is cards unless said, as the shell's own press is. `parentFields` are
+ * the scope fields of the record's parents ({@link ancestorScopes}), lifted
+ * from `expr` first, as a press on a child lifts them.
  */
-export function narrowPatch(expr: string, term: string | null, view: ViewKind = 'cards'): SearchPatch {
+export function narrowPatch(
+  expr: string,
+  term: string | null,
+  view: ViewKind = 'cards',
+  parentFields: readonly string[] = [],
+): SearchPatch {
   return {
     // An expression with nothing in it is no parameter, as the shell writes it.
-    [PARAM_EXPR]: addTerm(expr, term) || undefined,
+    [PARAM_EXPR]: addTerm(term ? withoutScopes(expr, parentFields) : expr, term) || undefined,
     [PARAM_ENTITY]: undefined,
     [PARAM_VIEW]: view,
     [PARAM_PAGE]: undefined,

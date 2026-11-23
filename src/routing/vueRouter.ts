@@ -2,7 +2,7 @@ import { computed, ref, watch } from 'vue'
 import type { RouteAdapter } from './adapter'
 import { normalizeSearch } from './adapter'
 import { PARAM_ENTITY, PARAM_EXPR } from '../query/codec'
-import { addTerm } from '../query/drill'
+import { addTerm, withoutScopes } from '../query/drill'
 
 /**
  * The slice of a vue-router `Router` this adapter needs. Typed structurally so
@@ -92,12 +92,15 @@ export interface RedirectTo {
  *
  * `scopeField` is the field the record's type declares as its
  * {@link EntitySchema.scope}; `param` the route param holding the id. `path`
- * is where the shell is mounted, `/` unless it says otherwise.
+ * is where the shell is mounted, `/` unless it says otherwise. `parentFields`
+ * are the scope fields of the record's parents (`EntitySchema.parent`), whose
+ * terms the query it arrived with loses, as a press on the record loses them.
  */
 export function recordRedirect(
   scopeField: string,
   param: string,
   path = '/',
+  parentFields: readonly string[] = [],
 ): (to: RedirectFrom) => RedirectTo {
   return (to) => {
     const raw = to.params[param]
@@ -107,7 +110,7 @@ export function recordRedirect(
     // Quoted as a drill quotes it: an id is opaque, a path or a URL as often
     // as a name, and a quote inside it would end the term early.
     const term = `${scopeField}="${id.replace(/"/g, '')}"`
-    return { path, query: { ...to.query, [PARAM_EXPR]: addTerm(expr, term) } }
+    return { path, query: { ...to.query, [PARAM_EXPR]: addTerm(withoutScopes(expr, parentFields), term) } }
   }
 }
 

@@ -7,7 +7,7 @@ import PressLink from './views/PressLink.vue'
 import { completeDraft } from '../query/completion'
 import type { Completion } from '../query/completion'
 import { refineExpression } from '../data/expression'
-import { scopedEntity } from '../query/drill'
+import { scopedEntity, withoutScopes } from '../query/drill'
 import { ENTITY_TERM, summaryTerms } from '../query/summary'
 import { formatCount } from '../data/format'
 import type { SummaryTerm } from '../query/summary'
@@ -179,7 +179,7 @@ const previewed = computed(() => {
   const query = shell.query.value
   const held = new Set(shell.terms.value.map((term) => term.address))
   return summaryTerms(
-    { ...query, expr: preview.alone ? preview.term : refineExpression(query.expr, preview.term) },
+    { ...query, expr: preview.alone ? preview.term : refineExpression(withoutScopes(query.expr, preview.lifts ?? []), preview.term) },
     shell.entity.value,
     shell.schema.value,
   )
@@ -189,8 +189,17 @@ const previewed = computed(() => {
     )
 })
 
-/** Whether a press on the value under the pointer would take the parts there now out of the query. */
-const leaving = computed(() => shell.pressPreview?.value?.alone === true)
+/**
+ * Whether a press on the value under the pointer would take this part out of the
+ * query: every part when the record narrows alone, and a part on a parent's scope
+ * when it is a child's record (see `EntitySchema.parent`).
+ */
+function leaving(term: SummaryTerm): boolean {
+  const preview = shell.pressPreview?.value
+  if (!preview) return false
+  if (preview.alone) return true
+  return !term.negated && term.field !== undefined && (preview.lifts ?? []).includes(term.field.toLowerCase())
+}
 
 /* ------------------------------------------------------- adding to the query */
 
@@ -607,7 +616,7 @@ onBeforeUnmount(() => watching?.disconnect())
                   <button
                     type="button"
                     class="dc-term dc-mono"
-                    :class="{ 'dc-term--idle': entry.idle, 'dc-term--leaving': leaving, 'dc-term--type': entry.term.facetKey === ENTITY_TERM }"
+                    :class="{ 'dc-term--idle': entry.idle, 'dc-term--leaving': leaving(entry.term), 'dc-term--type': entry.term.facetKey === ENTITY_TERM }"
                     :title="titleOf(entry)"
                     :aria-label="`Remove ${labelOf(entry.term)}`"
                     @mousedown.prevent
